@@ -5,3 +5,43 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# BEGIN old-address page redirects (domain_switch.py)
+# Pages only. MCP and API paths on the old address keep answering directly.
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/"
+  to = "https://revenue-enablement.gtmhelix.com/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/index.html"
+  to = "https://revenue-enablement.gtmhelix.com/index.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/privacy"
+  to = "https://revenue-enablement.gtmhelix.com/privacy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/privacy.html"
+  to = "https://revenue-enablement.gtmhelix.com/privacy.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/sitemap.xml"
+  to = "https://revenue-enablement.gtmhelix.com/sitemap.xml"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://revenue-enablement-mcp.netlify.app/llms.txt"
+  to = "https://revenue-enablement.gtmhelix.com/llms.txt"
+  status = 301
+  force = true
+
+# END old-address page redirects

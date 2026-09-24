@@ -1,6 +1,6 @@
 # Privacy Policy: Revenue Enablement MCP server
 
-Last updated: 2026-09-24. The same policy is published at https://revenue-enablement-mcp.netlify.app/privacy.html.
+Last updated: 2026-09-24. The same policy is published at https://revenue-enablement.gtmhelix.com/privacy.html.
 
 ## Who we are
 
@@ -8,7 +8,7 @@ Revenue Enablement is built and run by Shashwat Ghosh, Helix GTM Consulting. Con
 
 ## What the hosted server receives
 
-When an AI assistant such as Claude calls one of the tools, the server at `https://revenue-enablement-mcp.netlify.app/mcp` receives the tool name and the inputs for that call. It does not receive your chat history, account details, files or anything else from your conversation.
+When an AI assistant such as Claude calls one of the tools, the server at `https://revenue-enablement.gtmhelix.com/mcp` receives the tool name and the inputs for that call. It does not receive your chat history, account details, files or anything else from your conversation.
 
 ## How it is used and stored
 

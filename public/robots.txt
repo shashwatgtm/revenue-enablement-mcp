@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /mcp
 
-Sitemap: https://revenue-enablement-mcp.netlify.app/sitemap.xml
+Sitemap: https://revenue-enablement.gtmhelix.com/sitemap.xml

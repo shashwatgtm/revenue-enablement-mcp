@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenue Enablement Docs: MCP Server and REST API | Helix GTM</title>
+<meta name="description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
+<link rel="canonical" href="https://revenue-enablement.gtmhelix.com/docs/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Revenue Enablement by Helix GTM Consulting">
+<meta property="og:title" content="Revenue Enablement Docs: MCP Server and REST API | Helix GTM">
+<meta property="og:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta property="og:url" content="https://revenue-enablement.gtmhelix.com/docs/">
+<meta property="og:image" content="https://revenue-enablement.gtmhelix.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Revenue Enablement by Helix GTM Consulting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Revenue Enablement Docs: MCP Server and REST API | Helix GTM">
+<meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
+<meta name="twitter:creator" content="@Shashwat_Ghosh">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/brand.css">
+<link rel="stylesheet" href="/assets/app.css">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://www.gtmexpert.com/#org",
+   "name": "Helix GTM Consulting",
+   "alternateName": [
+    "GTMExpert",
+    "Helix GTM"
+   ],
+   "url": "https://www.gtmexpert.com",
+   "foundingDate": "2016",
+   "founder": {
+    "@id": "https://www.gtmexpert.com/#shashwat"
+   },
+   "sameAs": [
+    "https://github.com/shashwatgtm"
+   ]
+  },
+  {
+   "@type": "Person",
+   "@id": "https://www.gtmexpert.com/#shashwat",
+   "name": "Shashwat Ghosh",
+   "jobTitle": "GTM Alpha Consultant, AI GTM Expert and Fractional CMO",
+   "description": "Founder of Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience. Creator of the EPIC, IMPACT and CRAFT frameworks.",
+   "worksFor": {
+    "@id": "https://www.gtmexpert.com/#org"
+   },
+   "url": "https://www.gtmexpert.com",
+   "award": [
+    "B2B Marketer of the Year 2020, Fintech (CMO Asia)",
+    "LinkedIn Top Product Marketing Voice, #10 India and #52 Worldwide (2024)"
+   ],
+   "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Bengaluru",
+    "addressRegion": "Karnataka",
+    "addressCountry": "IN"
+   },
+   "sameAs": [
+    "https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/",
+    "https://x.com/Shashwat_Ghosh",
+    "https://github.com/shashwatgtm"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://revenue-enablement.gtmhelix.com/#site",
+   "url": "https://revenue-enablement.gtmhelix.com/",
+   "name": "Revenue Enablement by Helix GTM Consulting",
+   "publisher": {
+    "@id": "https://www.gtmexpert.com/#org"
+   },
+   "inLanguage": "en"
+  },
+  {
+   "@type": "WebPage",
+   "@id": "https://revenue-enablement.gtmhelix.com/docs/#page",
+   "url": "https://revenue-enablement.gtmhelix.com/docs/",
+   "name": "Revenue Enablement Docs: MCP Server and REST API | Helix GTM",
+   "description": "How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server's own schemas.",
+   "isPartOf": {
+    "@id": "https://revenue-enablement.gtmhelix.com/#site"
+   },
+   "about": {
+    "@id": "https://revenue-enablement.gtmhelix.com/#app"
+   },
+   "dateModified": "2026-09-25",
+   "inLanguage": "en",
+   "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
+  },
+  {
+   "@type": "BreadcrumbList",
+   "@id": "https://revenue-enablement.gtmhelix.com/docs/#breadcrumbs",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://revenue-enablement.gtmhelix.com/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Docs",
+     "item": "https://revenue-enablement.gtmhelix.com/docs/"
+    }
+   ]
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<a class="hx-skip" href="#main">Skip to content</a>
+<header class="hx-header">
+        <div class="hx-wrap hx-header-row">
+            <a class="hx-lockup" href="https://gtmalpha.gtmhelix.com/" aria-label="GTM Alpha home"><span class="hx-alpha" aria-hidden="true">&#945;</span><span class="hx-wordmark">GTM Alpha</span></a>
+            <nav class="hx-nav" aria-label="Main">
+                <a href="https://gtmalpha.gtmhelix.com/#features">Features</a>
+                <a href="https://gtmalpha.gtmhelix.com/#epic">EPIC Framework</a>
+                <a href="https://gtmalpha.gtmhelix.com/integration">Integration</a>
+                <a href="https://gtmalpha.gtmhelix.com/pricing">Pricing</a>
+                <a href="https://gtmalpha.gtmhelix.com/api-docs">API Docs</a>
+                <a href="https://gtmalpha.gtmhelix.com/consultation">Consultation</a>
+                <a href="https://gtmalpha.gtmhelix.com/#about">About Shashwat</a>
+                <a href="https://gtmexpert.com/" class="hx-cta">GTMExpert.com</a>
+            </nav>
+        </div>
+    </header>
+<nav class="hx-subnav" aria-label="Revenue Enablement"><div class="hx-wrap hx-subnav-row"><span class="hx-subnav-name">Revenue Enablement</span><div class="hx-subnav-links"><a href="/">Home</a><a href="/#tools">Tools</a><a href="/connect/">Connect</a><a href="/docs/" class="is-active" aria-current="page">Docs</a><a href="/faq/">FAQ</a><a href="/privacy/">Privacy</a><a href="https://tools.gtmhelix.com/" class="hx-subnav-hub">All tools and plugins</a></div></div></nav>
+<section class="hx-hero">
+  <div class="hx-wrap"><div class="hx-hero-inner">
+    <span class="hx-eyebrow">Revenue Enablement · documentation</span>
+    <h1>Revenue Enablement documentation</h1>
+    <p class="hx-lead">The MCP address, the REST API behind the web forms, and every field of all 12 tools.</p>
+  </div></div>
+</section>
+<main id="main" class="hx-body">
+
+<section class="hx-section" aria-labelledby="mcp-h">
+  <h2 id="mcp-h">MCP server</h2>
+  <ul class="hx-prose">
+    <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
+    <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.1.0.</li>
+    <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs the same tools over stdio.</li>
+  </ul>
+</section>
+
+<section class="hx-section" aria-labelledby="rest-h">
+  <h2 id="rest-h">REST API (used by the web forms)</h2>
+  <p class="hx-prose">Send <code>POST https://revenue-enablement.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
+  <pre class="hx-code-block">curl -s -X POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder \
+  -H "Content-Type: application/json" \
+  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Northwind Clinics&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_product&quot;: &quot;ClinicFlow scheduling&quot;}}'</pre>
+  <ul class="hx-prose">
+    <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
+    <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
+    <li>Forms without JavaScript post <code>application/x-www-form-urlencoded</code> and get an HTML page back.</li>
+    <li>Nothing is stored and the input is not logged (see <a href="/privacy/">Privacy</a>).</li>
+  </ul>
+</section>
+
+<section class="hx-section" aria-labelledby="ref-h">
+  <h2 id="ref-h">Tool reference</h2>
+  <p class="hx-sub">Generated from the server's own input schemas on 25 September 2026.</p>
+</section>
+<section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
+  <h3 id="d-account-plan-builder">Account Plan Builder <code>account_plan_builder</code></h3>
+  <p class="hx-prose">Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. <a href="/tools/account-plan-builder/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
+<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
+<tr><td><code>current_arr</code></td><td>number</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
+<tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles (can be rough notes)</td></tr>
+<tr><td><code>current_products</code></td><td>string</td><td>no</td><td></td><td>Products/services they currently use from you</td></tr>
+<tr><td><code>expansion_opportunities</code></td><td>string</td><td>no</td><td></td><td>Potential expansion areas or whitespace</td></tr>
+<tr><td><code>competitive_threats</code></td><td>string</td><td>no</td><td></td><td>Known competitors in the account</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/service offering</td></tr>
+<tr><td><code>account_notes</code></td><td>string</td><td>no</td><td></td><td>Any additional context about the account</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="deal-strategy-coach" aria-labelledby="d-deal-strategy-coach">
+  <h3 id="d-deal-strategy-coach">Deal Strategy Coach <code>deal_strategy_coach</code></h3>
+  <p class="hx-prose">Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. <a href="/tools/deal-strategy-coach/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
+<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
+<tr><td><code>deal_stage</code></td><td>string</td><td>yes</td><td>prospecting, discovery, demo, proposal, negotiation, closing, stuck</td><td>Current deal stage</td></tr>
+<tr><td><code>days_in_stage</code></td><td>number</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
+<tr><td><code>champion_status</code></td><td>string</td><td>no</td><td>no_champion, potential_champion, confirmed_champion, multi_threaded</td><td>Champion identification status</td></tr>
+<tr><td><code>economic_buyer</code></td><td>string</td><td>no</td><td></td><td>Economic buyer name and engagement level</td></tr>
+<tr><td><code>competitors</code></td><td>string</td><td>no</td><td></td><td>Competitors in the deal and their position</td></tr>
+<tr><td><code>blockers</code></td><td>string</td><td>no</td><td></td><td>Known blockers or objections</td></tr>
+<tr><td><code>next_steps</code></td><td>string</td><td>no</td><td></td><td>Currently planned next steps</td></tr>
+<tr><td><code>close_date</code></td><td>string</td><td>no</td><td></td><td>Target close date</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="discovery-question-bank" aria-labelledby="d-discovery-question-bank">
+  <h3 id="d-discovery-question-bank">Discovery Question Bank <code>discovery_question_bank</code></h3>
+  <p class="hx-prose">Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect. <a href="/tools/discovery-question-bank/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>framework</code></td><td>string</td><td>yes</td><td>meddpicc, bant, spiced, challenger, gap_selling, all</td><td>Discovery framework to use</td></tr>
+<tr><td><code>prospect_industry</code></td><td>string</td><td>no</td><td></td><td>Prospect industry for context</td></tr>
+<tr><td><code>prospect_role</code></td><td>string</td><td>no</td><td></td><td>Role of person you are meeting with</td></tr>
+<tr><td><code>known_pain_points</code></td><td>string</td><td>no</td><td></td><td>Pain points already identified</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics/KPIs already discussed</td></tr>
+<tr><td><code>deal_stage</code></td><td>string</td><td>no</td><td>first_call, discovery, deep_dive, technical, executive</td><td>Stage of conversation</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution for relevant questions</td></tr>
+<tr><td><code>gaps_to_fill</code></td><td>string</td><td>no</td><td></td><td>Specific information gaps to address</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
+  <h3 id="d-roi-business-case-builder">ROI Business Case Builder <code>roi_business_case_builder</code></h3>
+  <p class="hx-prose">Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
+<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for benchmarks</td></tr>
+<tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
+<tr><td><code>annual_revenue</code></td><td>number</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
+<tr><td><code>employee_count</code></td><td>number</td><td>no</td><td></td><td>Number of employees</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>solution_price</code></td><td>number</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
+<tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Any metrics shared by prospect</td></tr>
+<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today (for comparison)</td></tr>
+<tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
+  <h3 id="d-mutual-action-plan-generator">Mutual Action Plan Generator <code>mutual_action_plan_generator</code></h3>
+  <p class="hx-prose">Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. <a href="/tools/mutual-action-plan-generator/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
+<tr><td><code>target_close_date</code></td><td>string</td><td>yes</td><td></td><td>Target close date (YYYY-MM-DD)</td></tr>
+<tr><td><code>current_stage</code></td><td>string</td><td>no</td><td>discovery, evaluation, proposal, negotiation, procurement</td><td>Current deal stage</td></tr>
+<tr><td><code>buyer_champion</code></td><td>string</td><td>no</td><td></td><td>Champion name and title</td></tr>
+<tr><td><code>economic_buyer</code></td><td>string</td><td>no</td><td></td><td>Economic buyer name and title</td></tr>
+<tr><td><code>technical_evaluators</code></td><td>string</td><td>no</td><td></td><td>Technical evaluators involved</td></tr>
+<tr><td><code>procurement_contact</code></td><td>string</td><td>no</td><td></td><td>Procurement contact if known</td></tr>
+<tr><td><code>known_requirements</code></td><td>string</td><td>no</td><td></td><td>Known requirements or evaluation criteria</td></tr>
+<tr><td><code>known_process_steps</code></td><td>string</td><td>no</td><td></td><td>Known steps in their buying process</td></tr>
+<tr><td><code>blockers</code></td><td>string</td><td>no</td><td></td><td>Known blockers or concerns</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="win-loss-analyzer" aria-labelledby="d-win-loss-analyzer">
+  <h3 id="d-win-loss-analyzer">Win/Loss Analyzer <code>win_loss_analyzer</code></h3>
+  <p class="hx-prose">Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate. <a href="/tools/win-loss-analyzer/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>analysis_type</code></td><td>string</td><td>yes</td><td>single_deal, deal_portfolio, competitor_analysis, loss_pattern</td><td>Type of analysis</td></tr>
+<tr><td><code>deal_outcome</code></td><td>string</td><td>no</td><td>won, lost, no_decision, mixed</td><td>Deal outcome for single deal analysis</td></tr>
+<tr><td><code>deal_details</code></td><td>string</td><td>no</td><td></td><td>Deal details - can be rough notes, CRM export, or structured data</td></tr>
+<tr><td><code>loss_reason</code></td><td>string</td><td>no</td><td></td><td>Stated loss reason (for lost deals)</td></tr>
+<tr><td><code>competitor_won</code></td><td>string</td><td>no</td><td></td><td>Competitor who won (if applicable)</td></tr>
+<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Deal value</td></tr>
+<tr><td><code>sales_cycle_days</code></td><td>number</td><td>no</td><td></td><td>Length of sales cycle</td></tr>
+<tr><td><code>stakeholders_involved</code></td><td>string</td><td>no</td><td></td><td>Key stakeholders and their positions</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you were selling</td></tr>
+<tr><td><code>multiple_deals</code></td><td>string</td><td>no</td><td></td><td>For portfolio analysis: summary of multiple deals</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="proposal-section-writer" aria-labelledby="d-proposal-section-writer">
+  <h3 id="d-proposal-section-writer">Proposal Section Writer <code>proposal_section_writer</code></h3>
+  <p class="hx-prose">Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more. <a href="/tools/proposal-section-writer/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>section_type</code></td><td>string</td><td>yes</td><td>executive_summary, problem_statement, solution_overview, implementation_plan, pricing_justification, risk_mitigation, success_metrics, company_overview, case_studies, next_steps</td><td>Proposal section to generate</td></tr>
+<tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer name</td></tr>
+<tr><td><code>customer_industry</code></td><td>string</td><td>no</td><td></td><td>Customer industry</td></tr>
+<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Primary reader of proposal</td></tr>
+<tr><td><code>customer_challenges</code></td><td>string</td><td>no</td><td></td><td>Key challenges identified</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>key_differentiators</code></td><td>string</td><td>no</td><td></td><td>Why you vs alternatives</td></tr>
+<tr><td><code>pricing</code></td><td>string</td><td>no</td><td></td><td>Pricing details if relevant</td></tr>
+<tr><td><code>implementation_approach</code></td><td>string</td><td>no</td><td></td><td>How you will implement</td></tr>
+<tr><td><code>success_metrics</code></td><td>string</td><td>no</td><td></td><td>Expected outcomes/metrics</td></tr>
+<tr><td><code>tone</code></td><td>string</td><td>no</td><td>formal, consultative, bold, conservative</td><td>Tone for the proposal</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="email-sequence-generator" aria-labelledby="d-email-sequence-generator">
+  <h3 id="d-email-sequence-generator">Email Sequence Generator <code>email_sequence_generator</code></h3>
+  <p class="hx-prose">Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences. <a href="/tools/email-sequence-generator/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>sequence_type</code></td><td>string</td><td>yes</td><td>cold_outreach, warm_follow_up, post_demo, proposal_follow_up, re_engagement, nurture, event_follow_up, referral_request</td><td>Type of email sequence</td></tr>
+<tr><td><code>target_persona</code></td><td>string</td><td>yes</td><td></td><td>Target persona (e.g., VP Sales, CTO, CFO)</td></tr>
+<tr><td><code>target_industry</code></td><td>string</td><td>no</td><td></td><td>Target industry for context</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>key_value_prop</code></td><td>string</td><td>no</td><td></td><td>Primary value proposition</td></tr>
+<tr><td><code>specific_pain_point</code></td><td>string</td><td>no</td><td></td><td>Specific pain point to address</td></tr>
+<tr><td><code>social_proof</code></td><td>string</td><td>no</td><td></td><td>Customer names, stats, or proof points</td></tr>
+<tr><td><code>call_to_action</code></td><td>string</td><td>no</td><td></td><td>Desired action (meeting, demo, reply)</td></tr>
+<tr><td><code>num_emails</code></td><td>number</td><td>no</td><td></td><td>Number of emails in sequence (3-7)</td></tr>
+<tr><td><code>tone</code></td><td>string</td><td>no</td><td>professional, casual, urgent, consultative, provocative</td><td>Email tone</td></tr>
+<tr><td><code>sender_context</code></td><td>string</td><td>no</td><td></td><td>Context about sender (role, shared connections, etc.)</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="demo-script-builder" aria-labelledby="d-demo-script-builder">
+  <h3 id="d-demo-script-builder">Demo Script Builder <code>demo_script_builder</code></h3>
+  <p class="hx-prose">Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling. <a href="/tools/demo-script-builder/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>demo_type</code></td><td>string</td><td>yes</td><td>first_look, technical_deep_dive, executive_overview, competitive_displacement, expansion_upsell, proof_of_concept</td><td>Type of demo</td></tr>
+<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td></td><td>Primary demo audience (role/persona)</td></tr>
+<tr><td><code>attendees</code></td><td>string</td><td>no</td><td></td><td>Other attendees and their roles</td></tr>
+<tr><td><code>customer_industry</code></td><td>string</td><td>no</td><td></td><td>Customer industry</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>key_pain_points</code></td><td>string</td><td>no</td><td></td><td>Pain points to address in demo</td></tr>
+<tr><td><code>competitor_context</code></td><td>string</td><td>no</td><td></td><td>Competitor being displaced or compared</td></tr>
+<tr><td><code>demo_duration</code></td><td>number</td><td>no</td><td></td><td>Demo duration in minutes</td></tr>
+<tr><td><code>must_show_features</code></td><td>string</td><td>no</td><td></td><td>Features that must be demonstrated</td></tr>
+<tr><td><code>known_objections</code></td><td>string</td><td>no</td><td></td><td>Known objections to address</td></tr>
+<tr><td><code>desired_outcome</code></td><td>string</td><td>no</td><td></td><td>What you want to achieve from this demo</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="pricing-negotiation-guide" aria-labelledby="d-pricing-negotiation-guide">
+  <h3 id="d-pricing-negotiation-guide">Pricing Negotiation Guide <code>pricing_negotiation_guide</code></h3>
+  <p class="hx-prose">Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests. <a href="/tools/pricing-negotiation-guide/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
+<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Current deal value</td></tr>
+<tr><td><code>discount_requested</code></td><td>number</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>
+<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers</td></tr>
+<tr><td><code>buyer_leverage</code></td><td>string</td><td>no</td><td></td><td>Buyer leverage points (size, reference potential, etc.)</td></tr>
+<tr><td><code>your_leverage</code></td><td>string</td><td>no</td><td></td><td>Your leverage points (unique features, timeline, etc.)</td></tr>
+<tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>
+<tr><td><code>approval_authority</code></td><td>string</td><td>no</td><td></td><td>Who has final approval on pricing</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="champion-enablement-kit" aria-labelledby="d-champion-enablement-kit">
+  <h3 id="d-champion-enablement-kit">Champion Enablement Kit <code>champion_enablement_kit</code></h3>
+  <p class="hx-prose">Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points. <a href="/tools/champion-enablement-kit/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>asset_type</code></td><td>string</td><td>yes</td><td>executive_brief, internal_business_case, objection_responses, presentation_talking_points, email_to_stakeholder, roi_one_pager, competitive_comparison, risk_assessment</td><td>Type of enablement asset</td></tr>
+<tr><td><code>champion_name</code></td><td>string</td><td>no</td><td></td><td>Champion name</td></tr>
+<tr><td><code>champion_role</code></td><td>string</td><td>no</td><td></td><td>Champion role/title</td></tr>
+<tr><td><code>target_stakeholder</code></td><td>string</td><td>no</td><td></td><td>Who the champion needs to convince</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>key_value_points</code></td><td>string</td><td>no</td><td></td><td>Key value points to emphasize</td></tr>
+<tr><td><code>known_objections</code></td><td>string</td><td>no</td><td></td><td>Expected objections from stakeholders</td></tr>
+<tr><td><code>competitive_context</code></td><td>string</td><td>no</td><td></td><td>Competitive alternatives being considered</td></tr>
+<tr><td><code>budget_context</code></td><td>string</td><td>no</td><td></td><td>Budget situation and pricing</td></tr>
+<tr><td><code>urgency_drivers</code></td><td>string</td><td>no</td><td></td><td>Why act now</td></tr>
+<tr><td><code>champion_wins</code></td><td>string</td><td>no</td><td></td><td>How this makes the champion look good</td></tr>
+  </tbody></table></div>
+</section>
+<section class="hx-section" id="competitive-trap-setter" aria-labelledby="d-competitive-trap-setter">
+  <h3 id="d-competitive-trap-setter">Competitive Trap Setter <code>competitive_trap_setter</code></h3>
+  <p class="hx-prose">Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative. <a href="/tools/competitive-trap-setter/">Open the form</a>.</p>
+  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>competitor</code></td><td>string</td><td>yes</td><td></td><td>Primary competitor to position against</td></tr>
+<tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Known competitor weaknesses</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>your_strengths</code></td><td>string</td><td>no</td><td></td><td>Your key differentiators</td></tr>
+<tr><td><code>evaluation_stage</code></td><td>string</td><td>no</td><td>early, mid, late, finalist</td><td>Stage of competitive evaluation</td></tr>
+<tr><td><code>buyer_priorities</code></td><td>string</td><td>no</td><td></td><td>What the buyer cares most about</td></tr>
+<tr><td><code>buyer_persona</code></td><td>string</td><td>no</td><td></td><td>Role of key evaluator</td></tr>
+<tr><td><code>trap_type</code></td><td>string</td><td>no</td><td>discovery_questions, evaluation_criteria, reference_questions, technical_requirements, commercial_terms, all</td><td>Type of competitive positioning</td></tr>
+  </tbody></table></div>
+</section>
+
+</main>
+<footer class="hx-footer">
+        <div class="hx-wrap">
+            <div class="hx-footer-grid">
+                <div>
+                    <a class="hx-lockup" href="https://gtmalpha.gtmhelix.com/" aria-label="GTM Alpha home"><span class="hx-alpha" aria-hidden="true">&#945;</span><span class="hx-wordmark">GTM Alpha</span></a>
+                    <p>Professional go-to-market strategy consulting powered by Shashwat Ghosh's expertise and advanced AI integration.</p>
+                    <a href="https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/">LinkedIn</a>
+                    <a href="https://x.com/Shashwat_Ghosh">X (Twitter)</a>
+                </div>
+                <div>
+                    <h4>Platform</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/#features">Features</a>
+                    <a href="https://gtmalpha.gtmhelix.com/#epic">EPIC Framework</a>
+                    <a href="https://gtmalpha.gtmhelix.com/integration">Integration</a>
+                    <a href="https://gtmalpha.gtmhelix.com/pricing">Pricing</a>
+                    <a href="https://gtmalpha.gtmhelix.com/api-docs">API Docs</a>
+                    <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a>
+                </div>
+                <div>
+                    <h4>Connectors</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/integration">GTM Alpha</a>
+                    <a href="https://craft-gtm.gtmhelix.com/">CRAFT GTM</a>
+                    <a href="https://craft-content.gtmhelix.com/">CRAFT Content</a>
+                    <a href="https://impact.gtmhelix.com/">IMPACT</a>
+                    <a href="https://icp-intelligence.gtmhelix.com/">ICP Intelligence</a>
+                    <a href="https://revenue-enablement.gtmhelix.com/">Revenue Enablement</a>
+                    <a href="https://tools.gtmhelix.com/">All tools and plugins</a>
+                </div>
+                <div>
+                    <h4>Connect</h4>
+                    <a href="https://gtmalpha.gtmhelix.com/consultation">Book Consultation</a>
+                    <a href="mailto:shashwat@hyperplays.in">Email Support</a>
+                    <a href="https://gtmexpert.com/">GTMExpert.com</a>
+                    <a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a>
+                    <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a>
+                </div>
+            </div>
+            <div class="hx-footer-bottom">
+                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
+                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+            </div>
+        </div>
+    </footer>
+<script src="/assets/app.js" defer></script>
+</body>
+</html>

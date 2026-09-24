@@ -1,58 +1,74 @@
-# Revenue Enablement MCP connector
+# Revenue Enablement
 
-> Revenue Enablement gives Claude twelve tools for B2B sales work: account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win/loss reviews, proposal sections, email sequences, demo scripts, pricing negotiation guides, champion enablement kits and competitive discovery questions. Every tool turns the details you give it into a structured draft to review and edit before use.
+> Revenue Enablement is a free set of twelve sales tools by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win and loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
 
+- Web app (no sign-in): https://revenue-enablement.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement.gtmhelix.com/mcp
-- Setup and tools: https://revenue-enablement.gtmhelix.com/
-- Privacy policy: https://revenue-enablement.gtmhelix.com/privacy.html
+- Connect to Claude, ChatGPT, Cursor, VS Code, Windsurf: https://revenue-enablement.gtmhelix.com/connect/
+- Docs (MCP and REST, every field): https://revenue-enablement.gtmhelix.com/docs/
+- FAQ: https://revenue-enablement.gtmhelix.com/faq/
+- Privacy policy: https://revenue-enablement.gtmhelix.com/privacy/
 - Local npm package: @shashwatgtmalpha/revenue-enablement-mcp
 - Source code: https://github.com/shashwatgtm/revenue-enablement-mcp
 - Built by: Shashwat Ghosh, Helix GTM Consulting (https://www.gtmexpert.com)
+- All connectors and Claude plugins: https://tools.gtmhelix.com/
 
 ## Tools
 
-- Account Plan Builder (account_plan_builder): Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.
-- Deal Strategy Coach (deal_strategy_coach): Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.
-- Discovery Question Bank (discovery_question_bank): Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect.
-- ROI Business Case Builder (roi_business_case_builder): Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations.
-- Mutual Action Plan Generator (mutual_action_plan_generator): Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.
-- Win/Loss Analyzer (win_loss_analyzer): Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.
-- Proposal Section Writer (proposal_section_writer): Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.
-- Email Sequence Generator (email_sequence_generator): Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences.
-- Demo Script Builder (demo_script_builder): Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling.
-- Pricing Negotiation Guide (pricing_negotiation_guide): Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests.
-- Champion Enablement Kit (champion_enablement_kit): Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points.
-- Competitive Trap Setter (competitive_trap_setter): Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative.
+- [Account Plan Builder](https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/) (`account_plan_builder`): Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.
+- [Deal Strategy Coach](https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/) (`deal_strategy_coach`): Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.
+- [Discovery Question Bank](https://revenue-enablement.gtmhelix.com/tools/discovery-question-bank/) (`discovery_question_bank`): Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect.
+- [ROI Business Case Builder](https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/) (`roi_business_case_builder`): Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations.
+- [Mutual Action Plan Generator](https://revenue-enablement.gtmhelix.com/tools/mutual-action-plan-generator/) (`mutual_action_plan_generator`): Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.
+- [Win/Loss Analyzer](https://revenue-enablement.gtmhelix.com/tools/win-loss-analyzer/) (`win_loss_analyzer`): Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.
+- [Proposal Section Writer](https://revenue-enablement.gtmhelix.com/tools/proposal-section-writer/) (`proposal_section_writer`): Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.
+- [Email Sequence Generator](https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/) (`email_sequence_generator`): Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences.
+- [Demo Script Builder](https://revenue-enablement.gtmhelix.com/tools/demo-script-builder/) (`demo_script_builder`): Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling.
+- [Pricing Negotiation Guide](https://revenue-enablement.gtmhelix.com/tools/pricing-negotiation-guide/) (`pricing_negotiation_guide`): Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests.
+- [Champion Enablement Kit](https://revenue-enablement.gtmhelix.com/tools/champion-enablement-kit/) (`champion_enablement_kit`): Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points.
+- [Competitive Trap Setter](https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/) (`competitive_trap_setter`): Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative.
 
 ## Questions and answers
 
 ### What is Revenue Enablement?
 
-Revenue Enablement gives Claude twelve tools for B2B sales work: account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win/loss reviews, proposal sections, email sequences, demo scripts, pricing negotiation guides, champion enablement kits and competitive discovery questions. Every tool turns the details you give it into a structured draft to review and edit before use.
+Revenue Enablement is a free set of twelve sales tools by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win and loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
 
-### How do I connect Revenue Enablement to Claude?
+### Is Revenue Enablement free, and do I need an account?
 
-In Claude, open Customize, then Connectors, then Add custom connector. Name it Revenue Enablement, paste the server URL https://revenue-enablement.gtmhelix.com/mcp, choose no sign-in and select Add. In Claude Code run: claude mcp add --transport http revenue-enablement https://revenue-enablement.gtmhelix.com/mcp
+It is free, and there is no account or sign-in. Use the tools in your browser here, or connect the MCP server to your AI assistant.
 
-### Does Revenue Enablement need an account, and what does it cost?
+### Does it use AI to write the answers?
 
-No account or sign-in is needed, and there is no charge. The server is public and every tool is read-only.
+No. Each tool applies fixed rules in the Revenue Enablement code to the inputs you give it. It does not call an AI model and does not look anything up. When you use it from Claude or another assistant, that assistant writes around the tool's answer.
 
-### Which tools does Revenue Enablement include?
+### What happens to what I type?
 
-12 tools: Account Plan Builder, Deal Strategy Coach, Discovery Question Bank, ROI Business Case Builder, Mutual Action Plan Generator, Win/Loss Analyzer, Proposal Section Writer, Email Sequence Generator, Demo Script Builder, Pricing Negotiation Guide, Champion Enablement Kit, Competitive Trap Setter.
+It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. Nothing is stored and nothing you type is logged. The privacy page has the details.
 
-### What data does Revenue Enablement keep?
+### How do I use Revenue Enablement in Claude?
 
-None. Each call is answered from the inputs you give it, and the server stores and logs nothing. Netlify, the host, keeps its own request logs. See the privacy policy.
+In Claude, open Customize, then Connectors, then Add custom connector. Name it Revenue Enablement, paste https://revenue-enablement.gtmhelix.com/mcp and choose no sign-in. The Connect page covers Claude Code, ChatGPT, Cursor, VS Code and Windsurf too.
 
-### Can I run Revenue Enablement on my own computer?
+### Who built it?
 
-Yes. Run npx -y @shashwatgtmalpha/revenue-enablement-mcp to use the same tools locally over stdio; nothing is sent to us.
+Shashwat Ghosh, founder of Helix GTM Consulting: a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience, based in Bengaluru.
 
-### Who built Revenue Enablement?
+### Why do some answers look like templates?
 
-Shashwat Ghosh, founder of Helix GTM Consulting, a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience.
+Several tools return a structured plan with placeholders where your inputs did not give a fact. That is deliberate: the tools do not invent numbers or names. Fill the placeholders in before you use the result.
+
+### Can I call the tools from my own code?
+
+Yes. Send POST https://revenue-enablement.gtmhelix.com/api/tools/<tool name> with a JSON body {"input": {...}}. The Docs page lists every field. Please keep to the rate limit of 30 requests per minute.
+
+### Is the source code public?
+
+Yes, at https://github.com/shashwatgtm/revenue-enablement-mcp under the MIT licence. The npm package @shashwatgtmalpha/revenue-enablement-mcp runs the same tools locally.
+
+### How do I report a problem?
+
+Email shashwat@gtmhelix.com or open an issue at https://github.com/shashwatgtm/revenue-enablement-mcp/issues.
 
 ## Other connectors by Helix GTM Consulting
 

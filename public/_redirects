@@ -1,0 +1,29 @@
+# Old address: pages redirect to the gtmhelix.com address. /mcp and /api/* are NOT listed, so they keep answering directly.
+# These rules sit at the top because Netlify applies the first match.
+https://revenue-enablement-mcp.netlify.app/  https://revenue-enablement.gtmhelix.com/  301!
+https://revenue-enablement-mcp.netlify.app/tools/account-plan-builder/  https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/  301!
+https://revenue-enablement-mcp.netlify.app/tools/deal-strategy-coach/  https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/  301!
+https://revenue-enablement-mcp.netlify.app/tools/discovery-question-bank/  https://revenue-enablement.gtmhelix.com/tools/discovery-question-bank/  301!
+https://revenue-enablement-mcp.netlify.app/tools/roi-business-case-builder/  https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/  301!
+https://revenue-enablement-mcp.netlify.app/tools/mutual-action-plan-generator/  https://revenue-enablement.gtmhelix.com/tools/mutual-action-plan-generator/  301!
+https://revenue-enablement-mcp.netlify.app/tools/win-loss-analyzer/  https://revenue-enablement.gtmhelix.com/tools/win-loss-analyzer/  301!
+https://revenue-enablement-mcp.netlify.app/tools/proposal-section-writer/  https://revenue-enablement.gtmhelix.com/tools/proposal-section-writer/  301!
+https://revenue-enablement-mcp.netlify.app/tools/email-sequence-generator/  https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/  301!
+https://revenue-enablement-mcp.netlify.app/tools/demo-script-builder/  https://revenue-enablement.gtmhelix.com/tools/demo-script-builder/  301!
+https://revenue-enablement-mcp.netlify.app/tools/pricing-negotiation-guide/  https://revenue-enablement.gtmhelix.com/tools/pricing-negotiation-guide/  301!
+https://revenue-enablement-mcp.netlify.app/tools/champion-enablement-kit/  https://revenue-enablement.gtmhelix.com/tools/champion-enablement-kit/  301!
+https://revenue-enablement-mcp.netlify.app/tools/competitive-trap-setter/  https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/  301!
+https://revenue-enablement-mcp.netlify.app/connect/  https://revenue-enablement.gtmhelix.com/connect/  301!
+https://revenue-enablement-mcp.netlify.app/docs/  https://revenue-enablement.gtmhelix.com/docs/  301!
+https://revenue-enablement-mcp.netlify.app/faq/  https://revenue-enablement.gtmhelix.com/faq/  301!
+https://revenue-enablement-mcp.netlify.app/privacy/  https://revenue-enablement.gtmhelix.com/privacy/  301!
+https://revenue-enablement-mcp.netlify.app/index.html  https://revenue-enablement.gtmhelix.com/index.html  301!
+https://revenue-enablement-mcp.netlify.app/privacy  https://revenue-enablement.gtmhelix.com/privacy/  301!
+https://revenue-enablement-mcp.netlify.app/privacy.html  https://revenue-enablement.gtmhelix.com/privacy/  301!
+https://revenue-enablement-mcp.netlify.app/sitemap.xml  https://revenue-enablement.gtmhelix.com/sitemap.xml  301!
+https://revenue-enablement-mcp.netlify.app/llms.txt  https://revenue-enablement.gtmhelix.com/llms.txt  301!
+
+# Old page address on the new site
+/privacy.html  /privacy/  301!
+/privacy  /privacy/  301!
+

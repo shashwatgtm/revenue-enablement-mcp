@@ -132,6 +132,7 @@
    "url": "https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
+   "softwareRequirements": "None: a web browser, or any MCP client such as Claude for the MCP address",
    "operatingSystem": "Any",
    "isAccessibleForFree": true,
    "offers": {
@@ -201,12 +202,13 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 2 of 12</span>
     <h1>Deal Strategy Coach</h1>
     <p class="hx-lead">Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 
 <section class="hx-section" aria-labelledby="run-h">
-  <h2 id="run-h">Run Deal Strategy Coach in your browser</h2>
+  <h2 id="run-h">How do I run Deal Strategy Coach in my browser?</h2>
   <p class="hx-sub">Required: Deal name, Deal stage. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/deal_strategy_coach" data-tool="deal_strategy_coach" data-title="Deal Strategy Coach">
 <div class="hx-field"><label for="f-deal_name">Deal name <span class="hx-req" aria-hidden="true">*</span></label><input id="f-deal_name" name="deal_name" type="text" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-deal_name-help"><p class="hx-help" id="f-deal_name-help">Deal/opportunity name</p></div>
@@ -238,14 +240,14 @@
 </section>
 
 <section class="hx-section" aria-labelledby="ai-h">
-  <h2 id="ai-h">Use it from Claude or another assistant</h2>
+  <h2 id="ai-h">How do I use Deal Strategy Coach from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Deal Strategy Coach tool. deal name: Northwind expansion; deal stage: demo; deal value: 45000; champion status: potential champion; days in stage: 20.</blockquote>
   <p class="hx-prose">MCP tool name: <code>deal_strategy_coach</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/deal_strategy_coach</code> (see <a href="/docs/#deal-strategy-coach">Docs</a>).</p>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
-  <h2 id="works-h">How this tool works</h2>
+  <h2 id="works-h">How does Deal Strategy Coach work?</h2>
   <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/account-plan-builder/">Previous: Account Plan Builder</a><a href="/tools/discovery-question-bank/">Next: Discovery Question Bank</a></p>
 </section>
@@ -289,8 +291,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. Revenue Enablement by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

@@ -132,6 +132,7 @@
    "url": "https://revenue-enablement.gtmhelix.com/tools/win-loss-analyzer/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
+   "softwareRequirements": "None: a web browser, or any MCP client such as Claude for the MCP address",
    "operatingSystem": "Any",
    "isAccessibleForFree": true,
    "offers": {
@@ -201,12 +202,13 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 6 of 12</span>
     <h1>Win/Loss Analyzer</h1>
     <p class="hx-lead">Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 
 <section class="hx-section" aria-labelledby="run-h">
-  <h2 id="run-h">Run Win/Loss Analyzer in your browser</h2>
+  <h2 id="run-h">How do I run Win/Loss Analyzer in my browser?</h2>
   <p class="hx-sub">Required: Analysis type. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/win_loss_analyzer" data-tool="win_loss_analyzer" data-title="Win/Loss Analyzer">
 <div class="hx-field"><label for="f-analysis_type">Analysis type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-analysis_type" name="analysis_type" data-kind="string" required aria-required="true" aria-describedby="f-analysis_type-help"><option value="" disabled selected>Choose one</option><option value="single_deal">single deal</option><option value="deal_portfolio">deal portfolio</option><option value="competitor_analysis">competitor analysis</option><option value="loss_pattern">loss pattern</option></select><p class="hx-help" id="f-analysis_type-help">Type of analysis</p></div>
@@ -237,14 +239,14 @@
 </section>
 
 <section class="hx-section" aria-labelledby="ai-h">
-  <h2 id="ai-h">Use it from Claude or another assistant</h2>
+  <h2 id="ai-h">How do I use Win/Loss Analyzer from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Win/Loss Analyzer tool. analysis type: single deal; deal outcome: lost; loss reason: price; competitor won: Competitor A; deal value: 30000.</blockquote>
   <p class="hx-prose">MCP tool name: <code>win_loss_analyzer</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/win_loss_analyzer</code> (see <a href="/docs/#win-loss-analyzer">Docs</a>).</p>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
-  <h2 id="works-h">How this tool works</h2>
+  <h2 id="works-h">How does Win/Loss Analyzer work?</h2>
   <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/mutual-action-plan-generator/">Previous: Mutual Action Plan Generator</a><a href="/tools/proposal-section-writer/">Next: Proposal Section Writer</a></p>
 </section>
@@ -288,8 +290,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. Revenue Enablement by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

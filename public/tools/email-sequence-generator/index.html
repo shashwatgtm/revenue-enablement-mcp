@@ -132,6 +132,7 @@
    "url": "https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
+   "softwareRequirements": "None: a web browser, or any MCP client such as Claude for the MCP address",
    "operatingSystem": "Any",
    "isAccessibleForFree": true,
    "offers": {
@@ -201,12 +202,13 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 8 of 12</span>
     <h1>Email Sequence Generator</h1>
     <p class="hx-lead">Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 
 <section class="hx-section" aria-labelledby="run-h">
-  <h2 id="run-h">Run Email Sequence Generator in your browser</h2>
+  <h2 id="run-h">How do I run Email Sequence Generator in my browser?</h2>
   <p class="hx-sub">Required: Sequence type, Target persona, Your solution. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/email_sequence_generator" data-tool="email_sequence_generator" data-title="Email Sequence Generator">
 <div class="hx-field"><label for="f-sequence_type">Sequence type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-sequence_type" name="sequence_type" data-kind="string" required aria-required="true" aria-describedby="f-sequence_type-help"><option value="" disabled selected>Choose one</option><option value="cold_outreach">cold outreach</option><option value="warm_follow_up">warm follow up</option><option value="post_demo">post demo</option><option value="proposal_follow_up">proposal follow up</option><option value="re_engagement">re engagement</option><option value="nurture">nurture</option><option value="event_follow_up">event follow up</option><option value="referral_request">referral request</option></select><p class="hx-help" id="f-sequence_type-help">Type of email sequence</p></div>
@@ -238,14 +240,14 @@
 </section>
 
 <section class="hx-section" aria-labelledby="ai-h">
-  <h2 id="ai-h">Use it from Claude or another assistant</h2>
+  <h2 id="ai-h">How do I use Email Sequence Generator from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Email Sequence Generator tool. sequence type: cold outreach; target persona: Clinic operations directors; your solution: ClinicFlow scheduling; num emails: 3; tone: professional.</blockquote>
   <p class="hx-prose">MCP tool name: <code>email_sequence_generator</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/email_sequence_generator</code> (see <a href="/docs/#email-sequence-generator">Docs</a>).</p>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
-  <h2 id="works-h">How this tool works</h2>
+  <h2 id="works-h">How does Email Sequence Generator work?</h2>
   <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/proposal-section-writer/">Previous: Proposal Section Writer</a><a href="/tools/demo-script-builder/">Next: Demo Script Builder</a></p>
 </section>
@@ -289,8 +291,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. Revenue Enablement by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

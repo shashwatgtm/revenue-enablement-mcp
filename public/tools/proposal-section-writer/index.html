@@ -132,6 +132,7 @@
    "url": "https://revenue-enablement.gtmhelix.com/tools/proposal-section-writer/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
+   "softwareRequirements": "None: a web browser, or any MCP client such as Claude for the MCP address",
    "operatingSystem": "Any",
    "isAccessibleForFree": true,
    "offers": {
@@ -201,12 +202,13 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 7 of 12</span>
     <h1>Proposal Section Writer</h1>
     <p class="hx-lead">Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 
 <section class="hx-section" aria-labelledby="run-h">
-  <h2 id="run-h">Run Proposal Section Writer in your browser</h2>
+  <h2 id="run-h">How do I run Proposal Section Writer in my browser?</h2>
   <p class="hx-sub">Required: Section type, Your solution. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/proposal_section_writer" data-tool="proposal_section_writer" data-title="Proposal Section Writer">
 <div class="hx-field"><label for="f-section_type">Section type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-section_type" name="section_type" data-kind="string" required aria-required="true" aria-describedby="f-section_type-help"><option value="" disabled selected>Choose one</option><option value="executive_summary">executive summary</option><option value="problem_statement">problem statement</option><option value="solution_overview">solution overview</option><option value="implementation_plan">implementation plan</option><option value="pricing_justification">pricing justification</option><option value="risk_mitigation">risk mitigation</option><option value="success_metrics">success metrics</option><option value="company_overview">company overview</option><option value="case_studies">case studies</option><option value="next_steps">next steps</option></select><p class="hx-help" id="f-section_type-help">Proposal section to generate</p></div>
@@ -238,14 +240,14 @@
 </section>
 
 <section class="hx-section" aria-labelledby="ai-h">
-  <h2 id="ai-h">Use it from Claude or another assistant</h2>
+  <h2 id="ai-h">How do I use Proposal Section Writer from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Proposal Section Writer tool. section type: executive summary; your solution: ClinicFlow scheduling; primary audience: vp level; tone: consultative.</blockquote>
   <p class="hx-prose">MCP tool name: <code>proposal_section_writer</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/proposal_section_writer</code> (see <a href="/docs/#proposal-section-writer">Docs</a>).</p>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
-  <h2 id="works-h">How this tool works</h2>
+  <h2 id="works-h">How does Proposal Section Writer work?</h2>
   <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/win-loss-analyzer/">Previous: Win/Loss Analyzer</a><a href="/tools/email-sequence-generator/">Next: Email Sequence Generator</a></p>
 </section>
@@ -289,8 +291,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. Revenue Enablement by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

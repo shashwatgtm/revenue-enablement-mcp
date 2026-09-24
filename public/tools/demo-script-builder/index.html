@@ -132,6 +132,7 @@
    "url": "https://revenue-enablement.gtmhelix.com/tools/demo-script-builder/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
+   "softwareRequirements": "None: a web browser, or any MCP client such as Claude for the MCP address",
    "operatingSystem": "Any",
    "isAccessibleForFree": true,
    "offers": {
@@ -201,12 +202,13 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 9 of 12</span>
     <h1>Demo Script Builder</h1>
     <p class="hx-lead">Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling.</p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, founder of Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
 
 <section class="hx-section" aria-labelledby="run-h">
-  <h2 id="run-h">Run Demo Script Builder in your browser</h2>
+  <h2 id="run-h">How do I run Demo Script Builder in my browser?</h2>
   <p class="hx-sub">Required: Demo type, Your solution. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/demo_script_builder" data-tool="demo_script_builder" data-title="Demo Script Builder">
 <div class="hx-field"><label for="f-demo_type">Demo type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-demo_type" name="demo_type" data-kind="string" required aria-required="true" aria-describedby="f-demo_type-help"><option value="" disabled selected>Choose one</option><option value="first_look">first look</option><option value="technical_deep_dive">technical deep dive</option><option value="executive_overview">executive overview</option><option value="competitive_displacement">competitive displacement</option><option value="expansion_upsell">expansion upsell</option><option value="proof_of_concept">proof of concept</option></select><p class="hx-help" id="f-demo_type-help">Type of demo</p></div>
@@ -238,14 +240,14 @@
 </section>
 
 <section class="hx-section" aria-labelledby="ai-h">
-  <h2 id="ai-h">Use it from Claude or another assistant</h2>
+  <h2 id="ai-h">How do I use Demo Script Builder from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Demo Script Builder tool. demo type: first look; your solution: ClinicFlow scheduling; demo duration: 30.</blockquote>
   <p class="hx-prose">MCP tool name: <code>demo_script_builder</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/demo_script_builder</code> (see <a href="/docs/#demo-script-builder">Docs</a>).</p>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
-  <h2 id="works-h">How this tool works</h2>
+  <h2 id="works-h">How does Demo Script Builder work?</h2>
   <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/email-sequence-generator/">Previous: Email Sequence Generator</a><a href="/tools/pricing-negotiation-guide/">Next: Pricing Negotiation Guide</a></p>
 </section>
@@ -289,8 +291,8 @@
                 </div>
             </div>
             <div class="hx-footer-bottom">
-                <span>&copy; 2026 Helix GTM Consulting. GTM Alpha by Shashwat Ghosh.</span>
-                <span><a href="https://gtmalpha.gtmhelix.com/privacy">Privacy</a> &middot; <a href="https://gtmalpha.gtmhelix.com/terms">Terms</a> &middot; <a href="https://gtmalpha.gtmhelix.com/faq">FAQ</a></span>
+                <span>&copy; 2026 Helix GTM Consulting. Revenue Enablement by Shashwat Ghosh.</span>
+                <span><a href="/privacy/">Privacy</a> &middot; <a href="/faq/">FAQ</a></span>
             </div>
         </div>
     </footer>

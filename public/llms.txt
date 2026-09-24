@@ -1,6 +1,6 @@
 # Revenue Enablement
 
-> Revenue Enablement is a free set of twelve sales tools by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win and loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
+> Revenue Enablement is a free MCP server and web app with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win-loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
 
 - Web app (no sign-in): https://revenue-enablement.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement.gtmhelix.com/mcp
@@ -32,7 +32,7 @@
 
 ### What is Revenue Enablement?
 
-Revenue Enablement is a free set of twelve sales tools by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win and loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
+Revenue Enablement is a free MCP server and web app with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win-loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
 
 ### Is Revenue Enablement free, and do I need an account?
 
@@ -65,6 +65,10 @@ Yes. Send POST https://revenue-enablement.gtmhelix.com/api/tools/<tool name> wit
 ### Is the source code public?
 
 Yes, at https://github.com/shashwatgtm/revenue-enablement-mcp under the MIT licence. The npm package @shashwatgtmalpha/revenue-enablement-mcp runs the same tools locally.
+
+### Who is Revenue Enablement not ideal for?
+
+Teams that want the tools to read their CRM, email or call notes: they work only from what you type. Sending anything straight to a buyer: every output is a draft for a person to review first. Teams that need saved deal history: nothing is stored, so keep each result in your own deal record.
 
 ### How do I report a problem?
 

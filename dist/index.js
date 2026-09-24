@@ -19,6 +19,8 @@
  * 12. competitive_trap_setter - Landmine questions for deals
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
+exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -291,7 +293,7 @@ const tools = {
     // Tool 6: Win/Loss Analyzer
     win_loss_analyzer: {
         name: 'win_loss_analyzer',
-        description: 'Analyze deal outcomes to identify patterns, improve win rates, and refine sales strategy. Works with single deals or deal portfolios.',
+        description: 'Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -5406,52 +5408,96 @@ What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accom
 // ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
-const server = new index_js_1.Server({
-    name: 'revenue-enablement-mcp',
-    version: '1.0.0',
-}, {
-    capabilities: {
-        tools: {},
-    },
-});
 // List tools handler
-server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
+// =============================================================================
+// SERVER (shared by the stdio entry below and netlify/functions/mcp.mjs)
+// Added for the hosted connector: tool titles and annotations, and a clear
+// message when a required input is missing. Tool code above is unchanged.
+// =============================================================================
+exports.SERVER_NAME = 'revenue-enablement-mcp';
+exports.SERVER_VERSION = '1.1.0';
+// Every tool only builds text from its inputs: no storage, no network, no side effects.
+const TOOL_TITLES = {
+    "account_plan_builder": "Account Plan Builder",
+    "deal_strategy_coach": "Deal Strategy Coach",
+    "discovery_question_bank": "Discovery Question Bank",
+    "roi_business_case_builder": "ROI Business Case Builder",
+    "mutual_action_plan_generator": "Mutual Action Plan Generator",
+    "win_loss_analyzer": "Win/Loss Analyzer",
+    "proposal_section_writer": "Proposal Section Writer",
+    "email_sequence_generator": "Email Sequence Generator",
+    "demo_script_builder": "Demo Script Builder",
+    "pricing_negotiation_guide": "Pricing Negotiation Guide",
+    "champion_enablement_kit": "Champion Enablement Kit",
+    "competitive_trap_setter": "Competitive Trap Setter"
+};
+function withMeta(tool) {
+    const title = TOOL_TITLES[tool.name] ?? tool.name;
     return {
-        tools: Object.values(tools),
+        ...tool,
+        title,
+        annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     };
-});
-// Call tool handler
-server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    try {
-        const result = executeTool(name, args);
-        return {
-            content: [
-                {
-                    type: 'text',
-                    text: result,
-                },
-            ],
-        };
+}
+function checkRequiredInputs(name, args) {
+    const tool = tools[name];
+    if (!tool) {
+        return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
     }
-    catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        return {
-            content: [
-                {
-                    type: 'text',
-                    text: `Error executing ${name}: ${errorMessage}`,
-                },
-            ],
-            isError: true,
-        };
+    const required = tool.inputSchema.required ?? [];
+    const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
+    if (missing.length > 0) {
+        return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
-});
+    return null;
+}
+function createServer() {
+    const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });
+    server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
+        tools: Object.values(tools).map((tool) => withMeta(tool)),
+    }));
+    server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
+        const problem = checkRequiredInputs(request.params.name, request.params.arguments);
+        if (problem) {
+            return { content: [{ type: 'text', text: problem }], isError: true };
+        }
+        const { name, arguments: args } = request.params;
+        try {
+            const result = executeTool(name, args);
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: result,
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: `Error executing ${name}: ${errorMessage}`,
+                    },
+                ],
+                isError: true,
+            };
+        }
+    });
+    return server;
+}
 // Start server
 async function main() {
+    const server = createServer();
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error('Revenue Enablement MCP v1.0.0 running on stdio');
+    console.error(`Revenue Enablement MCP v${exports.SERVER_VERSION} running on stdio`);
 }
-main().catch(console.error);
+// Run over stdio only when started directly (npm bin). The hosted function imports this
+// file as an ES module bundle, where require is not defined.
+if (typeof module !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
+    main().catch(console.error);
+}
 //# sourceMappingURL=index.js.map

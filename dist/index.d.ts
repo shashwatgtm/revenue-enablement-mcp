@@ -17,5 +17,8 @@
  * 11. champion_enablement_kit - Internal selling tools
  * 12. competitive_trap_setter - Landmine questions for deals
  */
-export {};
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+export declare const SERVER_NAME = "revenue-enablement-mcp";
+export declare const SERVER_VERSION = "1.1.0";
+export declare function createServer(): Server;
 //# sourceMappingURL=index.d.ts.map

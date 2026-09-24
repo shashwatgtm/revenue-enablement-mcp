@@ -302,7 +302,7 @@ const tools: Record<string, Tool> = {
   // Tool 6: Win/Loss Analyzer
   win_loss_analyzer: {
     name: 'win_loss_analyzer',
-    description: 'Analyze deal outcomes to identify patterns, improve win rates, and refine sales strategy. Works with single deals or deal portfolios.',
+    description: 'Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -5542,58 +5542,112 @@ What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accom
 // MCP SERVER SETUP
 // ============================================================================
 
-const server = new Server(
-  {
-    name: 'revenue-enablement-mcp',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
 
 // List tools handler
-server.setRequestHandler(ListToolsRequestSchema, async () => {
+
+// =============================================================================
+// SERVER (shared by the stdio entry below and netlify/functions/mcp.mjs)
+// Added for the hosted connector: tool titles and annotations, and a clear
+// message when a required input is missing. Tool code above is unchanged.
+// =============================================================================
+
+export const SERVER_NAME = 'revenue-enablement-mcp';
+export const SERVER_VERSION = '1.1.0';
+
+// Every tool only builds text from its inputs: no storage, no network, no side effects.
+const TOOL_TITLES: Record<string, string> = {
+  "account_plan_builder": "Account Plan Builder",
+  "deal_strategy_coach": "Deal Strategy Coach",
+  "discovery_question_bank": "Discovery Question Bank",
+  "roi_business_case_builder": "ROI Business Case Builder",
+  "mutual_action_plan_generator": "Mutual Action Plan Generator",
+  "win_loss_analyzer": "Win/Loss Analyzer",
+  "proposal_section_writer": "Proposal Section Writer",
+  "email_sequence_generator": "Email Sequence Generator",
+  "demo_script_builder": "Demo Script Builder",
+  "pricing_negotiation_guide": "Pricing Negotiation Guide",
+  "champion_enablement_kit": "Champion Enablement Kit",
+  "competitive_trap_setter": "Competitive Trap Setter"
+};
+
+function withMeta<T extends { name: string }>(tool: T) {
+  const title = TOOL_TITLES[tool.name] ?? tool.name;
   return {
-    tools: Object.values(tools),
+    ...tool,
+    title,
+    annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   };
-});
-
-// Call tool handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  
-  try {
-    const result = executeTool(name, args as Record<string, unknown>);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: result,
-        },
-      ],
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error executing ${name}: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-});
-
-// Start server
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('Revenue Enablement MCP v1.0.0 running on stdio');
 }
 
-main().catch(console.error);
+function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
+  const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
+  if (!tool) {
+    return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+  }
+  const required = tool.inputSchema.required ?? [];
+  const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
+  if (missing.length > 0) {
+    return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+  }
+  return null;
+}
+
+export function createServer(): Server {
+  const server = new Server(
+    { name: SERVER_NAME, version: SERVER_VERSION },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: Object.values(tools).map((tool) => withMeta(tool)),
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const problem = checkRequiredInputs(request.params.name, request.params.arguments as Record<string, unknown> | undefined);
+    if (problem) {
+      return { content: [{ type: 'text', text: problem }], isError: true };
+    }
+    const { name, arguments: args } = request.params;
+  
+    try {
+      const result = executeTool(name, args as Record<string, unknown>);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: result,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error executing ${name}: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
+
+  return server;
+}
+
+
+// Start server
+
+async function main() {
+  const server = createServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error(`Revenue Enablement MCP v${SERVER_VERSION} running on stdio`);
+}
+
+// Run over stdio only when started directly (npm bin). The hosted function imports this
+// file as an ES module bundle, where require is not defined.
+if (typeof module !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
+  main().catch(console.error);
+}

@@ -1,0 +1,63 @@
+# Revenue Enablement MCP connector
+
+> Revenue Enablement gives Claude twelve tools for B2B sales work: account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win/loss reviews, proposal sections, email sequences, demo scripts, pricing negotiation guides, champion enablement kits and competitive discovery questions. Every tool turns the details you give it into a structured draft to review and edit before use.
+
+- MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement-mcp.netlify.app/mcp
+- Setup and tools: https://revenue-enablement-mcp.netlify.app/
+- Privacy policy: https://revenue-enablement-mcp.netlify.app/privacy.html
+- Local npm package: @shashwatgtmalpha/revenue-enablement-mcp
+- Source code: https://github.com/shashwatgtm/revenue-enablement-mcp
+- Built by: Shashwat Ghosh, Helix GTM Consulting (https://www.gtmexpert.com)
+
+## Tools
+
+- Account Plan Builder (account_plan_builder): Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.
+- Deal Strategy Coach (deal_strategy_coach): Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.
+- Discovery Question Bank (discovery_question_bank): Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect.
+- ROI Business Case Builder (roi_business_case_builder): Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations.
+- Mutual Action Plan Generator (mutual_action_plan_generator): Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.
+- Win/Loss Analyzer (win_loss_analyzer): Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.
+- Proposal Section Writer (proposal_section_writer): Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.
+- Email Sequence Generator (email_sequence_generator): Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences.
+- Demo Script Builder (demo_script_builder): Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling.
+- Pricing Negotiation Guide (pricing_negotiation_guide): Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests.
+- Champion Enablement Kit (champion_enablement_kit): Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points.
+- Competitive Trap Setter (competitive_trap_setter): Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative.
+
+## Questions and answers
+
+### What is Revenue Enablement?
+
+Revenue Enablement gives Claude twelve tools for B2B sales work: account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win/loss reviews, proposal sections, email sequences, demo scripts, pricing negotiation guides, champion enablement kits and competitive discovery questions. Every tool turns the details you give it into a structured draft to review and edit before use.
+
+### How do I connect Revenue Enablement to Claude?
+
+In Claude, open Customize, then Connectors, then Add custom connector. Name it Revenue Enablement, paste the server URL https://revenue-enablement-mcp.netlify.app/mcp, choose no sign-in and select Add. In Claude Code run: claude mcp add --transport http revenue-enablement https://revenue-enablement-mcp.netlify.app/mcp
+
+### Does Revenue Enablement need an account, and what does it cost?
+
+No account or sign-in is needed, and there is no charge. The server is public and every tool is read-only.
+
+### Which tools does Revenue Enablement include?
+
+12 tools: Account Plan Builder, Deal Strategy Coach, Discovery Question Bank, ROI Business Case Builder, Mutual Action Plan Generator, Win/Loss Analyzer, Proposal Section Writer, Email Sequence Generator, Demo Script Builder, Pricing Negotiation Guide, Champion Enablement Kit, Competitive Trap Setter.
+
+### What data does Revenue Enablement keep?
+
+None. Each call is answered from the inputs you give it, and the server stores and logs nothing. Netlify, the host, keeps its own request logs. See the privacy policy.
+
+### Can I run Revenue Enablement on my own computer?
+
+Yes. Run npx -y @shashwatgtmalpha/revenue-enablement-mcp to use the same tools locally over stdio; nothing is sent to us.
+
+### Who built Revenue Enablement?
+
+Shashwat Ghosh, founder of Helix GTM Consulting, a GTM Alpha consultant, AI GTM expert and fractional CMO with 24+ years in B2B and 10+ years of fractional experience.
+
+## Other connectors by Helix GTM Consulting
+
+- GTM Alpha: https://gtmalpha.netlify.app/integration
+- CRAFT GTM: https://craft-gtm-mcp.netlify.app/
+- CRAFT Content: https://craft-content-mcp.netlify.app/
+- IMPACT: https://impact-mcp.netlify.app/
+- ICP Intelligence: https://icp-intelligence-mcp.netlify.app/

@@ -207,6 +207,29 @@
 </section>
 <main id="main" class="hx-body">
 
+<section class="hx-section" aria-labelledby="need-h">
+  <h2 id="need-h">What do I need to run Champion Enablement Kit?</h2>
+  <p class="hx-sub">Free, no sign-up, no account. A web browser is enough; the answer comes back in a second or two.</p>
+  <div class="hx-table"><table><thead><tr><th>Input</th><th>Required?</th><th>What to enter</th></tr></thead><tbody>
+<tr><td>Asset type</td><td>Required</td><td>Type of enablement asset Allowed: executive brief, internal business case, objection responses, presentation talking points, email to stakeholder, roi one pager, competitive comparison, risk assessment.</td></tr>
+<tr><td>Champion name</td><td>Optional</td><td>Champion name</td></tr>
+<tr><td>Champion role</td><td>Optional</td><td>Champion role/title</td></tr>
+<tr><td>Target stakeholder</td><td>Optional</td><td>Who the champion needs to convince</td></tr>
+<tr><td>Your solution</td><td>Required</td><td>Your product/solution</td></tr>
+<tr><td>Key value points</td><td>Optional</td><td>Key value points to emphasize</td></tr>
+<tr><td>Known objections</td><td>Optional</td><td>Expected objections from stakeholders</td></tr>
+<tr><td>Competitive context</td><td>Optional</td><td>Competitive alternatives being considered</td></tr>
+<tr><td>Budget context</td><td>Optional</td><td>Budget situation and pricing</td></tr>
+<tr><td>Urgency drivers</td><td>Optional</td><td>Why act now</td></tr>
+<tr><td>Champion wins</td><td>Optional</td><td>How this makes the champion look good</td></tr>
+  </tbody></table></div>
+  <ol class="hx-steps">
+    <li>Fill in the required inputs above in the form below, or press <em>Fill in a tested example</em>.</li>
+    <li>Press <em>Run Champion Enablement Kit</em>.</li>
+    <li>Read the result on this page, then copy it and edit it before you use it.</li>
+  </ol>
+</section>
+
 <section class="hx-section" aria-labelledby="run-h">
   <h2 id="run-h">How do I run Champion Enablement Kit in my browser?</h2>
   <p class="hx-sub">Required: Asset type, Your solution. Fields marked optional can be left empty.</p>
@@ -239,11 +262,68 @@
   <div class="hx-result-body" data-result></div>
 </section>
 
+<section class="hx-section" aria-labelledby="ex-h">
+  <h2 id="ex-h">What does Champion Enablement Kit return for the tested example?</h2>
+  <p class="hx-prose">Generated from the live code on 25 September 2026 with the inputs behind <em>Fill in a tested example</em>. Your own inputs give a different result.</p>
+  <details class="hx-run"><summary>Show the full result</summary>
+  <div class="hx-result-body hx-output">
+<h3>Executive Brief for leadership</h3>
+<h4>Prepared for: Champion</h4>
+<h4>Topic: ClinicFlow scheduling</h4>
+<hr>
+<h5>The Opportunity</h5>
+<p>[1-2 sentence summary of what this enables for the business]</p>
+<p><strong>Key Benefits:</strong></p>
+<ul>
+<li>Improved efficiency</li>
+<li>Reduced costs</li>
+<li>Better outcomes</li>
+<li>Competitive advantage</li>
+</ul>
+<h5>The Business Case</h5>
+<p><strong>Problem:</strong></p>
+<p>[Current state challenges - what's not working]</p>
+<p><strong>Impact:</strong></p>
+<p>[Quantified impact of the problem]</p>
+<p><strong>Solution:</strong></p>
+<p>ClinicFlow scheduling addresses this by [how it solves the problem].</p>
+<p><strong>Expected Results:</strong></p>
+<ul>
+<li>[Result 1]</li>
+<li>[Result 2]  </li>
+<li>[Result 3]</li>
+</ul>
+<h5>Investment &amp; Return</h5>
+<p>Investment: $X</p>
+<p>Expected ROI: X:1</p>
+<p>Payback: X months</p>
+<h5>Recommendation</h5>
+<p>Proceed with ClinicFlow scheduling to [achieve outcome].</p>
+<hr>
+<p>*[Champion to present to leadership]*</p>
+  </div></details>
+</section>
+
+<section class="hx-section" aria-labelledby="not-t-h">
+  <h2 id="not-t-h">Who is Champion Enablement Kit not ideal for?</h2>
+  <ul class="hx-prose">
+    <li>Anyone who cannot give the required inputs (Asset type, Your solution); the answer is built only from them.</li>
+    <li>Teams that want the tools to read their CRM, email or call notes: they work only from what you type.</li>
+    <li>Sending anything straight to a buyer: every output is a draft for a person to review first.</li>
+  </ul>
+</section>
+
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Champion Enablement Kit from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Champion Enablement Kit tool. asset type: executive brief; your solution: ClinicFlow scheduling.</blockquote>
-  <p class="hx-prose">MCP tool name: <code>champion_enablement_kit</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/champion_enablement_kit</code> (see <a href="/docs/#champion-enablement-kit">Docs</a>).</p>
+  <p class="hx-prose">MCP tool name: <code>champion_enablement_kit</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/champion_enablement_kit</code> with this JSON body (see <a href="/docs/#champion-enablement-kit">Docs</a>):</p>
+  <pre class="hx-code-block">{
+  &quot;input&quot;: {
+    &quot;asset_type&quot;: &quot;executive_brief&quot;,
+    &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;
+  }
+}</pre>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">

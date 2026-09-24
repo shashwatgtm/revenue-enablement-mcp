@@ -207,6 +207,29 @@
 </section>
 <main id="main" class="hx-body">
 
+<section class="hx-section" aria-labelledby="need-h">
+  <h2 id="need-h">What do I need to run Proposal Section Writer?</h2>
+  <p class="hx-sub">Free, no sign-up, no account. A web browser is enough; the answer comes back in a second or two.</p>
+  <div class="hx-table"><table><thead><tr><th>Input</th><th>Required?</th><th>What to enter</th></tr></thead><tbody>
+<tr><td>Section type</td><td>Required</td><td>Proposal section to generate Allowed: executive summary, problem statement, solution overview, implementation plan, pricing justification, risk mitigation, success metrics, company overview, case studies, next steps.</td></tr>
+<tr><td>Customer name</td><td>Optional</td><td>Customer name</td></tr>
+<tr><td>Customer industry</td><td>Optional</td><td>Customer industry</td></tr>
+<tr><td>Primary audience</td><td>Optional</td><td>Primary reader of proposal Allowed: c suite, vp level, director, manager, technical, procurement.</td></tr>
+<tr><td>Customer challenges</td><td>Optional</td><td>Key challenges identified</td></tr>
+<tr><td>Your solution</td><td>Required</td><td>Your product/solution</td></tr>
+<tr><td>Key differentiators</td><td>Optional</td><td>Why you vs alternatives</td></tr>
+<tr><td>Pricing</td><td>Optional</td><td>Pricing details if relevant</td></tr>
+<tr><td>Implementation approach</td><td>Optional</td><td>How you will implement</td></tr>
+<tr><td>Success metrics</td><td>Optional</td><td>Expected outcomes/metrics</td></tr>
+<tr><td>Tone</td><td>Optional</td><td>Tone for the proposal Allowed: formal, consultative, bold, conservative.</td></tr>
+  </tbody></table></div>
+  <ol class="hx-steps">
+    <li>Fill in the required inputs above in the form below, or press <em>Fill in a tested example</em>.</li>
+    <li>Press <em>Run Proposal Section Writer</em>.</li>
+    <li>Read the result on this page, then copy it and edit it before you use it.</li>
+  </ol>
+</section>
+
 <section class="hx-section" aria-labelledby="run-h">
   <h2 id="run-h">How do I run Proposal Section Writer in my browser?</h2>
   <p class="hx-sub">Required: Section type, Your solution. Fields marked optional can be left empty.</p>
@@ -239,11 +262,71 @@
   <div class="hx-result-body" data-result></div>
 </section>
 
+<section class="hx-section" aria-labelledby="ex-h">
+  <h2 id="ex-h">What does Proposal Section Writer return for the tested example?</h2>
+  <p class="hx-prose">Generated from the live code on 25 September 2026 with the inputs behind <em>Fill in a tested example</em>. Your own inputs give a different result.</p>
+  <details class="hx-run"><summary>Show the full result</summary>
+  <div class="hx-result-body hx-output">
+<h3>Executive Summary</h3>
+<h4>Proposal for Customer</h4>
+<p>Based on our conversations, this proposal outlines how ClinicFlow scheduling will help Customer address the challenges we've discussed and achieve meaningful business outcomes.</p>
+<h5>The Opportunity</h5>
+<p>Customer is seeking to improve operational efficiency, reduce costs, and drive growth. Our conversations have revealed opportunities to create significant value through ClinicFlow scheduling.</p>
+<h5>Our Recommendation</h5>
+<p>ClinicFlow scheduling provides Customer with a comprehensive solution that:</p>
+<ul>
+<li>Addresses your core business challenges</li>
+<li>Delivers measurable ROI</li>
+<li>Integrates with your existing systems</li>
+<li>Scales with your growth</li>
+</ul>
+<h5>Expected Outcomes</h5>
+<p>Within 12 months of implementation, Customer can expect:</p>
+<ul>
+<li>Improved operational efficiency</li>
+<li>Reduced costs and complexity</li>
+<li>Enhanced visibility and control</li>
+<li>Foundation for future growth</li>
+</ul>
+<h5>Investment Overview</h5>
+<p>Detailed pricing is outlined in the Investment section of this proposal.</p>
+<h5>Why ClinicFlow scheduling</h5>
+<p>We bring deep expertise in your industry, a proven track record of success, and a commitment to your long-term success.</p>
+<h5>Next Steps</h5>
+<p>We recommend the following path forward:</p>
+<ol>
+<li>Review this proposal and provide feedback</li>
+<li>Schedule a working session to finalize scope</li>
+<li>Begin implementation planning</li>
+<li>Kick off the project</li>
+</ol>
+<hr>
+<p>*We look forward to partnering with Customer to achieve these outcomes.*</p>
+  </div></details>
+</section>
+
+<section class="hx-section" aria-labelledby="not-t-h">
+  <h2 id="not-t-h">Who is Proposal Section Writer not ideal for?</h2>
+  <ul class="hx-prose">
+    <li>Anyone who cannot give the required inputs (Section type, Your solution); the answer is built only from them.</li>
+    <li>Teams that want the tools to read their CRM, email or call notes: they work only from what you type.</li>
+    <li>Sending anything straight to a buyer: every output is a draft for a person to review first.</li>
+  </ul>
+</section>
+
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Proposal Section Writer from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
   <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Proposal Section Writer tool. section type: executive summary; your solution: ClinicFlow scheduling; primary audience: vp level; tone: consultative.</blockquote>
-  <p class="hx-prose">MCP tool name: <code>proposal_section_writer</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/proposal_section_writer</code> (see <a href="/docs/#proposal-section-writer">Docs</a>).</p>
+  <p class="hx-prose">MCP tool name: <code>proposal_section_writer</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/proposal_section_writer</code> with this JSON body (see <a href="/docs/#proposal-section-writer">Docs</a>):</p>
+  <pre class="hx-code-block">{
+  &quot;input&quot;: {
+    &quot;section_type&quot;: &quot;executive_summary&quot;,
+    &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;,
+    &quot;primary_audience&quot;: &quot;vp_level&quot;,
+    &quot;tone&quot;: &quot;consultative&quot;
+  }
+}</pre>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">

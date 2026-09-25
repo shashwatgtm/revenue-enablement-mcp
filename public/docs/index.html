@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Revenue Enablement Docs: MCP Server and REST API | Helix GTM</title>
-<meta name="description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
 <link rel="canonical" href="https://revenue-enablement.gtmhelix.com/docs/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Revenue Enablement by Helix GTM Consulting">
 <meta property="og:title" content="Revenue Enablement Docs: MCP Server and REST API | Helix GTM">
-<meta property="og:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta property="og:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
 <meta property="og:url" content="https://revenue-enablement.gtmhelix.com/docs/">
 <meta property="og:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
 <meta property="og:image:alt" content="Revenue Enablement by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Revenue Enablement Docs: MCP Server and REST API | Helix GTM">
-<meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server&#x27;s own schemas.">
+<meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
 <meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -108,7 +108,7 @@
    "@id": "https://revenue-enablement.gtmhelix.com/docs/#page",
    "url": "https://revenue-enablement.gtmhelix.com/docs/",
    "name": "Revenue Enablement Docs: MCP Server and REST API | Helix GTM",
-   "description": "How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, generated from the server's own schemas.",
+   "description": "How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server's own schemas.",
    "isPartOf": {
     "@id": "https://revenue-enablement.gtmhelix.com/#site"
    },
@@ -182,7 +182,7 @@
   <p class="hx-prose">Send <code>POST https://revenue-enablement.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
   <pre class="hx-code-block">curl -s -X POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder \
   -H "Content-Type: application/json" \
-  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Northwind Clinics&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_product&quot;: &quot;ClinicFlow scheduling&quot;}}'</pre>
+  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Northwind Clinics&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;}}'</pre>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
     <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
@@ -243,19 +243,19 @@
 </section>
 <section class="hx-section" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
   <h3 id="d-roi-business-case-builder">ROI Business Case Builder <code>roi_business_case_builder</code></h3>
-  <p class="hx-prose">Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
+  <p class="hx-prose">Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
-<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for benchmarks</td></tr>
+<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
 <tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
 <tr><td><code>annual_revenue</code></td><td>number</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
 <tr><td><code>employee_count</code></td><td>number</td><td>no</td><td></td><td>Number of employees</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>solution_price</code></td><td>number</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
 <tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
-<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Any metrics shared by prospect</td></tr>
-<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today (for comparison)</td></tr>
-<tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
@@ -298,21 +298,21 @@
 <tr><td><code>section_type</code></td><td>string</td><td>yes</td><td>executive_summary, problem_statement, solution_overview, implementation_plan, pricing_justification, risk_mitigation, success_metrics, company_overview, case_studies, next_steps</td><td>Proposal section to generate</td></tr>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer name</td></tr>
 <tr><td><code>customer_industry</code></td><td>string</td><td>no</td><td></td><td>Customer industry</td></tr>
-<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Primary reader of proposal</td></tr>
+<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Accepted but not used yet: the text is the same for every audience</td></tr>
 <tr><td><code>customer_challenges</code></td><td>string</td><td>no</td><td></td><td>Key challenges identified</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>key_differentiators</code></td><td>string</td><td>no</td><td></td><td>Why you vs alternatives</td></tr>
 <tr><td><code>pricing</code></td><td>string</td><td>no</td><td></td><td>Pricing details if relevant</td></tr>
 <tr><td><code>implementation_approach</code></td><td>string</td><td>no</td><td></td><td>How you will implement</td></tr>
 <tr><td><code>success_metrics</code></td><td>string</td><td>no</td><td></td><td>Expected outcomes/metrics</td></tr>
-<tr><td><code>tone</code></td><td>string</td><td>no</td><td>formal, consultative, bold, conservative</td><td>Tone for the proposal</td></tr>
+<tr><td><code>tone</code></td><td>string</td><td>no</td><td>formal, consultative, bold, conservative</td><td>Tone for the proposal (changes only the opening of the executive summary)</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="email-sequence-generator" aria-labelledby="d-email-sequence-generator">
   <h3 id="d-email-sequence-generator">Email Sequence Generator <code>email_sequence_generator</code></h3>
   <p class="hx-prose">Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences. <a href="/tools/email-sequence-generator/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>sequence_type</code></td><td>string</td><td>yes</td><td>cold_outreach, warm_follow_up, post_demo, proposal_follow_up, re_engagement, nurture, event_follow_up, referral_request</td><td>Type of email sequence</td></tr>
+<tr><td><code>sequence_type</code></td><td>string</td><td>yes</td><td>cold_outreach, warm_follow_up, post_demo, proposal_follow_up, re_engagement, nurture, event_follow_up, referral_request</td><td>Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline</td></tr>
 <tr><td><code>target_persona</code></td><td>string</td><td>yes</td><td></td><td>Target persona (e.g., VP Sales, CTO, CFO)</td></tr>
 <tr><td><code>target_industry</code></td><td>string</td><td>no</td><td></td><td>Target industry for context</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
@@ -320,7 +320,7 @@
 <tr><td><code>specific_pain_point</code></td><td>string</td><td>no</td><td></td><td>Specific pain point to address</td></tr>
 <tr><td><code>social_proof</code></td><td>string</td><td>no</td><td></td><td>Customer names, stats, or proof points</td></tr>
 <tr><td><code>call_to_action</code></td><td>string</td><td>no</td><td></td><td>Desired action (meeting, demo, reply)</td></tr>
-<tr><td><code>num_emails</code></td><td>number</td><td>no</td><td></td><td>Number of emails in sequence (3-7)</td></tr>
+<tr><td><code>num_emails</code></td><td>number</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>professional, casual, urgent, consultative, provocative</td><td>Email tone</td></tr>
 <tr><td><code>sender_context</code></td><td>string</td><td>no</td><td></td><td>Context about sender (role, shared connections, etc.)</td></tr>
   </tbody></table></div>
@@ -349,9 +349,9 @@
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
 <tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Current deal value</td></tr>
 <tr><td><code>discount_requested</code></td><td>number</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
-<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Accepted but not used yet by this tool</td></tr>
 <tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>
-<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers</td></tr>
+<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Shown in the output; the value example does not use it</td></tr>
 <tr><td><code>buyer_leverage</code></td><td>string</td><td>no</td><td></td><td>Buyer leverage points (size, reference potential, etc.)</td></tr>
 <tr><td><code>your_leverage</code></td><td>string</td><td>no</td><td></td><td>Your leverage points (unique features, timeline, etc.)</td></tr>
 <tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>

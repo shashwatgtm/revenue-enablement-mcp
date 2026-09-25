@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Email Sequence Generator | Revenue Enablement by Helix GTM</title>
-<meta name="description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective.">
+<meta name="description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective. Free, with no sign-in.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
 <link rel="canonical" href="https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Revenue Enablement by Helix GTM Consulting">
 <meta property="og:title" content="Email Sequence Generator | Revenue Enablement by Helix GTM">
-<meta property="og:description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective.">
+<meta property="og:description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective. Free, with no sign-in.">
 <meta property="og:url" content="https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/">
 <meta property="og:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
 <meta property="og:image:alt" content="Revenue Enablement by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Email Sequence Generator | Revenue Enablement by Helix GTM">
-<meta name="twitter:description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective.">
+<meta name="twitter:description" content="Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective. Free, with no sign-in.">
 <meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -108,7 +108,7 @@
    "@id": "https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/#page",
    "url": "https://revenue-enablement.gtmhelix.com/tools/email-sequence-generator/",
    "name": "Email Sequence Generator | Revenue Enablement by Helix GTM",
-   "description": "Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective.",
+   "description": "Run Email Sequence Generator free in your browser or in Claude. Generate multi-touch email sequences by persona, stage, and objective. Free, with no sign-in.",
    "isPartOf": {
     "@id": "https://revenue-enablement.gtmhelix.com/#site"
    },
@@ -228,7 +228,7 @@
   <h2 id="need-h">What do I need to run Email Sequence Generator?</h2>
   <p class="hx-sub">Free, no sign-up, no account. A web browser is enough; the answer comes back in a second or two.</p>
   <div class="hx-table"><table><thead><tr><th>Input</th><th>Required?</th><th>What to enter</th></tr></thead><tbody>
-<tr><td>Sequence type</td><td>Required</td><td>Type of email sequence Allowed: cold outreach, warm follow up, post demo, proposal follow up, re engagement, nurture, event follow up, referral request.</td></tr>
+<tr><td>Sequence type</td><td>Required</td><td>Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline Allowed: cold outreach, warm follow up, post demo, proposal follow up, re engagement, nurture, event follow up, referral request.</td></tr>
 <tr><td>Target persona</td><td>Required</td><td>Target persona (e.g., VP Sales, CTO, CFO)</td></tr>
 <tr><td>Target industry</td><td>Optional</td><td>Target industry for context</td></tr>
 <tr><td>Your solution</td><td>Required</td><td>Your product/solution</td></tr>
@@ -236,7 +236,7 @@
 <tr><td>Specific pain point</td><td>Optional</td><td>Specific pain point to address</td></tr>
 <tr><td>Social proof</td><td>Optional</td><td>Customer names, stats, or proof points</td></tr>
 <tr><td>Call to action</td><td>Optional</td><td>Desired action (meeting, demo, reply)</td></tr>
-<tr><td>Num emails</td><td>Optional</td><td>Number of emails in sequence (3-7)</td></tr>
+<tr><td>Num emails</td><td>Optional</td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
 <tr><td>Tone</td><td>Optional</td><td>Email tone Allowed: professional, casual, urgent, consultative, provocative.</td></tr>
 <tr><td>Sender context</td><td>Optional</td><td>Context about sender (role, shared connections, etc.)</td></tr>
   </tbody></table></div>
@@ -251,7 +251,7 @@
   <h2 id="run-h">How do I run Email Sequence Generator in my browser?</h2>
   <p class="hx-sub">Required: Sequence type, Target persona, Your solution. Fields marked optional can be left empty.</p>
   <form class="hx-form" method="post" action="/api/tools/email_sequence_generator" data-tool="email_sequence_generator" data-title="Email Sequence Generator">
-<div class="hx-field"><label for="f-sequence_type">Sequence type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-sequence_type" name="sequence_type" data-kind="string" required aria-required="true" aria-describedby="f-sequence_type-help"><option value="" disabled selected>Choose one</option><option value="cold_outreach">cold outreach</option><option value="warm_follow_up">warm follow up</option><option value="post_demo">post demo</option><option value="proposal_follow_up">proposal follow up</option><option value="re_engagement">re engagement</option><option value="nurture">nurture</option><option value="event_follow_up">event follow up</option><option value="referral_request">referral request</option></select><p class="hx-help" id="f-sequence_type-help">Type of email sequence</p></div>
+<div class="hx-field"><label for="f-sequence_type">Sequence type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-sequence_type" name="sequence_type" data-kind="string" required aria-required="true" aria-describedby="f-sequence_type-help"><option value="" disabled selected>Choose one</option><option value="cold_outreach">cold outreach</option><option value="warm_follow_up">warm follow up</option><option value="post_demo">post demo</option><option value="proposal_follow_up">proposal follow up</option><option value="re_engagement">re engagement</option><option value="nurture">nurture</option><option value="event_follow_up">event follow up</option><option value="referral_request">referral request</option></select><p class="hx-help" id="f-sequence_type-help">Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline</p></div>
 <div class="hx-field"><label for="f-target_persona">Target persona <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-target_persona" name="target_persona" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-target_persona-help"></textarea><p class="hx-help" id="f-target_persona-help">Target persona (e.g., VP Sales, CTO, CFO)</p></div>
 <div class="hx-field"><label for="f-target_industry">Target industry <span class="hx-opt">(optional)</span></label><input id="f-target_industry" name="target_industry" type="text" maxlength="6000" data-kind="string" aria-describedby="f-target_industry-help"><p class="hx-help" id="f-target_industry-help">Target industry for context</p></div>
 <div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
@@ -259,7 +259,7 @@
 <div class="hx-field"><label for="f-specific_pain_point">Specific pain point <span class="hx-opt">(optional)</span></label><textarea id="f-specific_pain_point" name="specific_pain_point" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-specific_pain_point-help"></textarea><p class="hx-help" id="f-specific_pain_point-help">Specific pain point to address</p></div>
 <div class="hx-field"><label for="f-social_proof">Social proof <span class="hx-opt">(optional)</span></label><textarea id="f-social_proof" name="social_proof" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-social_proof-help"></textarea><p class="hx-help" id="f-social_proof-help">Customer names, stats, or proof points</p></div>
 <div class="hx-field"><label for="f-call_to_action">Call to action <span class="hx-opt">(optional)</span></label><textarea id="f-call_to_action" name="call_to_action" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-call_to_action-help"></textarea><p class="hx-help" id="f-call_to_action-help">Desired action (meeting, demo, reply)</p></div>
-<div class="hx-field"><label for="f-num_emails">Num emails <span class="hx-opt">(optional)</span></label><input id="f-num_emails" name="num_emails" type="number" step="any" inputmode="decimal" data-kind="number" aria-describedby="f-num_emails-help"><p class="hx-help" id="f-num_emails-help">Number of emails in sequence (3-7)</p></div>
+<div class="hx-field"><label for="f-num_emails">Num emails <span class="hx-opt">(optional)</span></label><input id="f-num_emails" name="num_emails" type="number" step="any" inputmode="decimal" data-kind="number" aria-describedby="f-num_emails-help"><p class="hx-help" id="f-num_emails-help">Accepted but not used yet: each sequence type has a fixed number of emails</p></div>
 <div class="hx-field"><label for="f-tone">Tone <span class="hx-opt">(optional)</span></label><select id="f-tone" name="tone" data-kind="string" aria-describedby="f-tone-help"><option value="">Not specified</option><option value="professional">professional</option><option value="casual">casual</option><option value="urgent">urgent</option><option value="consultative">consultative</option><option value="provocative">provocative</option></select><p class="hx-help" id="f-tone-help">Email tone</p></div>
 <div class="hx-field"><label for="f-sender_context">Sender context <span class="hx-opt">(optional)</span></label><textarea id="f-sender_context" name="sender_context" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-sender_context-help"></textarea><p class="hx-help" id="f-sender_context-help">Context about sender (role, shared connections, etc.)</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-email_sequence_generator">Leave this empty</label><input id="hp-email_sequence_generator" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
@@ -289,6 +289,7 @@
 <h4>Solution: ClinicFlow scheduling</h4>
 <h4>Tone: Formal, polished, business-appropriate</h4>
 <h4>Emails: 3</h4>
+<p>*The template below has a fixed number of emails: add or remove emails to match the number you need.*</p>
 <hr>
 <h5>Email 1: The Opening (Day 1)</h5>
 <p><strong>Subject Options:</strong></p>
@@ -373,6 +374,7 @@
 <li>Track open and reply rates</li>
 <li>A/B test subject lines</li>
 </ul>
+<p>Suggested timings, lengths and counts: adjust them to your own.</p>
   </div></details>
 </section>
 
@@ -403,7 +405,7 @@
 
 <section class="hx-section" aria-labelledby="works-h">
   <h2 id="works-h">How does Email Sequence Generator work?</h2>
-  <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
+  <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server call the same tool code, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/proposal-section-writer/">Previous: Proposal Section Writer</a><a href="/tools/demo-script-builder/">Next: Demo Script Builder</a></p>
 </section>
 

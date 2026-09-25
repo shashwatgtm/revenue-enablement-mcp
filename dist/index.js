@@ -180,7 +180,7 @@ const tools = {
     // Tool 4: ROI Business Case Builder
     roi_business_case_builder: {
         name: 'roi_business_case_builder',
-        description: 'Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations.',
+        description: 'Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -190,7 +190,7 @@ const tools = {
                 },
                 industry: {
                     type: 'string',
-                    description: 'Industry for benchmarks'
+                    description: 'Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology'
                 },
                 company_size: {
                     type: 'string',
@@ -220,15 +220,15 @@ const tools = {
                 },
                 known_metrics: {
                     type: 'string',
-                    description: 'Any metrics shared by prospect'
+                    description: 'Metrics the prospect shared. Shown in the output; not used in the calculation'
                 },
                 current_process: {
                     type: 'string',
-                    description: 'How they do it today (for comparison)'
+                    description: 'How they do it today. Shown in the output; not used in the calculation'
                 },
                 implementation_timeline: {
                     type: 'string',
-                    description: 'Expected implementation time'
+                    description: 'Expected implementation time. Shown in the output; not used in the calculation'
                 }
             },
             required: ['your_solution', 'primary_value_driver']
@@ -366,7 +366,7 @@ const tools = {
                 primary_audience: {
                     type: 'string',
                     enum: ['c_suite', 'vp_level', 'director', 'manager', 'technical', 'procurement'],
-                    description: 'Primary reader of proposal'
+                    description: 'Accepted but not used yet: the text is the same for every audience'
                 },
                 customer_challenges: {
                     type: 'string',
@@ -395,7 +395,7 @@ const tools = {
                 tone: {
                     type: 'string',
                     enum: ['formal', 'consultative', 'bold', 'conservative'],
-                    description: 'Tone for the proposal'
+                    description: 'Tone for the proposal (changes only the opening of the executive summary)'
                 }
             },
             required: ['section_type', 'your_solution']
@@ -411,7 +411,7 @@ const tools = {
                 sequence_type: {
                     type: 'string',
                     enum: ['cold_outreach', 'warm_follow_up', 'post_demo', 'proposal_follow_up', 're_engagement', 'nurture', 'event_follow_up', 'referral_request'],
-                    description: 'Type of email sequence'
+                    description: 'Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline'
                 },
                 target_persona: {
                     type: 'string',
@@ -443,7 +443,7 @@ const tools = {
                 },
                 num_emails: {
                     type: 'number',
-                    description: 'Number of emails in sequence (3-7)'
+                    description: 'Accepted but not used yet: each sequence type has a fixed number of emails'
                 },
                 tone: {
                     type: 'string',
@@ -536,7 +536,7 @@ const tools = {
                 },
                 your_solution: {
                     type: 'string',
-                    description: 'Your product/solution'
+                    description: 'Accepted but not used yet by this tool'
                 },
                 competitor_price: {
                     type: 'string',
@@ -544,7 +544,7 @@ const tools = {
                 },
                 value_delivered: {
                     type: 'string',
-                    description: 'Quantified value your solution delivers'
+                    description: 'Quantified value your solution delivers. Shown in the output; the value example does not use it'
                 },
                 buyer_leverage: {
                     type: 'string',
@@ -671,6 +671,13 @@ const tools = {
 // ============================================================================
 // TOOL EXECUTION FUNCTIONS
 // ============================================================================
+// Output labels (owner decision 1): every figure that is not the user's input, and not computed
+// only from it, is labelled in the output. These strings change output text only, never a calculation.
+const EXAMPLE = '(Example figure: replace with your own)';
+const EXAMPLES = 'Example figures: replace with your own.';
+const SUGGESTIONS_FOOTER = 'Suggested timings, lengths and counts: adjust them to your own.';
+const NOT_SUPPLIED = 'not supplied';
+const hasValue = (v) => v !== undefined && v !== null && v !== '';
 // Tool 1: Account Plan Builder
 function executeAccountPlanBuilder(args) {
     const accountName = args.account_name || 'Target Account';
@@ -737,7 +744,7 @@ Based on the contacts provided, here's the stakeholder analysis:
 3. Who will use the solution daily?
 4. Who must approve the purchase?
 
-**Typical Stakeholders for ${industry}:**
+**Typical Stakeholders (a general list${args.industry ? `, not specific to ${industry}` : ''}):**
 - **Economic Buyer**: CFO, VP Operations, Business Unit Head
 - **Technical Buyer**: CTO, VP Engineering, IT Director
 - **User Buyer**: Department Head, Team Lead
@@ -764,7 +771,7 @@ Based on current products, consider expansion into:
 
 **Land Strategy Recommendations:**
 1. Start with a specific pain point and team
-2. Prove value quickly (30-60 days)
+2. Prove value quickly (30-60 days) ${EXAMPLE}
 3. Build internal champions
 4. Expand from success`;
     }
@@ -824,11 +831,11 @@ ${expansionOpportunities}
 | Attribute | Value |
 |-----------|-------|
 | **Account Name** | ${accountName} |
-| **Industry** | ${industry} |
+| **Industry** | ${args.industry || NOT_SUPPLIED} |
 | **Account Tier** | ${accountTier} |
-| **Current ARR** | $${currentArr.toLocaleString()} |
+| **Current ARR** | ${hasValue(args.current_arr) ? `$${currentArr.toLocaleString('en-US')}` : NOT_SUPPLIED} |
 | **Expansion Potential** | ${expansionPotential} |
-| **Your Solution** | ${yourSolution} |
+| **Your Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ---
 
@@ -945,7 +952,9 @@ ${accountNotes ? `### Additional Context\n${accountNotes}\n\n` : ''}### Research
 ---
 
 *Account Plan Generated: ${today.toISOString().split('T')[0]}*
-*Review and Update: Monthly*`;
+*Review and Update: Monthly*
+
+${SUGGESTIONS_FOOTER}`;
 }
 // Tool 2: Deal Strategy Coach
 function executeDealStrategyCoach(args) {
@@ -1006,11 +1015,11 @@ function executeDealStrategyCoach(args) {
     const threshold = stageDaysThreshold[dealStage] || 21;
     if (daysInStage > threshold * 2) {
         healthScore -= 15;
-        healthFactors.push(`🔴 ${daysInStage} days in stage (2x normal)`);
+        healthFactors.push(`🔴 ${daysInStage} days in stage (more than 2x this tool's example threshold for the stage) ${EXAMPLE}`);
     }
     else if (daysInStage > threshold) {
         healthScore -= 5;
-        healthFactors.push(`⚠️ ${daysInStage} days in stage (above average)`);
+        healthFactors.push(`⚠️ ${daysInStage} days in stage (above this tool's example threshold for the stage)`);
     }
     // Competitor impact
     if (competitors && competitors.toLowerCase().includes('incumbent')) {
@@ -1109,7 +1118,7 @@ function executeDealStrategyCoach(args) {
 
 **Tactical Priorities:**
 1. **No surprises** - Proposal should confirm what's already discussed
-2. **Quantify value** - ROI > 3x investment
+2. **Quantify value** - ROI > 3x investment ${EXAMPLE}
 3. **Differentiate** - Why you, not just why change
 4. **Create urgency** - Why now matters
 
@@ -1201,11 +1210,11 @@ function executeDealStrategyCoach(args) {
 - Champion has left or disengaged
 - Budget moved to other priorities
 - Competitor selected
-- No response in 3+ attempts
+- No response in 3+ attempts ${EXAMPLE}
 - Problem not urgent enough
 
 **Decision Framework:**
-- Commit to resolution in 2 weeks
+- Commit to resolution in 2 weeks ${EXAMPLE}
 - Either unstick or move out of pipeline`
     };
     // Generate specific recommendations
@@ -1214,7 +1223,7 @@ function executeDealStrategyCoach(args) {
         specificRecs += `
 ### 🔴 CRITICAL: Find Your Champion
 
-Without a champion, win rate drops 70%+. Immediate action required:
+Without a champion, win rate drops 70%+ ${EXAMPLE}. Immediate action required:
 
 1. **Identify potential champions** - Who has the pain and influence?
 2. **Test for championship** - Will they:
@@ -1284,11 +1293,11 @@ You don't know who controls the budget. Action required:
 | Metric | Value |
 |--------|-------|
 | **Deal Name** | ${dealName} |
-| **Deal Value** | $${dealValue.toLocaleString()} |
+| **Deal Value** | ${hasValue(args.deal_value) ? `$${dealValue.toLocaleString('en-US')}` : NOT_SUPPLIED} |
 | **Current Stage** | ${dealStage.charAt(0).toUpperCase() + dealStage.slice(1)} |
-| **Days in Stage** | ${daysInStage} |
+| **Days in Stage** | ${hasValue(args.days_in_stage) ? daysInStage : NOT_SUPPLIED} |
 | **Target Close** | ${closeDate || 'Not set'} |
-| **Solution** | ${yourSolution} |
+| **Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ### Health Score: ${healthColor} ${healthScore}/100 - ${healthStatus}
 
@@ -1332,7 +1341,9 @@ Ask yourself:
 ---
 
 *Strategy generated for ${dealStage} stage deals*
-*Review with manager weekly*`;
+*Review with manager weekly*
+
+${SUGGESTIONS_FOOTER}`;
 }
 // Tool 3: Discovery Question Bank
 function executeDiscoveryQuestionBank(args) {
@@ -1566,7 +1577,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 **Quantifying:**
 - "If you could solve this, what would improve?"
-- "What would success look like in 12 months?"
+- "What would success look like in 12 months?" ${EXAMPLE}
 - "How would you measure the impact?"
 
 **Expanding:**
@@ -1732,7 +1743,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 - **Prospect Industry:** ${prospectIndustry || 'Not specified'}
 - **Contact Role:** ${prospectRole || 'Not specified'}
 - **Deal Stage:** ${dealStage.replace(/_/g, ' ')}
-- **Your Solution:** ${yourSolution}
+- **Your Solution:** ${args.your_solution || NOT_SUPPLIED}
 ${knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}` : ''}
 ${knownMetrics ? `- **Known Metrics:** ${knownMetrics}` : ''}
 ${gapsToFill ? `- **Information Gaps:** ${gapsToFill}` : ''}
@@ -1774,7 +1785,7 @@ ${gapsToFill ? `- **Information Gaps:** ${gapsToFill}` : ''}
 **Avoid:**
 - Pitching too early
 - Yes/no questions
-- Talking more than 40% of the time`,
+- Talking more than 40% of the time ${EXAMPLE}`,
         discovery: `
 ## Discovery Stage Recommendations
 
@@ -1868,12 +1879,14 @@ Executive sponsorship and path to decision`
 
 ---
 
-*Use these questions as a guide, not a script. Listen more than you talk.*`;
+*Use these questions as a guide, not a script. Listen more than you talk.*
+
+${SUGGESTIONS_FOOTER}`;
     return output;
 }
 // Tool 4: ROI Business Case Builder
 function executeRoiBusinessCaseBuilder(args) {
-    const customerName = args.customer_name || 'Customer';
+    const customerName = args.customer_name || '[Customer name]';
     const industry = args.industry || 'Technology';
     const companySize = args.company_size || 'mid_market';
     const annualRevenue = args.annual_revenue || 0;
@@ -1929,6 +1942,22 @@ function executeRoiBusinessCaseBuilder(args) {
     // Calculate estimated company metrics if not provided
     const estimatedRevenue = annualRevenue || (employeeCount * industryBenchmark.revenue_per_employee * sizeMultiplier);
     const estimatedEmployees = employeeCount || Math.round(annualRevenue / (industryBenchmark.revenue_per_employee * sizeMultiplier));
+    // Display helpers (output text only; no calculation below changes). The user's own inputs are shown
+    // as given; every figure built from this tool's example assumptions carries the EXAMPLE label.
+    const fmt = (n) => n.toLocaleString('en-US');
+    const noSizeData = !annualRevenue && !employeeCount;
+    const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
+    const revenueCell = annualRevenue
+        ? `$${fmt(annualRevenue)}`
+        : employeeCount
+            ? `$${fmt(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
+            : NOT_SUPPLIED;
+    const employeesCell = employeeCount
+        ? fmt(employeeCount)
+        : annualRevenue
+            ? `${fmt(estimatedEmployees)}, estimated from your annual revenue ${EXAMPLE}`
+            : NOT_SUPPLIED;
+    const revenueValueCell = (n) => (noSizeData ? NOT_COMPUTED : `**$${fmt(n)}** ${EXAMPLE}`);
     // Generate ROI calculations based on value driver
     let valueCalculations = '';
     let totalValue = 0;
@@ -1941,17 +1970,13 @@ function executeRoiBusinessCaseBuilder(args) {
 ### Revenue Impact
 
 **Calculation Methodology:**
-- Estimated Annual Revenue: $${estimatedRevenue.toLocaleString()}
-- Conservative Impact: 2% (industry benchmark: 1-5%)
-- Annual Revenue Impact: **$${revenueImpact.toLocaleString()}**
-
-**Sources:**
-- Forrester TEI studies show 1-5% revenue impact for sales enablement tools
-- McKinsey research on digital transformation ROI
+- Estimated Annual Revenue: ${revenueCell}
+- Assumed impact: 2% (example range: 1-5%) ${EXAMPLE}
+- Annual Revenue Impact: ${revenueValueCell(revenueImpact)}
 
 **Validation Questions:**
 - "What's your current win rate?" (Baseline for improvement)
-- "What would a 10% improvement in win rate mean in revenue?"
+- "What would a 10% improvement in win rate mean in revenue?" ${EXAMPLE}
 - "How much revenue is lost to no-decision or competitor?"
 
 `;
@@ -1967,15 +1992,12 @@ function executeRoiBusinessCaseBuilder(args) {
 ### Cost Reduction
 
 **Calculation Methodology:**
+${EXAMPLES}
 - Hours saved per employee per week: ${hoursSavedPerEmployee} hours
 - Employees impacted: ${impactedEmployees.toFixed(0)}
 - Hourly cost of labor: $${industryBenchmark.cost_of_manual_work_per_hour}
-- Weekly savings: $${weeklySavings.toLocaleString()}
-- Annual Cost Savings: **$${annualCostSavings.toLocaleString()}**
-
-**Sources:**
-- Bureau of Labor Statistics average compensation data
-- Industry productivity benchmarks
+- Weekly savings: $${fmt(weeklySavings)}
+- Annual Cost Savings: **$${fmt(annualCostSavings)}**
 
 **Validation Questions:**
 - "How many hours per week do your team spend on [manual task]?"
@@ -1992,17 +2014,13 @@ function executeRoiBusinessCaseBuilder(args) {
 ### Productivity Gains
 
 **Calculation Methodology:**
-- Revenue baseline: $${estimatedRevenue.toLocaleString()}
-- Productivity improvement: 1% (conservative estimate)
-- Annual Productivity Value: **$${productivityGain.toLocaleString()}**
-
-**Sources:**
-- Harvard Business Review on productivity ROI
-- Gartner research on technology productivity gains
+- Revenue baseline: ${revenueCell}
+- Productivity improvement: 1% (assumed) ${EXAMPLE}
+- Annual Productivity Value: ${revenueValueCell(productivityGain)}
 
 **Validation Questions:**
 - "How much time does your team spend on low-value tasks?"
-- "What could your team achieve with 10% more time?"
+- "What could your team achieve with 10% more time?" ${EXAMPLE}
 - "Where are the biggest time sinks today?"
 
 `;
@@ -2015,13 +2033,9 @@ function executeRoiBusinessCaseBuilder(args) {
 ### Risk Mitigation
 
 **Calculation Methodology:**
-- Revenue at risk: $${estimatedRevenue.toLocaleString()}
-- Risk reduction factor: 0.5%
-- Annual Risk Mitigation Value: **$${riskReduction.toLocaleString()}**
-
-**Sources:**
-- Insurance industry risk calculations
-- Compliance cost benchmarks
+- Revenue baseline: ${revenueCell}
+- Risk reduction factor: 0.5% ${EXAMPLE}
+- Annual Risk Mitigation Value: ${revenueValueCell(riskReduction)}
 
 **Validation Questions:**
 - "What's the cost of a compliance incident?"
@@ -2039,19 +2053,38 @@ function executeRoiBusinessCaseBuilder(args) {
     if (knownMetrics) {
         confidenceLevel = 'High';
     }
+    // Display text (output only; every figure above is unchanged)
+    const nc = 'not computed';
+    const priceSupplied = !!solutionPrice;
+    const valueComputed = totalValue > 0;
+    const sizeText = companySize.replace(/_/g, ' ');
+    const benchmarkText = !args.industry
+        ? 'Technology (no industry supplied)'
+        : benchmarks[industry]
+            ? industry
+            : `Technology (your industry "${industry}" matched none of the built-in sets: ${Object.keys(benchmarks).join(', ')})`;
+    const confidenceText = knownMetrics
+        ? `${confidenceLevel}: set because you supplied metrics, but the calculation does not use them; the value figures rest on example assumptions`
+        : `${confidenceLevel}: the value figures rest on example assumptions, not on the customer's data`;
+    const timelineText = `${implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`}`;
+    const ignoredInputs = [currentProcess ? 'current process' : '', knownMetrics ? 'known metrics' : ''].filter(Boolean).join(' and ');
+    // Without a price, the investment is a share of the value, so it cannot be shown when no value is computed
+    const invCell = (n) => (priceSupplied || valueComputed ? `$${fmt(n)}` : nc);
     return `# 💰 ROI Business Case: ${customerName}
+
+*Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
 
 ## Executive Summary
 
 | Metric | Value |
 |--------|-------|
-| **Customer** | ${customerName} |
-| **Industry** | ${industry} |
-| **Company Size** | ${companySize.replace(/_/g, ' ')} |
-| **Est. Annual Revenue** | $${estimatedRevenue.toLocaleString()} |
-| **Est. Employees** | ${estimatedEmployees.toLocaleString()} |
+| **Customer** | ${args.customer_name || NOT_SUPPLIED} |
+| **Industry** | ${args.industry || NOT_SUPPLIED} |
+| **Company Size** | ${args.company_size ? sizeText : `${NOT_SUPPLIED} (treated as ${sizeText})`} |
+| **Est. Annual Revenue** | ${revenueCell} |
+| **Est. Employees** | ${employeesCell} |
 | **Solution** | ${yourSolution} |
-| **Confidence Level** | ${confidenceLevel} |
+| **Confidence Level** | ${confidenceText} |
 
 ---
 
@@ -2059,16 +2092,16 @@ function executeRoiBusinessCaseBuilder(args) {
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost** | $${investment.toLocaleString()} | $${investment.toLocaleString()} | $${investment.toLocaleString()} |
-| **Implementation** | $${Math.round(investment * 0.15).toLocaleString()} | $0 | $0 |
-| **Total Investment** | $${Math.round(investment * 1.15).toLocaleString()} | $${investment.toLocaleString()} | $${investment.toLocaleString()} |
+| **Solution Cost**${priceSupplied ? '' : ` (${NOT_SUPPLIED}) ${EXAMPLE}`} | ${invCell(investment)} | ${invCell(investment)} | ${invCell(investment)} |
+| **Implementation** ${EXAMPLE} | ${invCell(Math.round(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
+| **Total Investment** | ${invCell(Math.round(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
 
 ---
 
 ## Value Breakdown
 
 ${valueCalculations}
-
+${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you supplied (listed under Assumptions). Replace the example figures with that data.*\n` : ''}
 ---
 
 ## ROI Analysis
@@ -2076,51 +2109,50 @@ ${valueCalculations}
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$${totalValue.toLocaleString()}** |
-| **Annual Investment** | $${investment.toLocaleString()} |
-| **Net Annual Benefit** | $${(totalValue - investment).toLocaleString()} |
+| **Total Quantified Value** | ${valueComputed ? `**$${fmt(totalValue)}** ${EXAMPLE}` : nc} |
+| **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
+| **Net Annual Benefit** | ${valueComputed ? `$${fmt(totalValue - investment)} ${EXAMPLE}` : nc} |
 
 ### Key Metrics
 
-| Metric | Value | Benchmark |
-|--------|-------|-----------|
-| **ROI** | ${roi.toFixed(0)}% | >100% considered strong |
-| **Payback Period** | ${paybackMonths.toFixed(1)} months | <12 months considered fast |
-| **3-Year Net Value** | $${threeYearNet.toLocaleString()} | - |
-| **Value/Cost Ratio** | ${(totalValue / investment).toFixed(1)}x | >3x considered excellent |
+${EXAMPLES}
+| Metric | Value | Example threshold |
+|--------|-------|-------------------|
+| **ROI** | ${valueComputed ? `${roi.toFixed(0)}%` : nc} | >100% considered strong |
+| **Payback Period** | ${valueComputed ? `${paybackMonths.toFixed(1)} months` : nc} | <12 months considered fast |
+| **3-Year Net Value** | ${valueComputed ? `$${fmt(threeYearNet)}` : nc} | - |
+| **Value/Cost Ratio** | ${valueComputed ? `${(totalValue / investment).toFixed(1)}x` : nc} | >3x considered excellent |
 
 ---
 
-## Assumptions & Sources
+## Assumptions
 
 ### Key Assumptions
-1. Implementation timeline: ${implementationTimeline}
-2. Full value realization: 6-12 months post-implementation
-3. Industry benchmarks applied for ${industry} sector
-4. Company size multiplier: ${sizeMultiplier}x (${companySize})
+1. Implementation timeline: ${timelineText}
+2. Full value realization: 6-12 months post-implementation ${EXAMPLE}
+3. Benchmark set used for hourly labor cost and revenue per employee: ${benchmarkText}
+4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), used only to estimate revenue or employees that were not supplied ${EXAMPLE}
 
 ${currentProcess ? `### Current State\n${currentProcess}\n` : ''}
 
 ${knownMetrics ? `### Customer-Provided Metrics\n${knownMetrics}\n` : '### Validation Needed\n- Customer metrics not yet provided\n- Schedule discovery session to validate assumptions\n- Adjust calculations based on actual data'}
 
-### Sources
-- Industry benchmark studies (Forrester, Gartner, McKinsey)
-- Bureau of Labor Statistics
-- Customer-provided data (where available)
+### About These Figures
+The assumptions above are examples built into this tool, not findings from published research or from the customer's data. Replace them with the customer's own figures before you share this business case.
 
 ---
 
 ## Sensitivity Analysis
 
+${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
-- Annual Value: $${Math.round(totalValue * 0.5).toLocaleString()}
-- ROI: ${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%
-- Payback: ${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months
-
+- Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 0.5))}` : nc}
+- ROI: ${valueComputed ? `${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%` : nc}
+- Payback: ${valueComputed ? `${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months` : nc}
 ### Aggressive Scenario (150% of projected value)
-- Annual Value: $${Math.round(totalValue * 1.5).toLocaleString()}
-- ROI: ${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%
-- Payback: ${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months
+- Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 1.5))}` : nc}
+- ROI: ${valueComputed ? `${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%` : nc}
+- Payback: ${valueComputed ? `${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months` : nc}
 
 ---
 
@@ -2131,7 +2163,7 @@ ${knownMetrics ? `### Customer-Provided Metrics\n${knownMetrics}\n` : '### Valid
 | Delayed implementation | Lower Year 1 ROI | Phase approach, quick wins first |
 | User adoption issues | Reduced value capture | Training, change management |
 | Integration complexity | Higher implementation cost | Technical validation upfront |
-| Market changes | Assumption invalidity | Conservative estimates used |
+| Market changes | Assumption invalidity | Replace the example assumptions with customer data |
 
 ---
 
@@ -2155,19 +2187,22 @@ ${currentProcess ? currentProcess : 'Current process creates inefficiencies, cos
 ${yourSolution} addresses these challenges through [key capabilities].
 
 **The Value:**
-- **$${totalValue.toLocaleString()}** in annual value
+${valueComputed ? `${EXAMPLES}
+- **$${fmt(totalValue)}** in annual value
 - **${roi.toFixed(0)}%** ROI
-- **${paybackMonths.toFixed(1)} months** payback
+- **${paybackMonths.toFixed(1)} months** payback` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
-- Competitive pressure increasing
-- Cost of delay: $${Math.round(totalValue / 12).toLocaleString()}/month
-- Implementation timeline: ${implementationTimeline}
+- [Why this customer should act now, for example competitive pressure, if it applies]
+- Cost of delay: ${valueComputed ? `$${fmt(Math.round(totalValue / 12))}/month ${EXAMPLE}` : nc}
+- Implementation timeline: ${timelineText}
 
 ---
 
-*Business case generated with ${confidenceLevel.toLowerCase()} confidence*
-*Recommend validation with customer-provided metrics*`;
+*Confidence: ${confidenceLevel.toLowerCase()}. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
+*Recommend validation with customer-provided metrics*
+
+${SUGGESTIONS_FOOTER}`;
 }
 // Tool 5: Mutual Action Plan Generator
 function executeMutualActionPlanGenerator(args) {
@@ -2184,6 +2219,9 @@ function executeMutualActionPlanGenerator(args) {
     const yourSolution = args.your_solution || 'the solution';
     // Calculate dates working backward from close date
     const closeDate = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+    if (isNaN(closeDate.getTime())) {
+        return `target_close_date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
+    }
     const today = new Date();
     const daysUntilClose = Math.round((closeDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
     // Calculate milestone dates
@@ -2234,10 +2272,10 @@ function executeMutualActionPlanGenerator(args) {
 | Item | Detail |
 |------|--------|
 | **Opportunity** | ${dealName} |
-| **Target Close Date** | ${formatDate(closeDate)} |
-| **Days Until Close** | ${daysUntilClose} days |
+| **Target Close Date** | ${formatDate(closeDate)}${targetCloseDate ? '' : ` (${NOT_SUPPLIED}: example date)`} |
+| **Days Until Close** | ${daysUntilClose} days${targetCloseDate ? '' : ` ${EXAMPLE}`} |
 | **Current Stage** | ${currentStage.replace(/_/g, ' ')} |
-| **Solution** | ${yourSolution} |
+| **Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ---
 
@@ -2429,9 +2467,9 @@ function executeWinLossAnalyzer(args) {
 | Attribute | Value |
 |-----------|-------|
 | **Outcome** | ${dealOutcome ? dealOutcome.charAt(0).toUpperCase() + dealOutcome.slice(1) : 'Not specified'} |
-| **Deal Value** | ${dealValue ? '$' + dealValue.toLocaleString() : 'Not specified'} |
+| **Deal Value** | ${dealValue ? '$' + dealValue.toLocaleString('en-US') : 'Not specified'} |
 | **Sales Cycle** | ${salesCycleDays ? salesCycleDays + ' days' : 'Not specified'} |
-| **Solution** | ${yourSolution} |
+| **Solution** | ${args.your_solution || 'Not specified'} |
 ${competitorWon ? `| **Competitor Won** | ${competitorWon} |` : ''}
 ${lossReason ? `| **Stated Reason** | ${lossReason} |` : ''}
 
@@ -2465,7 +2503,7 @@ ${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
 | Factor | What Worked | How to Replicate |
 |--------|-------------|------------------|
 | **Discovery** | Deep understanding of needs | Standardize discovery framework |
-| **Multi-threading** | Multiple stakeholder relationships | Mandate 3+ contacts per deal |
+| **Multi-threading** | Multiple stakeholder relationships | Mandate 3+ contacts per deal ${EXAMPLE} |
 | **Value Selling** | Quantified business impact | ROI calculator for all deals |
 | **Champion** | Strong internal advocate | Champion testing questions |
 
@@ -2627,7 +2665,9 @@ ${stakeholdersInvolved}
 
 ---
 
-*For best results, combine this analysis with direct buyer feedback*`;
+*For best results, combine this analysis with direct buyer feedback*
+
+${SUGGESTIONS_FOOTER}`;
         return analysis;
     }
     else if (analysisType === 'deal_portfolio' || analysisType === 'loss_pattern') {
@@ -2643,6 +2683,7 @@ To analyze your deal portfolio, please provide:
 ${multipleDeals ? `### Provided Data
 ${multipleDeals}` : `
 **Option 1: Structured Data**
+${EXAMPLES}
 \`\`\`
 Deal Name, Outcome, Value, Days, Loss Reason, Competitor
 Deal 1, won, 50000, 45, -, -
@@ -2651,7 +2692,7 @@ Deal 3, no_decision, 30000, 90, priorities, -
 \`\`\`
 
 **Option 2: Narrative Summary**
-Describe your last 10-20 deals including:
+Describe your last 10-20 deals ${EXAMPLE}, including:
 - Win/loss/no-decision split
 - Common loss reasons
 - Average deal size and cycle time
@@ -2662,7 +2703,7 @@ Describe your last 10-20 deals including:
 ## Analysis Framework
 
 ### 1. Win Rate Analysis
-- Overall win rate vs benchmark (25-35% typical)
+- Overall win rate vs a benchmark, for example 25-35% ${EXAMPLE}
 - Win rate by deal size
 - Win rate by competitor
 - Win rate by segment
@@ -2674,7 +2715,7 @@ Describe your last 10-20 deals including:
 - Characteristics of lost deals
 
 ### 3. No-Decision Analysis
-- % going to no-decision (benchmark: 25-40%)
+- % going to no-decision vs a benchmark, for example 25-40% ${EXAMPLE}
 - How long before going dark
 - Common characteristics
 - Recoverability
@@ -2690,6 +2731,7 @@ Describe your last 10-20 deals including:
 ## Common Patterns to Investigate
 
 ### Red Flags in Your Pipeline
+${EXAMPLES}
 | Pattern | Warning Sign | Action |
 |---------|--------------|--------|
 | High no-decision rate | >40% no-decision | Improve qualification |
@@ -2707,7 +2749,9 @@ Describe your last 10-20 deals including:
 
 ---
 
-*Provide deal data for specific pattern analysis*`;
+*Provide deal data for specific pattern analysis*
+
+${SUGGESTIONS_FOOTER}`;
     }
     else {
         // Competitor analysis
@@ -2796,6 +2840,25 @@ function executePricingNegotiationGuide(args) {
     const approvalAuthority = args.approval_authority || '';
     const discountedValue = dealValue - (dealValue * discountRequested / 100);
     const revenueAtRisk = dealValue * discountRequested / 100;
+    // Display text (output only; the figures above are unchanged)
+    const dealValueText = hasValue(args.deal_value) ? `$${dealValue.toLocaleString('en-US')}` : NOT_SUPPLIED;
+    const bothPricingInputs = hasValue(args.deal_value) && hasValue(args.discount_requested);
+    const pricingNotComputed = 'not computed: needs deal value and discount';
+    const valueReframe = !valueDelivered
+        ? `
+"Before we discuss price, let's revisit the value we identified:
+- [Value point 1]
+- [Value point 2]
+- [Value point 3]
+
+At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's an X:1 return on investment."`
+        : dealValue
+            ? `
+You supplied this value: ${valueDelivered}. The example below does not use it: it assumes an example value instead. Replace these figures with your own.
+- If value is $${(dealValue * 3).toLocaleString('en-US')}, price is only ${Math.round(100 / 3)}% of first-year value ${EXAMPLE}
+- ROI of ${Math.round((dealValue * 3 - dealValue) / dealValue * 100)}% in year one ${EXAMPLE}`
+            : `
+You supplied this value: ${valueDelivered}. Add the deal value to compare the price with that value.`;
     const scenarioGuides = {
         discount_request: () => `# 💰 Pricing Negotiation Guide: Discount Request
 
@@ -2803,10 +2866,10 @@ function executePricingNegotiationGuide(args) {
 
 | Factor | Value |
 |--------|-------|
-| **Deal Value** | $${dealValue.toLocaleString()} |
-| **Discount Requested** | ${discountRequested}% |
-| **Revenue at Risk** | $${revenueAtRisk.toLocaleString()} |
-| **Post-Discount Value** | $${discountedValue.toLocaleString()} |
+| **Deal Value** | ${dealValueText} |
+| **Discount Requested** | ${hasValue(args.discount_requested) ? `${discountRequested}%` : NOT_SUPPLIED} |
+| **Revenue at Risk** | ${bothPricingInputs ? `$${revenueAtRisk.toLocaleString('en-US')}` : pricingNotComputed} |
+| **Post-Discount Value** | ${bothPricingInputs ? `$${discountedValue.toLocaleString('en-US')}` : pricingNotComputed} |
 | **Decision Timeline** | ${decisionTimeline || 'Not specified'} |
 | **Approval Authority** | ${approvalAuthority || 'Not specified'} |
 
@@ -2837,6 +2900,7 @@ ${buyerLeverage ? buyerLeverage : `
 ### Rule #1: Never Discount Without Getting Something
 
 **Acceptable Trades:**
+${EXAMPLES}
 | What They Want | What You Get |
 |----------------|--------------|
 | 10% discount | 3-year commitment (vs 1-year) |
@@ -2856,16 +2920,7 @@ ${buyerLeverage ? buyerLeverage : `
 ### Rule #3: Reframe Value, Not Price
 
 **Value Reframe:**
-${valueDelivered ? `
-Based on the value we've identified (${valueDelivered}), the investment represents:
-- If value is $${dealValue * 3}, price is only ${Math.round(100 / 3)}% of first-year value
-- ROI of ${Math.round((dealValue * 3 - dealValue) / dealValue * 100)}% in year one` : `
-"Before we discuss price, let's revisit the value we identified:
-- [Value point 1]
-- [Value point 2]
-- [Value point 3]
-
-At $${dealValue.toLocaleString()}, that's an X:1 return on investment."`}
+${valueReframe}
 
 ---
 
@@ -2880,7 +2935,7 @@ At $${dealValue.toLocaleString()}, that's an X:1 return on investment."`}
 - "We've already priced this competitively. What specifically is the concern?"
 - "What would need to happen for our current pricing to work?"
 
-### "Your competitor is 20% cheaper"
+### "Your competitor is 20% cheaper" ${EXAMPLE}
 
 **Don't Say:** "We can match that."
 
@@ -2950,7 +3005,7 @@ If discount approval is needed:
 
 "Let's build a business case that makes the ROI so clear, budget gets reallocated. What would leadership need to see?"
 
-${valueDelivered ? `\nBased on value of ${valueDelivered}, the ROI case is strong.` : ''}
+${valueDelivered ? `\nBuild the case on the value you supplied: ${valueDelivered}.` : ''}
 
 ### Strategy 3: Restructure the Deal
 
@@ -2973,7 +3028,7 @@ If budget genuinely isn't available:
 1. **Lock in pricing** - "We can hold this pricing until [date]"
 2. **Secure commitment** - "If we do this, will you move forward?"
 3. **Stay engaged** - Monthly check-in until budget cycle
-4. **Create urgency** - "Pricing is increasing next quarter"`,
+4. **Create urgency** - "Pricing is increasing next quarter" (say this only if it is true)`,
         competitor_pricing: () => `# 💰 Competitor Pricing Response
 
 ## Situation: Competitor has lower price
@@ -3005,11 +3060,11 @@ ${competitorPrice ? `**Competitor Price:** ${competitorPrice}` : ''}
 
 ### Option 1: Win on Value, Not Price
 
-"We could probably be cheaper if we cut [capabilities]. But we've found that customers who prioritize price end up paying more in the long run through [hidden costs/limitations]. Is that a tradeoff you want to make?"
+"We could probably be cheaper if we cut [capabilities]. But we've found that customers who prioritize price end up paying more in the long run through [hidden costs/limitations]. Is that a tradeoff you want to make?" (Example claim: keep it only if your own customer data supports it)
 
 ### Option 2: Total Cost of Ownership
 
-"Let me show you a total cost comparison over 3 years. When you factor in [implementation, support, lost productivity from limitations], here's what the math looks like..."
+"Let me show you a total cost comparison over 3 years. When you factor in [implementation, support, lost productivity from limitations], here's what the math looks like..." ${EXAMPLE}
 
 ### Option 3: Risk Framing
 
@@ -3022,7 +3077,7 @@ ${competitorPrice ? `**Competitor Price:** ${competitorPrice}` : ''}
 Suggest the buyer ask the competitor:
 1. "What's NOT included in that price?"
 2. "What does your highest-tier customer pay?"
-3. "Can I talk to a customer who's been with you 3+ years about total cost?"
+3. "Can I talk to a customer who's been with you 3+ years about total cost?" ${EXAMPLE}
 4. "What happens when we need to scale?"`,
         procurement_pressure: () => `# 💰 Procurement Negotiation Guide
 
@@ -3041,7 +3096,7 @@ Procurement's job is to reduce costs. Don't take it personally, but don't cave u
 - Standardize terms
 
 ### Their Tactics:
-- "We need 20% discount on everything"
+- "We need 20% discount on everything" ${EXAMPLE}
 - "We only work with vendors who [term]"
 - "Legal won't approve those terms"
 - "We're looking at other vendors"
@@ -3063,9 +3118,10 @@ Before procurement engagement:
 
 ### Tactic 3: Trade, Don't Cave
 
-**When they ask for 20% discount:**
+**When they ask for 20% discount:** ${EXAMPLE}
 "We're happy to discuss pricing. Here's what we can do at different commitment levels..."
 
+${EXAMPLES}
 | Commitment | Discount | Benefit to Them |
 |------------|----------|-----------------|
 | 1-year, net 30 | 0% | Standard terms |
@@ -3177,9 +3233,10 @@ Multi-year deals benefit both parties. Structure them to reflect that.
 
 ---
 
-## Standard Multi-Year Discount Framework
+## Example Multi-Year Discount Framework
 
-| Term | Typical Discount | Your Discount |
+${EXAMPLES}
+| Term | Example Discount | Your Discount |
 |------|------------------|---------------|
 | 1 year | 0% | - |
 | 2 years | 5-10% | - |
@@ -3187,7 +3244,7 @@ Multi-year deals benefit both parties. Structure them to reflect that.
 
 **Important:** Price lock vs. actual discount
 - "No price increase" is valuable without being a discount
-- "10% off current price, locked for 3 years" is aggressive
+- "10% off current price, locked for 3 years" is aggressive ${EXAMPLE}
 
 ---
 
@@ -3287,7 +3344,7 @@ Enterprise deals often have multiple vendors. Position on value, not price:
 // Tool 11: Champion Enablement Kit
 function executeChampionEnablementKit(args) {
     const assetType = args.asset_type || 'executive_brief';
-    const championName = args.champion_name || 'Champion';
+    const championName = args.champion_name || '[Champion name]';
     const championRole = args.champion_role || '';
     const targetStakeholder = args.target_stakeholder || 'leadership';
     const yourSolution = args.your_solution || 'our solution';
@@ -3339,7 +3396,7 @@ ${urgencyDrivers ? `**Why Now:** ${urgencyDrivers}` : ''}
 
 ---
 
-*[${championName} to present to ${targetStakeholder}]*`,
+*[${args.champion_name || 'Champion'} to present to ${targetStakeholder}]*`,
         internal_business_case: () => `# Internal Business Case
 
 ## ${yourSolution} Investment Proposal
@@ -3410,7 +3467,7 @@ ${budgetContext ? budgetContext : `
 ### ROI Analysis
 - **ROI:** XXX%
 - **Payback:** X months
-- **3-Year Net Value:** $X,XXX,XXX
+- **3-Year Net Value:** $X,XXX,XXX ${EXAMPLE}
 
 ---
 
@@ -3453,7 +3510,9 @@ ${urgencyDrivers ? `\n**Timing:** ${urgencyDrivers}` : ''}
 ---
 
 *Prepared by ${championName}*
-*Date: ${new Date().toISOString().split('T')[0]}*`,
+*Date: ${new Date().toISOString().split('T')[0]}*
+
+${SUGGESTIONS_FOOTER}`,
         objection_responses: () => `# Objection Response Guide
 
 ## For: ${championName}
@@ -3617,7 +3676,7 @@ ${knownObjections ? knownObjections.split(',').map(o => `- "${o.trim()}" → [Yo
 
 ---
 
-${championWins ? `## Personal Note\n\nRemember: ${championWins}` : ''}`,
+${championWins ? `## Personal Note\n\nRemember: ${championWins}\n\n` : ''}${SUGGESTIONS_FOOTER}`,
         email_to_stakeholder: () => `# Email to ${targetStakeholder}
 
 ## From: ${championName}
@@ -3652,7 +3711,7 @@ ${urgencyDrivers ? `**Why Now:**\n${urgencyDrivers}\n` : ''}
 **My Recommendation:**
 Proceed with ${yourSolution}.
 
-Would you be available for a 15-minute discussion this week? I can walk you through the details and answer any questions.
+Would you be available for a 15-minute discussion this week? I can walk you through the details and answer any questions. ${EXAMPLE}
 
 Thanks,
 ${championName}
@@ -3663,7 +3722,7 @@ ${championName}
 
 Hi [Name],
 
-Quick question: Would you be open to a 15-minute discussion about [solving X problem]?
+Quick question: Would you be open to a 15-minute discussion about [solving X problem]? ${EXAMPLE}
 
 I've found a solution that could save us [$ or time] and I'd like your input before we proceed.
 
@@ -3711,7 +3770,7 @@ ${keyValuePoints ? keyValuePoints.split(',').map(p => `| ${p.trim()} | $XX,XXX |
 |--------|-------|
 | **ROI** | XXX% |
 | **Payback** | X months |
-| **3-Year NPV** | $X.XM |
+| **3-Year NPV** | $X.XM ${EXAMPLE} |
 
 ---
 
@@ -3746,6 +3805,8 @@ ${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated mul
 ---
 
 ## Comparison Matrix
+
+*Example ratings (not from your input): replace every rating with the results of your own evaluation.*
 
 | Criteria | ${yourSolution} | Alternative A | Alternative B |
 |----------|-----------------|---------------|---------------|
@@ -3789,7 +3850,9 @@ Based on comprehensive evaluation, ${yourSolution} is the best choice for [our o
 
 This assessment evaluates risks associated with implementing ${yourSolution} and our mitigation strategies.
 
-**Overall Risk Level:** LOW to MEDIUM
+*Example assessment (not from your input): replace every rating and mitigation below with your own findings.*
+
+**Overall Risk Level:** [your assessment, for example LOW to MEDIUM]
 
 ---
 
@@ -3961,7 +4024,7 @@ ${competitorWeaknesses ? competitorWeaknesses.split(',').map(w => `- "How do you
 
 ### How to Position Reference Calls
 
-"References are important. Make sure to ask about [area where competitor struggles]. I've heard mixed feedback about their [weakness area]."`,
+"References are important. Make sure to ask about [area where competitor struggles]. I've heard mixed feedback about their [weakness area]." (say the last sentence only if you have heard such feedback)`,
         technical_requirements: `## Technical Requirements (Traps)
 
 ### RFP/Requirements Document
@@ -4051,7 +4114,7 @@ Ask ${competitor}:
 - **Competitor:** ${competitor}
 - **Your Solution:** ${yourSolution}
 - **Evaluation Stage:** ${evaluationStage}
-- **Buyer Persona:** ${buyerPersona}
+- **Buyer Persona:** ${args.buyer_persona || NOT_SUPPLIED}
 ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 
 ---
@@ -4150,7 +4213,7 @@ ${evaluationStage === 'finalist' ? `
 // Tool 7: Proposal Section Writer
 function executeProposalSectionWriter(args) {
     const sectionType = args.section_type || 'executive_summary';
-    const customerName = args.customer_name || 'Customer';
+    const customerName = args.customer_name || '[Customer name]';
     const customerIndustry = args.customer_industry || 'Technology';
     const primaryAudience = args.primary_audience || 'vp_level';
     const customerChallenges = args.customer_challenges || '';
@@ -4200,7 +4263,7 @@ ${keyDifferentiators ? keyDifferentiators.split(',').map(d => `- **${d.trim()}**
 
 ### Expected Outcomes
 
-${successMetrics ? successMetrics : `Within 12 months of implementation, ${customerName} can expect:\n\n- Improved operational efficiency\n- Reduced costs and complexity\n- Enhanced visibility and control\n- Foundation for future growth`}
+${successMetrics ? successMetrics : `Within 12 months of implementation ${EXAMPLE}, ${customerName} can expect:\n\n- Improved operational efficiency\n- Reduced costs and complexity\n- Enhanced visibility and control\n- Foundation for future growth`}
 
 ### Investment Overview
 
@@ -4208,7 +4271,7 @@ ${pricing ? `Investment: ${pricing}` : 'Detailed pricing is outlined in the Inve
 
 ### Why ${yourSolution}
 
-${keyDifferentiators ? `We are uniquely positioned to deliver this value because:\n\n${keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n')}` : `We bring deep expertise in your industry, a proven track record of success, and a commitment to your long-term success.`}
+${keyDifferentiators ? `We are uniquely positioned to deliver this value because:\n\n${keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n')}` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
 
 ### Next Steps
 
@@ -4255,7 +4318,7 @@ ${customerName} envisions a future where:
 
 ${yourSolution} provides a comprehensive platform that addresses each of the challenges we've discussed:
 
-#### Core Capabilities
+#### Core Capabilities${keyDifferentiators ? '' : ' (example capabilities: replace them with your own)'}
 
 ${keyDifferentiators ? keyDifferentiators.split(',').map((d, i) => `**${i + 1}. ${d.trim()}**\nDescription of how this capability solves specific customer challenges.\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
 
@@ -4281,17 +4344,17 @@ ${keyDifferentiators ? keyDifferentiators.split(',').map((d, i) => `**${i + 1}. 
 
 | Your Challenge | Our Capability | Business Value |
 |----------------|----------------|----------------|
-| ${customerChallenges?.split(',')[0]?.trim() || 'Challenge 1'} | Feature A | Outcome 1 |
-| ${customerChallenges?.split(',')[1]?.trim() || 'Challenge 2'} | Feature B | Outcome 2 |
-| ${customerChallenges?.split(',')[2]?.trim() || 'Challenge 3'} | Feature C | Outcome 3 |
+| ${customerChallenges?.split(',')[0]?.trim() || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
+| ${customerChallenges?.split(',')[1]?.trim() || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
+| ${customerChallenges?.split(',')[2]?.trim() || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
 
 ### Security & Compliance
 
-${yourSolution} is built with enterprise-grade security:
-- SOC 2 Type II certified
-- GDPR compliant
-- Data encryption at rest and in transit
-- Role-based access controls
+[List only the security facts that are true for ${yourSolution}, for example:]
+- [SOC 2 Type II certified, if you hold this report]
+- [GDPR compliant, if it applies to you]
+- [Data encryption at rest and in transit, if true]
+- [Role-based access controls, if true]
 
 ---
 
@@ -4302,10 +4365,11 @@ ${yourSolution} is built with enterprise-grade security:
 
 ${implementationApproach ? implementationApproach : `### Our Methodology
 
-We follow a proven implementation methodology that ensures successful deployment while minimizing disruption to your operations.`}
+[Describe your implementation methodology and how it limits disruption to the customer's operations.]`}
 
 ### Timeline Overview
 
+${EXAMPLES}
 | Phase | Duration | Activities | Outcomes |
 |-------|----------|------------|----------|
 | **Phase 1: Discovery** | 2 weeks | Requirements, design | Solution design |
@@ -4315,6 +4379,8 @@ We follow a proven implementation methodology that ensures successful deployment
 | **Phase 5: Optimize** | Ongoing | Monitor, improve | Continuous value |
 
 ### Phase Details
+
+The week ranges below follow the example timeline above: replace them with your own.
 
 #### Phase 1: Discovery & Design (Weeks 1-2)
 **Activities:**
@@ -4366,7 +4432,7 @@ We follow a proven implementation methodology that ensures successful deployment
 
 ### Success Criteria
 
-${successMetrics ? successMetrics : `- System fully operational within 12 weeks\n- 80% user adoption within 30 days of launch\n- Key integrations functional\n- Performance benchmarks met`}
+${successMetrics ? successMetrics : `- System fully operational within 12 weeks ${EXAMPLE}\n- 80% user adoption within 30 days of launch ${EXAMPLE}\n- Key integrations functional\n- Performance benchmarks met`}
 
 ### Risk Mitigation
 
@@ -4406,6 +4472,8 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 
 ### Competitive Comparison
 
+*Example ratings (not from your input): replace every rating with your own comparison.*
+
 | Factor | ${yourSolution} | Alternative A | Alternative B |
 |--------|-----------------|---------------|---------------|
 | Total Cost | $$ | $$$ | $ |
@@ -4416,6 +4484,7 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 
 ### Investment Protection
 
+*Include only the protections you actually offer:*
 - **Satisfaction Guarantee:** We stand behind our solution
 - **Flexible Terms:** Options for payment structure
 - **Price Lock:** Protection from future increases
@@ -4470,10 +4539,11 @@ We prepare for scenarios through:
 
 ### Commitments & Guarantees
 
-- **SLA:** 99.9% uptime guarantee
-- **Support:** 24/7 critical issue response
-- **Security:** Regular audits and updates
-- **Success:** Dedicated success manager
+*Include only the commitments you actually offer:*
+- **SLA:** 99.9% uptime guarantee ${EXAMPLE}
+- **Support:** [your support hours, for example 24/7 critical issue response]
+- **Security:** [your security practices, for example regular audits and updates]
+- **Success:** [your success model, for example a dedicated success manager]
 
 ---
 
@@ -4486,6 +4556,7 @@ ${successMetrics ? `### Agreed Success Metrics\n\n${successMetrics}` : '### Prop
 
 ### Key Performance Indicators
 
+${EXAMPLES}
 | KPI | Baseline | Target | Timeline |
 |-----|----------|--------|----------|
 | **Operational Efficiency** | Current state | +30% improvement | 6 months |
@@ -4500,17 +4571,17 @@ ${successMetrics ? `### Agreed Success Metrics\n\n${successMetrics}` : '### Prop
 - Establish measurement methodology
 - Set realistic targets
 
-#### Phase 2: Early Indicators (30-60 days)
+#### Phase 2: Early Indicators (30-60 days) ${EXAMPLE}
 - System usage and adoption
 - Initial process improvements
 - User satisfaction
 
-#### Phase 3: Business Outcomes (90-180 days)
+#### Phase 3: Business Outcomes (90-180 days) ${EXAMPLE}
 - Efficiency gains
 - Cost reductions
 - Quality improvements
 
-#### Phase 4: Strategic Impact (12+ months)
+#### Phase 4: Strategic Impact (12+ months) ${EXAMPLE}
 - Revenue impact
 - Competitive advantage
 - Scalability achieved
@@ -4537,7 +4608,7 @@ We are committed to helping ${customerName} achieve these outcomes. Our success 
 
 ### Who We Are
 
-${yourSolution} is a leading provider of [solution category], trusted by [X+] companies worldwide to [core value proposition].
+${yourSolution} is a provider of [solution category], trusted by [X+] companies to [core value proposition].
 
 ### Our Mission
 
@@ -4546,9 +4617,9 @@ To help organizations like ${customerName} achieve [mission statement].
 ### Why Companies Choose Us
 
 **Experience:** XX years helping companies solve these challenges
-**Expertise:** Deep knowledge of the ${customerIndustry} industry
-**Results:** Proven track record of delivering value
-**Support:** Commitment to customer success
+**Expertise:** [Your experience in ${args.customer_industry ? `the ${customerIndustry} industry` : "the customer's industry"}]
+**Results:** [Your results, with evidence]
+**Support:** [Your support commitment]
 
 ### By the Numbers
 
@@ -4562,7 +4633,7 @@ To help organizations like ${customerName} achieve [mission statement].
 
 ### Our Differentiators
 
-${keyDifferentiators ? keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n') : `- Industry-leading technology\n- Deep domain expertise\n- Proven methodology\n- World-class support`}
+${keyDifferentiators ? keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
 
 ### Industry Recognition
 
@@ -4576,7 +4647,7 @@ Your ${customerName} team includes:
 - **Account Executive:** Your business advocate
 - **Solutions Engineer:** Technical expertise
 - **Customer Success Manager:** Ongoing partnership
-- **Support Team:** Always available
+- **Support Team:** [your support availability]
 
 ---
 
@@ -4585,7 +4656,9 @@ Your ${customerName} team includes:
 
 ## Companies Like ${customerName} Achieving Results
 
-### Case Study 1: [Similar Company in ${customerIndustry}]
+*Example case studies (not real customers): replace each one with a real customer story you have permission to share.*
+
+### Example 1: [Similar Company in ${args.customer_industry ? customerIndustry : "the customer's industry"}]
 
 **Challenge:**
 Faced similar challenges to ${customerName} including ${customerChallenges?.split(',')[0] || 'operational inefficiency'}.
@@ -4594,6 +4667,7 @@ Faced similar challenges to ${customerName} including ${customerChallenges?.spli
 Implemented ${yourSolution} to address core challenges.
 
 **Results:**
+${EXAMPLES}
 - 40% improvement in efficiency
 - $X million in cost savings
 - 95% user adoption
@@ -4604,7 +4678,7 @@ Implemented ${yourSolution} to address core challenges.
 
 ---
 
-### Case Study 2: [Another Similar Company]
+### Example 2: [Another Similar Company]
 
 **Challenge:**
 Needed to address ${customerChallenges?.split(',')[1] || 'scaling challenges'}.
@@ -4613,6 +4687,7 @@ Needed to address ${customerChallenges?.split(',')[1] || 'scaling challenges'}.
 Deployed ${yourSolution} across their organization.
 
 **Results:**
+${EXAMPLES}
 - 50% reduction in processing time
 - Improved visibility and control
 - Enabled growth without adding headcount
@@ -4622,7 +4697,7 @@ Deployed ${yourSolution} across their organization.
 
 ---
 
-### Case Study 3: [Third Example]
+### Example 3: [Third Similar Company]
 
 **Challenge:**
 ${customerChallenges?.split(',')[2] || 'Integration and visibility challenges'}.
@@ -4639,7 +4714,7 @@ Full implementation of ${yourSolution} with integrations.
 
 ### References Available
 
-We're happy to connect ${customerName} with customers who have faced similar challenges and achieved success with ${yourSolution}.`,
+[Only if you have references who agreed to talk:] We're happy to connect ${customerName} with customers who have faced similar challenges and achieved success with ${yourSolution}.`,
         next_steps: () => `# Recommended Next Steps
 
 ## Path Forward for ${customerName}
@@ -4684,7 +4759,9 @@ We understand timing is important. Let's discuss what would make this the right 
 
 ---
 
-*We're excited about the opportunity to partner with ${customerName} and look forward to helping you achieve your goals.*`
+*We're excited about the opportunity to partner with ${customerName} and look forward to helping you achieve your goals.*
+
+${SUGGESTIONS_FOOTER}`
     };
     // Generate the requested section
     const generator = sections[sectionType];
@@ -4706,6 +4783,9 @@ function executeEmailSequenceGenerator(args) {
     const numEmails = args.num_emails || 5;
     const tone = args.tone || 'professional';
     const senderContext = args.sender_context || '';
+    // Display text (output only): every template has a fixed number of emails, whatever num_emails says
+    const emailsText = `${numEmails}${hasValue(args.num_emails) ? '' : ' (default)'}`;
+    const fixedLengthNote = '*The template below has a fixed number of emails: add or remove emails to match the number you need.*';
     const toneInstructions = {
         professional: 'Formal, polished, business-appropriate',
         casual: 'Friendly, conversational, approachable',
@@ -4719,7 +4799,8 @@ function executeEmailSequenceGenerator(args) {
 ## Target: ${targetPersona} ${targetIndustry ? `in ${targetIndustry}` : ''}
 ## Solution: ${yourSolution}
 ## Tone: ${toneInstructions[tone] || toneInstructions['professional']}
-## Emails: ${numEmails}
+## Emails: ${emailsText}
+${fixedLengthNote}
 
 ---
 
@@ -4857,7 +4938,8 @@ All the best,
 
 ## Context: Post-meeting/referral/event
 ## Target: ${targetPersona}
-## Emails: ${numEmails}
+## Emails: ${emailsText}
+${fixedLengthNote}
 
 ---
 
@@ -4936,7 +5018,8 @@ Any questions I can answer? Happy to hop on a quick call to discuss.
 
 ## Following up after product demonstration
 ## Target: ${targetPersona}
-## Emails: ${numEmails}
+## Emails: ${emailsText}
+${fixedLengthNote}
 
 ---
 
@@ -5031,7 +5114,8 @@ Can we find time this week to discuss next steps?
 
 ## Reconnecting with cold/stalled opportunities
 ## Target: ${targetPersona}
-## Emails: ${numEmails}
+## Emails: ${emailsText}
+${fixedLengthNote}
 
 ---
 
@@ -5095,7 +5179,7 @@ Either way is fine - just want to respect your time.
     };
     const generator = sequenceTemplates[sequenceType];
     if (generator) {
-        return generator();
+        return `${generator()}\n\n${SUGGESTIONS_FOOTER}`;
     }
     // Default for other sequence types
     return `# ${sequenceType.replace(/_/g, ' ')} Sequence
@@ -5104,7 +5188,9 @@ Either way is fine - just want to respect your time.
 - Target: ${targetPersona}
 - Industry: ${targetIndustry || 'General'}
 - Tone: ${tone}
-- Emails: ${numEmails}
+- Emails: ${emailsText}
+
+${fixedLengthNote}
 
 ## General Structure
 
@@ -5135,7 +5221,9 @@ Either way is fine - just want to respect your time.
 
 ---
 
-*Customize based on your specific situation and ${targetPersona} preferences*`;
+*Customize based on your specific situation and ${targetPersona} preferences*
+
+${SUGGESTIONS_FOOTER}`;
 }
 // Tool 9: Demo Script Builder
 function executeDemoScriptBuilder(args) {
@@ -5166,7 +5254,7 @@ function executeDemoScriptBuilder(args) {
 | **Primary Audience** | ${primaryAudience} |
 | **Other Attendees** | ${attendees || 'TBD'} |
 | **Industry** | ${customerIndustry || 'General'} |
-| **Duration** | ${demoDuration} minutes |
+| **Duration** | ${demoDuration} minutes${hasValue(args.demo_duration) ? '' : ' (default)'} |
 | **Desired Outcome** | ${desiredOutcome} |
 
 ---
@@ -5210,7 +5298,7 @@ ${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorCont
 
 "Thanks everyone for joining. I'm [Your name] and I'll be walking you through ${yourSolution} today.
 
-Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} minutes valuable for you?"
+Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} minutes valuable for you?"${hasValue(args.demo_duration) ? '' : ` ${EXAMPLE}`}
 
 **[Wait for response - this shapes your demo]**
 
@@ -5295,7 +5383,7 @@ ${mustShowFeatures.split(',').map((f, i) => `${i + 1}. ${f.trim()}`).join('\n')}
 [Show the feature]
 
 *Value Statement:*
-"This is typically where we see the biggest time/cost savings because [reason]."
+"This is typically where we see the biggest time/cost savings because [reason]." (Example claim: keep it only if your customer results support it)
 
 *Check-in:*
 "Does this address what you were looking for?"
@@ -5311,7 +5399,7 @@ ${mustShowFeatures.split(',').map((f, i) => `${i + 1}. ${f.trim()}`).join('\n')}
 [Show unique capability]
 
 *Value Statement:*
-"This is something our customers tell us they can't find elsewhere."
+"This is something our customers tell us they can't find elsewhere." (Example claim: keep it only if customers have told you this)
 
 ${competitorContext ? `\n*Competitive note:*\nIf competitor comes up: "Great question. The key difference is [differentiator]. Would you like me to show you specifically?"` : ''}
 
@@ -5331,7 +5419,7 @@ ${knownObjections.split(',').map(o => `**Objection:** "${o.trim()}"
 `).join('')}` : `**Common Objections to Prepare For:**
 
 **"How long does implementation take?"**
-"Typically [timeframe]. We have a proven methodology that includes..."
+"Typically [timeframe]. Our methodology includes [your implementation steps]..."
 
 **"What about integration with [system]?"**
 "We have pre-built integrations with [systems]. Let me show you..."
@@ -5403,7 +5491,9 @@ What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accom
 
 ---
 
-*Customize this script based on pre-demo discovery*`;
+*Customize this script based on pre-demo discovery*
+
+${SUGGESTIONS_FOOTER}`;
 }
 // ============================================================================
 // MCP SERVER SETUP

@@ -18,7 +18,7 @@
 - [Account Plan Builder](https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/) (`account_plan_builder`): Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.
 - [Deal Strategy Coach](https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/) (`deal_strategy_coach`): Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.
 - [Discovery Question Bank](https://revenue-enablement.gtmhelix.com/tools/discovery-question-bank/) (`discovery_question_bank`): Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect.
-- [ROI Business Case Builder](https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/) (`roi_business_case_builder`): Build quantified ROI business cases with documented assumptions, industry benchmarks, and executive-ready summaries. Generates defensible value calculations.
+- [ROI Business Case Builder](https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/) (`roi_business_case_builder`): Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary.
 - [Mutual Action Plan Generator](https://revenue-enablement.gtmhelix.com/tools/mutual-action-plan-generator/) (`mutual_action_plan_generator`): Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.
 - [Win/Loss Analyzer](https://revenue-enablement.gtmhelix.com/tools/win-loss-analyzer/) (`win_loss_analyzer`): Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.
 - [Proposal Section Writer](https://revenue-enablement.gtmhelix.com/tools/proposal-section-writer/) (`proposal_section_writer`): Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.
@@ -56,7 +56,7 @@ Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, a busines
 
 ### Why do some answers look like templates?
 
-Several tools return a structured plan with placeholders where your inputs did not give a fact. That is deliberate: the tools do not invent numbers or names. Fill the placeholders in before you use the result.
+Several tools return a structured plan with [placeholders] where your inputs did not give a fact. When an answer shows a benchmark, target, rate, weight or other figure you did not supply, it is labelled "Example figure: replace with your own". Figures calculated from your inputs are not labelled. Suggested lengths, timings and counts are marked as suggestions. Replace every example and placeholder before you use the result.
 
 ### Can I call the tools from my own code?
 

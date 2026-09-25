@@ -266,7 +266,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"account_name": "Northwind Clinics", "industry": "healthcare", "current_arr": "24000", "your_product": "ClinicFlow scheduling"}</script>
+  <script type="application/json" data-example>{"account_name": "Northwind Clinics", "industry": "healthcare", "current_arr": "24000", "your_solution": "ClinicFlow scheduling"}</script>
 </section>
 
 <section class="hx-section hx-result" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -282,7 +282,7 @@
   <div class="hx-result-body hx-output">
 <h3>🎯 Strategic Account Plan: Northwind Clinics</h3>
 <h4>Account Overview</h4>
-<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account Name</strong></td><td>Northwind Clinics</td></tr><tr><td><strong>Industry</strong></td><td>healthcare</td></tr><tr><td><strong>Account Tier</strong></td><td>SMB</td></tr><tr><td><strong>Current ARR</strong></td><td>$24,000</td></tr><tr><td><strong>Expansion Potential</strong></td><td>Medium</td></tr><tr><td><strong>Your Solution</strong></td><td>your solution</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account Name</strong></td><td>Northwind Clinics</td></tr><tr><td><strong>Industry</strong></td><td>healthcare</td></tr><tr><td><strong>Account Tier</strong></td><td>SMB</td></tr><tr><td><strong>Current ARR</strong></td><td>$24,000</td></tr><tr><td><strong>Expansion Potential</strong></td><td>Medium</td></tr><tr><td><strong>Your Solution</strong></td><td>ClinicFlow scheduling</td></tr></tbody></table></div>
 <hr>
 <h4>Strategic Analysis</h4>
 <h5>Power Map (To Be Mapped)</h5>
@@ -293,7 +293,7 @@
 <li>Who will use the solution daily?</li>
 <li>Who must approve the purchase?</li>
 </ol>
-<p><strong>Typical Stakeholders for healthcare:</strong></p>
+<p><strong>Typical Stakeholders (a general list, not specific to healthcare):</strong></p>
 <ul>
 <li><strong>Economic Buyer</strong>: CFO, VP Operations, Business Unit Head</li>
 <li><strong>Technical Buyer</strong>: CTO, VP Engineering, IT Director</li>
@@ -306,7 +306,7 @@
 <p><strong>Land Strategy Recommendations:</strong></p>
 <ol>
 <li>Start with a specific pain point and team</li>
-<li>Prove value quickly (30-60 days)</li>
+<li>Prove value quickly (30-60 days) (Example figure: replace with your own)</li>
 <li>Build internal champions</li>
 <li>Expand from success</li>
 </ol>
@@ -415,6 +415,7 @@
 <hr>
 <p>*Account Plan Generated: 2026-09-25*</p>
 <p>*Review and Update: Monthly*</p>
+<p>Suggested timings, lengths and counts: adjust them to your own.</p>
   </div></details>
 </section>
 
@@ -430,20 +431,21 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Account Plan Builder from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Account Plan Builder tool. account name: Northwind Clinics; industry: healthcare; current arr: 24000; your product: ClinicFlow scheduling.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Account Plan Builder tool. account name: Northwind Clinics; industry: healthcare; current arr: 24000; your solution: ClinicFlow scheduling.</blockquote>
   <p class="hx-prose">MCP tool name: <code>account_plan_builder</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder</code> with this JSON body (see <a href="/docs/#account-plan-builder">Docs</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
     &quot;account_name&quot;: &quot;Northwind Clinics&quot;,
     &quot;industry&quot;: &quot;healthcare&quot;,
-    &quot;current_arr&quot;: 24000
+    &quot;current_arr&quot;: 24000,
+    &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;
   }
 }</pre>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
   <h2 id="works-h">How does Account Plan Builder work?</h2>
-  <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server run the same function, so the same input gives the same answer in both.</p>
+  <p class="hx-prose">It applies fixed rules in the Revenue Enablement code to the inputs above and returns text. It does not call an AI model, does not look anything up, and does not store what you type. The web form and the MCP server call the same tool code, so the same input gives the same answer in both.</p>
   <p class="hx-pn"><a href="/tools/deal-strategy-coach/">Next: Deal Strategy Coach</a></p>
 </section>
 

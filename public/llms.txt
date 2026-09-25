@@ -64,7 +64,7 @@ Yes. Send POST https://revenue-enablement.gtmhelix.com/api/tools/<tool name> wit
 
 ### Is the source code public?
 
-Yes, at https://github.com/shashwatgtm/revenue-enablement-mcp under the MIT licence. The npm package @shashwatgtmalpha/revenue-enablement-mcp runs the same tools locally.
+Yes, at https://github.com/shashwatgtm/revenue-enablement-mcp under the MIT licence. The npm package @shashwatgtmalpha/revenue-enablement-mcp runs these tools locally; it can lag behind this site until a new version is published.
 
 ### Who is Revenue Enablement not ideal for?
 

@@ -194,7 +194,7 @@ Generated on 26 September 2026 from the server's own tool list (`tools/list` of 
 |---|---|---|---|
 | `scenario` | Yes | one of: `discount_request`, `budget_objection`, `competitor_pricing`, `procurement_pressure`, `multi_year_negotiation`, `enterprise_agreement`, `renewal_negotiation` | Negotiation scenario |
 | `deal_value` | No | number (0 or more) | Current deal value |
-| `discount_requested` | No | number | Discount percentage requested |
+| `discount_requested` | No | number (0 or more) | Discount percentage requested |
 | `your_solution` | No | string | Accepted but not used yet by this tool |
 | `competitor_price` | No | string | Competitor pricing if known |
 | `value_delivered` | No | string | Quantified value your solution delivers. Shown in the output; the value example does not use it |

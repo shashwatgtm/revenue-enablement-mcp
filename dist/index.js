@@ -543,6 +543,7 @@ const tools = {
                 },
                 discount_requested: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Discount percentage requested'
                 },
                 your_solution: {
@@ -3377,7 +3378,7 @@ function executeChampionEnablementKit(args) {
 
 [1-2 sentence summary of what this enables for the business]
 
-${keyValuePoints ? `**Key Benefits:**\n${keyValuePoints.split(',').map(p => `- ${p.trim()}`).join('\n')}` : '**Key Benefits:**\n- Improved efficiency\n- Reduced costs\n- Better outcomes\n- Competitive advantage'}
+${keyValuePoints ? `**Key Benefits:**\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n')}` : '**Key Benefits:**\n- Improved efficiency\n- Reduced costs\n- Better outcomes\n- Competitive advantage'}
 
 ### The Business Case
 
@@ -3421,7 +3422,7 @@ ${urgencyDrivers ? `**Why Now:** ${urgencyDrivers}` : ''}
 
 This document presents the business case for investing in ${yourSolution} to address [challenge] and achieve [outcome].
 
-${keyValuePoints ? `\n**Value Summary:**\n${keyValuePoints.split(',').map(p => `- ${p.trim()}`).join('\n')}\n` : ''}
+${keyValuePoints ? `\n**Value Summary:**\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n')}\n` : ''}
 
 ---
 
@@ -3531,7 +3532,7 @@ ${SUGGESTIONS_FOOTER}`,
 
 ---
 
-${knownObjections ? `## Anticipated Objections\n\n${knownObjections.split(',').map(obj => `
+${knownObjections ? `## Anticipated Objections\n\n${knownObjections.split(/\n|,(?!\d{3}(?!\d))/).map(obj => `
 ### Objection: "${obj.trim()}"
 
 **Response:**
@@ -3640,7 +3641,7 @@ ${championWins ? `## Your Personal Stake\n\nWhen this succeeds, you get:\n${cham
 "${yourSolution} helps us [primary benefit]."
 
 **Key Capabilities:**
-${keyValuePoints ? keyValuePoints.split(',').map((p, i) => `${i + 1}. ${p.trim()}`).join('\n') : '1. [Capability 1]\n2. [Capability 2]\n3. [Capability 3]'}
+${keyValuePoints ? keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n') : '1. [Capability 1]\n2. [Capability 2]\n3. [Capability 3]'}
 
 ${competitiveContext ? `\n**Why This Solution:**\n"We looked at alternatives including ${competitiveContext}. This is the best fit because [reasons]."` : ''}
 
@@ -3683,7 +3684,7 @@ ${urgencyDrivers ? `\n**Timing:**\n"We should move now because ${urgencyDrivers}
 ## Q&A Prep
 
 **Expected Questions:**
-${knownObjections ? knownObjections.split(',').map(o => `- "${o.trim()}" → [Your response]`).join('\n') : '- Budget questions → Point to ROI\n- Timeline questions → Show implementation plan\n- Risk questions → Discuss mitigation'}
+${knownObjections ? knownObjections.split(/\n|,(?!\d{3}(?!\d))/).map(o => `- "${o.trim()}" → [Your response]`).join('\n') : '- Budget questions → Point to ROI\n- Timeline questions → Show implementation plan\n- Risk questions → Discuss mitigation'}
 
 ---
 
@@ -3709,7 +3710,7 @@ I wanted to bring a recommendation to your attention regarding [challenge we're 
 
 **The Opportunity:**
 ${yourSolution} can help us [key benefit]. Based on my analysis:
-${keyValuePoints ? keyValuePoints.split(',').map(p => `- ${p.trim()}`).join('\n') : '- [Benefit 1]\n- [Benefit 2]\n- [Benefit 3]'}
+${keyValuePoints ? keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n') : '- [Benefit 1]\n- [Benefit 2]\n- [Benefit 3]'}
 
 **The Investment:**
 ${budgetContext ? budgetContext : '[Brief investment summary]'}
@@ -3770,7 +3771,7 @@ ${championName}`,
 
 | Benefit | Annual Value | Source |
 |---------|--------------|--------|
-${keyValuePoints ? keyValuePoints.split(',').map(p => `| ${p.trim()} | $XX,XXX | [Source] |`).join('\n') : '| Efficiency gains | $XX,XXX | Time savings |\n| Cost reduction | $XX,XXX | Eliminated spend |\n| Revenue impact | $XX,XXX | Improved outcomes |'}
+${keyValuePoints ? keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `| ${p.trim()} | $XX,XXX | [Source] |`).join('\n') : '| Efficiency gains | $XX,XXX | Time savings |\n| Cost reduction | $XX,XXX | Eliminated spend |\n| Revenue impact | $XX,XXX | Improved outcomes |'}
 | **Total Value** | **$XXX,XXX** | - |
 
 ---
@@ -3832,7 +3833,7 @@ ${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated mul
 
 ## Why ${yourSolution}
 
-${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(',').map(p => `- ✅ ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- Better fit for our needs\n- Lower total cost of ownership\n- Faster time to value\n- Lower risk'}
+${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ✅ ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- Better fit for our needs\n- Lower total cost of ownership\n- Faster time to value\n- Lower risk'}
 
 ---
 
@@ -3956,7 +3957,7 @@ These questions help surface ${competitor}'s weaknesses without being negative:
 - "Have you defined must-haves vs nice-to-haves?"
 
 ### Capability Landmines
-${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competitorWeaknesses.split(',').map(w => `
+${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `
 **Weakness:** ${w.trim()}
 **Landmine Question:** "How important is [area] to your evaluation? Can you show me how [competitor] handles this specific scenario?"
 **Why It Works:** When they test ${competitor} on this, they'll discover the gap.
@@ -3978,7 +3979,7 @@ ${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competit
 
 ### Criteria to Establish Early
 
-${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these as requirements:\n${yourStrengths.split(',').map(s => `
+${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these as requirements:\n${yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `
 - **${s.trim()}**: "Most successful implementations we've seen require [capability]. Is this in your evaluation criteria?"
 `).join('')}` : `
 **Capability Criteria:**
@@ -4016,7 +4017,7 @@ Suggest the buyer ask these questions when speaking with ${competitor}'s referen
 - "What surprised you after implementation?"
 
 ### Capability Questions
-${competitorWeaknesses ? competitorWeaknesses.split(',').map(w => `- "How do you handle ${w.trim().toLowerCase()}? Does the tool support this well?"`).join('\n') : `- "What limitations have you encountered?"
+${competitorWeaknesses ? competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- "How do you handle ${w.trim().toLowerCase()}? Does the tool support this well?"`).join('\n') : `- "What limitations have you encountered?"
 - "What do you wish the tool did that it doesn't?"
 - "What workarounds have you had to build?"`}
 
@@ -4044,7 +4045,7 @@ Include these requirements that favor your strengths:
 
 ${yourStrengths ? `
 **Based on Your Strengths:**
-${yourStrengths.split(',').map((s, i) => `
+${yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map((s, i) => `
 ${i + 1}. **${s.trim()}**
    - Requirement language: "Solution must demonstrate [specific capability] with [specific proof point]"
    - Evaluation: "Vendor must show live demonstration of [scenario]"
@@ -4060,7 +4061,7 @@ Design evaluation scenarios that highlight competitor weaknesses:
 
 ${competitorWeaknesses ? `
 **Scenarios Based on Weaknesses:**
-${competitorWeaknesses.split(',').map((w, i) => `
+${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map((w, i) => `
 **Scenario ${i + 1}:** Test ${w.trim().toLowerCase()}
 - Task: "[Specific task that requires this capability]"
 - Success criteria: "[Measurable outcome]"
@@ -4133,10 +4134,10 @@ ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 ## Competitive Intelligence
 
 ### Your Strengths
-${yourStrengths ? yourStrengths.split(',').map(s => `- ✅ ${s.trim()}`).join('\n') : '- [Define your key differentiators]'}
+${yourStrengths ? yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ✅ ${s.trim()}`).join('\n') : '- [Define your key differentiators]'}
 
 ### ${competitor} Weaknesses
-${competitorWeaknesses ? competitorWeaknesses.split(',').map(w => `- ❌ ${w.trim()}`).join('\n') : '- [Research competitor weaknesses]'}
+${competitorWeaknesses ? competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ❌ ${w.trim()}`).join('\n') : '- [Research competitor weaknesses]'}
 
 ---
 
@@ -4264,13 +4265,13 @@ ${toneStyle.opening}, this proposal outlines how ${yourSolution} will help ${cus
 
 ### The Opportunity
 
-${customerChallenges ? `Through our discovery conversations, we identified several key challenges:\n\n${customerChallenges.split(',').map(c => `- ${c.trim()}`).join('\n')}` : `${customerName} is seeking to improve operational efficiency, reduce costs, and drive growth. Our conversations have revealed opportunities to create significant value through ${yourSolution}.`}
+${customerChallenges ? `Through our discovery conversations, we identified several key challenges:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map(c => `- ${c.trim()}`).join('\n')}` : `${customerName} is seeking to improve operational efficiency, reduce costs, and drive growth. Our conversations have revealed opportunities to create significant value through ${yourSolution}.`}
 
 ### Our Recommendation
 
 ${yourSolution} provides ${customerName} with a comprehensive solution that:
 
-${keyDifferentiators ? keyDifferentiators.split(',').map(d => `- **${d.trim()}**`).join('\n') : `- Addresses your core business challenges\n- Delivers measurable ROI\n- Integrates with your existing systems\n- Scales with your growth`}
+${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- **${d.trim()}**`).join('\n') : `- Addresses your core business challenges\n- Delivers measurable ROI\n- Integrates with your existing systems\n- Scales with your growth`}
 
 ### Expected Outcomes
 
@@ -4282,7 +4283,7 @@ ${pricing ? `Investment: ${pricing}` : 'Detailed pricing is outlined in the Inve
 
 ### Why ${yourSolution}
 
-${keyDifferentiators ? `We are uniquely positioned to deliver this value because:\n\n${keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n')}` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
+${keyDifferentiators ? `We are uniquely positioned to deliver this value because:\n\n${keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- ${d.trim()}`).join('\n')}` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
 
 ### Next Steps
 
@@ -4299,7 +4300,7 @@ We recommend the following path forward:
 
 ## Current State at ${customerName}
 
-${customerChallenges ? `Based on our discovery conversations, ${customerName} is facing several interconnected challenges:\n\n${customerChallenges.split(',').map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** This challenge is affecting your team's ability to perform at their best, creating inefficiencies, and potentially impacting revenue.\n\n**Root Cause:** Our analysis suggests this stems from [process gaps / technology limitations / resource constraints].\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `Through our conversations with your team, we've developed a deep understanding of the challenges you're facing:\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
+${customerChallenges ? `Based on our discovery conversations, ${customerName} is facing several interconnected challenges:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** This challenge is affecting your team's ability to perform at their best, creating inefficiencies, and potentially impacting revenue.\n\n**Root Cause:** Our analysis suggests this stems from [process gaps / technology limitations / resource constraints].\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `Through our conversations with your team, we've developed a deep understanding of the challenges you're facing:\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
 
 ## The Cost of the Current State
 
@@ -4331,7 +4332,7 @@ ${yourSolution} provides a comprehensive platform that addresses each of the cha
 
 #### Core Capabilities${keyDifferentiators ? '' : ' (example capabilities: replace them with your own)'}
 
-${keyDifferentiators ? keyDifferentiators.split(',').map((d, i) => `**${i + 1}. ${d.trim()}**\nDescription of how this capability solves specific customer challenges.\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
+${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map((d, i) => `**${i + 1}. ${d.trim()}**\nDescription of how this capability solves specific customer challenges.\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
 
 ### How It Works
 
@@ -4355,9 +4356,9 @@ ${keyDifferentiators ? keyDifferentiators.split(',').map((d, i) => `**${i + 1}. 
 
 | Your Challenge | Our Capability | Business Value |
 |----------------|----------------|----------------|
-| ${customerChallenges?.split(',')[0]?.trim() || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
-| ${customerChallenges?.split(',')[1]?.trim() || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
-| ${customerChallenges?.split(',')[2]?.trim() || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
+| ${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[0]?.trim() || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
+| ${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[1]?.trim() || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
+| ${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[2]?.trim() || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
 
 ### Security & Compliance
 
@@ -4644,7 +4645,7 @@ To help organizations like ${customerName} achieve [mission statement].
 
 ### Our Differentiators
 
-${keyDifferentiators ? keyDifferentiators.split(',').map(d => `- ${d.trim()}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
+${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- ${d.trim()}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
 
 ### Industry Recognition
 
@@ -4672,7 +4673,7 @@ Your ${customerName} team includes:
 ### Example 1: [Similar Company in ${args.customer_industry ? customerIndustry : "the customer's industry"}]
 
 **Challenge:**
-Faced similar challenges to ${customerName} including ${customerChallenges?.split(',')[0] || 'operational inefficiency'}.
+Faced similar challenges to ${customerName} including ${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[0] || 'operational inefficiency'}.
 
 **Solution:**
 Implemented ${yourSolution} to address core challenges.
@@ -4692,7 +4693,7 @@ ${EXAMPLES}
 ### Example 2: [Another Similar Company]
 
 **Challenge:**
-Needed to address ${customerChallenges?.split(',')[1] || 'scaling challenges'}.
+Needed to address ${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[1] || 'scaling challenges'}.
 
 **Solution:**
 Deployed ${yourSolution} across their organization.
@@ -4711,7 +4712,7 @@ ${EXAMPLES}
 ### Example 3: [Third Similar Company]
 
 **Challenge:**
-${customerChallenges?.split(',')[2] || 'Integration and visibility challenges'}.
+${customerChallenges?.split(/\n|,(?!\d{3}(?!\d))/)[2] || 'Integration and visibility challenges'}.
 
 **Solution:**
 Full implementation of ${yourSolution} with integrations.
@@ -5331,7 +5332,7 @@ Does that work for everyone?"
 
 "Before I show you anything, let me confirm what I've learned to make sure the demo is relevant:
 
-${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(',').map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `Based on what [champion] shared, it sounds like you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
+${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `Based on what [champion] shared, it sounds like you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
 
 **[Listen and adjust demo focus based on responses]**
 
@@ -5367,7 +5368,7 @@ ${demoType === 'executive_overview' ? `
 #### Demo Flow
 
 ${mustShowFeatures ? `**Must-Show Features:**
-${mustShowFeatures.split(',').map((f, i) => `${i + 1}. ${f.trim()}`).join('\n')}\n` : ''}
+${mustShowFeatures.split(/\n|,(?!\d{3}(?!\d))/).map((f, i) => `${i + 1}. ${f.trim()}`).join('\n')}\n` : ''}
 
 **Feature 1: [Address Pain Point 1]**
 
@@ -5424,7 +5425,7 @@ ${competitorContext ? `\n*Competitive note:*\nIf competitor comes up: "Great que
 
 ${knownObjections ? `**Anticipated Objections:**
 
-${knownObjections.split(',').map(o => `**Objection:** "${o.trim()}"
+${knownObjections.split(/\n|,(?!\d{3}(?!\d))/).map(o => `**Objection:** "${o.trim()}"
 **Response:** [Prepared response]
 
 `).join('')}` : `**Common Objections to Prepare For:**
@@ -5540,6 +5541,29 @@ function withMeta(tool) {
         annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     };
 }
+const NEGATIVE_AMOUNT = /(^|[\s(:=])[-\u2212]\$\s*\d|\$\s*[-\u2212]\s*\d|^\s*[-\u2212]\s*\d/;
+function checkLimits(schema, value, path, problems) {
+    if (schema.properties && value && typeof value === "object" && !Array.isArray(value)) {
+        for (const [key, p] of Object.entries(schema.properties)) {
+            checkLimits(p, value[key], path ? `${path}.${key}` : key, problems);
+        }
+        return;
+    }
+    if (schema.items && Array.isArray(value)) {
+        value.forEach((item, i) => checkLimits(schema.items, item, `${path}[${i}]`, problems));
+        return;
+    }
+    if (schema.type !== "number" && schema.type !== "integer")
+        return;
+    const v = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+    if (typeof v !== "number" || !Number.isFinite(v))
+        return;
+    if (typeof schema.minimum === "number" && v < schema.minimum)
+        problems.push(`${path} must be ${schema.minimum} or more`);
+    if (typeof schema.maximum === "number" && v > schema.maximum)
+        problems.push(`${path} must be ${schema.maximum} or less`);
+}
+const AMOUNT_TEXT = { pricing_negotiation_guide: ["competitor_price"], champion_enablement_kit: ["budget_context"] };
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
@@ -5550,17 +5574,16 @@ function checkRequiredInputs(name, args) {
     if (missing.length > 0) {
         return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
-    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum).
-    const props = (tool.inputSchema.properties ?? {});
-    const below = Object.entries(props)
-        .filter(([key, p]) => {
+    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum, maximum).
+    const problems = [];
+    checkLimits(tool.inputSchema, args ?? {}, "", problems);
+    for (const key of AMOUNT_TEXT[name] ?? []) {
         const raw = args?.[key];
-        const v = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
-        return typeof p.minimum === "number" && typeof v === "number" && Number.isFinite(v) && v < p.minimum;
-    })
-        .map(([key, p]) => `${key} must be ${p.minimum} or more`);
-    if (below.length > 0) {
-        return `Invalid input for ${name}: ${below.join("; ")}.`;
+        if (typeof raw === "string" && NEGATIVE_AMOUNT.test(raw))
+            problems.push(`${key} must not contain a negative amount`);
+    }
+    if (problems.length > 0) {
+        return `Invalid input for ${name}: ${problems.join("; ")}.`;
     }
     return null;
 }

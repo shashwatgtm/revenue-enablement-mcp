@@ -173,7 +173,7 @@
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
     <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.0.</li>
-    <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs the same tools over stdio.</li>
+    <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
 </section>
 
@@ -185,7 +185,7 @@
   -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Clinic Group&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;}}'</pre>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
-    <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
+    <li>Limits: 30 requests per minute per IP address; the whole request up to 32,000 bytes; top-level text fields up to 6,000 characters and top-level lists up to 50 items.</li>
     <li>Forms without JavaScript post <code>application/x-www-form-urlencoded</code> and get an HTML page back.</li>
     <li>Nothing is stored and the input is not logged (see <a href="/privacy/">Privacy</a>).</li>
   </ul>
@@ -348,7 +348,7 @@
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
 <tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current deal value</td></tr>
-<tr><td><code>discount_requested</code></td><td>number</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
+<tr><td><code>discount_requested</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Accepted but not used yet by this tool</td></tr>
 <tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>
 <tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Shown in the output; the value example does not use it</td></tr>

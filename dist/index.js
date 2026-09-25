@@ -45,6 +45,7 @@ const tools = {
                 },
                 current_arr: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Current ARR with this account (0 for prospects)'
                 },
                 known_contacts: {
@@ -88,6 +89,7 @@ const tools = {
                 },
                 deal_value: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Deal value in dollars'
                 },
                 deal_stage: {
@@ -97,6 +99,7 @@ const tools = {
                 },
                 days_in_stage: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Days the deal has been in current stage'
                 },
                 champion_status: {
@@ -199,10 +202,12 @@ const tools = {
                 },
                 annual_revenue: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Customer annual revenue'
                 },
                 employee_count: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Number of employees'
                 },
                 your_solution: {
@@ -211,6 +216,7 @@ const tools = {
                 },
                 solution_price: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Annual cost of your solution'
                 },
                 primary_value_driver: {
@@ -321,10 +327,12 @@ const tools = {
                 },
                 deal_value: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Deal value'
                 },
                 sales_cycle_days: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Length of sales cycle'
                 },
                 stakeholders_involved: {
@@ -443,6 +451,7 @@ const tools = {
                 },
                 num_emails: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Accepted but not used yet: each sequence type has a fixed number of emails'
                 },
                 tone: {
@@ -496,6 +505,7 @@ const tools = {
                 },
                 demo_duration: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Demo duration in minutes'
                 },
                 must_show_features: {
@@ -528,6 +538,7 @@ const tools = {
                 },
                 deal_value: {
                     type: 'number',
+                    minimum: 0,
                     description: 'Current deal value'
                 },
                 discount_requested: {
@@ -5505,7 +5516,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.1.0';
+exports.SERVER_VERSION = '1.2.0';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",
@@ -5538,6 +5549,18 @@ function checkRequiredInputs(name, args) {
     const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null);
     if (missing.length > 0) {
         return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+    }
+    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum).
+    const props = (tool.inputSchema.properties ?? {});
+    const below = Object.entries(props)
+        .filter(([key, p]) => {
+        const raw = args?.[key];
+        const v = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
+        return typeof p.minimum === "number" && typeof v === "number" && Number.isFinite(v) && v < p.minimum;
+    })
+        .map(([key, p]) => `${key} must be ${p.minimum} or more`);
+    if (below.length > 0) {
+        return `Invalid input for ${name}: ${below.join("; ")}.`;
     }
     return null;
 }

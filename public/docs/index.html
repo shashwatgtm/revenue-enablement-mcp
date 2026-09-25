@@ -172,7 +172,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.1.0.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.0.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs the same tools over stdio.</li>
   </ul>
 </section>
@@ -201,7 +201,7 @@
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
-<tr><td><code>current_arr</code></td><td>number</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
+<tr><td><code>current_arr</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
 <tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles (can be rough notes)</td></tr>
 <tr><td><code>current_products</code></td><td>string</td><td>no</td><td></td><td>Products/services they currently use from you</td></tr>
 <tr><td><code>expansion_opportunities</code></td><td>string</td><td>no</td><td></td><td>Potential expansion areas or whitespace</td></tr>
@@ -215,9 +215,9 @@
   <p class="hx-prose">Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. <a href="/tools/deal-strategy-coach/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
-<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
+<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
 <tr><td><code>deal_stage</code></td><td>string</td><td>yes</td><td>prospecting, discovery, demo, proposal, negotiation, closing, stuck</td><td>Current deal stage</td></tr>
-<tr><td><code>days_in_stage</code></td><td>number</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
+<tr><td><code>days_in_stage</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
 <tr><td><code>champion_status</code></td><td>string</td><td>no</td><td>no_champion, potential_champion, confirmed_champion, multi_threaded</td><td>Champion identification status</td></tr>
 <tr><td><code>economic_buyer</code></td><td>string</td><td>no</td><td></td><td>Economic buyer name and engagement level</td></tr>
 <tr><td><code>competitors</code></td><td>string</td><td>no</td><td></td><td>Competitors in the deal and their position</td></tr>
@@ -248,10 +248,10 @@
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
 <tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
-<tr><td><code>annual_revenue</code></td><td>number</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
-<tr><td><code>employee_count</code></td><td>number</td><td>no</td><td></td><td>Number of employees</td></tr>
+<tr><td><code>annual_revenue</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
+<tr><td><code>employee_count</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Number of employees</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
-<tr><td><code>solution_price</code></td><td>number</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
+<tr><td><code>solution_price</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
 <tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
 <tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; not used in the calculation</td></tr>
 <tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
@@ -284,8 +284,8 @@
 <tr><td><code>deal_details</code></td><td>string</td><td>no</td><td></td><td>Deal details - can be rough notes, CRM export, or structured data</td></tr>
 <tr><td><code>loss_reason</code></td><td>string</td><td>no</td><td></td><td>Stated loss reason (for lost deals)</td></tr>
 <tr><td><code>competitor_won</code></td><td>string</td><td>no</td><td></td><td>Competitor who won (if applicable)</td></tr>
-<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Deal value</td></tr>
-<tr><td><code>sales_cycle_days</code></td><td>number</td><td>no</td><td></td><td>Length of sales cycle</td></tr>
+<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value</td></tr>
+<tr><td><code>sales_cycle_days</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Length of sales cycle</td></tr>
 <tr><td><code>stakeholders_involved</code></td><td>string</td><td>no</td><td></td><td>Key stakeholders and their positions</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you were selling</td></tr>
 <tr><td><code>multiple_deals</code></td><td>string</td><td>no</td><td></td><td>For portfolio analysis: summary of multiple deals</td></tr>
@@ -320,7 +320,7 @@
 <tr><td><code>specific_pain_point</code></td><td>string</td><td>no</td><td></td><td>Specific pain point to address</td></tr>
 <tr><td><code>social_proof</code></td><td>string</td><td>no</td><td></td><td>Customer names, stats, or proof points</td></tr>
 <tr><td><code>call_to_action</code></td><td>string</td><td>no</td><td></td><td>Desired action (meeting, demo, reply)</td></tr>
-<tr><td><code>num_emails</code></td><td>number</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
+<tr><td><code>num_emails</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>professional, casual, urgent, consultative, provocative</td><td>Email tone</td></tr>
 <tr><td><code>sender_context</code></td><td>string</td><td>no</td><td></td><td>Context about sender (role, shared connections, etc.)</td></tr>
   </tbody></table></div>
@@ -336,7 +336,7 @@
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>key_pain_points</code></td><td>string</td><td>no</td><td></td><td>Pain points to address in demo</td></tr>
 <tr><td><code>competitor_context</code></td><td>string</td><td>no</td><td></td><td>Competitor being displaced or compared</td></tr>
-<tr><td><code>demo_duration</code></td><td>number</td><td>no</td><td></td><td>Demo duration in minutes</td></tr>
+<tr><td><code>demo_duration</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Demo duration in minutes</td></tr>
 <tr><td><code>must_show_features</code></td><td>string</td><td>no</td><td></td><td>Features that must be demonstrated</td></tr>
 <tr><td><code>known_objections</code></td><td>string</td><td>no</td><td></td><td>Known objections to address</td></tr>
 <tr><td><code>desired_outcome</code></td><td>string</td><td>no</td><td></td><td>What you want to achieve from this demo</td></tr>
@@ -347,7 +347,7 @@
   <p class="hx-prose">Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests. <a href="/tools/pricing-negotiation-guide/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
-<tr><td><code>deal_value</code></td><td>number</td><td>no</td><td></td><td>Current deal value</td></tr>
+<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current deal value</td></tr>
 <tr><td><code>discount_requested</code></td><td>number</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Accepted but not used yet by this tool</td></tr>
 <tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>

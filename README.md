@@ -1,4 +1,4 @@
-# Revenue Enablement MCP v1.1.0
+# Revenue Enablement MCP v1.2.0
 **Deal Strategy & Sales Enablement Engine** - 12 tools for sales execution, deal management, and revenue acceleration.
 
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/revenue-enablement-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/revenue-enablement-mcp)
@@ -31,7 +31,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 25 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.1.0, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 26 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.0, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -56,7 +56,7 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 |---|---|---|---|
 | `account_name` | Yes | string | Company/account name |
 | `industry` | No | string | Industry vertical |
-| `current_arr` | No | number | Current ARR with this account (0 for prospects) |
+| `current_arr` | No | number (0 or more) | Current ARR with this account (0 for prospects) |
 | `known_contacts` | No | string | Known contacts and their roles (can be rough notes) |
 | `current_products` | No | string | Products/services they currently use from you |
 | `expansion_opportunities` | No | string | Potential expansion areas or whitespace |
@@ -70,8 +70,8 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 |---|---|---|---|
 | `deal_name` | Yes | string | Deal/opportunity name |
 | `deal_stage` | Yes | one of: `prospecting`, `discovery`, `demo`, `proposal`, `negotiation`, `closing`, `stuck` | Current deal stage |
-| `deal_value` | No | number | Deal value in dollars |
-| `days_in_stage` | No | number | Days the deal has been in current stage |
+| `deal_value` | No | number (0 or more) | Deal value in dollars |
+| `days_in_stage` | No | number (0 or more) | Days the deal has been in current stage |
 | `champion_status` | No | one of: `no_champion`, `potential_champion`, `confirmed_champion`, `multi_threaded` | Champion identification status |
 | `economic_buyer` | No | string | Economic buyer name and engagement level |
 | `competitors` | No | string | Competitors in the deal and their position |
@@ -102,9 +102,9 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 | `customer_name` | No | string | Customer/prospect name |
 | `industry` | No | string | Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology |
 | `company_size` | No | one of: `startup`, `smb`, `mid_market`, `enterprise` | Company size tier |
-| `annual_revenue` | No | number | Customer annual revenue |
-| `employee_count` | No | number | Number of employees |
-| `solution_price` | No | number | Annual cost of your solution |
+| `annual_revenue` | No | number (0 or more) | Customer annual revenue |
+| `employee_count` | No | number (0 or more) | Number of employees |
+| `solution_price` | No | number (0 or more) | Annual cost of your solution |
 | `known_metrics` | No | string | Metrics the prospect shared. Shown in the output; not used in the calculation |
 | `current_process` | No | string | How they do it today. Shown in the output; not used in the calculation |
 | `implementation_timeline` | No | string | Expected implementation time. Shown in the output; not used in the calculation |
@@ -134,8 +134,8 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 | `deal_details` | No | string | Deal details - can be rough notes, CRM export, or structured data |
 | `loss_reason` | No | string | Stated loss reason (for lost deals) |
 | `competitor_won` | No | string | Competitor who won (if applicable) |
-| `deal_value` | No | number | Deal value |
-| `sales_cycle_days` | No | number | Length of sales cycle |
+| `deal_value` | No | number (0 or more) | Deal value |
+| `sales_cycle_days` | No | number (0 or more) | Length of sales cycle |
 | `stakeholders_involved` | No | string | Key stakeholders and their positions |
 | `your_solution` | No | string | What you were selling |
 | `multiple_deals` | No | string | For portfolio analysis: summary of multiple deals |
@@ -168,7 +168,7 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 | `specific_pain_point` | No | string | Specific pain point to address |
 | `social_proof` | No | string | Customer names, stats, or proof points |
 | `call_to_action` | No | string | Desired action (meeting, demo, reply) |
-| `num_emails` | No | number | Accepted but not used yet: each sequence type has a fixed number of emails |
+| `num_emails` | No | number (0 or more) | Accepted but not used yet: each sequence type has a fixed number of emails |
 | `tone` | No | one of: `professional`, `casual`, `urgent`, `consultative`, `provocative` | Email tone |
 | `sender_context` | No | string | Context about sender (role, shared connections, etc.) |
 
@@ -183,7 +183,7 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 | `customer_industry` | No | string | Customer industry |
 | `key_pain_points` | No | string | Pain points to address in demo |
 | `competitor_context` | No | string | Competitor being displaced or compared |
-| `demo_duration` | No | number | Demo duration in minutes |
+| `demo_duration` | No | number (0 or more) | Demo duration in minutes |
 | `must_show_features` | No | string | Features that must be demonstrated |
 | `known_objections` | No | string | Known objections to address |
 | `desired_outcome` | No | string | What you want to achieve from this demo |
@@ -193,7 +193,7 @@ Generated on 25 September 2026 from the server's own tool list (`tools/list` of 
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `scenario` | Yes | one of: `discount_request`, `budget_objection`, `competitor_pricing`, `procurement_pressure`, `multi_year_negotiation`, `enterprise_agreement`, `renewal_negotiation` | Negotiation scenario |
-| `deal_value` | No | number | Current deal value |
+| `deal_value` | No | number (0 or more) | Current deal value |
 | `discount_requested` | No | number | Discount percentage requested |
 | `your_solution` | No | string | Accepted but not used yet by this tool |
 | `competitor_price` | No | string | Competitor pricing if known |

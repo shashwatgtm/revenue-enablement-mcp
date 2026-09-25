@@ -115,7 +115,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-09-25",
+   "dateModified": "2026-09-26",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -219,7 +219,7 @@
     <span class="hx-eyebrow">Revenue Enablement · tool 1 of 12</span>
     <h1>Account Plan Builder</h1>
     <p class="hx-lead">Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.</p>
-    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-26">26 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
@@ -266,7 +266,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"account_name": "Northwind Clinics", "industry": "healthcare", "current_arr": "24000", "your_solution": "ClinicFlow scheduling"}</script>
+  <script type="application/json" data-example>{"account_name": "Example Clinic Group", "industry": "healthcare", "current_arr": "24000", "your_solution": "ExampleCo Scheduler"}</script>
 </section>
 
 <section class="hx-section hx-result" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -277,12 +277,12 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">What does Account Plan Builder return for the tested example?</h2>
-  <p class="hx-prose">Generated from the live code on 25 September 2026 with the inputs behind <em>Fill in a tested example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">Generated from the live code on 26 September 2026 with the inputs behind <em>Fill in a tested example</em>. Your own inputs give a different result.</p>
   <details class="hx-run"><summary>Show the full result</summary>
   <div class="hx-result-body hx-output">
-<h3>🎯 Strategic Account Plan: Northwind Clinics</h3>
+<h3>🎯 Strategic Account Plan: Example Clinic Group</h3>
 <h4>Account Overview</h4>
-<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account Name</strong></td><td>Northwind Clinics</td></tr><tr><td><strong>Industry</strong></td><td>healthcare</td></tr><tr><td><strong>Account Tier</strong></td><td>SMB</td></tr><tr><td><strong>Current ARR</strong></td><td>$24,000</td></tr><tr><td><strong>Expansion Potential</strong></td><td>Medium</td></tr><tr><td><strong>Your Solution</strong></td><td>ClinicFlow scheduling</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account Name</strong></td><td>Example Clinic Group</td></tr><tr><td><strong>Industry</strong></td><td>healthcare</td></tr><tr><td><strong>Account Tier</strong></td><td>SMB</td></tr><tr><td><strong>Current ARR</strong></td><td>$24,000</td></tr><tr><td><strong>Expansion Potential</strong></td><td>Medium</td></tr><tr><td><strong>Your Solution</strong></td><td>ExampleCo Scheduler</td></tr></tbody></table></div>
 <hr>
 <h4>Strategic Analysis</h4>
 <h5>Power Map (To Be Mapped)</h5>
@@ -431,14 +431,14 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Account Plan Builder from Claude?</h2>
   <p class="hx-prose">Connect Revenue Enablement once (see <a href="/connect/">Connect</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Account Plan Builder tool. account name: Northwind Clinics; industry: healthcare; current arr: 24000; your solution: ClinicFlow scheduling.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Account Plan Builder tool. account name: Example Clinic Group; industry: healthcare; current arr: 24000; your solution: ExampleCo Scheduler.</blockquote>
   <p class="hx-prose">MCP tool name: <code>account_plan_builder</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder</code> with this JSON body (see <a href="/docs/#account-plan-builder">Docs</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
-    &quot;account_name&quot;: &quot;Northwind Clinics&quot;,
+    &quot;account_name&quot;: &quot;Example Clinic Group&quot;,
     &quot;industry&quot;: &quot;healthcare&quot;,
     &quot;current_arr&quot;: 24000,
-    &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;
+    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;
   }
 }</pre>
 </section>

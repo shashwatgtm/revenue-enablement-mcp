@@ -115,7 +115,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-09-25",
+   "dateModified": "2026-09-26",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -162,7 +162,7 @@
     <span class="hx-eyebrow">Revenue Enablement · documentation</span>
     <h1>Revenue Enablement documentation</h1>
     <p class="hx-lead">The MCP address, the REST API behind the web forms, and every field of all 12 tools.</p>
-    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-25">25 September 2026</time></p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-26">26 September 2026</time></p>
   </div></div>
 </section>
 <main id="main" class="hx-body">
@@ -182,7 +182,7 @@
   <p class="hx-prose">Send <code>POST https://revenue-enablement.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
   <pre class="hx-code-block">curl -s -X POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder \
   -H "Content-Type: application/json" \
-  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Northwind Clinics&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ClinicFlow scheduling&quot;}}'</pre>
+  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Clinic Group&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;}}'</pre>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
     <li>Limits: 30 requests per minute per IP address; text fields up to 6,000 characters; lists up to 50 items.</li>
@@ -193,7 +193,7 @@
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas on 25 September 2026.</p>
+  <p class="hx-sub">Generated from the server's own input schemas on 26 September 2026.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder <code>account_plan_builder</code></h3>

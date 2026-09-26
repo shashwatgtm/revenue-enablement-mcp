@@ -63,18 +63,17 @@
    "@id": "https://www.gtmexpert.com/#shashwat",
    "name": "Shashwat Ghosh",
    "jobTitle": "Co-Founder and Fractional CMO",
-   "description": "Co-Founder and Fractional CMO of Helix GTM Consulting since October 2022, with 24+ years in B2B and 10+ years of fractional experience. Creator of the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology. Has led 6+ major corporate rebrands.",
+   "description": "Co-Founder and Fractional CMO of Helix GTM Consulting since October 2022, with 24+ years in B2B and 10+ years of fractional experience. Creator of the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology. Has led 6+ major corporate rebrands. Results: VP Marketing, Happay: 161% ARR growth. 2x exit: CRED ($180M), then MakeMyTrip. VP Performance Marketing, Locus: $4.2M pipeline. Acquired by IKEA (Ingka Group) in Oct 2025. Fractional CMO, FieldAssist: 2.25x growth in mid-market and enterprise qualified leads. Advisor, QuantumStreet AI: rebranded a $7Bn AUM AI investment fund, with Digitas and IBM. 4x business growth, Airtel Data Centers and Managed Services. Rs 2.35 Cr TCV in 6 months with ABM at Seclore, and 225+ sales meetings across Seclore's target accounts.",
    "worksFor": {
     "@id": "https://tools.gtmhelix.com/#org"
    },
    "url": "https://www.gtmexpert.com",
    "email": "shashwat@gtmhelix.com",
    "award": [
-    "LinkedIn Top Product Marketing Voice, ranked #10 India and #52 worldwide (Favikon verified)",
-    "#14 in AI Research and Innovation on LinkedIn India (Favikon verified)",
-    "Top 30 Product-Led Growth (PLG) worldwide",
-    "Most Admired Marketing Leaders 2025 (CMO Asia, World Leadership Congress)",
-    "B2B Marketer of the Year 2020, CMO Asia, Fintech category"
+    "LinkedIn Top Product Marketing Voice: #10 India, #52 worldwide (Favikon verified)",
+    "#14 in AI Research and Innovation on LinkedIn India",
+    "Most Admired Marketing Leaders 2025 (CMO Asia)",
+    "B2B Marketer of the Year 2020, Fintech (CMO Asia)"
    ],
    "knowsAbout": [
     "Go-to-market strategy",
@@ -97,6 +96,32 @@
     "https://www.gtmexpert.com/",
     "https://github.com/shashwatgtm",
     "https://x.com/Shashwat_Ghosh"
+   ],
+   "hasOccupation": [
+    {
+     "@type": "Occupation",
+     "name": "VP Marketing, Happay: 161% ARR growth. 2x exit: CRED ($180M), then MakeMyTrip."
+    },
+    {
+     "@type": "Occupation",
+     "name": "VP Performance Marketing, Locus: $4.2M pipeline. Acquired by IKEA (Ingka Group) in Oct 2025."
+    },
+    {
+     "@type": "Occupation",
+     "name": "Fractional CMO, FieldAssist: 2.25x growth in mid-market and enterprise qualified leads."
+    },
+    {
+     "@type": "Occupation",
+     "name": "Advisor, QuantumStreet AI: rebranded a $7Bn AUM AI investment fund, with Digitas and IBM."
+    },
+    {
+     "@type": "Occupation",
+     "name": "4x business growth, Airtel Data Centers and Managed Services."
+    },
+    {
+     "@type": "Occupation",
+     "name": "Rs 2.35 Cr TCV in 6 months with ABM at Seclore, and 225+ sales meetings across Seclore's target accounts."
+    }
    ]
   },
   {
@@ -121,7 +146,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-09-26",
+   "dateModified": "2026-09-27",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -167,10 +192,10 @@
     </header>
 <section class="hx-hero">
   <div class="hx-wrap"><div class="hx-hero-inner">
-    <span class="hx-eyebrow">Revenue Enablement · documentation</span>
+    <span class="hx-eyebrow">For developers</span>
     <h1>Revenue Enablement documentation</h1>
     <p class="hx-lead">The MCP address, the REST API behind the web forms, and every field of all 12 tools.</p>
-    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-26">26 September 2026</time></p>
+    <p class="hx-byline">By <a href="https://www.gtmexpert.com/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix GTM Consulting · Last updated <time datetime="2026-09-27">27 September 2026</time></p>
   </div></div>
 </section>
 
@@ -181,7 +206,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.1.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.2.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
 </section>
@@ -191,7 +216,7 @@
   <p class="hx-prose">Send <code>POST https://revenue-enablement.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
   <pre class="hx-code-block">curl -s -X POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder \
   -H "Content-Type: application/json" \
-  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Clinic Group&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;}}'</pre>
+  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Clinic Group&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;, &quot;current_products&quot;: &quot;ExampleCo Scheduler at 3 of their 12 clinics&quot;}}'</pre>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 429 when the rate limit is reached, 500 if the tool fails.</li>
     <li>Limits: 30 requests per minute per IP address; the whole request up to 32,000 bytes; top-level text fields up to 6,000 characters and top-level lists up to 50 items.</li>
@@ -202,7 +227,7 @@
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas on 26 September 2026.</p>
+  <p class="hx-sub">Generated from the server's own input schemas on 27 September 2026.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder <code>account_plan_builder</code></h3>
@@ -238,7 +263,7 @@
 </section>
 <section class="hx-section" id="discovery-question-bank" aria-labelledby="d-discovery-question-bank">
   <h3 id="d-discovery-question-bank">Discovery Question Bank <code>discovery_question_bank</code></h3>
-  <p class="hx-prose">Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect. <a href="/tools/discovery-question-bank/">Open the form</a>.</p>
+  <p class="hx-prose">Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect. <a href="/tools/discovery-question-bank/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>framework</code></td><td>string</td><td>yes</td><td>meddpicc, bant, spiced, challenger, gap_selling, all</td><td>Discovery framework to use</td></tr>
 <tr><td><code>prospect_industry</code></td><td>string</td><td>no</td><td></td><td>Prospect industry for context</td></tr>
@@ -402,11 +427,11 @@
 </main>
 <footer class="hx-footer">
         <div class="hx-wrap">
-            <div class="hx7-built"><picture class="hx7-built-photo"><source srcset="/assets/shashwat-ghosh-160.webp" type="image/webp"><img src="/assets/shashwat-ghosh-160.jpg" width="160" height="160" alt="Shashwat Ghosh" decoding="async"></picture><div><p class="hx7-built-h">Built by Shashwat Ghosh</p><p>Co-Founder and Fractional CMO, Helix GTM Consulting. 24+ years in B2B, 10+ years fractional. Creator of the EPIC, IMPACT and CRAFT frameworks.</p><p class="hx7-built-links"><a href="https://www.gtmexpert.com/">gtmexpert.com</a><a href="https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/">LinkedIn</a><a href="https://tools.gtmhelix.com/about/">About Shashwat</a></p></div></div>
+            
             <div class="hx-footer-grid">
                 <div>
                     <a class="hx-lockup" href="/"><span class="hx-alpha" aria-hidden="true">h</span><span class="hx-wordmark">Revenue Enablement</span></a>
-                    <p>Revenue Enablement is a free MCP server and web app with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting.</p>
+                    <p>Sales enablement tools for B2B revenue teams.</p>
                     <a href="https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/">LinkedIn</a>
                     <a href="https://x.com/Shashwat_Ghosh">X (Twitter)</a>
                 </div>
@@ -428,9 +453,8 @@
                     <a href="https://icp-intelligence.gtmhelix.com/">ICP Intelligence</a>
                     <a href="https://tools.gtmhelix.com/">All tools and plugins</a>
                 </div>
-                <div>
+                <div id="writing">
                     <p class="hx-foot-h">Writing</p>
-                    <a href="https://gtmhelix.com/blog/">Blog</a>
                     <a href="https://gtmexpert.substack.com/">GTM Whisperer newsletter</a>
                     <a href="https://gtmhelix.com/ai-trendwatch/">Offbeat AI Watch</a>
                 </div>

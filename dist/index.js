@@ -4097,11 +4097,11 @@ When they compare prices, ensure they compare:
 
 ### Contract Terms to Highlight
 
-${competitor} may have concerning terms:
-- Auto-renewal with price escalation
-- Limited termination rights
-- Hidden fees
-- Restrictive usage terms
+Ask these about ${competitor}'s contract (nothing here says ${competitor} has these terms; check the actual contract):
+- Does it auto-renew, and can the price rise at renewal?
+- What are the termination rights and notice periods?
+- Are there fees outside the quoted price?
+- Are there usage limits or restrictions?
 
 **Ask:**
 - "What's the notice period for changes?"
@@ -5517,7 +5517,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.0';
+exports.SERVER_VERSION = '1.2.1';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",
@@ -5541,29 +5541,53 @@ function withMeta(tool) {
         annotations: { title, readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     };
 }
-const NEGATIVE_AMOUNT = /(^|[\s(:=])[-\u2212]\$\s*\d|\$\s*[-\u2212]\s*\d|^\s*[-\u2212]\s*\d/;
-function checkLimits(schema, value, path, problems) {
-    if (schema.properties && value && typeof value === "object" && !Array.isArray(value)) {
-        for (const [key, p] of Object.entries(schema.properties)) {
-            checkLimits(p, value[key], path ? `${path}.${key}` : key, problems);
-        }
+const NEGATIVE_AMOUNT = /\$\s*[-\u2212]\s*\d|(^|[\s(:=,;])[-\u2212](?:\$|usd|inr|eur|gbp|rs\.?|\u20b9|\u20ac|\u00a3)?\s?\d[\d,]*(?:\.\d+)?(?![\d,.]|\s*%)/i;
+const NEGATIVE_MONEY = /[-−]\s?[$₹€£]\s*\d|[$₹€£]\s*[-−]\s*\d|\b(?:mrr|arr|cac|ltv|acv)\b[:\s]*[-−]\s*\d/i;
+const AMOUNT_RANGE = /\d\s*[kmb]?\s*(?:-|\u2013|\u2014|to)\s*[$\u20b9\u20ac\u00a3]?\s*\d/i;
+function checkValue(schema, holder, key, path, problems) {
+    const box = holder;
+    const value = box[key];
+    if (value === undefined || value === null)
+        return;
+    if (schema.properties && typeof value === "object" && !Array.isArray(value)) {
+        for (const [k, p] of Object.entries(schema.properties))
+            checkValue(p, value, k, path ? `${path}.${k}` : k, problems);
         return;
     }
     if (schema.items && Array.isArray(value)) {
-        value.forEach((item, i) => checkLimits(schema.items, item, `${path}[${i}]`, problems));
+        value.forEach((_, i) => checkValue(schema.items, value, i, `${path}[${i}]`, problems));
+        return;
+    }
+    if (Array.isArray(schema.enum) && typeof value === "string" && !schema.enum.includes(value)) {
+        problems.push(`${path} must be one of: ${schema.enum.join(", ")}`);
         return;
     }
     if (schema.type !== "number" && schema.type !== "integer")
         return;
-    const v = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
-    if (typeof v !== "number" || !Number.isFinite(v))
+    let v = value;
+    if (typeof v === "string") {
+        const n = v.trim() === "" ? NaN : Number(v.replace(/,/g, "").trim());
+        if (!Number.isFinite(n)) {
+            problems.push(`${path} must be a number, written with digits only (for example 220000)`);
+            return;
+        }
+        box[key] = n;
+        v = n;
+    }
+    if (typeof v !== "number" || !Number.isFinite(v)) {
+        problems.push(`${path} must be a number`);
         return;
+    }
     if (typeof schema.minimum === "number" && v < schema.minimum)
         problems.push(`${path} must be ${schema.minimum} or more`);
+    if (typeof schema.exclusiveMinimum === "number" && v <= schema.exclusiveMinimum)
+        problems.push(`${path} must be more than ${schema.exclusiveMinimum}`);
     if (typeof schema.maximum === "number" && v > schema.maximum)
         problems.push(`${path} must be ${schema.maximum} or less`);
 }
-const AMOUNT_TEXT = { pricing_negotiation_guide: ["competitor_price"], champion_enablement_kit: ["budget_context"] };
+const MONEY_TEXT = { pricing_negotiation_guide: ["competitor_price", "value_delivered"], champion_enablement_kit: ["budget_context"], proposal_section_writer: ["pricing"] };
+const METRIC_TEXT = {};
+const ONE_AMOUNT = {};
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
@@ -5574,13 +5598,26 @@ function checkRequiredInputs(name, args) {
     if (missing.length > 0) {
         return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
-    // Decision N2 (run 6): amounts, counts and durations cannot be negative; the schema says which (minimum, maximum).
+    // Decision N2 (run 6) and run 7: schema limits at any depth, choices, money text and single amounts.
     const problems = [];
-    checkLimits(tool.inputSchema, args ?? {}, "", problems);
-    for (const key of AMOUNT_TEXT[name] ?? []) {
+    if (args) {
+        for (const [k, p] of Object.entries(tool.inputSchema.properties ?? {}))
+            checkValue(p, args, k, k, problems);
+    }
+    for (const key of MONEY_TEXT[name] ?? []) {
         const raw = args?.[key];
         if (typeof raw === "string" && NEGATIVE_AMOUNT.test(raw))
             problems.push(`${key} must not contain a negative amount`);
+    }
+    for (const key of METRIC_TEXT[name] ?? []) {
+        const raw = args?.[key];
+        if (typeof raw === "string" && NEGATIVE_MONEY.test(raw))
+            problems.push(`${key} must not contain a negative amount of money`);
+    }
+    for (const key of ONE_AMOUNT[name] ?? []) {
+        const raw = args?.[key];
+        if (typeof raw === "string" && AMOUNT_RANGE.test(raw))
+            problems.push(`${key} must be one amount, not a range (for example $75,000)`);
     }
     if (problems.length > 0) {
         return `Invalid input for ${name}: ${problems.join("; ")}.`;

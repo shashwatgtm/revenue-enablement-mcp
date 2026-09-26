@@ -1,7 +1,7 @@
 {
   "name": "@shashwatgtmalpha/revenue-enablement-mcp",
   "mcpName": "io.github.shashwatgtm/revenue-enablement-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Revenue Enablement MCP server: account plans, deal strategy, discovery questions, ROI cases, mutual action plans, win/loss reviews, proposals, email sequences, demo scripts, negotiation guides, champion kits and competitive traps. Runs locally over stdio (npm) or hosted over Streamable HTTP.",
   "main": "dist/index.js",
   "bin": {

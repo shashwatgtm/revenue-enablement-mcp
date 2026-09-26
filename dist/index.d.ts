@@ -19,6 +19,6 @@
  */
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export declare const SERVER_NAME = "revenue-enablement-mcp";
-export declare const SERVER_VERSION = "1.2.1";
+export declare const SERVER_VERSION = "1.2.2";
 export declare function createServer(): Server;
 //# sourceMappingURL=index.d.ts.map

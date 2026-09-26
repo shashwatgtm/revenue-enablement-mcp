@@ -1,4 +1,4 @@
-# Revenue Enablement MCP v1.2.1
+# Revenue Enablement MCP v1.2.2
 **Deal Strategy & Sales Enablement Engine** - 12 tools for sales execution, deal management, and revenue acceleration.
 
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/revenue-enablement-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/revenue-enablement-mcp)
@@ -31,13 +31,13 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 26 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.1, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.2, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
 | 1 | `account_plan_builder` | Account Plan Builder | Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. |
 | 2 | `deal_strategy_coach` | Deal Strategy Coach | Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. |
-| 3 | `discovery_question_bank` | Discovery Question Bank | Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect. |
+| 3 | `discovery_question_bank` | Discovery Question Bank | Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect. |
 | 4 | `roi_business_case_builder` | ROI Business Case Builder | Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary. |
 | 5 | `mutual_action_plan_generator` | Mutual Action Plan Generator | Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. |
 | 6 | `win_loss_analyzer` | Win/Loss Analyzer | Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate. |
@@ -305,8 +305,8 @@ This MCP supports multiple sales methodologies:
 
 **Shashwat Ghosh**, Co-Founder and Fractional CMO, Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/shashwatghosh)
-[![Twitter](https://img.shields.io/badge/Twitter-Follow-1DA1F2)](https://twitter.com/Shashwat_Ghosh)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/shashwatghosh-ai-b2b-gtm-fractionalcmo/)
+[![X](https://img.shields.io/badge/X-Follow-1A0E10)](https://x.com/Shashwat_Ghosh)
 [![Website](https://img.shields.io/badge/Website-gtmhelix.com-green)](https://gtmhelix.com)
 
 ---

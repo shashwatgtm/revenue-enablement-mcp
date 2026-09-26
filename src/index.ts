@@ -144,7 +144,7 @@ const tools: Record<string, Tool> = {
   // Tool 3: Discovery Question Bank
   discovery_question_bank: {
     name: 'discovery_question_bank',
-    description: 'Get contextual discovery questions using MEDDPICC, BANT, SPICED, or custom frameworks. Questions adapt based on what you already know about the prospect.',
+    description: 'Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -4808,7 +4808,7 @@ ${EXAMPLES}
 - ROI achieved in X months
 
 > "Quote from customer about their experience."
-> — [Name, Title, Company]
+> ([Name, Title, Company])
 
 ---
 
@@ -4827,7 +4827,7 @@ ${EXAMPLES}
 - Enabled growth without adding headcount
 
 > "Quote from customer."
-> — [Name, Title, Company]
+> ([Name, Title, Company])
 
 ---
 
@@ -4909,6 +4909,12 @@ ${SUGGESTIONS_FOOTER}`
 }
 
 // Tool 8: Email Sequence Generator
+// Text only: the plural of a persona in a sentence. A persona that already ends in s ("operations directors")
+// is kept as it is (no "directorss"); otherwise an s is added, as before.
+function pluralOf(persona: string): string {
+  const p = persona.trim();
+  return /s$/i.test(p) ? p : `${p}s`;
+}
 function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const sequenceType = (args.sequence_type as string) || 'cold_outreach';
   const targetPersona = (args.target_persona as string) || 'Decision Maker';
@@ -4958,13 +4964,13 @@ Hi [First Name],
 
 ${senderContext ? `${senderContext}` : "I've been following [Company]'s [relevant news/initiative] and noticed [observation]."}
 
-${specificPainPoint ? `Many ${targetPersona}s I talk to are struggling with ${specificPainPoint}. Is this something you're dealing with too?` : `Many ${targetPersona}s I speak with tell me [common pain point] is a top priority this year.`}
+${specificPainPoint ? `Many ${pluralOf(targetPersona)} I talk to are struggling with ${specificPainPoint}. Is this something you're dealing with too?` : `Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.`}
 
 ${keyValueProp ? keyValueProp : `We help companies like yours [key outcome].`}
 
 ${socialProof ? `For context: ${socialProof}` : ''}
 
-Would it make sense to have a quick conversation about ${callToAction === 'meeting' ? 'how we might help?' : callToAction}?
+Would it make sense to have a quick conversation about ${callToAction === 'meeting' ? 'how we might help' : callToAction}?
 
 Best,
 [Your name]
@@ -4981,7 +4987,7 @@ Hi [First Name],
 
 Following up on my note from earlier this week.
 
-I wanted to share [resource/insight/case study] that's been helpful for other ${targetPersona}s dealing with [challenge].
+I wanted to share [resource/insight/case study] that's been helpful for other ${pluralOf(targetPersona)} dealing with [challenge].
 
 [1-2 sentence description of the value]
 
@@ -5202,7 +5208,7 @@ Hi [First Name],
 
 Following up on yesterday's demo.
 
-Something I've seen with other ${targetPersona}s after a demo is wondering about [common concern - implementation, adoption, etc.].
+Something I've seen with other ${pluralOf(targetPersona)} after a demo is wondering about [common concern - implementation, adoption, etc.].
 
 [Proactively address the concern]
 
@@ -5659,7 +5665,7 @@ ${SUGGESTIONS_FOOTER}`;
 // =============================================================================
 
 export const SERVER_NAME = 'revenue-enablement-mcp';
-export const SERVER_VERSION = '1.2.1';
+export const SERVER_VERSION = '1.2.2';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {

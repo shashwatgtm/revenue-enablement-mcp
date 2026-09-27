@@ -911,7 +911,7 @@ Based on the contacts provided, here's the stakeholder analysis:
 3. Who will use the solution daily?
 4. Who must approve the purchase?
 
-**Typical Stakeholders (a general list${args.industry ? `, not specific to ${industry}` : ''}):**
+**Typical Stakeholders (a general list${args.industry ? `, not specific to ${lowerFirstIfCommon(industry)}` : ''}):**
 - **Economic Buyer**: CFO, VP Operations, Business Unit Head
 - **Technical Buyer**: CTO, VP Engineering, IT Director
 - **User Buyer**: Department Head, Team Lead
@@ -1559,7 +1559,7 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
 - "Who else is impacted by these metrics?"
 - "What happens to your goals if you don't address this?"
 
-${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${knownMetrics}. Can you help me understand how you're measuring that today?"` : ''}
+${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${lowerFirstIfCommon(knownMetrics)}. Can you help me understand how you're measuring that today?"` : ''}
 
 ---
 
@@ -1632,7 +1632,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 - "If you do nothing, what happens?"
 
 **Deepening:**
-${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${knownPainPoints}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
+${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${lowerFirstIfCommon(knownPainPoints)}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
 - "Who else in the organization feels this pain?"
 
 ---
@@ -5082,7 +5082,7 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const sequenceTemplates: Record<string, () => string> = {
     cold_outreach: () => `# Cold Outreach Sequence
 
-## Target: ${targetPersona} ${targetIndustry ? `in ${targetIndustry}` : ''}
+## Target: ${targetPersona} ${targetIndustry ? `in ${lowerFirstIfCommon(targetIndustry)}` : ''}
 ## Solution: ${yourSolution}
 ## Tone: ${toneInstructions[tone] || toneInstructions['professional']}
 ## Emails: ${emailsText}
@@ -5094,7 +5094,7 @@ ${fixedLengthNote}
 
 **Subject Options:**
 - Question about [their company's] [relevant initiative]
-- Quick thought on ${specificPainPoint || '[pain point]'}
+- Quick thought on ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[pain point]'}
 - [Mutual connection] suggested I reach out
 
 **Body:**
@@ -5103,7 +5103,7 @@ Hi [First Name],
 
 ${senderContext ? `${senderContext}` : "I've been following [Company]'s [relevant news/initiative] and noticed [observation]."}
 
-${specificPainPoint ? `Many ${pluralOf(targetPersona)} I talk to are struggling with ${specificPainPoint}. Is this something you're dealing with too?` : `Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.`}
+${specificPainPoint ? `Many ${pluralOf(targetPersona)} I talk to are struggling with ${lowerFirstIfCommon(specificPainPoint)}. Is this something you're dealing with too?` : `Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.`}
 
 ${keyValueProp ? keyValueProp : `We help companies like yours [key outcome].`}
 
@@ -5605,7 +5605,7 @@ Before I share my screen, I want to make sure we cover what's most important to 
 
 **[Wait for response - this shapes your demo]**
 
-**[1:00] Agenda Setting**
+**[${intro >= 2 ? 1 : 0}:00] Agenda Setting**
 
 "Perfect. Here's my plan for today:
 1. Quick validation of what I've learned about your situation
@@ -5813,7 +5813,7 @@ ${SUGGESTIONS_FOOTER}`;
 // =============================================================================
 
 export const SERVER_NAME = 'revenue-enablement-mcp';
-export const SERVER_VERSION = '1.2.4';
+export const SERVER_VERSION = '1.2.5';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {

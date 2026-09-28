@@ -1,9 +1,9 @@
-# Revenue Enablement MCP v1.2.5
+# Revenue Enablement MCP v1.2.6
 **Deal Strategy & Sales Enablement Engine** - 12 tools for sales execution, deal management, and revenue acceleration.
 
 ## Use it hosted (no install)
 
-Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.5). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
+Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.6). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
 
 The npm package below is an older version (1.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 
@@ -38,7 +38,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.5, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.6, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -138,7 +138,7 @@ Generated on 27 September 2026 from the server's own tool list (`tools/list` of 
 |---|---|---|---|
 | `analysis_type` | Yes | one of: `single_deal`, `deal_portfolio`, `competitor_analysis`, `loss_pattern` | Type of analysis |
 | `deal_outcome` | No | one of: `won`, `lost`, `no_decision`, `mixed` | Deal outcome for single deal analysis |
-| `deal_details` | No | string | Deal details - can be rough notes, CRM export, or structured data |
+| `deal_details` | No | string | Deal details, can be rough notes, CRM export, or structured data |
 | `loss_reason` | No | string | Stated loss reason (for lost deals) |
 | `competitor_won` | No | string | Competitor who won (if applicable) |
 | `deal_value` | No | number (0 or more) | Deal value |

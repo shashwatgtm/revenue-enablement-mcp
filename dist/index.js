@@ -4963,8 +4963,12 @@ ${SUGGESTIONS_FOOTER}`
 // Tool 8: Email Sequence Generator
 // Text only: the plural of a persona in a sentence. A persona that already ends in s ("operations directors")
 // is kept as it is (no "directorss"); otherwise an s is added, as before.
+// Run 11 addendum 1 (R11-A1-1): the persona in running-text case ("head of Marketing" becomes "heads of marketing").
 function pluralOf(persona) {
-    const p = persona.trim();
+    const p = lowerFirstIfCommon(persona);
+    const m = p.match(/^([A-Za-z]+)( of .+)$/);
+    if (m)
+        return /s$/i.test(m[1]) ? p : `${m[1]}s${m[2]}`;
     return /s$/i.test(p) ? p : `${p}s`;
 }
 function executeEmailSequenceGenerator(args) {
@@ -5058,7 +5062,7 @@ Hi [First Name],
 
 Wanted to share a quick story.
 
-[Similar company] was facing [same challenge] - ${specificPainPoint || '[describe pain]'}.
+[Similar company] was facing [same challenge] - ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[describe pain]'}.
 
 After implementing ${yourSolution}, they achieved:
 - [Result 1]
@@ -5365,7 +5369,7 @@ Would it make sense to reconnect and catch up?
 
 Hi [First Name],
 
-I don't want to keep reaching out if ${specificPainPoint || '[solving this challenge]'} isn't on your radar anymore.
+I don't want to keep reaching out if ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[solving this challenge]'} isn't on your radar anymore.
 
 Quick question: Is this still something you're thinking about, or should I check back at a different time?
 
@@ -5417,7 +5421,7 @@ ${fixedLengthNote}
 
 ---
 
-*Customize based on your specific situation and ${targetPersona} preferences*
+*Customize based on your specific situation and ${lowerFirstIfCommon(targetPersona)} preferences*
 
 ${SUGGESTIONS_FOOTER}`;
 }
@@ -5719,7 +5723,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.6';
+exports.SERVER_VERSION = '1.2.7';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",

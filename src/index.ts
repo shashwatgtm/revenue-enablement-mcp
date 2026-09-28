@@ -959,14 +959,14 @@ ${currentProducts}
 
 ### Whitespace Opportunities
 Based on current products, consider expansion into:
-1. **Adjacent use cases** - Who else has similar problems?
-2. **Deeper penetration** - More users, more features, more data
-3. **Cross-sell** - Complementary products they don't have
+1. **Adjacent use cases**: Who else has similar problems?
+2. **Deeper penetration**: More users, more features, more data
+3. **Cross-sell**: Complementary products they don't have
 4. **Upsell** - Premium tiers, enterprise features`;
   } else {
     whitespaceAnalysis = `
 ### Whitespace Analysis
-**Full greenfield opportunity** - No current footprint
+**Full greenfield opportunity**: No current footprint
 
 **Land Strategy Recommendations:**
 1. Start with a specific pain point and team
@@ -1014,9 +1014,9 @@ ${competitiveThreats}
 ${expansionOpportunities}
 
 ### Expansion Playbook
-1. **Document current value** - Quantify ROI from existing usage
-2. **Identify expansion sponsors** - Who benefits from growth?
-3. **Map to business initiatives** - Tie to strategic priorities
+1. **Document current value**: Quantify ROI from existing usage
+2. **Identify expansion sponsors**: Who benefits from growth?
+3. **Map to business initiatives**: Tie to strategic priorities
 4. **Create urgency** - Why expand now vs later?`;
   }
 
@@ -1259,10 +1259,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Earn the first meeting
 
 **Tactical Priorities:**
-1. **Research deeply** - Know their business before outreach
-2. **Find a warm path** - Referral, common connection, trigger event
-3. **Lead with insight** - Not what you sell, but what you know
-4. **Multi-channel approach** - Email, LinkedIn, phone, events
+1. **Research deeply**: Know their business before outreach
+2. **Find a warm path**: Referral, common connection, trigger event
+3. **Lead with insight**: Not what you sell, but what you know
+4. **Multi-channel approach**: Email, LinkedIn, phone, events
 
 **Key Questions to Answer:**
 - Why would they take a meeting NOW?
@@ -1280,10 +1280,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Understand and quantify the problem
 
 **Tactical Priorities:**
-1. **Deep discovery** - Understand the problem better than they do
-2. **Quantify impact** - Turn pain into dollars and time
-3. **Multi-thread** - Don't rely on single contact
-4. **Map the process** - Understand how they buy
+1. **Deep discovery**: Understand the problem better than they do
+2. **Quantify impact**: Turn pain into dollars and time
+3. **Multi-thread**: Don't rely on single contact
+4. **Map the process**: Understand how they buy
 
 **Key Questions to Answer:**
 - What's the cost of inaction?
@@ -1303,10 +1303,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Connect solution to their specific needs
 
 **Tactical Priorities:**
-1. **Customize heavily** - Demo their use case, not features
-2. **Confirm understanding** - Validate discovery before showing
-3. **Address concerns** - Surface and handle objections
-4. **Drive commitment** - Get clear next steps
+1. **Customize heavily**: Demo their use case, not features
+2. **Confirm understanding**: Validate discovery before showing
+3. **Address concerns**: Surface and handle objections
+4. **Drive commitment**: Get clear next steps
 
 **Key Questions Before Demo:**
 - "What would make this demo a success for you?"
@@ -1325,10 +1325,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Present a compelling, differentiated offer
 
 **Tactical Priorities:**
-1. **No surprises** - Proposal should confirm what's already discussed
+1. **No surprises**: Proposal should confirm what's already discussed
 2. **Quantify value** - ROI > 3x investment ${EXAMPLE}
-3. **Differentiate** - Why you, not just why change
-4. **Create urgency** - Why now matters
+3. **Differentiate**: Why you, not just why change
+4. **Create urgency**: Why now matters
 
 **Proposal Must Include:**
 - Executive summary (1 page)
@@ -1351,10 +1351,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Close deal while protecting value
 
 **Tactical Priorities:**
-1. **Defend value** - Trade, don't discount
+1. **Defend value**: Trade, don't discount
 2. **Multi-thread** - Don't let procurement isolate you
-3. **Create urgency** - Why close by target date
-4. **Stay close to champion** - They fight for you internally
+3. **Create urgency**: Why close by target date
+4. **Stay close to champion**: They fight for you internally
 
 **Negotiation Tactics:**
 - Never discount without getting something back
@@ -1381,10 +1381,10 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Get signature and start value delivery
 
 **Tactical Priorities:**
-1. **Remove all blockers** - Legal, procurement, technical
+1. **Remove all blockers**: Legal, procurement, technical
 2. **Daily communication** - Don't let momentum die
-3. **Parallel processing** - Multiple tracks moving
-4. **Executive alignment** - Keep sponsors engaged
+3. **Parallel processing**: Multiple tracks moving
+4. **Executive alignment**: Keep sponsors engaged
 
 **Closing Checklist:**
 - [ ] All technical validations complete
@@ -1406,16 +1406,16 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 **Primary Objective:** Re-qualify or kill the deal
 
 **Diagnostic Questions:**
-1. **Is there a real problem?** - Or did we create perceived need?
-2. **Do they have budget?** - Confirmed, not assumed
-3. **Is timing real?** - What happens if they don't act?
-4. **Do we have power?** - Access to decision maker?
+1. **Is there a real problem?** Or did we create perceived need?
+2. **Do they have budget?** Confirmed, not assumed
+3. **Is timing real?** What happens if they don't act?
+4. **Do we have power?** Access to decision maker?
 
 **Recovery Tactics:**
-1. **Go high** - Request executive conversation
-2. **Create event** - New information, risk, or opportunity
-3. **Change the conversation** - Different angle or use case
-4. **Walk away test** - "Should we pause this?"
+1. **Go high**: Request executive conversation
+2. **Create event**: New information, risk, or opportunity
+3. **Change the conversation**: Different angle or use case
+4. **Walk away test**: "Should we pause this?"
 
 **Kill Criteria (Move On If):**
 - Champion has left or disengaged
@@ -1438,12 +1438,12 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 
 Without a champion, win rate drops 70%+ ${EXAMPLE}. Immediate action required:
 
-1. **Identify potential champions** - Who has the pain and influence?
-2. **Test for championship** - Will they:
+1. **Identify potential champions**: Who has the pain and influence?
+2. **Test for championship**: Will they:
    - Advocate internally when you're not there?
    - Share information about competition and process?
    - Help you access other stakeholders?
-3. **Enable your champion** - Give them ammunition:
+3. **Enable your champion**: Give them ammunition:
    - Internal business case
    - Executive talking points
    - ROI one-pager
@@ -1472,10 +1472,10 @@ You don't know who controls the budget. Action required:
 **Competitors:** ${competitors}
 
 **Tactics:**
-1. **Know their weaknesses** - Every competitor has gaps
-2. **Set traps** - Questions that expose their limitations
-3. **Don't go negative** - Let buyer discover issues
-4. **Change the criteria** - Make your strengths their requirements
+1. **Know their weaknesses**: Every competitor has gaps
+2. **Set traps**: Questions that expose their limitations
+3. **Don't go negative**: Let buyer discover issues
+4. **Change the criteria**: Make your strengths their requirements
 
 **Landmine Questions to Suggest:**
 - "Ask them about [your strength area]"
@@ -1492,13 +1492,13 @@ You don't know who controls the budget. Action required:
 **Known Blockers:** ${blockers}
 
 **Strategy:**
-1. **Understand root cause** - Why are they blocking?
+1. **Understand root cause**: Why are they blocking?
    - Threatened by change?
    - Owns competing solution?
    - Legitimate concerns?
-2. **Address concerns** - Can you solve their problem too?
-3. **Go around** - Can champion neutralize?
-4. **Executive cover** - Get mandate from above
+2. **Address concerns**: Can you solve their problem too?
+3. **Go around**: Can champion neutralize?
+4. **Executive cover**: Get mandate from above
 
 `;
   }
@@ -1532,10 +1532,10 @@ ${specificRecs}
 ## Immediate Actions
 
 ### Next 24-48 Hours
-${championStatus === 'no_champion' ? '1. 🔴 **Identify champion** - Cannot win without one' : championStatus === 'potential_champion' ? '1. 🟡 **Confirm your potential champion** - test them before you rely on them' : '1. ✅ Champion identified - keep them engaged'}
-${!economicBuyer ? '2. 🔴 **Find economic buyer** - Who controls budget?' : '2. ✅ Economic buyer known - get them involved'}
+${championStatus === 'no_champion' ? '1. 🔴 **Identify champion**: Cannot win without one' : championStatus === 'potential_champion' ? '1. 🟡 **Confirm your potential champion**: test them before you rely on them' : '1. ✅ Champion identified - keep them engaged'}
+${!economicBuyer ? '2. 🔴 **Find economic buyer**: Who controls budget?' : '2. ✅ Economic buyer known - get them involved'}
 3. 📞 **Advance the deal** - ${nextSteps || 'Schedule next meeting with clear agenda'}
-4. 📝 **Update CRM** - Document all new information
+4. 📝 **Update CRM**: Document all new information
 
 ### This Week
 - [ ] Confirm or find champion
@@ -1549,11 +1549,11 @@ ${!economicBuyer ? '2. 🔴 **Find economic buyer** - Who controls budget?' : '2
 ## Coaching Questions
 
 Ask yourself:
-1. **Why will they buy?** - What's the compelling event?
-2. **Why will they buy from us?** - What's our differentiation?
-3. **Why will they buy now?** - What creates urgency?
-4. **Who decides?** - Do we have the right relationships?
-5. **What can go wrong?** - What are we not seeing?
+1. **Why will they buy?** What's the compelling event?
+2. **Why will they buy from us?** What's our differentiation?
+3. **Why will they buy now?** What creates urgency?
+4. **Who decides?** Do we have the right relationships?
+5. **What can go wrong?** What are we not seeing?
 
 ---
 
@@ -2094,8 +2094,8 @@ Executive sponsorship and path to decision`
 **Active Listening:**
 1. **Wait 3 seconds** after they finish before responding
 2. **Summarize** what you heard to confirm understanding
-3. **Go deeper** - "Tell me more about that"
-4. **Take notes** - Show you're capturing what matters
+3. **Go deeper**: "Tell me more about that"
+4. **Take notes**: Show you're capturing what matters
 
 **Question Sequencing:**
 1. **Open** with broad questions (situation)
@@ -2421,10 +2421,10 @@ ${EXAMPLES}
 
 ## Next Steps
 
-1. **Validate assumptions** - Schedule discovery to confirm metrics
-2. **Customize calculations** - Adjust with customer-provided data
-3. **Build executive presentation** - Create 1-page summary for CFO
-4. **Identify champions** - Find stakeholders who benefit from ROI
+1. **Validate assumptions**: Schedule discovery to confirm metrics
+2. **Customize calculations**: Adjust with customer-provided data
+3. **Build executive presentation**: Create 1-page summary for CFO
+4. **Identify champions**: Find stakeholders who benefit from ROI
 
 ---
 
@@ -2851,11 +2851,11 @@ ${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().incl
 ### Why No Decision Happened
 
 **Common Causes:**
-1. **No compelling event** - Status quo was acceptable
-2. **Champion failure** - No one willing to drive change
-3. **Budget reallocation** - Priorities shifted
-4. **Risk aversion** - Fear of change or failure
-5. **Evaluation fatigue** - Too long, lost momentum
+1. **No compelling event**: Status quo was acceptable
+2. **Champion failure**: No one willing to drive change
+3. **Budget reallocation**: Priorities shifted
+4. **Risk aversion**: Fear of change or failure
+5. **Evaluation fatigue**: Too long, lost momentum
 
 ### Investigation Framework
 
@@ -3244,10 +3244,10 @@ ${valueReframe}
 
 If discount approval is needed:
 
-1. **Document the ask** - Why, how much, what we get
-2. **Show your work** - What you've tried
-3. **Make a recommendation** - Not just "they want X%"
-4. **Get approval before offering** - Never surprise leadership`,
+1. **Document the ask**: Why, how much, what we get
+2. **Show your work**: What you've tried
+3. **Make a recommendation**: Not just "they want X%"
+4. **Get approval before offering**: Never surprise leadership`,
 
     budget_objection: () => `# 💰 Budget Objection Handling
 
@@ -3293,10 +3293,10 @@ ${valueDelivered ? `\nBuild the case on the value you supplied: ${valueDelivered
 
 If budget genuinely isn't available:
 
-1. **Lock in pricing** - "We can hold this pricing until [date]"
-2. **Secure commitment** - "If we do this, will you move forward?"
-3. **Stay engaged** - Monthly check-in until budget cycle
-4. **Create urgency** - "Pricing is increasing next quarter" (say this only if it is true)`,
+1. **Lock in pricing**: "We can hold this pricing until [date]"
+2. **Secure commitment**: "If we do this, will you move forward?"
+3. **Stay engaged**: Monthly check-in until budget cycle
+4. **Create urgency**: "Pricing is increasing next quarter" (say this only if it is true)`,
 
     competitor_pricing: () => `# 💰 Competitor Pricing Response
 
@@ -3860,11 +3860,11 @@ ${knownObjections ? `## Anticipated Objections\n\n${knownObjections.split(/\n|,(
 
 ## General Tips for ${championName}
 
-1. **Listen first** - Understand the real concern
-2. **Acknowledge** - Show you heard them
-3. **Respond with evidence** - Not just opinion
-4. **Check for understanding** - "Does that address your concern?"
-5. **Offer next step** - Keep momentum
+1. **Listen first**: Understand the real concern
+2. **Acknowledge**: Show you heard them
+3. **Respond with evidence**: Not just opinion
+4. **Check for understanding**: "Does that address your concern?"
+5. **Offer next step**: Keep momentum
 
 ---
 

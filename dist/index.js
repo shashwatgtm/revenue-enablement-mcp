@@ -1506,7 +1506,7 @@ ${specificRecs}
 
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. 🔴 **Identify champion**: Cannot win without one' : championStatus === 'potential_champion' ? '1. 🟡 **Confirm your potential champion**: test them before you rely on them' : '1. ✅ Champion identified - keep them engaged'}
-${!economicBuyer ? '2. 🔴 **Find economic buyer**: Who controls budget?' : '2. ✅ Economic buyer known - get them involved'}
+${!economicBuyer ? '2. 🔴 **Find economic buyer**: Who controls budget?' : '2. ✅ Economic buyer known: get them involved'}
 3. 📞 **Advance the deal** - ${nextSteps || 'Schedule next meeting with clear agenda'}
 4. 📝 **Update CRM**: Document all new information
 
@@ -1549,7 +1549,7 @@ function executeDiscoveryQuestionBank(args) {
     const meddpiccQuestions = `
 ## MEDDPICC Framework Questions
 
-### M - Metrics
+### M: Metrics
 *What are the quantified goals or benefits the customer expects?*
 
 **Initial Discovery:**
@@ -1566,7 +1566,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 
 ---
 
-### E - Economic Buyer
+### E: Economic Buyer
 *Who has the final authority to approve the spend?*
 
 **Identification:**
@@ -1581,7 +1581,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 
 ---
 
-### D - Decision Criteria
+### D: Decision Criteria
 *What are the formal requirements for making a decision?*
 
 **Understanding:**
@@ -1596,7 +1596,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 
 ---
 
-### D - Decision Process
+### D: Decision Process
 *What is the process for making and approving the decision?*
 
 **Mapping:**
@@ -1611,7 +1611,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 
 ---
 
-### P - Paper Process
+### P: Paper Process
 *What is the formal process for getting contracts signed?*
 
 **Understanding:**
@@ -1626,7 +1626,7 @@ ${knownMetrics ? `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentio
 
 ---
 
-### I - Identify Pain
+### I: Identify Pain
 *What are the business problems driving the initiative?*
 
 **Surface Level:**
@@ -1640,7 +1640,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### C - Champion
+### C: Champion
 *Who will sell internally on your behalf?*
 
 **Identification:**
@@ -1655,7 +1655,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### C - Competition
+### C: Competition
 *What alternatives are being considered?*
 
 **Direct:**
@@ -1671,7 +1671,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
     const bantQuestions = `
 ## BANT Framework Questions
 
-### B - Budget
+### B: Budget
 *Is there budget allocated for this initiative?*
 
 **Discovery:**
@@ -1686,7 +1686,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### A - Authority
+### A: Authority
 *Does this person have the authority to buy?*
 
 **Understanding:**
@@ -1701,7 +1701,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### N - Need
+### N: Need
 *Is there a genuine business need?*
 
 **Validating:**
@@ -1716,7 +1716,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### T - Timeline
+### T: Timeline
 *When do they need to make a decision?*
 
 **Understanding:**
@@ -1732,7 +1732,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
     const spicedQuestions = `
 ## SPICED Framework Questions
 
-### S - Situation
+### S: Situation
 *What is the prospect's current state?*
 
 **Understanding:**
@@ -1747,7 +1747,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${l
 
 ---
 
-### P - Pain
+### P: Pain
 *What problems are they experiencing?*
 
 **Surface:**
@@ -1762,7 +1762,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### I - Impact
+### I: Impact
 *What is the business impact of the pain?*
 
 **Quantifying:**
@@ -1777,7 +1777,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### C - Critical Event
+### C: Critical Event
 *What's creating urgency?*
 
 **Identifying:**
@@ -1792,7 +1792,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### E - Event (or Expected Decision Process)
+### E: Event (or Expected Decision Process)
 *How will they make the decision?*
 
 **Process:**
@@ -1807,7 +1807,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### D - Decision Criteria
+### D: Decision Criteria
 *What factors will drive the decision?*
 
 **Understanding:**
@@ -5723,7 +5723,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.8';
+exports.SERVER_VERSION = '1.2.9';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",

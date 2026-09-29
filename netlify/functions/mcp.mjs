@@ -21,7 +21,8 @@ const MAX_NAME = 100;
 // Tool name to the fields that take a pasted document, article, transcript, notes or content.
 const LONG_TEXT = {
   "account_plan_builder": [
-    "known_contacts"
+    "known_contacts",
+    "account_notes"
   ],
   "win_loss_analyzer": [
     "deal_details"

@@ -1,5 +1,5 @@
 {
-  "name": "Revenue Enablement MCP - Sales Execution",
+  "name": "Revenue Enablement MCP: Sales Execution",
   "version": "1.2.9",
   "description": "Deal strategy with 12 tools: account planning, discovery, ROI cases, proposals, email sequences, demos, negotiations, and competitive traps.",
   "author": "https://github.com/shashwatgtm",
@@ -8,6 +8,6 @@
   "runtime": "node",
   "entry": "dist/index.js",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.30.1"
   }
 }

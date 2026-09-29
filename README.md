@@ -1,5 +1,5 @@
 # Revenue Enablement MCP v1.2.9
-**Deal Strategy & Sales Enablement Engine** - 12 tools for sales execution, deal management, and revenue acceleration.
+**Deal Strategy & Sales Enablement Engine**: 12 tools for sales execution, deal management, and revenue acceleration.
 
 ## Use it hosted (no install)
 
@@ -38,7 +38,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list (`tools/list` of revenue-enablement-mcp 1.2.6, the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list, and checked again on 29 September 2026 against `tools/list` of revenue-enablement-mcp 1.2.9 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
@@ -269,17 +269,6 @@ Generated on 27 September 2026 from the server's own tool list (`tools/list` of 
 | "I need to arm my champion" | `champion_enablement_kit` |
 | "I need competitive landmine questions" | `competitive_trap_setter` |
 
-### Recommended Agent Skills
-
-This MCP is included in these user-focused Agent bundles:
-
-| Agent Bundle | Tools Count | Best For |
-|--------------|-------------|----------|
-| **💼 Account Executive Deal Desk** | 12 tools | AEs, account managers |
-| **📞 SDR Toolkit** | 8 tools | SDRs, BDRs |
-| **🔧 Sales Engineer Toolkit** | 9 tools | SEs, solution consultants |
-| **🎯 Founder GTM Copilot** | 10 tools | Founders doing sales |
-
 ---
 
 ## 🔗 Related MCPs
@@ -320,7 +309,7 @@ This MCP supports multiple sales methodologies:
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License: see [LICENSE](LICENSE) for details.
 
 ---
 
@@ -333,20 +322,20 @@ The same tools are also available as a hosted MCP server, so they work in Claude
 
 - Server URL: `https://revenue-enablement.gtmhelix.com/mcp`
 - Transport: Streamable HTTP (stateless, JSON responses). Authentication: none.
-- Setup guide: https://revenue-enablement.gtmhelix.com/
+- Setup guide: https://revenue-enablement.gtmhelix.com/connect/
 - In Claude: Customize, then Connectors, then Add custom connector, and paste the server URL.
 - In Claude Code: `claude mcp add --transport http revenue-enablement https://revenue-enablement.gtmhelix.com/mcp`
 
 The npm package (stdio) and the hosted server run the same `createServer()` code in `src/index.ts`.
 
-The tool reference on the setup page (https://revenue-enablement.gtmhelix.com/) is generated from the code. Where it differs from the parameter tables earlier in this README, the setup page is correct.
+The tool reference on the docs page (https://revenue-enablement.gtmhelix.com/docs/) is generated from the code. Where it differs from the parameter tables earlier in this README, the docs page is correct.
 
 ## Privacy Policy
 
-Full policy: https://revenue-enablement.gtmhelix.com/privacy.html (also in [PRIVACY.md](PRIVACY.md)).
+Full policy: https://revenue-enablement.gtmhelix.com/privacy/ (also in [PRIVACY.md](PRIVACY.md)).
 
 - **Data collection:** the hosted server receives only the tool name and the inputs of each tool call. The npm package runs on your computer and sends nothing to us.
 - **Use and storage:** inputs are used only to build that call's reply. Nothing is stored: no database, no files, no cache, no logging of inputs or outputs by our code.
-- **Third-party sharing:** none by us. Netlify hosts the server and processes requests under its own policy (https://www.netlify.com/privacy/). The web pages load fonts from Google Fonts.
+- **Third-party sharing:** none by us. Netlify hosts the server and processes requests under its own policy (https://www.netlify.com/privacy/). Fonts are served from this site, so loading a page contacts no one else.
 - **Retention:** we keep no tool inputs or outputs. Netlify keeps its own platform logs under its policy.
 - **Contact:** shashwat@gtmhelix.com

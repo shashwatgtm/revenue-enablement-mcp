@@ -1026,7 +1026,7 @@ ${expansionOpportunities}
   const day60 = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
   const day90 = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-  return `# 🎯 Strategic Account Plan: ${accountName}
+  return `# Strategic Account Plan: ${accountName}
 
 ## Account Overview
 
@@ -1145,11 +1145,11 @@ ${accountNotes ? `### Additional Context\n${accountNotes}\n\n` : ''}### Research
 
 | Priority | Action | Owner | Due Date |
 |----------|--------|-------|----------|
-| 🔴 High | Identify and engage champion | AE | Week 1 |
-| 🔴 High | Map decision-making process | AE | Week 2 |
-| 🟡 Medium | Research competitive landscape | AE | Week 2 |
-| 🟡 Medium | Build initial business case | AE + SE | Week 3 |
-| 🟢 Low | Document account in CRM | AE | Ongoing |
+| High | Identify and engage champion | AE | Week 1 |
+| High | Map decision-making process | AE | Week 2 |
+| Medium | Research competitive landscape | AE | Week 2 |
+| Medium | Build initial business case | AE + SE | Week 3 |
+| Low | Document account in CRM | AE | Ongoing |
 
 ---
 
@@ -1180,28 +1180,28 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   // Champion impact
   if (championStatus === 'multi_threaded') {
     healthScore += 15;
-    healthFactors.push('✅ Multi-threaded (strong)');
+    healthFactors.push('Multi-threaded (strong)');
   } else if (championStatus === 'confirmed_champion') {
     healthScore += 10;
-    healthFactors.push('✅ Confirmed champion');
+    healthFactors.push('Confirmed champion');
   } else if (championStatus === 'potential_champion') {
     healthScore += 0;
-    healthFactors.push('⚠️ Champion not confirmed');
+    healthFactors.push('Note: Champion not confirmed');
   } else {
     healthScore -= 20;
-    healthFactors.push('🔴 No champion identified');
+    healthFactors.push('High risk: No champion identified');
   }
 
   // Economic buyer
   if (economicBuyer && economicBuyer.toLowerCase().includes('engaged')) {
     healthScore += 10;
-    healthFactors.push('✅ Economic buyer engaged');
+    healthFactors.push('Economic buyer engaged');
   } else if (economicBuyer) {
     healthScore += 5;
-    healthFactors.push('⚠️ Economic buyer identified but not engaged');
+    healthFactors.push('Note: Economic buyer identified but not engaged');
   } else {
     healthScore -= 10;
-    healthFactors.push('🔴 Economic buyer unknown');
+    healthFactors.push('High risk: Economic buyer unknown');
   }
 
   // Days in stage penalty
@@ -1218,36 +1218,33 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   const threshold = stageDaysThreshold[dealStage] || 21;
   if (daysInStage > threshold * 2) {
     healthScore -= 15;
-    healthFactors.push(`🔴 ${daysInStage} days in stage (more than 2x this tool's example threshold for the stage) ${EXAMPLE}`);
+    healthFactors.push(`High risk: ${daysInStage} days in stage (more than 2x this tool's example threshold for the stage) ${EXAMPLE}`);
   } else if (daysInStage > threshold) {
     healthScore -= 5;
-    healthFactors.push(`⚠️ ${daysInStage} days in stage (above this tool's example threshold for the stage)`);
+    healthFactors.push(`Note: ${daysInStage} days in stage (above this tool's example threshold for the stage)`);
   }
 
   // Competitor impact
   if (competitors && competitors.toLowerCase().includes('incumbent')) {
     healthScore -= 10;
-    healthFactors.push('⚠️ Competing against incumbent');
+    healthFactors.push('Note: Competing against incumbent');
   } else if (competitors) {
     healthScore -= 5;
-    healthFactors.push('⚠️ Active competition');
+    healthFactors.push('Note: Active competition');
   }
 
   // Blockers impact
   if (blockers) {
     healthScore -= 10;
-    healthFactors.push('🔴 Known blockers present');
+    healthFactors.push('High risk: Known blockers present');
   }
 
   healthScore = Math.max(0, Math.min(100, healthScore));
 
-  let healthColor = '🟢';
   let healthStatus = 'Healthy';
   if (healthScore < 50) {
-    healthColor = '🔴';
     healthStatus = 'At Risk';
   } else if (healthScore < 70) {
-    healthColor = '🟡';
     healthStatus = 'Needs Attention';
   }
 
@@ -1434,7 +1431,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   
   if (championStatus === 'no_champion') {
     specificRecs += `
-### 🔴 CRITICAL: Find Your Champion
+### CRITICAL: Find Your Champion
 
 Without a champion, win rate drops 70%+ ${EXAMPLE}. Immediate action required:
 
@@ -1453,7 +1450,7 @@ Without a champion, win rate drops 70%+ ${EXAMPLE}. Immediate action required:
 
   if (!economicBuyer) {
     specificRecs += `
-### ⚠️ Economic Buyer Unknown
+### Note: Economic Buyer Unknown
 
 You don't know who controls the budget. Action required:
 
@@ -1467,7 +1464,7 @@ You don't know who controls the budget. Action required:
 
   if (competitors) {
     specificRecs += `
-### ⚔️ Competitive Strategy
+### Competitive Strategy
 
 **Competitors:** ${competitors}
 
@@ -1487,7 +1484,7 @@ You don't know who controls the budget. Action required:
 
   if (blockers) {
     specificRecs += `
-### 🚧 Blocker Mitigation
+### Blocker Mitigation
 
 **Known Blockers:** ${blockers}
 
@@ -1503,7 +1500,7 @@ You don't know who controls the budget. Action required:
 `;
   }
 
-  return `# 🎯 Deal Strategy Coach: ${dealName}
+  return `# Deal Strategy Coach: ${dealName}
 
 ## Deal Health Assessment
 
@@ -1516,7 +1513,7 @@ You don't know who controls the budget. Action required:
 | **Target Close** | ${closeDate || 'Not set'} |
 | **Solution** | ${(args.your_solution as string) || NOT_SUPPLIED} |
 
-### Health Score: ${healthColor} ${healthScore}/100 - ${healthStatus}
+### Health Score: ${healthScore}/100 (${healthStatus})
 
 **Health Factors:**
 ${healthFactors.map(f => `- ${f}`).join('\n')}
@@ -1532,10 +1529,10 @@ ${specificRecs}
 ## Immediate Actions
 
 ### Next 24-48 Hours
-${championStatus === 'no_champion' ? '1. 🔴 **Identify champion**: Cannot win without one' : championStatus === 'potential_champion' ? '1. 🟡 **Confirm your potential champion**: test them before you rely on them' : '1. ✅ Champion identified - keep them engaged'}
-${!economicBuyer ? '2. 🔴 **Find economic buyer**: Who controls budget?' : '2. ✅ Economic buyer known: get them involved'}
-3. 📞 **Advance the deal** - ${nextSteps || 'Schedule next meeting with clear agenda'}
-4. 📝 **Update CRM**: Document all new information
+${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
+${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
+3. **Advance the deal**: ${nextSteps || 'Schedule next meeting with clear agenda'}
+4. **Update CRM**: Document all new information
 
 ### This Week
 - [ ] Confirm or find champion
@@ -1961,7 +1958,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 - "What constraints are you working within?"`;
 
   // Build output based on framework selection
-  let output = `# 📋 Discovery Question Bank
+  let output = `# Discovery Question Bank
 
 ## Context
 - **Prospect Industry:** ${prospectIndustry || 'Not specified'}
@@ -2322,7 +2319,7 @@ ${EXAMPLES}
   // Without a price, the investment is a share of the value, so it cannot be shown when no value is computed
   const invCell = (n: number) => (priceSupplied || valueComputed ? `$${fmt(n)}` : nc);
 
-  return `# 💰 ROI Business Case: ${customerName}
+  return `# ROI Business Case: ${customerName}
 
 *Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
 
@@ -2524,7 +2521,7 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
 
   const currentMilestones = stageMillestones[currentStage] || stageMillestones['evaluation'];
 
-  return `# 🤝 Mutual Action Plan: ${dealName}
+  return `# Mutual Action Plan: ${dealName}
 
 ## Overview
 
@@ -2543,10 +2540,10 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
 ### Buyer Team
 | Role | Name | Engagement |
 |------|------|------------|
-| **Champion** | ${buyerChampion || '⚠️ TBD - Need to identify'} | ${buyerChampion ? '✅ Engaged' : '🔴 Not identified'} |
-| **Economic Buyer** | ${economicBuyer || '⚠️ TBD - Need to identify'} | ${economicBuyer ? '⚠️ Needs engagement' : '🔴 Not identified'} |
-| **Technical Evaluator(s)** | ${technicalEvaluators || '⚠️ TBD'} | ${technicalEvaluators ? '✅ In evaluation' : '🔴 Not identified'} |
-| **Procurement** | ${procurementContact || '⚠️ TBD'} | ${procurementContact ? '⚠️ Not yet engaged' : '🔴 Not identified'} |
+| **Champion** | ${buyerChampion || 'TBD: need to identify'} | ${buyerChampion ? 'Engaged' : 'Not identified'} |
+| **Economic Buyer** | ${economicBuyer || 'TBD: need to identify'} | ${economicBuyer ? 'Needs engagement' : 'Not identified'} |
+| **Technical Evaluator(s)** | ${technicalEvaluators || 'TBD'} | ${technicalEvaluators ? 'In evaluation' : 'Not identified'} |
+| **Procurement** | ${procurementContact || 'TBD'} | ${procurementContact ? 'Not yet engaged' : 'Not identified'} |
 
 ### Seller Team
 | Role | Name | Responsibility |
@@ -2574,10 +2571,10 @@ ${knownRequirements ? knownRequirements : `
 ### Evaluation Criteria
 | Priority | Criterion | Status |
 |----------|-----------|--------|
-| 🔴 High | [Core requirement] | ⏳ Pending |
-| 🔴 High | [Core requirement] | ⏳ Pending |
-| 🟡 Medium | [Important feature] | ⏳ Pending |
-| 🟢 Low | [Nice to have] | ⏳ Pending |
+| High | [Core requirement] | Pending |
+| High | [Core requirement] | Pending |
+| Medium | [Important feature] | Pending |
+| Low | [Nice to have] | Pending |
 
 ---
 
@@ -2587,7 +2584,7 @@ ${knownRequirements ? knownRequirements : `
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
-${currentMilestones.map((m, i) => `| ${i + 1} | ${m} | ${i % 2 === 0 ? buyerChampion || 'Buyer' : 'Seller'} | ${formatDate(i < 2 ? week1 : week2)} | ⏳ |`).join('\n')}
+${currentMilestones.map((m, i) => `| ${i + 1} | ${m} | ${i % 2 === 0 ? buyerChampion || 'Buyer' : 'Seller'} | ${formatDate(i < 2 ? week1 : week2)} | Pending |`).join('\n')}
 
 **Key Questions to Answer:**
 ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
@@ -2601,10 +2598,10 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
-| 5 | Present business case to ${economicBuyer || 'economic buyer'} | Seller + ${buyerChampion || 'Champion'} | ${formatDate(weekMinus3)} | ⏳ |
-| 6 | Align on ROI and success metrics | Both | ${formatDate(weekMinus3)} | ⏳ |
-| 7 | Finalize scope and pricing | Seller | ${formatDate(weekMinus3)} | ⏳ |
-| 8 | Reference calls completed | ${buyerChampion || 'Buyer'} | ${formatDate(weekMinus3)} | ⏳ |
+| 5 | Present business case to ${economicBuyer || 'economic buyer'} | Seller + ${buyerChampion || 'Champion'} | ${formatDate(weekMinus3)} | Pending |
+| 6 | Align on ROI and success metrics | Both | ${formatDate(weekMinus3)} | Pending |
+| 7 | Finalize scope and pricing | Seller | ${formatDate(weekMinus3)} | Pending |
+| 8 | Reference calls completed | ${buyerChampion || 'Buyer'} | ${formatDate(weekMinus3)} | Pending |
 
 **Deliverables:**
 - [ ] Executive presentation
@@ -2618,10 +2615,10 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
-| 9 | Commercial terms agreed | Both | ${formatDate(weekMinus2)} | ⏳ |
-| 10 | Legal review initiated | ${procurementContact || 'Procurement'} | ${formatDate(weekMinus2)} | ⏳ |
-| 11 | Security/compliance review complete | Buyer IT | ${formatDate(weekMinus1)} | ⏳ |
-| 12 | All redlines resolved | Both | ${formatDate(weekMinus1)} | ⏳ |
+| 9 | Commercial terms agreed | Both | ${formatDate(weekMinus2)} | Pending |
+| 10 | Legal review initiated | ${procurementContact || 'Procurement'} | ${formatDate(weekMinus2)} | Pending |
+| 11 | Security/compliance review complete | Buyer IT | ${formatDate(weekMinus1)} | Pending |
+| 12 | All redlines resolved | Both | ${formatDate(weekMinus1)} | Pending |
 
 **Documentation Required:**
 - [ ] Master service agreement
@@ -2636,10 +2633,10 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
-| 13 | Final approvals obtained | ${economicBuyer || 'Economic Buyer'} | ${formatDate(weekMinus1)} | ⏳ |
-| 14 | Contract signed | Both | ${formatDate(closeDate)} | ⏳ |
-| 15 | Implementation kickoff scheduled | Both | ${formatDate(closeDate)} | ⏳ |
-| 16 | Success criteria documented | Seller | ${formatDate(closeDate)} | ⏳ |
+| 13 | Final approvals obtained | ${economicBuyer || 'Economic Buyer'} | ${formatDate(weekMinus1)} | Pending |
+| 14 | Contract signed | Both | ${formatDate(closeDate)} | Pending |
+| 15 | Implementation kickoff scheduled | Both | ${formatDate(closeDate)} | Pending |
+| 16 | Success criteria documented | Seller | ${formatDate(closeDate)} | Pending |
 
 ---
 
@@ -2651,8 +2648,8 @@ ${blockers}
 **Mitigation Plan:**
 | Blocker | Mitigation | Owner | Status |
 |---------|------------|-------|--------|
-| [Blocker 1] | [Mitigation approach] | [Owner] | ⏳ |
-| [Blocker 2] | [Mitigation approach] | [Owner] | ⏳ |
+| [Blocker 1] | [Mitigation approach] | [Owner] | Pending |
+| [Blocker 2] | [Mitigation approach] | [Owner] | Pending |
 ` : '### Potential Risks\n- Budget timing/availability\n- Competing priorities\n- Stakeholder alignment\n- Technical integration complexity'}
 
 ### Risk Assessment
@@ -2685,10 +2682,10 @@ ${blockers}
 
 | Priority | Action | Owner | Due |
 |----------|--------|-------|-----|
-| 🔴 | ${!buyerChampion ? 'Identify and confirm champion' : 'Confirm next steps with champion'} | AE | ${formatDate(week1)} |
-| 🔴 | ${!economicBuyer ? 'Identify economic buyer' : 'Schedule economic buyer meeting'} | AE | ${formatDate(week1)} |
-| 🟡 | Share this MAP with buyer champion | AE | ${formatDate(today)} |
-| 🟡 | Validate timeline and milestones | Both | ${formatDate(week1)} |
+| High | ${!buyerChampion ? 'Identify and confirm champion' : 'Confirm next steps with champion'} | AE | ${formatDate(week1)} |
+| High | ${!economicBuyer ? 'Identify economic buyer' : 'Schedule economic buyer meeting'} | AE | ${formatDate(week1)} |
+| Medium | Share this MAP with buyer champion | AE | ${formatDate(today)} |
+| Medium | Validate timeline and milestones | Both | ${formatDate(week1)} |
 
 ---
 
@@ -2721,7 +2718,7 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
 
   if (analysisType === 'single_deal') {
     // Single deal analysis
-    let analysis = `# 📊 Win/Loss Analysis: Single Deal
+    let analysis = `# Win/Loss Analysis: Single Deal
 
 ## Deal Overview
 
@@ -2739,7 +2736,7 @@ ${lossReason ? `| **Stated Reason** | ${lossReason} |` : ''}
 `;
 
     if (dealOutcome === 'won') {
-      analysis += `## Win Analysis 🎉
+      analysis += `## Win Analysis
 
 ### Why We Won (Hypothesis)
 
@@ -2778,7 +2775,7 @@ ${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
 
 `;
     } else if (dealOutcome === 'lost') {
-      analysis += `## Loss Analysis 📉
+      analysis += `## Loss Analysis
 
 ### Why We Lost (Hypothesis)
 
@@ -2846,7 +2843,7 @@ ${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().incl
 
 `;
     } else if (dealOutcome === 'no_decision') {
-      analysis += `## No-Decision Analysis ⏸️
+      analysis += `## No-Decision Analysis
 
 ### Why No Decision Happened
 
@@ -2905,10 +2902,10 @@ ${stakeholdersInvolved}
 ### Engagement Assessment
 | Question | Check |
 |----------|-------|
-| Did we have an executive sponsor? | ❓ |
-| Was economic buyer engaged? | ❓ |
-| Did we multi-thread? | ❓ |
-| Was there a true champion? | ❓ |` : '### Stakeholder Information Needed\n\nFor better analysis, provide:\n- Names and titles\n- Their positions on the deal\n- Engagement level\n- Who we didn\'t reach'}
+| Did we have an executive sponsor? | [Yes or no] |
+| Was economic buyer engaged? | [Yes or no] |
+| Did we multi-thread? | [Yes or no] |
+| Was there a true champion? | [Yes or no] |` : '### Stakeholder Information Needed\n\nFor better analysis, provide:\n- Names and titles\n- Their positions on the deal\n- Engagement level\n- Who we didn\'t reach'}
 
 ---
 
@@ -2934,7 +2931,7 @@ ${SUGGESTIONS_FOOTER}`;
 
   } else if (analysisType === 'deal_portfolio' || analysisType === 'loss_pattern') {
     // Portfolio analysis
-    return `# 📊 Deal Portfolio Analysis
+    return `# Deal Portfolio Analysis
 
 ## Analysis Type: ${analysisType.replace(/_/g, ' ')}
 
@@ -3017,7 +3014,7 @@ ${SUGGESTIONS_FOOTER}`;
 
   } else {
     // Competitor analysis
-    return `# 📊 Competitive Win/Loss Analysis
+    return `# Competitive Win/Loss Analysis
 
 ## Competitor: ${competitorWon || 'Not specified'}
 
@@ -3127,7 +3124,7 @@ You supplied this value: ${valueDelivered}. The example below does not use it: i
 You supplied this value: ${valueDelivered}. Add the deal value to compare the price with that value.`;
 
   const scenarioGuides: Record<string, () => string> = {
-    discount_request: () => `# 💰 Pricing Negotiation Guide: Discount Request
+    discount_request: () => `# Pricing Negotiation Guide: Discount Request
 
 ## Situation Analysis
 
@@ -3249,7 +3246,7 @@ If discount approval is needed:
 3. **Make a recommendation**: Not just "they want X%"
 4. **Get approval before offering**: Never surprise leadership`,
 
-    budget_objection: () => `# 💰 Budget Objection Handling
+    budget_objection: () => `# Budget Objection Handling
 
 ## The Objection: "We don't have budget"
 
@@ -3298,7 +3295,7 @@ If budget genuinely isn't available:
 3. **Stay engaged**: Monthly check-in until budget cycle
 4. **Create urgency**: "Pricing is increasing next quarter" (say this only if it is true)`,
 
-    competitor_pricing: () => `# 💰 Competitor Pricing Response
+    competitor_pricing: () => `# Competitor Pricing Response
 
 ## Situation: Competitor has lower price
 
@@ -3349,7 +3346,7 @@ Suggest the buyer ask the competitor:
 3. "Can I talk to a customer who's been with you 3+ years about total cost?" ${EXAMPLE}
 4. "What happens when we need to scale?"`,
 
-    procurement_pressure: () => `# 💰 Procurement Negotiation Guide
+    procurement_pressure: () => `# Procurement Negotiation Guide
 
 ## Context: Dealing with Professional Buyers
 
@@ -3423,7 +3420,7 @@ If they're pressuring for discount:
 - Services included
 - Renewal terms`,
 
-    renewal_negotiation: () => `# 💰 Renewal Negotiation Guide
+    renewal_negotiation: () => `# Renewal Negotiation Guide
 
 ## Context: Existing Customer Renewal
 
@@ -3483,7 +3480,7 @@ The renewal conversation is the best time to expand:
 
 "Since we're discussing renewal, I wanted to share what other customers like you are doing with [additional product/tier]. Would you like to see how that could benefit you?"`,
 
-    multi_year_negotiation: () => `# 💰 Multi-Year Deal Negotiation
+    multi_year_negotiation: () => `# Multi-Year Deal Negotiation
 
 ## Value Exchange Framework
 
@@ -3546,7 +3543,7 @@ ${EXAMPLES}
 - [ ] Early termination clause (or lack thereof)
 - [ ] Success criteria for continued value`,
 
-    enterprise_agreement: () => `# 💰 Enterprise Agreement Negotiation
+    enterprise_agreement: () => `# Enterprise Agreement Negotiation
 
 ## Large Deal Complexity
 
@@ -4063,7 +4060,7 @@ ${urgencyDrivers ? urgencyDrivers : '- [Why now: the deadline or event that sets
 
 ### Recommendation
 
-✅ **Approve investment in ${yourSolution}**
+**Approve investment in ${yourSolution}**
 
 ---
 
@@ -4092,10 +4089,10 @@ ${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated: [t
 
 | Criteria | ${yourSolution} | Alternative A | Alternative B |
 |----------|-----------------|---------------|---------------|
-| **Capability Fit** | ✅ Full | ⚠️ Partial | ⚠️ Partial |
-| **Integration** | ✅ Easy | ⚠️ Complex | ⚠️ Complex |
-| **Implementation** | ✅ Fast | ⚠️ Slow | ❌ Very slow |
-| **Support** | ✅ Premium | ⚠️ Standard | ❌ Limited |
+| **Capability Fit** | Full | Partial | Partial |
+| **Integration** | Easy | Complex | Complex |
+| **Implementation** | Fast | Slow | Very slow |
+| **Support** | Premium | Standard | Limited |
 | **Total Cost (3yr)** | $XXX,XXX | $XXX,XXX | $XXX,XXX |
 | **Risk** | Low | Medium | High |
 
@@ -4103,7 +4100,7 @@ ${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated: [t
 
 ## Why ${yourSolution}
 
-${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ✅ ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- [Benefits from your key value points]'}
+${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- [Benefits from your key value points]'}
 
 ---
 
@@ -4269,10 +4266,10 @@ ${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these a
 
 | Priority | Criteria | Why It Matters | Questions to Ask All Vendors |
 |----------|----------|----------------|------------------------------|
-| 🔴 Must Have | [Your strength] | [Business reason] | "How do you handle [scenario]?" |
-| 🔴 Must Have | [Your strength] | [Business reason] | "Show me [proof]" |
-| 🟡 Important | [Your strength] | [Business reason] | "What's your approach to [area]?" |
-| 🟢 Nice to Have | [Neutral area] | [Business reason] | "Do you support [feature]?" |
+| Must Have | [Your strength] | [Business reason] | "How do you handle [scenario]?" |
+| Must Have | [Your strength] | [Business reason] | "Show me [proof]" |
+| Important | [Your strength] | [Business reason] | "What's your approach to [area]?" |
+| Nice to Have | [Neutral area] | [Business reason] | "Do you support [feature]?" |
 
 ### How to Suggest Criteria
 
@@ -4399,7 +4396,7 @@ Ask ${competitor}:
 - "Can we start smaller and expand?"`
   };
 
-  let output = `# 🎯 Competitive Positioning: vs ${competitor}
+  let output = `# Competitive Positioning: vs ${competitor}
 
 ## Situation
 - **Competitor:** ${competitor}
@@ -4413,10 +4410,10 @@ ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 ## Competitive Intelligence
 
 ### Your Strengths
-${yourStrengths ? yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ✅ ${s.trim()}`).join('\n') : '- [Define your key differentiators]'}
+${yourStrengths ? yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `- ${s.trim()}`).join('\n') : '- [Define your key differentiators]'}
 
 ### ${competitor} Weaknesses
-${competitorWeaknesses ? competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ❌ ${w.trim()}`).join('\n') : '- [Research competitor weaknesses]'}
+${competitorWeaknesses ? competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `- ${w.trim()}`).join('\n') : '- [Research competitor weaknesses]'}
 
 ---
 
@@ -4485,13 +4482,13 @@ ${evaluationStage === 'finalist' ? `
 
 ## Do's and Don'ts
 
-✅ **Do:**
+**Do:**
 - Ask questions that expose weaknesses
 - Let them discover issues through testing
 - Provide proof for your claims
 - Be helpful and consultative
 
-❌ **Don't:**
+**Don't:**
 - Trash talk the competitor
 - Make claims you can't prove
 - Ignore competitor strengths
@@ -5600,7 +5597,7 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   };
 
-  return `# 🎬 Demo Script: ${cap(demoType.replace(/_/g, ' '))}
+  return `# Demo Script: ${cap(demoType.replace(/_/g, ' '))}
 
 ## Demo Configuration
 

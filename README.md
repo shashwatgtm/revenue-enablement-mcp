@@ -12,7 +12,7 @@ The npm package below is an older version (1.0.0 on npm on 27 September 2026) un
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Run directly with npx
@@ -239,7 +239,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `buyer_persona` | No | string | Role of key evaluator |
 | `trap_type` | No | one of: `discovery_questions`, `evaluation_criteria`, `reference_questions`, `technical_requirements`, `commercial_terms`, `all` | Type of competitive positioning |
 
-## 👤 Who Is This For?
+## Who Is This For?
 
 ### Primary Users
 
@@ -271,7 +271,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 
 ---
 
-## 🔗 Related MCPs
+## Related MCPs
 
 | MCP | Focus | Tools | Link |
 |-----|-------|-------|------|
@@ -282,7 +282,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 
 ---
 
-## 📚 Sales Methodology Support
+## Sales Methodology Support
 
 This MCP supports multiple sales methodologies:
 
@@ -297,7 +297,7 @@ This MCP supports multiple sales methodologies:
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Shashwat Ghosh**, Co-Founder and Fractional CMO, Helix GTM Consulting, with 24+ years in B2B and 10+ years of fractional experience
 
@@ -307,7 +307,7 @@ This MCP supports multiple sales methodologies:
 
 ---
 
-## 📄 License
+## License
 
 MIT License: see [LICENSE](LICENSE) for details.
 

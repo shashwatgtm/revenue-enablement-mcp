@@ -2279,7 +2279,7 @@ ${EXAMPLES}
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost**${priceSupplied ? '' : ` (${NOT_SUPPLIED}) ${EXAMPLE}`} | ${invCell(investment)} | ${invCell(investment)} | ${invCell(investment)} |
+| **Solution Cost**${priceSupplied ? '' : ` (${hasValue(args.solution_price) ? 'zero given, example price used' : NOT_SUPPLIED}) ${EXAMPLE}`} | ${invCell(investment)} | ${invCell(investment)} | ${invCell(investment)} |
 | **Implementation** ${EXAMPLE} | ${invCell(Math.round(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
 | **Total Investment** | ${invCell(Math.round(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
 
@@ -2310,6 +2310,8 @@ ${EXAMPLES}
 | **3-Year Net Value** | ${valueComputed ? `$${fmt(threeYearNet)}` : nc} | - |
 | **Value/Cost Ratio** | ${valueComputed ? `${(totalValue / investment).toFixed(1)}x` : nc} | >3x considered excellent |
 
+ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
+
 ---
 
 ## Assumptions
@@ -2318,7 +2320,7 @@ ${EXAMPLES}
 1. Implementation timeline: ${timelineText}
 2. Full value realization: 6-12 months post-implementation ${EXAMPLE}
 3. Benchmark set used for hourly labor cost and revenue per employee: ${benchmarkText}
-4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), used only to estimate revenue or employees that were not supplied ${EXAMPLE}
+4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), ${annualRevenue && employeeCount ? 'not used here, because revenue and employees were both supplied' : `used only to estimate revenue or employees that were not supplied ${EXAMPLE}`}
 
 ${currentProcess ? `### Current State\n${currentProcess}\n` : ''}
 
@@ -2368,7 +2370,7 @@ ${EXAMPLES}
 ### Why ${yourSolution} for ${customerName}
 
 **The Problem:**
-${currentProcess ? currentProcess : 'Current process creates inefficiencies, costs, and risks that impact business performance.'}
+${currentProcess ? currentProcess : "[The customer's problem in their words]"}
 
 **The Solution:**
 ${yourSolution} addresses these challenges through [key capabilities].
@@ -2746,7 +2748,9 @@ ${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().incl
 
 ### Loss Categories
 
-| Category | Likelihood | Investigation Needed |
+*Check first: set by this tool's rule (High when no stakeholders were given for Champion Failure, or when a competitor won for Competitive Loss; otherwise Medium). It is not a finding about your deal.*
+
+| Category | Check first | Investigation Needed |
 |----------|------------|---------------------|
 | **Champion Failure** | ${stakeholdersInvolved ? 'Medium' : 'High'} | Did we have a true champion? |
 | **Value Not Proven** | Medium | Was ROI quantified and believed? |
@@ -3038,7 +3042,7 @@ function executePricingNegotiationGuide(args) {
 - [Value point 2]
 - [Value point 3]
 
-At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's an X:1 return on investment."`
+At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's a [your ROI multiple, for example X:1] return on investment."`
         : dealValue
             ? `
 You supplied this value: ${valueDelivered}. The example below does not use it: it assumes an example value instead. Replace these figures with your own.
@@ -3066,6 +3070,7 @@ You supplied this value: ${valueDelivered}. Add the deal value to compare the pr
 
 ### Your Leverage
 ${yourLeverage ? yourLeverage : `
+Common leverage points: tick the ones that apply.
 - Unique capabilities they need
 - Time pressure (implementation timeline)
 - Switching costs from current state
@@ -3074,6 +3079,7 @@ ${yourLeverage ? yourLeverage : `
 
 ### Their Leverage
 ${buyerLeverage ? buyerLeverage : `
+Common leverage points: tick the ones that apply.
 - Multiple vendor options
 - Budget constraints
 - Long timeline (no urgency)
@@ -4973,6 +4979,9 @@ ${SUGGESTIONS_FOOTER}`
 // Run 11 addendum 1 (R11-A1-1): the persona in running-text case ("head of Marketing" becomes "heads of marketing").
 function pluralOf(persona) {
     const p = lowerFirstIfCommon(persona);
+    // Run 12: a function name is not a plural title ("Many sales I speak with" becomes "Many people in sales roles").
+    if (/^(sales|marketing|finance|operations|hr|it|engineering|procurement|product|revops|legal|security)$/i.test(p.trim()))
+        return `people in ${p.trim()} roles`;
     const m = p.match(/^([A-Za-z]+)( of .+)$/);
     if (m)
         return /s$/i.test(m[1]) ? p : `${m[1]}s${m[2]}`;
@@ -5003,7 +5012,7 @@ function executeEmailSequenceGenerator(args) {
     const sequenceTemplates = {
         cold_outreach: () => `# Cold Outreach Sequence
 
-## Target: ${targetPersona} ${targetIndustry ? `in ${lowerFirstIfCommon(targetIndustry)}` : ''}
+## Target: ${targetPersona}${targetIndustry ? ` in ${lowerFirstIfCommon(targetIndustry)}` : ''}
 ## Solution: ${yourSolution}
 ## Tone: ${toneInstructions[tone] || toneInstructions['professional']}
 ## Emails: ${emailsText}
@@ -5092,7 +5101,7 @@ ${tone === 'provocative' ? "I'm curious - is this something you've been thinking
 
 Hi [First Name],
 
-I've reached out a few times but haven't heard back. I totally get it - you're busy.
+I've reached out a few times but haven't heard back. I get it: you're busy.
 
 Just want to check: Is [solving pain point] not a priority right now, or is there someone else I should be talking to?
 
@@ -5266,7 +5275,7 @@ Hi [First Name],
 
 Following up on yesterday's demo.
 
-Something I've seen with other ${pluralOf(targetPersona)} after a demo is wondering about [common concern - implementation, adoption, etc.].
+After a demo, many ${pluralOf(targetPersona)} ask about [concern: implementation, adoption].
 
 [Proactively address the concern]
 
@@ -5854,7 +5863,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: result,
+                        text: result.replace(/\n{3,}/g, '\n\n'),
                     },
                 ],
             };

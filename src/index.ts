@@ -2501,7 +2501,7 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
       'Complete technical evaluation/POC',
       'Validate integration requirements',
       'Confirm security and compliance requirements',
-      'Reference calls with similar customers'
+      'Reference calls with similar customers (if you have them)'
     ],
     proposal: [
       'Present business case to economic buyer',
@@ -2610,7 +2610,7 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 **Deliverables:**
 - [ ] Executive presentation
 - [ ] ROI calculator with customer data
-- [ ] Reference customer list
+- [ ] Reference customer list (if you have one)
 - [ ] Draft proposal
 
 ---

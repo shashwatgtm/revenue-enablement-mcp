@@ -1452,7 +1452,7 @@ Without a champion, win rate drops 70%+ (example claim: keep it only if your dat
     specificRecs += `
 ### Note: Economic Buyer Unknown
 
-You don't know who controls the budget. Action required:
+The economic buyer was not supplied. If you do not know who controls the budget:
 
 1. **Ask directly**: "Who has final approval on budget and vendor selection?"
 2. **Map the org**: Who does your champion report to?
@@ -5874,7 +5874,7 @@ ${SUGGESTIONS_FOOTER}`;
 // =============================================================================
 
 export const SERVER_NAME = 'revenue-enablement-mcp';
-export const SERVER_VERSION = '1.2.11';
+export const SERVER_VERSION = '1.2.12';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {

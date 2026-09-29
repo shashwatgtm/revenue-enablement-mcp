@@ -952,7 +952,7 @@ Based on current products, consider expansion into:
 1. **Adjacent use cases**: Who else has similar problems?
 2. **Deeper penetration**: More users, more features, more data
 3. **Cross-sell**: Complementary products they don't have
-4. **Upsell** - Premium tiers, enterprise features`;
+4. **Upsell**: Premium tiers, enterprise features`;
     }
     else {
         whitespaceAnalysis = `
@@ -1007,7 +1007,7 @@ ${expansionOpportunities}
 1. **Document current value**: Quantify ROI from existing usage
 2. **Identify expansion sponsors**: Who benefits from growth?
 3. **Map to business initiatives**: Tie to strategic priorities
-4. **Create urgency** - Why expand now vs later?`;
+4. **Create urgency**: Why expand now vs later?`;
     }
     // Generate 90-day plan
     const today = new Date();
@@ -1022,9 +1022,9 @@ ${expansionOpportunities}
 |-----------|-------|
 | **Account Name** | ${accountName} |
 | **Industry** | ${args.industry || NOT_SUPPLIED} |
-| **Account Tier** | ${accountTier} |
+| **Account Tier** | ${accountTier} (set by this tool's rule from Current ARR) |
 | **Current ARR** | ${hasValue(args.current_arr) ? `$${currentArr.toLocaleString('en-US')}` : NOT_SUPPLIED} |
-| **Expansion Potential** | ${expansionPotential} |
+| **Expansion Potential** | ${expansionPotential} (set by this tool's rule from Current ARR, not from your notes) |
 | **Your Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ---
@@ -1047,7 +1047,7 @@ ${expansionSection ? `---\n${expansionSection}` : ''}
 
 ## 90-Day Account Plan
 
-### Days 1-30: Foundation (by ${day30.toISOString().split('T')[0]})
+### Days 1-30: ${currentArr > 0 ? 'Deepen the relationship' : 'Foundation'} (by ${day30.toISOString().split('T')[0]})
 
 **Objectives:**
 - [ ] Complete stakeholder mapping (all decision makers identified)
@@ -1114,7 +1114,7 @@ ${expansionSection ? `---\n${expansionSection}` : ''}
 
 ${accountNotes ? `### Additional Context\n${accountNotes}\n\n` : ''}### Research Checklist
 - [ ] Recent news and press releases
-- [ ] Earnings calls and investor presentations
+- [ ] Earnings calls and investor presentations (if the company is public)
 - [ ] LinkedIn for org changes and hiring
 - [ ] Glassdoor for culture insights
 - [ ] G2/review sites for tech stack
@@ -1305,7 +1305,7 @@ function executeDealStrategyCoach(args) {
 
 **Tactical Priorities:**
 1. **No surprises**: Proposal should confirm what's already discussed
-2. **Quantify value** - ROI > 3x investment ${EXAMPLE}
+2. **Quantify value**: ROI > 3x investment ${EXAMPLE}
 3. **Differentiate**: Why you, not just why change
 4. **Create urgency**: Why now matters
 
@@ -1330,7 +1330,7 @@ function executeDealStrategyCoach(args) {
 
 **Tactical Priorities:**
 1. **Defend value**: Trade, don't discount
-2. **Multi-thread** - Don't let procurement isolate you
+2. **Multi-thread**: Don't let procurement isolate you
 3. **Create urgency**: Why close by target date
 4. **Stay close to champion**: They fight for you internally
 
@@ -1359,7 +1359,7 @@ function executeDealStrategyCoach(args) {
 
 **Tactical Priorities:**
 1. **Remove all blockers**: Legal, procurement, technical
-2. **Daily communication** - Don't let momentum die
+2. **Daily communication**: Don't let momentum die
 3. **Parallel processing**: Multiple tracks moving
 4. **Executive alignment**: Keep sponsors engaged
 
@@ -1377,7 +1377,7 @@ function executeDealStrategyCoach(args) {
 - Success criteria documented
 - Account plan for expansion`,
         stuck: `
-### STUCK DEAL - Urgent Recovery Strategy
+### STUCK DEAL: Urgent Recovery Strategy
 
 **Primary Objective:** Re-qualify or kill the deal
 
@@ -1410,7 +1410,7 @@ function executeDealStrategyCoach(args) {
         specificRecs += `
 ### CRITICAL: Find Your Champion
 
-Without a champion, win rate drops 70%+ ${EXAMPLE}. Immediate action required:
+Without a champion, win rate drops 70%+ (example claim: keep it only if your data shows it). Immediate action required:
 
 1. **Identify potential champions**: Who has the pain and influence?
 2. **Test for championship**: Will they:
@@ -1487,6 +1487,8 @@ You don't know who controls the budget. Action required:
 | **Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ### Health Score: ${healthScore}/100 (${healthStatus})
+
+*Set by this tool's rule: a base score adjusted for champion status, economic buyer, days in stage, competitors and blockers (the factors below).*
 
 **Health Factors:**
 ${healthFactors.map(f => `- ${f}`).join('\n')}
@@ -1820,13 +1822,13 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
     const challengerQuestions = `
 ## Challenger Sale Framework Questions
 
-### Teach - Share Insights
+### Teach: Share Insights
 *Lead with provocative insights about their business*
 
 **Reframe Questions:**
 - "Have you considered that [surprising insight about their industry]?"
 - "What if the problem isn't [obvious issue] but actually [hidden issue]?"
-- "We've seen companies like yours [unexpected finding] - have you experienced that?"
+- "We've seen companies like yours [unexpected finding]. Have you experienced that?"
 
 **Insight Starters:**
 - "Most companies we talk to think [common belief], but the data shows [surprising reality]."
@@ -1835,7 +1837,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### Tailor - Customize the Message
+### Tailor: Customize the Message
 *Connect insights to their specific situation*
 
 **Resonance Questions:**
@@ -1850,7 +1852,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 ---
 
-### Take Control - Guide the Process
+### Take Control: Guide the Process
 *Assertively lead the conversation and process*
 
 **Direction Setting:**
@@ -2463,7 +2465,7 @@ function executeMutualActionPlanGenerator(args) {
 | **Opportunity** | ${dealName} |
 | **Target Close Date** | ${formatDate(closeDate)}${targetCloseDate ? '' : ` (${NOT_SUPPLIED}: example date)`} |
 | **Days Until Close** | ${daysUntilClose} days${targetCloseDate ? '' : ` ${EXAMPLE}`} |
-| **Current Stage** | ${currentStage.replace(/_/g, ' ')} |
+| **Current Stage** | ${currentStage.replace(/_/g, ' ')}${args.current_stage ? '' : ' (default)'} |
 | **Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
 ---
@@ -2513,7 +2515,7 @@ ${knownRequirements ? knownRequirements : `
 
 ## Mutual Action Plan Timeline
 
-### Phase 1: Current Stage - ${cap(currentStage.replace(/_/g, ' '))} (Now - ${formatDate(week2)})
+### Phase 1: ${cap(currentStage.replace(/_/g, ' '))}, the current stage (now to ${formatDate(week2)})
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
@@ -2527,7 +2529,7 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 ---
 
-### Phase 2: Business Case & Alignment (${formatDate(week2)} - ${formatDate(weekMinus3)})
+### Phase 2: Business Case & Alignment (${formatDate(week2)} to ${formatDate(weekMinus3)})
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
@@ -2544,7 +2546,7 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 ---
 
-### Phase 3: Commercial & Legal (${formatDate(weekMinus3)} - ${formatDate(weekMinus1)})
+### Phase 3: Commercial & Legal (${formatDate(weekMinus3)} to ${formatDate(weekMinus1)})
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
@@ -2562,7 +2564,7 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 
 ---
 
-### Phase 4: Close & Launch (${formatDate(weekMinus1)} - ${formatDate(closeDate)})
+### Phase 4: Close & Launch (${formatDate(weekMinus1)} to ${formatDate(closeDate)})
 
 | # | Milestone | Owner | Due Date | Status |
 |---|-----------|-------|----------|--------|
@@ -2586,7 +2588,7 @@ ${blockers}
 ` : '### Potential Risks\n- Budget timing/availability\n- Competing priorities\n- Stakeholder alignment\n- Technical integration complexity'}
 
 ### Risk Assessment
-| Risk | Likelihood | Impact | Mitigation |
+| Risk | Typical likelihood | Typical impact | Mitigation |
 |------|------------|--------|------------|
 | Timeline slips | Medium | High | Weekly check-ins, early escalation |
 | Budget not approved | Low | Critical | Build strong business case, executive sponsor |
@@ -2617,7 +2619,7 @@ ${blockers}
 |----------|--------|-------|-----|
 | High | ${!buyerChampion ? 'Identify and confirm champion' : 'Confirm next steps with champion'} | AE | ${formatDate(week1)} |
 | High | ${!economicBuyer ? 'Identify economic buyer' : 'Schedule economic buyer meeting'} | AE | ${formatDate(week1)} |
-| Medium | Share this MAP with buyer champion | AE | ${formatDate(today)} |
+| Medium | ${buyerChampion ? 'Share this MAP with buyer champion' : 'Share this MAP with your main buyer contact'} | AE | ${formatDate(today)} |
 | Medium | Validate timeline and milestones | Both | ${formatDate(week1)} |
 
 ---
@@ -4140,7 +4142,7 @@ These questions help surface ${competitor}'s weaknesses without being negative:
 ### Capability Landmines
 ${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `
 **Weakness:** ${w.trim()}
-**Landmine Question:** "How important is [area] to your evaluation? Can you show me how [competitor] handles this specific scenario?"
+**Landmine Question:** "How important is [area] to your evaluation? Can you show me how ${competitor} handles this specific scenario?"
 **Why It Works:** When they test ${competitor} on this, they'll discover the gap.
 `).join('\n')}` : `
 - "Can you walk me through how you'd handle [scenario where they're weak]?"
@@ -4164,12 +4166,12 @@ ${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these a
 - **${s.trim()}**: "Most successful implementations we've seen require [capability]. Is this in your evaluation criteria?"
 `).join('')}` : `
 **Capability Criteria:**
-- "[Your unique capability]" - "We've found this is critical for [outcome]. Is this on your list?"
-- "[Another differentiator]" - "Without this, organizations often struggle with [problem]."
+- "[Your unique capability]": "We've found this is critical for [outcome]. Is this on your list?"
+- "[Another differentiator]": "Without this, organizations often struggle with [problem]."
 
 **Risk Criteria:**
-- "Vendor stability/longevity" - "How are you evaluating vendor risk?"
-- "Customer references in your industry" - "Will you be talking to customers like you?"`}
+- "Vendor stability/longevity": "How are you evaluating vendor risk?"
+- "Customer references in your industry": "Will you be talking to customers like you?"`}
 
 ### Criteria Framework to Suggest
 
@@ -4249,9 +4251,9 @@ ${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map((w, i) => `
 - Why: ${competitor} will struggle with this
 `).join('')}` : `
 **Example Scenarios:**
-1. "[Scenario you handle well]" - Test core capability
-2. "[Edge case you handle]" - Test flexibility
-3. "[Scale scenario]" - Test performance`}
+1. "[Scenario you handle well]": Test core capability
+2. "[Edge case you handle]": Test flexibility
+3. "[Scale scenario]": Test performance`}
 
 ### Security/Compliance Requirements
 
@@ -4306,7 +4308,7 @@ Ask ${competitor}:
 ## Situation
 - **Competitor:** ${competitor}
 - **Your Solution:** ${yourSolution}
-- **Evaluation Stage:** ${evaluationStage}
+- **Evaluation Stage:** ${evaluationStage}${args.evaluation_stage ? '' : ' (default)'}
 - **Buyer Persona:** ${args.buyer_persona || NOT_SUPPLIED}
 ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 
@@ -4355,28 +4357,28 @@ ${competitorWeaknesses ? competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w
 ### ${cap(evaluationStage)} Stage Recommendations
 
 ${evaluationStage === 'early' ? `
-**Early Stage - Shape the Evaluation**
+**Early Stage: Shape the Evaluation**
 - Establish evaluation criteria now
 - Position your strengths as requirements
 - Plant seeds of doubt about alternatives
 - Offer to help them structure the evaluation` : ''}
 
 ${evaluationStage === 'mid' ? `
-**Mid Stage - Differentiate**
+**Mid Stage: Differentiate**
 - Ensure your differentiators are being tested
 - Provide proof points and references
 - Surface competitor limitations through questions
 - Build champion with competitive ammo` : ''}
 
 ${evaluationStage === 'late' ? `
-**Late Stage - Close Strong**
+**Late Stage: Close Strong**
 - Address any lingering concerns
 - Reinforce differentiators
 - Ensure decision criteria favor you
 - Help champion make the case internally` : ''}
 
 ${evaluationStage === 'finalist' ? `
-**Finalist Stage - Win**
+**Finalist Stage: Win**
 - Focus on risk mitigation
 - Provide executive access
 - Offer commercial flexibility
@@ -5078,14 +5080,14 @@ Hi [First Name],
 
 Wanted to share a quick story.
 
-[Similar company] was facing [same challenge] - ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[describe pain]'}.
+[Similar company] was facing [same challenge]: ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[describe pain]'}.
 
 After implementing ${yourSolution}, they achieved:
 - [Result 1]
 - [Result 2]
 - [Result 3]
 
-${tone === 'provocative' ? "I'm curious - is this something you've been thinking about, or is everything running smoothly?" : "I thought this might be relevant given what I know about [their company]."}
+${tone === 'provocative' ? "I'm curious: is this something you've been thinking about, or is everything running smoothly?" : "I thought this might be relevant given what I know about [their company]."}
 
 15 minutes to explore if this could work for you?
 
@@ -5161,7 +5163,7 @@ ${fixedLengthNote}
 
 ### Email 1: Immediate Follow-Up (Same day/next morning)
 
-**Subject:** Great connecting - next steps on [topic]
+**Subject:** Great connecting: next steps on [topic]
 
 **Body:**
 
@@ -5208,7 +5210,7 @@ Any questions, let me know.
 
 ### Email 3: Check-In (Day 7)
 
-**Subject:** Checking in - [topic]
+**Subject:** Checking in: [topic]
 
 **Body:**
 
@@ -5319,7 +5321,7 @@ Hi [First Name],
 
 Wanted to share a quick update that might impact your timeline:
 
-[Relevant urgency driver - pricing, availability, competitor news, etc.]
+[Relevant urgency driver: pricing, availability, competitor news, etc.]
 
 Given our conversation about [their timeline/goals], thought this would be relevant.
 
@@ -5343,7 +5345,7 @@ ${fixedLengthNote}
 
 Hi [First Name],
 
-I noticed [trigger event - news, job change, company milestone].
+I noticed [trigger event: news, job change, company milestone].
 
 Congrats on [specific thing]!
 
@@ -5389,7 +5391,7 @@ I don't want to keep reaching out if ${specificPainPoint ? lowerFirstIfCommon(sp
 
 Quick question: Is this still something you're thinking about, or should I check back at a different time?
 
-Either way is fine - just want to respect your time.
+Either way is fine. I just want to respect your time.
 
 [Your name]`
     };
@@ -5485,7 +5487,7 @@ function executeDemoScriptBuilder(args) {
 | Element | Details |
 |---------|---------|
 | **Type** | ${cap(demoType.replace(/_/g, ' '))} |
-| **Primary Audience** | ${primaryAudience} |
+| **Primary Audience** | ${primaryAudience}${args.primary_audience ? '' : ' (default)'} |
 | **Other Attendees** | ${attendees || 'TBD'} |
 | **Industry** | ${customerIndustry || 'General'} |
 | **Duration** | ${demoDuration} minutes${hasValue(args.demo_duration) ? '' : ' (default)'} |
@@ -5532,9 +5534,9 @@ ${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorCont
 
 "Thanks everyone for joining. I'm [Your name] and I'll be walking you through ${yourSolution} today.
 
-Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} minutes valuable for you?"${hasValue(args.demo_duration) ? '' : ` ${EXAMPLE}`}
+Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} minutes valuable for you?"${hasValue(args.demo_duration) ? '' : '\n\n*The length above is an example: replace it with your own.*'}
 
-**[Wait for response - this shapes your demo]**
+**[Wait for response: this shapes your demo]**
 
 **[${startAt(0.075, intro >= 2 ? 1 : 0)}] Agenda Setting**
 
@@ -5554,7 +5556,7 @@ Does that work for everyone?"
 
 "Before I show you anything, let me confirm what I've learned to make sure the demo is relevant:
 
-${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `Based on what [champion] shared, it sounds like you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
+${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `From what I understand so far, you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
 
 **[Listen and adjust demo focus based on responses]**
 
@@ -5681,8 +5683,7 @@ ${desiredOutcome === 'advance the deal' ? `
 "Based on what you've seen, what would be helpful as a next step?
 
 Options might be:
-- Technical deep dive with your team
-- Business case review
+${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
 - Reference call with similar customer
 - Pilot/POC discussion
 

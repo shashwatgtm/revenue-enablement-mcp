@@ -2434,7 +2434,7 @@ function executeMutualActionPlanGenerator(args) {
             'Complete technical evaluation/POC',
             'Validate integration requirements',
             'Confirm security and compliance requirements',
-            'Reference calls with similar customers'
+            'Reference calls with similar customers (if you have them)'
         ],
         proposal: [
             'Present business case to economic buyer',
@@ -2541,7 +2541,7 @@ ${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
 **Deliverables:**
 - [ ] Executive presentation
 - [ ] ROI calculator with customer data
-- [ ] Reference customer list
+- [ ] Reference customer list (if you have one)
 - [ ] Draft proposal
 
 ---
@@ -5742,7 +5742,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.12';
+exports.SERVER_VERSION = '1.2.13';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",

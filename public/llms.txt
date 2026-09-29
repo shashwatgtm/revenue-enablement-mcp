@@ -1,6 +1,6 @@
 # Revenue Enablement
 
-> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win-loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
+> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
 
 - Web app (no sign-in): https://revenue-enablement.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement.gtmhelix.com/mcp
@@ -32,7 +32,7 @@
 
 ### What is Revenue Enablement?
 
-Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting. Give it an account, a deal or a competitor, and it drafts account plans, deal strategy, discovery questions, ROI business cases, mutual action plans, win-loss reviews, proposal sections, emails, demo scripts, negotiation guides, champion kits and competitive traps.
+Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
 
 ### Is Revenue Enablement free, and do I need an account?
 
@@ -52,7 +52,7 @@ In Claude, open Customize, then Connectors, select + and then Add custom connect
 
 ### Who built it?
 
-Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, a business consulting firm founded in 2022 in Bengaluru. He has 24+ years in B2B and 10+ years of fractional experience, and created the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology.
+Shashwat Ghosh, Co-Founder and Fractional CMO of Helix GTM Consulting, founded in 2022 in Bengaluru. He has 24+ years in B2B and 10+ years of fractional experience, and created the EPIC, IMPACT and CRAFT frameworks and the Hub-Spoke Messaging Methodology.
 
 ### Why do some answers look like templates?
 

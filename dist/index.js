@@ -1079,7 +1079,7 @@ ${expansionSection ? `---\n${expansionSection}` : ''}
 **Key Activities:**
 1. Conduct demo/workshop with stakeholders
 2. Develop ROI model with customer data
-3. Connect champion with reference customers
+3. Connect champion with reference customers, if you have them
 4. Begin technical validation if needed
 
 **Success Criteria:**
@@ -1828,12 +1828,12 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 **Reframe Questions:**
 - "Have you considered that [surprising insight about their industry]?"
 - "What if the problem isn't [obvious issue] but actually [hidden issue]?"
-- "We've seen companies like yours [unexpected finding]. Have you experienced that?"
+- "[Only if true and provable: We've seen companies like yours [unexpected finding].] Have you experienced that?"
 
 **Insight Starters:**
-- "Most companies we talk to think [common belief], but the data shows [surprising reality]."
-- "There's a hidden cost in your current approach that most people miss..."
-- "The best-performing teams in your industry are doing something different..."
+- "[Only if true and provable: Most companies we talk to think [common belief], but the data shows [surprising reality].]"
+- "[Only if true and provable: There's a hidden cost in your current approach: [the cost].]"
+- "[Only if true and provable: The best-performing teams in your industry are doing [what they do differently].]"
 
 ---
 
@@ -1857,7 +1857,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "How does ${knownP
 
 **Direction Setting:**
 - "Based on what I'm hearing, here's what I think we should do next..."
-- "In my experience, the most effective path forward would be..."
+- "The path forward I'd suggest is..."
 - "Let me suggest a different way to think about this..."
 
 **Constructive Tension:**
@@ -2672,7 +2672,7 @@ ${lossReason ? `| **Stated Reason** | ${lossReason} |` : ''}
 
 ### Why We Won (Hypothesis)
 
-Based on the deal information, likely success factors:
+Possible success factors (not from your input: keep only those your deal notes support):
 
 **Value Proposition Alignment**
 - Strong fit between solution and customer needs
@@ -2690,6 +2690,8 @@ Based on the deal information, likely success factors:
 ${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
 
 ### What to Replicate
+
+*Example (not from your input): replace with what worked in this deal.*
 
 | Factor | What Worked | How to Replicate |
 |--------|-------------|------------------|
@@ -3127,7 +3129,7 @@ ${valueReframe}
 
 **Do Say:**
 - "Help me understand what 'better' means. Is this about budget or value?"
-- "We've already priced this competitively. What specifically is the concern?"
+- "[Only if true and provable: We've already priced this competitively.] What specifically is the concern?"
 - "What would need to happen for our current pricing to work?"
 
 ### "Your competitor is 20% cheaper" ${EXAMPLE}
@@ -3194,7 +3196,7 @@ If discount approval is needed:
 
 ### Strategy 1: Find Hidden Budget
 
-"Most companies have discretionary funds for high-impact initiatives. Who would have authority over those funds?"
+"Is there a discretionary fund for high-impact initiatives? Who would have authority over it?"
 
 ### Strategy 2: Build Business Case for Budget
 
@@ -3405,7 +3407,7 @@ Renewals are different from new business. You have leverage (they're using your 
 
 The renewal conversation is the best time to expand:
 
-"Since we're discussing renewal, I wanted to share what other customers like you are doing with [additional product/tier]. Would you like to see how that could benefit you?"`,
+"Since we're discussing renewal, I wanted to share [additional product/tier]. [Only if true and provable: Other customers like you use it for [use case].] Would you like to see how that could benefit you?"`,
         multi_year_negotiation: () => `# Multi-Year Deal Negotiation
 
 ## Value Exchange Framework
@@ -3514,8 +3516,8 @@ Instead of line-item negotiation:
 ### Tactic 3: Use Competition Carefully
 
 Enterprise deals often have multiple vendors. Position on value, not price:
-- "We know you're evaluating alternatives. Here's what makes us different..."
-- "I'm confident our value justifies the investment. Let me show you why."
+- "We know you're evaluating alternatives. Here's what makes us different: [differentiators you can prove]."
+- "[Only if your business case supports it: I'm confident our value justifies the investment.] Let me walk you through the business case."
 
 ---
 
@@ -3749,7 +3751,7 @@ ${knownObjections ? `## Anticipated Objections\n\n${knownObjections.split(/\n|,(
 
 **Supporting Evidence:**
 - How this is different
-- Reference customer stories
+- Reference customer stories (only if you have them)
 
 ---
 
@@ -3811,10 +3813,10 @@ ${championWins ? `## Your Personal Stake\n\nWhen this succeeds, you get:\n${cham
 **Key Points:**
 1. Current state: "[Describe pain point]"
 2. Impact: "[Quantify the cost]"
-3. Trend: "This is getting worse because [reason]"
+3. Trend: "[Only if true: This is getting worse because [reason].]"
 
 **Transition:**
-"There is a solution that addresses all of this."
+"Here is the solution I recommend."
 
 ---
 
@@ -3946,7 +3948,7 @@ ${championName}`,
 |----------|--------|
 | Year 1 Investment | $XX,XXX |
 | Annual Recurring | $XX,XXX |
-| Implementation | Included |
+| Implementation | [Included, or its cost] |
 
 ---
 
@@ -4104,13 +4106,13 @@ This assessment evaluates risks associated with implementing ${yourSolution} and
 | Employee productivity | X hours/week wasted |
 | Opportunity cost | $X in missed growth |
 
-**Risk of inaction exceeds risk of action.**
+**[Your conclusion: does the risk of inaction exceed the risk of action?]**
 
 ---
 
 ## Conclusion
 
-While implementation has some risks, all are manageable with proper planning. The risk of NOT proceeding is higher than proceeding.
+[Your conclusion from the assessment above, for example: While implementation has some risks, all are manageable with proper planning. The risk of NOT proceeding is higher than proceeding.]
 
 ---
 
@@ -4163,11 +4165,11 @@ ${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competit
 ### Criteria to Establish Early
 
 ${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these as requirements:\n${yourStrengths.split(/\n|,(?!\d{3}(?!\d))/).map(s => `
-- **${s.trim()}**: "Most successful implementations we've seen require [capability]. Is this in your evaluation criteria?"
+- **${s.trim()}**: "[Why this matters, from your own customers' results]. Is this in your evaluation criteria?"
 `).join('')}` : `
 **Capability Criteria:**
-- "[Your unique capability]": "We've found this is critical for [outcome]. Is this on your list?"
-- "[Another differentiator]": "Without this, organizations often struggle with [problem]."
+- "[Your differentiating capability]": "[Why this matters for [outcome], only if you can show it]. Is this on your list?"
+- "[Another differentiator]": "[What goes wrong without it, only if you have seen it]."
 
 **Risk Criteria:**
 - "Vendor stability/longevity": "How are you evaluating vendor risk?"
@@ -4184,12 +4186,12 @@ ${yourStrengths ? `Based on your strengths (${yourStrengths}), establish these a
 
 ### How to Suggest Criteria
 
-"Before you evaluate anyone, I'd recommend defining your criteria. In my experience, the most successful projects prioritize:
+"Before you evaluate anyone, I'd recommend defining your criteria. I'd suggest prioritizing:
 1. [Your strength area]
 2. [Your strength area]
 3. [Your strength area]
 
-Would it be helpful if I shared what questions other customers ask vendors?"`,
+Would it be helpful if I shared questions to ask every vendor?"`,
         reference_questions: `## Reference Call Questions
 
 Suggest the buyer ask these questions when speaking with ${competitor}'s references:
@@ -4651,7 +4653,7 @@ ${successMetrics ? successMetrics : `- System fully operational within 12 weeks 
 
 ## Pricing for ${customerName}
 
-${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\n| Component | Investment |\n|-----------|------------|\n| Platform License | $XX,XXX/year |\n| Implementation | $XX,XXX |\n| Training | Included |\n| Support | Included |`}
+${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\n| Component | Investment |\n|-----------|------------|\n| Platform License | $XX,XXX/year |\n| Implementation | $XX,XXX |\n| Training | [Included, or its cost] |\n| Support | [Included, or its cost] |`}
 
 ### Value Justification
 
@@ -4693,7 +4695,7 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 
 ---
 
-*Investment assumes standard scope. Custom pricing available for specific requirements.*`,
+*Investment assumes standard scope. [Custom pricing for specific requirements, only if you offer it.]*`,
         risk_mitigation: () => `# Risk Assessment & Mitigation
 
 ## Ensuring Success for ${customerName}
@@ -4752,7 +4754,7 @@ We prepare for scenarios through:
 
 ---
 
-*We take risk seriously and invest in ensuring your success.*`,
+*[Only if true: We take risk seriously and invest in ensuring your success.]*`,
         success_metrics: () => `# Success Metrics & Measurement
 
 ## How We'll Measure Success
@@ -4802,7 +4804,7 @@ ${EXAMPLES}
 
 ### Success Commitment
 
-We are committed to helping ${customerName} achieve these outcomes. Our success is measured by your success.
+[Your success commitment, for example: We are committed to helping ${customerName} achieve these outcomes.]
 
 ---
 
@@ -4813,7 +4815,7 @@ We are committed to helping ${customerName} achieve these outcomes. Our success 
 
 ### Who We Are
 
-${yourSolution} is a provider of [solution category], trusted by [X+] companies to [core value proposition].
+${yourSolution} is a provider of [solution category] that helps [who] [core value proposition]. [Only if true and provable: Trusted by [X+] companies.]
 
 ### Our Mission
 
@@ -4949,7 +4951,7 @@ Before moving forward, let's align on:
 Let's schedule a call to finalize terms and begin implementation planning.
 
 **Option 2: Need More Information**
-We're happy to provide additional details, demos, or references.
+We're happy to provide additional details, demos, or [references, only if you have them].
 
 **Option 3: Not Right Now**
 We understand timing is important. Let's discuss what would make this the right time.
@@ -5035,9 +5037,9 @@ Hi [First Name],
 
 ${senderContext ? `${senderContext}` : "I've been following [Company]'s [relevant news/initiative] and noticed [observation]."}
 
-${specificPainPoint ? `Many ${pluralOf(targetPersona)} I talk to are struggling with ${lowerFirstIfCommon(specificPainPoint)}. Is this something you're dealing with too?` : `Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.`}
+${specificPainPoint ? `[Only if true and provable: Many ${pluralOf(targetPersona)} I talk to are struggling with ${lowerFirstIfCommon(specificPainPoint)}.] Is this something you're dealing with too?` : `[Only if true and provable: Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.]`}
 
-${keyValueProp ? keyValueProp : `We help companies like yours [key outcome].`}
+${keyValueProp ? keyValueProp : `[Outcome you can prove for companies like theirs].`}
 
 ${socialProof ? `For context: ${socialProof}` : ''}
 
@@ -5058,7 +5060,7 @@ Hi [First Name],
 
 Following up on my note from earlier this week.
 
-I wanted to share [resource/insight/case study] that's been helpful for other ${pluralOf(targetPersona)} dealing with [challenge].
+I wanted to share [resource/insight/case study] for ${pluralOf(targetPersona)} dealing with [challenge].
 
 [1-2 sentence description of the value]
 
@@ -5078,7 +5080,7 @@ Worth a conversation?
 
 Hi [First Name],
 
-Wanted to share a quick story.
+[Only if true and provable: a real customer story you may share.] Wanted to share a quick story.
 
 [Similar company] was facing [same challenge]: ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[describe pain]'}.
 
@@ -5277,11 +5279,11 @@ Hi [First Name],
 
 Following up on yesterday's demo.
 
-After a demo, many ${pluralOf(targetPersona)} ask about [concern: implementation, adoption].
+You may be wondering about [concern: implementation, adoption].
 
 [Proactively address the concern]
 
-${socialProof ? socialProof : 'Happy to connect you with a customer who had similar concerns.'}
+${socialProof ? socialProof : '[Only if true: Happy to connect you with a customer who had similar concerns.]'}
 
 Does this help? What other questions are on your mind?
 
@@ -5367,7 +5369,7 @@ Hi [First Name],
 
 It's been a while since we last connected.
 
-Since then, we've [new capability/new customer/new result] that I thought would be relevant to your [challenge/initiative].
+[Only if true and provable: Since then, we've [new capability/new customer/new result] that I thought would be relevant to your [challenge/initiative].]
 
 [Brief description of what's new]
 
@@ -5583,7 +5585,7 @@ ${demoType === 'executive_overview' ? `
 
 **[${startAt(0.30, intro + discovery)}] Transition to Demo**
 
-"Great, that confirms what I thought. Let me show you how ${yourSolution} addresses exactly those challenges. I'm going to share my screen..."
+"Great, that confirms what I thought. Let me show you how ${yourSolution} handles those challenges. I'm going to share my screen..."
 
 **[Share screen with demo environment]**
 
@@ -5603,7 +5605,7 @@ ${mustShowFeatures.split(/\n|,(?!\d{3}(?!\d))/).map((f, i) => `${i + 1}. ${f.tri
 [Show the feature]
 
 *Value Statement:*
-"What this means for you is [business outcome]. [Customer example] saw [specific result] using this."
+"What this means for you is [business outcome]. [Only if true and provable: [Customer example] saw [specific result] using this.]"
 
 *Check-in:*
 "How does this compare to how you're doing it today?"
@@ -5629,10 +5631,10 @@ ${mustShowFeatures.split(/\n|,(?!\d{3}(?!\d))/).map((f, i) => `${i + 1}. ${f.tri
 **Feature 3: [Differentiator]**
 
 *Setup:*
-"This next part is what really sets us apart..."
+"This next part is where we differ from [alternative]: [differentiator you can prove]..."
 
 *Action:*
-[Show unique capability]
+[Show your differentiating capability]
 
 *Value Statement:*
 "This is something our customers tell us they can't find elsewhere." (Example claim: keep it only if customers have told you this)
@@ -5658,7 +5660,7 @@ ${knownObjections.split(/\n|,(?!\d{3}(?!\d))/).map(o => `**Objection:** "${o.tri
 "Typically [timeframe]. Our methodology includes [your implementation steps]..."
 
 **"What about integration with [system]?"**
-"We have pre-built integrations with [systems]. Let me show you..."
+"[Only if true and provable: We have pre-built integrations with [systems]. Let me show you...]" [If not: say what connects today and what does not.]
 
 **"What does pricing look like?"**
 "I'd like to understand your needs better to give you accurate pricing. Generally..."
@@ -5684,7 +5686,7 @@ ${desiredOutcome === 'advance the deal' ? `
 
 Options might be:
 ${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
-- Reference call with similar customer
+- Reference call with a similar customer (only if one has agreed)
 - Pilot/POC discussion
 
 What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accomplished that? What else do you need?"`}

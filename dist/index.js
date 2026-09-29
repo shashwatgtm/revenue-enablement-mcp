@@ -3556,12 +3556,12 @@ function executeChampionEnablementKit(args) {
 
 [1-2 sentence summary of what this enables for the business]
 
-${keyValuePoints ? `**Key Benefits:**\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n')}` : '**Key Benefits:**\n- Improved efficiency\n- Reduced costs\n- Better outcomes\n- Competitive advantage'}
+${keyValuePoints ? `**Key Benefits:**\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ${p.trim()}`).join('\n')}` : '**Key Benefits:**\n- [Benefits from your key value points]'}
 
 ### The Business Case
 
 **Problem:**
-[Current state challenges - what's not working]
+[Current state challenges: what's not working]
 
 **Impact:**
 [Quantified impact of the problem]
@@ -3607,9 +3607,9 @@ ${keyValuePoints ? `\n**Value Summary:**\n${keyValuePoints.split(/\n|,(?!\d{3}(?
 ## Current State
 
 ### Challenges
-- [Challenge 1 - describe current pain]
-- [Challenge 2 - describe current pain]
-- [Challenge 3 - describe current pain]
+- [Challenge 1: describe current pain]
+- [Challenge 2: describe current pain]
+- [Challenge 3: describe current pain]
 
 ### Impact
 - Time: [Hours/FTEs spent on workarounds]
@@ -3630,7 +3630,7 @@ ${yourSolution} provides [brief description].
 3. [Step 3]
 
 ### Why This Solution
-${competitiveContext ? `We evaluated alternatives including ${competitiveContext}. We recommend ${yourSolution} because [reasons].` : 'After evaluating alternatives, this solution best fits our requirements.'}
+${competitiveContext ? `We evaluated alternatives including ${competitiveContext}. We recommend ${yourSolution} because [reasons].` : '[Why this option over the alternatives]'}
 
 ---
 
@@ -3657,7 +3657,7 @@ ${budgetContext ? budgetContext : `
 ### ROI Analysis
 - **ROI:** XXX%
 - **Payback:** X months
-- **3-Year Net Value:** $X,XXX,XXX ${EXAMPLE}
+- **3-Year Net Value:** $X,XXX,XXX
 
 ---
 
@@ -3960,13 +3960,13 @@ ${keyValuePoints ? keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `| ${p.t
 |--------|-------|
 | **ROI** | XXX% |
 | **Payback** | X months |
-| **3-Year NPV** | $X.XM ${EXAMPLE} |
+| **3-Year NPV** | $X.XM |
 
 ---
 
 ### Why Now
 
-${urgencyDrivers ? urgencyDrivers : '- Market opportunity window\n- Competitive pressure\n- Cost of delay: $X/month'}
+${urgencyDrivers ? urgencyDrivers : '- [Why now: the deadline or event that sets the timing]\n- Cost of delay: $X/month'}
 
 ---
 
@@ -3988,7 +3988,7 @@ ${urgencyDrivers ? urgencyDrivers : '- Market opportunity window\n- Competitive 
 
 ## Evaluation Summary
 
-${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated multiple alternatives.'}
+${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated: [the alternatives you looked at]'}
 
 **Recommendation:** ${yourSolution}
 
@@ -4011,7 +4011,7 @@ ${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated mul
 
 ## Why ${yourSolution}
 
-${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ✅ ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- Better fit for our needs\n- Lower total cost of ownership\n- Faster time to value\n- Lower risk'}
+${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!\d))/).map(p => `- ✅ ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- [Benefits from your key value points]'}
 
 ---
 
@@ -4024,7 +4024,7 @@ ${keyValuePoints ? `### Key Advantages:\n${keyValuePoints.split(/\n|,(?!\d{3}(?!
 
 ## Recommendation
 
-Based on comprehensive evaluation, ${yourSolution} is the best choice for [our organization].
+Based on [your evaluation], ${yourSolution} is the best choice for [our organization].
 
 ---
 
@@ -4416,19 +4416,19 @@ function executeProposalSectionWriter(args) {
     // Tone adjustments
     const toneStyles = {
         formal: {
-            opening: 'We are pleased to present',
+            opening: 'We are pleased to present this proposal. It outlines',
             language: 'professional and structured'
         },
         consultative: {
-            opening: 'Based on our conversations',
+            opening: 'This proposal outlines',
             language: 'partnership-oriented'
         },
         bold: {
-            opening: 'The opportunity before you',
+            opening: 'The opportunity before you is set out below. This proposal outlines',
             language: 'confident and direct'
         },
         conservative: {
-            opening: 'We respectfully submit',
+            opening: 'We respectfully submit this proposal. It outlines',
             language: 'measured and thorough'
         }
     };
@@ -4439,29 +4439,29 @@ function executeProposalSectionWriter(args) {
 
 ## Proposal for ${customerName}
 
-${toneStyle.opening}, this proposal outlines how ${yourSolution} will help ${customerName} address the challenges we've discussed and achieve meaningful business outcomes.
+${toneStyle.opening} how ${yourSolution} can help ${customerName} with ${customerChallenges ? 'the challenges below' : '[the challenges they named]'}.
 
 ### The Opportunity
 
-${customerChallenges ? `Through our discovery conversations, we identified several key challenges:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map(c => `- ${c.trim()}`).join('\n')}` : `${customerName} is seeking to improve operational efficiency, reduce costs, and drive growth. Our conversations have revealed opportunities to create significant value through ${yourSolution}.`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map(c => `- ${c.trim()}`).join('\n')}` : `[The challenges ${customerName} named, in their words]`}
 
 ### Our Recommendation
 
-${yourSolution} provides ${customerName} with a comprehensive solution that:
+What ${yourSolution} offers ${customerName}:
 
-${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- **${d.trim()}**`).join('\n') : `- Addresses your core business challenges\n- Delivers measurable ROI\n- Integrates with your existing systems\n- Scales with your growth`}
+${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- **${d.trim()}**`).join('\n') : `- [Outcome you can prove]\n- [How it fits their current systems: only if true]\n- [What changes for their team]`}
 
 ### Expected Outcomes
 
-${successMetrics ? successMetrics : `Within 12 months of implementation ${EXAMPLE}, ${customerName} can expect:\n\n- Improved operational efficiency\n- Reduced costs and complexity\n- Enhanced visibility and control\n- Foundation for future growth`}
+${successMetrics ? successMetrics : `Within 12 months of implementation ${EXAMPLE}, ${customerName} can expect:\n\n- [Outcome you can prove]\n- [Second outcome you can prove]\n- [How you will measure them]`}
 
 ### Investment Overview
 
-${pricing ? `Investment: ${pricing}` : 'Detailed pricing is outlined in the Investment section of this proposal.'}
+${pricing ? `Investment: ${pricing}` : '[Pricing: add yours or point to your pricing section]'}
 
 ### Why ${yourSolution}
 
-${keyDifferentiators ? `We are uniquely positioned to deliver this value because:\n\n${keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- ${d.trim()}`).join('\n')}` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
+${keyDifferentiators ? `What sets ${yourSolution} apart:\n\n${keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => `- ${d.trim()}`).join('\n')}` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
 
 ### Next Steps
 
@@ -4478,7 +4478,7 @@ We recommend the following path forward:
 
 ## Current State at ${customerName}
 
-${customerChallenges ? `Based on our discovery conversations, ${customerName} is facing several interconnected challenges:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** This challenge is affecting your team's ability to perform at their best, creating inefficiencies, and potentially impacting revenue.\n\n**Root Cause:** Our analysis suggests this stems from [process gaps / technology limitations / resource constraints].\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `Through our conversations with your team, we've developed a deep understanding of the challenges you're facing:\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${customerChallenges.split(/\n|,(?!\d{3}(?!\d))/).map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** [How this affects their team and results, in their words]\n\n**Root Cause:** [process gaps, technology limits or resource constraints: what they told you]\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `*Example challenges (not from your input): keep only the ones ${customerName} named, in their words.*\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
 
 ## The Cost of the Current State
 
@@ -4490,6 +4490,8 @@ ${customerChallenges ? `Based on our discovery conversations, ${customerName} is
 | Growth | [Missed opportunities] | [Growth enablement] |
 
 ## What Success Looks Like
+
+*Example picture of success (not from your input): replace it with what ${customerName} told you.*
 
 ${customerName} envisions a future where:
 - Teams spend time on high-value work, not manual processes
@@ -4506,13 +4508,15 @@ ${customerName} envisions a future where:
 
 ### Solution Architecture
 
-${yourSolution} provides a comprehensive platform that addresses each of the challenges we've discussed:
+[How ${yourSolution} addresses each challenge ${customerName} named]
 
 #### Core Capabilities${keyDifferentiators ? '' : ' (example capabilities: replace them with your own)'}
 
-${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map((d, i) => `**${i + 1}. ${d.trim()}**\nDescription of how this capability solves specific customer challenges.\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
+${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map((d, i) => `**${i + 1}. ${d.trim()}**\n[How this capability solves one of their challenges]\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
 
 ### How It Works
+
+*Example process (not from your input): replace it with your own steps.*
 
 1. **Discovery & Configuration**
    - We work with your team to understand specific requirements
@@ -4626,6 +4630,8 @@ ${successMetrics ? successMetrics : `- System fully operational within 12 weeks 
 
 ### Risk Mitigation
 
+*Typical risks (not from your input): replace the ratings with your own.*
+
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
 | Timeline delay | Medium | Buffer time, parallel workstreams |
@@ -4658,7 +4664,7 @@ ${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\n
 
 ### Price-to-Value Ratio
 
-For every dollar invested in ${yourSolution}, ${customerName} can expect to receive $X in value, making this a highly favorable investment.
+For every dollar invested in ${yourSolution}, ${customerName} can expect to receive $X in value [only if your ROI figures show it].
 
 ### Competitive Comparison
 
@@ -4689,6 +4695,8 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 
 ### Risk Categories
 
+*Typical risks (not from your input): replace the ratings and mitigations with your own.*
+
 #### Implementation Risks
 
 | Risk | Probability | Impact | Mitigation |
@@ -4708,6 +4716,8 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 | Business continuity | Low | Critical | Disaster recovery plan |
 
 ### Our Approach to Risk Management
+
+*Example approach (not from your input): keep only what your team does.*
 
 **1. Proactive Identification**
 We identify and assess risks before they become issues through:
@@ -4834,9 +4844,9 @@ ${keyDifferentiators ? keyDifferentiators.split(/\n|,(?!\d{3}(?!\d))/).map(d => 
 ### Our Team
 
 Your ${customerName} team includes:
-- **Account Executive:** Your business advocate
-- **Solutions Engineer:** Technical expertise
-- **Customer Success Manager:** Ongoing partnership
+- **Account Executive:** [Name]
+- **Solutions Engineer:** [Name]
+- **Customer Success Manager:** [Name, if you assign one]
 - **Support Team:** [your support availability]
 
 ---
@@ -4942,8 +4952,8 @@ We understand timing is important. Let's discuss what would make this the right 
 ### Contact
 
 **Your Account Team:**
-- [Account Executive Name] - [email]
-- [Solutions Engineer Name] - [email]
+- [Account Executive Name]: [email]
+- [Solutions Engineer Name]: [email]
 
 **To schedule a call:** [Calendar link]
 

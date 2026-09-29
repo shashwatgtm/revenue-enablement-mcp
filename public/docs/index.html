@@ -201,7 +201,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.12.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.13.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -239,12 +239,14 @@
 <tr><td>1.2.9</td><td>29 September 2026</td><td>GitHub, commit c8375c2</td></tr>
 <tr><td>1.2.10</td><td>29 September 2026</td><td>GitHub, commit 93e4756</td></tr>
 <tr><td>1.2.11</td><td>29 September 2026</td><td>GitHub, commit 2cd7cc4</td></tr>
+<tr><td>1.2.12</td><td>29 September 2026</td><td>GitHub, commit 62cb780</td></tr>
+<tr><td>1.2.13 (this site)</td><td>29 September 2026</td><td>GitHub, commit 33349e8</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.12.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.13.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>

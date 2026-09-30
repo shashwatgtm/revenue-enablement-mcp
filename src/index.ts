@@ -2125,7 +2125,11 @@ function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
   const annualRevenue = (args.annual_revenue as number) || 0;
   const employeeCount = (args.employee_count as number) || 0;
   const yourSolution = (args.your_solution as string) || 'your solution';
-  const solutionPrice = (args.solution_price as number) || 0;
+  // D34 (run 15): omitted, null and 0 are told apart with explicit checks. Omitted or null: the labelled example
+  // price is used. 0: the user's own input, so every figure that divides by it says it cannot be computed.
+  const priceGiven = args.solution_price !== undefined && args.solution_price !== null;
+  const solutionPrice = priceGiven ? (args.solution_price as number) : 0;
+  const priceIsZero = priceGiven && solutionPrice === 0;
   const primaryValueDriver = (args.primary_value_driver as string) || 'productivity';
   const knownMetrics = (args.known_metrics as string) || '';
   const currentProcess = (args.current_process as string) || '';
@@ -2293,7 +2297,7 @@ ${EXAMPLES}
   }
 
   // Calculate ROI metrics
-  const investment = solutionPrice || totalValue * 0.1; // Assume 10% of value if price unknown
+  const investment = priceGiven ? solutionPrice : totalValue * 0.1; // Assume 10% of value if price not supplied (omitted or null)
   const roi = ((totalValue - investment) / investment) * 100;
   const paybackMonths = (investment / totalValue) * 12;
   const threeYearValue = totalValue * 3;
@@ -2305,8 +2309,11 @@ ${EXAMPLES}
 
   // Display text (output only; every figure above is unchanged)
   const nc = 'not computed';
-  const priceSupplied = !!solutionPrice;
+  const priceSupplied = priceGiven;
   const valueComputed = totalValue > 0;
+  // A figure that divides by the price: with a price of 0 it prints the line below instead of a number
+  const NEEDS_PRICE = 'not computed: add your annual price';
+  const byPrice = (text: string) => (priceIsZero ? NEEDS_PRICE : text);
   const sizeText = companySize === 'smb' ? 'SMB' : companySize.replace(/_/g, ' ');
   const benchmarkText = !args.industry
     ? 'Technology (no industry supplied)'
@@ -2343,7 +2350,7 @@ ${EXAMPLES}
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost**${priceSupplied ? '' : ` (${hasValue(args.solution_price) ? 'zero given, example price used' : NOT_SUPPLIED}) ${EXAMPLE}`} | ${invCell(investment)} | ${invCell(investment)} | ${invCell(investment)} |
+| **Solution Cost**${priceSupplied ? '' : ` (${NOT_SUPPLIED}) ${EXAMPLE}`} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} |
 | **Implementation** ${EXAMPLE} | ${invCell(Math.round(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
 | **Total Investment** | ${invCell(Math.round(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
 
@@ -2369,10 +2376,10 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 ${EXAMPLES}
 | Metric | Value | Example threshold |
 |--------|-------|-------------------|
-| **ROI** | ${valueComputed ? `${roi.toFixed(0)}%` : nc} | >100% considered strong |
-| **Payback Period** | ${valueComputed ? `${paybackMonths.toFixed(1)} months` : nc} | <12 months considered fast |
+| **ROI** | ${valueComputed ? byPrice(`${roi.toFixed(0)}%`) : nc} | >100% considered strong |
+| **Payback Period** | ${valueComputed ? byPrice(`${paybackMonths.toFixed(1)} months`) : nc} | <12 months considered fast |
 | **3-Year Net Value** | ${valueComputed ? `$${fmt(threeYearNet)}` : nc} | - |
-| **Value/Cost Ratio** | ${valueComputed ? `${(totalValue / investment).toFixed(1)}x` : nc} | >3x considered excellent |
+| **Value/Cost Ratio** | ${valueComputed ? byPrice(`${(totalValue / investment).toFixed(1)}x`) : nc} | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
 
@@ -2400,12 +2407,12 @@ The assumptions above are examples built into this tool, not findings from publi
 ${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
 - Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 0.5))}` : nc}
-- ROI: ${valueComputed ? `${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%` : nc}
-- Payback: ${valueComputed ? `${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months` : nc}
+- ROI: ${valueComputed ? byPrice(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
+- Payback: ${valueComputed ? byPrice(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
 ### Aggressive Scenario (150% of projected value)
 - Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 1.5))}` : nc}
-- ROI: ${valueComputed ? `${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%` : nc}
-- Payback: ${valueComputed ? `${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months` : nc}
+- ROI: ${valueComputed ? byPrice(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
+- Payback: ${valueComputed ? byPrice(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
 
 ---
 
@@ -2442,8 +2449,9 @@ ${yourSolution} addresses these challenges through [key capabilities].
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
 - **$${fmt(totalValue)}** in annual value
-- **${roi.toFixed(0)}%** ROI
-- **${paybackMonths.toFixed(1)} months** payback` : `- ${NOT_COMPUTED}`}
+${priceIsZero ? `- **ROI:** ${NEEDS_PRICE}
+- **Payback:** ${NEEDS_PRICE}` : `- **${roi.toFixed(0)}%** ROI
+- **${paybackMonths.toFixed(1)} months** payback`}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]

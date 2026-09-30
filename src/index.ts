@@ -2122,8 +2122,14 @@ function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
   const customerName = (args.customer_name as string) || '[Customer name]';
   const industry = (args.industry as string) || 'Technology';
   const companySize = (args.company_size as string) || 'mid_market';
-  const annualRevenue = (args.annual_revenue as number) || 0;
-  const employeeCount = (args.employee_count as number) || 0;
+  // D45 (run 16): omitted, null and 0 are told apart with explicit checks, as for the price below. Omitted or null:
+  // the missing size is estimated from the other one and labelled as an example. 0: the user's own input, used as 0.
+  const revenueGiven = args.annual_revenue !== undefined && args.annual_revenue !== null;
+  const employeesGiven = args.employee_count !== undefined && args.employee_count !== null;
+  const annualRevenue = revenueGiven ? (args.annual_revenue as number) : 0;
+  const employeeCount = employeesGiven ? (args.employee_count as number) : 0;
+  const revenueIsZero = revenueGiven && annualRevenue === 0;
+  const employeesIsZero = employeesGiven && employeeCount === 0;
   const yourSolution = (args.your_solution as string) || 'your solution';
   // D34 (run 15): omitted, null and 0 are told apart with explicit checks. Omitted or null: the labelled example
   // price is used. 0: the user's own input, so every figure that divides by it says it cannot be computed.
@@ -2181,23 +2187,24 @@ function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
   const sizeMultiplier = sizeMultipliers[companySize] || 1.0;
 
   // Calculate estimated company metrics if not provided
-  const estimatedRevenue = annualRevenue || (employeeCount * industryBenchmark.revenue_per_employee * sizeMultiplier);
-  const estimatedEmployees = employeeCount || Math.round(annualRevenue / (industryBenchmark.revenue_per_employee * sizeMultiplier));
+  // A revenue given as 0 is never estimated from the employees; an employee count given as 0 is never estimated from the revenue.
+  const estimatedRevenue = revenueGiven ? annualRevenue : (employeeCount * industryBenchmark.revenue_per_employee * sizeMultiplier);
+  const estimatedEmployees = employeesGiven ? employeeCount : Math.round(annualRevenue / (industryBenchmark.revenue_per_employee * sizeMultiplier));
 
   // Display helpers (output text only; no calculation below changes). The user's own inputs are shown
   // as given; every figure built from this tool's example assumptions carries the EXAMPLE label.
   const fmt = (n: number) => n.toLocaleString('en-US');
   const usd = (n: number) => `${n < 0 ? '-' : ''}$${fmt(Math.abs(n))}`;  // run 15: -$17,640, not $-17,640
-  const noSizeData = !annualRevenue && !employeeCount;
+  const noSizeData = !revenueGiven && !employeesGiven;
   const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
-  const revenueCell = annualRevenue
-    ? `$${fmt(annualRevenue)}`
-    : employeeCount
+  const revenueCell = revenueGiven
+    ? (revenueIsZero ? '$0 (your input)' : `$${fmt(annualRevenue)}`)
+    : employeesGiven
       ? `$${fmt(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
       : NOT_SUPPLIED;
-  const employeesCell = employeeCount
-    ? fmt(employeeCount)
-    : annualRevenue
+  const employeesCell = employeesGiven
+    ? (employeesIsZero ? '0 (your input)' : fmt(employeeCount))
+    : revenueGiven
       ? `${fmt(estimatedEmployees)}, estimated from your annual revenue ${EXAMPLE}`
       : NOT_SUPPLIED;
   const revenueValueCell = (n: number) => (noSizeData ? NOT_COMPUTED : `**$${fmt(n)}** ${EXAMPLE}`);
@@ -2311,10 +2318,20 @@ ${EXAMPLES}
   // Display text (output only; every figure above is unchanged)
   const nc = 'not computed';
   const priceSupplied = priceGiven;
-  const valueComputed = totalValue > 0;
+  // D45: a revenue of 0 (or an employee count of 0 when no revenue was given) makes the revenue based value 0. The figures
+  // that multiply are computed with 0; the ones that divide by that value (or by the example price taken from it) say what to add.
+  const zeroWhat = revenueIsZero ? 'annual revenue' : (employeesIsZero && !revenueGiven ? 'employee count' : '');
+  const valueIsZeroFromInput = totalValue === 0 && zeroWhat !== '';
+  const valueComputed = totalValue > 0 || valueIsZeroFromInput;
   // A figure that divides by the price: with a price of 0 it prints the line below instead of a number
   const NEEDS_PRICE = 'not computed: add your annual price';
-  const byPrice = (text: string) => (priceIsZero ? NEEDS_PRICE : text);
+  const NEEDS_VALUE = `not computed: add your ${zeroWhat}`;
+  // ROI and the value/cost ratio divide by the investment: a price of 0 (D34), or an example price (a share of the value) that is 0.
+  const byInvestment = (text: string) => (priceIsZero ? NEEDS_PRICE : valueIsZeroFromInput && !priceGiven ? NEEDS_VALUE : text);
+  // Payback divides by the value: a price of 0 is reported first (D34), then a value of 0.
+  const byValue = (text: string) => (priceIsZero ? NEEDS_PRICE : valueIsZeroFromInput ? NEEDS_VALUE : text);
+  const roiSummary = priceIsZero || (valueIsZeroFromInput && !priceGiven) ? `- **ROI:** ${byInvestment('')}` : `- **${roi.toFixed(0)}%** ROI`;
+  const paybackSummary = priceIsZero || valueIsZeroFromInput ? `- **Payback:** ${byValue('')}` : `- **${paybackMonths.toFixed(1)} months** payback`;
   const sizeText = companySize === 'smb' ? 'SMB' : companySize.replace(/_/g, ' ');
   const benchmarkText = !args.industry
     ? 'Technology (no industry supplied)'
@@ -2377,10 +2394,10 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 ${EXAMPLES}
 | Metric | Value | Example threshold |
 |--------|-------|-------------------|
-| **ROI** | ${valueComputed ? byPrice(`${roi.toFixed(0)}%`) : nc} | >100% considered strong |
-| **Payback Period** | ${valueComputed ? byPrice(`${paybackMonths.toFixed(1)} months`) : nc} | <12 months considered fast |
+| **ROI** | ${valueComputed ? byInvestment(`${roi.toFixed(0)}%`) : nc} | >100% considered strong |
+| **Payback Period** | ${valueComputed ? byValue(`${paybackMonths.toFixed(1)} months`) : nc} | <12 months considered fast |
 | **3-Year Net Value** | ${valueComputed ? usd(threeYearNet) : nc} | - |
-| **Value/Cost Ratio** | ${valueComputed ? byPrice(`${(totalValue / investment).toFixed(1)}x`) : nc} | >3x considered excellent |
+| **Value/Cost Ratio** | ${valueComputed ? byInvestment(`${(totalValue / investment).toFixed(1)}x`) : nc} | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
 
@@ -2392,7 +2409,7 @@ ROI, payback and three-year value use the annual price and leave out the one-tim
 1. Implementation timeline: ${timelineText}
 2. Full value realization: 6-12 months post-implementation ${EXAMPLE}
 3. Benchmark set used for hourly labor cost and revenue per employee: ${benchmarkText}
-4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), ${annualRevenue && employeeCount ? 'not used here, because revenue and employees were both supplied' : `used only to estimate revenue or employees that were not supplied ${EXAMPLE}`}
+4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), ${revenueGiven && employeesGiven ? 'not used here, because revenue and employees were both supplied' : `used only to estimate revenue or employees that were not supplied ${EXAMPLE}`}
 
 ${currentProcess ? `### Current State\n${currentProcess}\n` : ''}
 
@@ -2408,12 +2425,12 @@ The assumptions above are examples built into this tool, not findings from publi
 ${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
 - Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 0.5))}` : nc}
-- ROI: ${valueComputed ? byPrice(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
-- Payback: ${valueComputed ? byPrice(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
+- ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
+- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
 ### Aggressive Scenario (150% of projected value)
 - Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 1.5))}` : nc}
-- ROI: ${valueComputed ? byPrice(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
-- Payback: ${valueComputed ? byPrice(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
+- ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
+- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
 
 ---
 
@@ -2450,9 +2467,8 @@ ${yourSolution} addresses these challenges through [key capabilities].
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
 - **$${fmt(totalValue)}** in annual value
-${priceIsZero ? `- **ROI:** ${NEEDS_PRICE}
-- **Payback:** ${NEEDS_PRICE}` : `- **${roi.toFixed(0)}%** ROI
-- **${paybackMonths.toFixed(1)} months** payback`}` : `- ${NOT_COMPUTED}`}
+${roiSummary}
+${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]

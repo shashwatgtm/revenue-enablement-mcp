@@ -2138,6 +2138,7 @@ function executeRoiBusinessCaseBuilder(args) {
     // Display helpers (output text only; no calculation below changes). The user's own inputs are shown
     // as given; every figure built from this tool's example assumptions carries the EXAMPLE label.
     const fmt = (n) => n.toLocaleString('en-US');
+    const usd = (n) => `${n < 0 ? '-' : ''}$${fmt(Math.abs(n))}`; // run 15: -$17,640, not $-17,640
     const noSizeData = !annualRevenue && !employeeCount;
     const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
     const revenueCell = annualRevenue
@@ -2307,7 +2308,7 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 |----------|--------------|
 | **Total Quantified Value** | ${valueComputed ? `**$${fmt(totalValue)}** ${EXAMPLE}` : nc} |
 | **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
-| **Net Annual Benefit** | ${valueComputed ? `$${fmt(totalValue - investment)} ${EXAMPLE}` : nc} |
+| **Net Annual Benefit** | ${valueComputed ? `${usd(totalValue - investment)} ${EXAMPLE}` : nc} |
 
 ### Key Metrics
 
@@ -2316,7 +2317,7 @@ ${EXAMPLES}
 |--------|-------|-------------------|
 | **ROI** | ${valueComputed ? byPrice(`${roi.toFixed(0)}%`) : nc} | >100% considered strong |
 | **Payback Period** | ${valueComputed ? byPrice(`${paybackMonths.toFixed(1)} months`) : nc} | <12 months considered fast |
-| **3-Year Net Value** | ${valueComputed ? `$${fmt(threeYearNet)}` : nc} | - |
+| **3-Year Net Value** | ${valueComputed ? usd(threeYearNet) : nc} | - |
 | **Value/Cost Ratio** | ${valueComputed ? byPrice(`${(totalValue / investment).toFixed(1)}x`) : nc} | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
@@ -2666,8 +2667,8 @@ function executeWinLossAnalyzer(args) {
 | Attribute | Value |
 |-----------|-------|
 | **Outcome** | ${dealOutcome ? dealOutcome.charAt(0).toUpperCase() + dealOutcome.slice(1) : 'Not specified'} |
-| **Deal Value** | ${dealValue ? '$' + dealValue.toLocaleString('en-US') : 'Not specified'} |
-| **Sales Cycle** | ${salesCycleDays ? salesCycleDays + ' days' : 'Not specified'} |
+| **Deal Value** | ${hasValue(args.deal_value) ? '$' + dealValue.toLocaleString('en-US') : 'Not specified'} |
+| **Sales Cycle** | ${hasValue(args.sales_cycle_days) ? salesCycleDays.toLocaleString('en-US') + (salesCycleDays === 1 ? ' day' : ' days') : 'Not specified'} |
 | **Solution** | ${args.your_solution || 'Not specified'} |
 ${competitorWon ? `| **Competitor Won** | ${competitorWon} |` : ''}
 ${lossReason ? `| **Stated Reason** | ${lossReason} |` : ''}
@@ -2725,7 +2726,7 @@ ${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
 ${lossReason ? `**Stated Reason:** ${lossReason}` : '**Stated Reason:** Not provided'}
 
 **Common Root Causes to Investigate:**
-
+${[/price/, /feature|product/, /timing|priority/].some((re) => re.test((lossReason || '').toLowerCase())) || competitorWon ? '' : '\n- [No stated reason or competitor matches a common cause: add the causes your loss review finds]\n'}
 ${lossReason?.toLowerCase().includes('price') ? `
 #### Pricing/Budget Issues
 - Was the business case strong enough to justify investment?
@@ -4152,7 +4153,7 @@ These questions help surface ${competitor}'s weaknesses without being negative:
 ### Capability Landmines
 ${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `
 **Weakness:** ${w.trim()}
-**Landmine Question:** "How important is [area] to your evaluation? Can you show me how ${competitor} handles this specific scenario?"
+**Landmine Question:** "How important is ${lowerFirstIfCommon(w.trim())} to your evaluation? Can you show me how ${competitor} handles this specific scenario?"
 **Why It Works:** When they test ${competitor} on this, they'll discover the gap.
 `).join('\n')}` : `
 - "Can you walk me through how you'd handle [scenario where they're weak]?"
@@ -5012,7 +5013,7 @@ function executeEmailSequenceGenerator(args) {
     const tone = args.tone || 'professional';
     const senderContext = args.sender_context || '';
     // Display text (output only): every template has a fixed number of emails, whatever num_emails says
-    const emailsText = `${numEmails}${hasValue(args.num_emails) ? '' : ' (default)'}`;
+    const emailsText = hasValue(args.num_emails) ? args.num_emails.toLocaleString('en-US') : `${numEmails} (default)`; // run 15: a given 0 is shown as 0, not replaced by 5
     const fixedLengthNote = '*The template below has a fixed number of emails: add or remove emails to match the number you need.*';
     const toneInstructions = {
         professional: 'Formal, polished, business-appropriate',
@@ -5463,6 +5464,8 @@ function executeDemoScriptBuilder(args) {
     const keyPainPoints = args.key_pain_points || '';
     const competitorContext = args.competitor_context || '';
     const demoDuration = args.demo_duration || 30;
+    const durationGiven = hasValue(args.demo_duration) && demoDuration === args.demo_duration; // run 15: a given 0 falls back to 30, labelled as the default
+    const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
     const mustShowFeatures = args.must_show_features || '';
     const knownObjections = args.known_objections || '';
     const desiredOutcome = args.desired_outcome || 'advance the deal';
@@ -5500,7 +5503,7 @@ function executeDemoScriptBuilder(args) {
 | **Primary Audience** | ${primaryAudience}${args.primary_audience ? '' : ' (default)'} |
 | **Other Attendees** | ${attendees || 'TBD'} |
 | **Industry** | ${customerIndustry || 'General'} |
-| **Duration** | ${demoDuration} minutes${hasValue(args.demo_duration) ? '' : ' (default)'} |
+| **Duration** | ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'} |
 | **Desired Outcome** | ${desiredOutcome} |
 
 ---
@@ -5544,7 +5547,7 @@ ${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorCont
 
 "Thanks everyone for joining. I'm [Your name] and I'll be walking you through ${yourSolution} today.
 
-Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} minutes valuable for you?"${hasValue(args.demo_duration) ? '' : '\n\n*The length above is an example: replace it with your own.*'}
+Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
 
 **[Wait for response: this shapes your demo]**
 
@@ -5750,7 +5753,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.14';
+exports.SERVER_VERSION = '1.2.15';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",
@@ -5851,6 +5854,15 @@ function checkRequiredInputs(name, args) {
         const raw = args?.[key];
         if (typeof raw === "string" && AMOUNT_RANGE.test(raw))
             problems.push(`${key} must be one amount, not a range (for example $75,000)`);
+    }
+    // Run 15 R15-32 (edge-case matrix): a discount is a percentage, so over 100 cannot be priced; a target close date must not be past.
+    if (name === "pricing_negotiation_guide" && typeof args?.discount_requested === "number" && args.discount_requested > 100) {
+        problems.push("discount_requested must be 100 or less (it is a percentage of the deal value)");
+    }
+    if (name === "mutual_action_plan_generator" && typeof args?.target_close_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.target_close_date.trim())) {
+        const close = new Date(args.target_close_date.trim() + "T23:59:59Z");
+        if (!isNaN(close.getTime()) && close.getTime() < Date.now())
+            problems.push(`target_close_date ${args.target_close_date.trim()} is in the past; use a future date in the format YYYY-MM-DD`);
     }
     if (problems.length > 0) {
         return `Invalid input for ${name}: ${problems.join("; ")}.`;

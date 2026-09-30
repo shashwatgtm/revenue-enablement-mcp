@@ -5913,7 +5913,7 @@ ${SUGGESTIONS_FOOTER}`;
 // =============================================================================
 
 export const SERVER_NAME = 'revenue-enablement-mcp';
-export const SERVER_VERSION = '1.2.17';
+export const SERVER_VERSION = '1.2.18';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {

@@ -869,6 +869,17 @@ const SUGGESTIONS_FOOTER = 'Suggested timings, lengths and counts: adjust them t
 const NOT_SUPPLIED = 'not supplied';
 const hasValue = (v) => v !== undefined && v !== null && v !== '';
 // Tool 1: Account Plan Builder
+// Run 17 D55: money under $1 prints 2 decimals; a positive amount that rounds to $0.00 says so (the ICP rule, run 16 N2).
+// An amount of $1 or more prints exactly as before.
+function money(n) {
+    const a = Math.abs(n);
+    if (a > 0 && a < 1) {
+        if (a.toFixed(2) === '0.00')
+            return n < 0 ? 'a loss under $0.01' : 'under $0.01';
+        return `${n < 0 ? '-' : ''}$${a.toFixed(2)}`;
+    }
+    return `${n < 0 ? '-' : ''}$${a.toLocaleString('en-US')}`;
+}
 function executeAccountPlanBuilder(args) {
     const accountName = args.account_name || 'Target Account';
     const industry = args.industry || 'Technology';
@@ -1023,7 +1034,7 @@ ${expansionOpportunities}
 | **Account Name** | ${accountName} |
 | **Industry** | ${args.industry || NOT_SUPPLIED} |
 | **Account Tier** | ${accountTier} (set by this tool's rule from Current ARR) |
-| **Current ARR** | ${hasValue(args.current_arr) ? `$${currentArr.toLocaleString('en-US')}` : NOT_SUPPLIED} |
+| **Current ARR** | ${hasValue(args.current_arr) ? money(currentArr) : NOT_SUPPLIED} |
 | **Expansion Potential** | ${expansionPotential} (set by this tool's rule from Current ARR, not from your notes) |
 | **Your Solution** | ${args.your_solution || NOT_SUPPLIED} |
 
@@ -1480,7 +1491,7 @@ The economic buyer was not supplied. If you do not know who controls the budget:
 | Metric | Value |
 |--------|-------|
 | **Deal Name** | ${dealName} |
-| **Deal Value** | ${hasValue(args.deal_value) ? `$${dealValue.toLocaleString('en-US')}` : NOT_SUPPLIED} |
+| **Deal Value** | ${hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED} |
 | **Current Stage** | ${dealStage.charAt(0).toUpperCase() + dealStage.slice(1)} |
 | **Days in Stage** | ${hasValue(args.days_in_stage) ? daysInStage : NOT_SUPPLIED} |
 | **Target Close** | ${closeDate || 'Not set'} |
@@ -2145,20 +2156,20 @@ function executeRoiBusinessCaseBuilder(args) {
     // Display helpers (output text only; no calculation below changes). The user's own inputs are shown
     // as given; every figure built from this tool's example assumptions carries the EXAMPLE label.
     const fmt = (n) => n.toLocaleString('en-US');
-    const usd = (n) => `${n < 0 ? '-' : ''}$${fmt(Math.abs(n))}`; // run 15: -$17,640, not $-17,640
+    const usd = (n) => money(n); // run 15: -$17,640, not $-17,640; run 17 D55: money() adds the rule for amounts under $1
     const noSizeData = !revenueGiven && !employeesGiven;
     const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
     const revenueCell = revenueGiven
-        ? (revenueIsZero ? '$0 (your input)' : `$${fmt(annualRevenue)}`)
+        ? (revenueIsZero ? '$0 (your input)' : `${money(annualRevenue)}`)
         : employeesGiven
-            ? `$${fmt(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
+            ? `${money(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
             : NOT_SUPPLIED;
     const employeesCell = employeesGiven
         ? (employeesIsZero ? '0 (your input)' : fmt(employeeCount))
         : revenueGiven
             ? `${fmt(estimatedEmployees)}, estimated from your annual revenue ${EXAMPLE}`
             : NOT_SUPPLIED;
-    const revenueValueCell = (n) => (noSizeData ? NOT_COMPUTED : `**$${fmt(n)}** ${EXAMPLE}`);
+    const revenueValueCell = (n) => (noSizeData ? NOT_COMPUTED : `**${money(n)}** ${EXAMPLE}`);
     // Generate ROI calculations based on value driver
     let valueCalculations = '';
     let totalValue = 0;
@@ -2200,8 +2211,8 @@ ${EXAMPLES}
 - Hours saved per employee per week: ${hoursSavedPerEmployee} hours
 - Employees impacted: ${impactedEmployees.toFixed(0)}
 - Hourly cost of labor: $${industryBenchmark.cost_of_manual_work_per_hour}
-- Weekly savings: $${fmt(weeklySavings)}
-- Annual Cost Savings: **$${fmt(annualCostSavings)}**
+- Weekly savings: ${money(weeklySavings)}
+- Annual Cost Savings: **${money(annualCostSavings)}**
 
 **Validation Questions:**
 - "How many hours per week do your team spend on [manual task]?"
@@ -2287,7 +2298,7 @@ ${EXAMPLES}
     const timelineText = `${implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`}`;
     const ignoredInputs = [currentProcess ? 'current process' : '', knownMetrics ? 'known metrics' : ''].filter(Boolean).join(' and ');
     // Without a price, the investment is a share of the value, so it cannot be shown when no value is computed
-    const invCell = (n) => (priceSupplied || valueComputed ? `$${fmt(n)}` : nc);
+    const invCell = (n) => (priceSupplied || valueComputed ? `${money(n)}` : nc);
     return `# ROI Business Case: ${customerName}
 
 *Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
@@ -2327,7 +2338,7 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | ${valueComputed ? `**$${fmt(totalValue)}** ${EXAMPLE}` : nc} |
+| **Total Quantified Value** | ${valueComputed ? `**${money(totalValue)}** ${EXAMPLE}` : nc} |
 | **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
 | **Net Annual Benefit** | ${valueComputed ? `${usd(totalValue - investment)} ${EXAMPLE}` : nc} |
 
@@ -2366,11 +2377,11 @@ The assumptions above are examples built into this tool, not findings from publi
 
 ${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
-- Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 0.5))}` : nc}
+- Annual Value: ${valueComputed ? `${money(Math.round(totalValue * 0.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
 - Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
 ### Aggressive Scenario (150% of projected value)
-- Annual Value: ${valueComputed ? `$${fmt(Math.round(totalValue * 1.5))}` : nc}
+- Annual Value: ${valueComputed ? `${money(Math.round(totalValue * 1.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
 - Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
 
@@ -2408,13 +2419,13 @@ ${yourSolution} addresses these challenges through [key capabilities].
 
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
-- **$${fmt(totalValue)}** in annual value
+- **${money(totalValue)}** in annual value
 ${roiSummary}
 ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]
-- Cost of delay: ${valueComputed ? `$${fmt(Math.round(totalValue / 12))}/month ${EXAMPLE}` : nc}
+- Cost of delay: ${valueComputed ? `${money(Math.round(totalValue / 12))}/month ${EXAMPLE}` : nc}
 - Implementation timeline: ${timelineText}
 
 ---
@@ -2687,7 +2698,7 @@ function executeWinLossAnalyzer(args) {
 | Attribute | Value |
 |-----------|-------|
 | **Outcome** | ${dealOutcome ? dealOutcome.charAt(0).toUpperCase() + dealOutcome.slice(1) : 'Not specified'} |
-| **Deal Value** | ${hasValue(args.deal_value) ? '$' + dealValue.toLocaleString('en-US') : 'Not specified'} |
+| **Deal Value** | ${hasValue(args.deal_value) ? money(dealValue) : 'Not specified'} |
 | **Sales Cycle** | ${hasValue(args.sales_cycle_days) ? salesCycleDays.toLocaleString('en-US') + (salesCycleDays === 1 ? ' day' : ' days') : 'Not specified'} |
 | **Solution** | ${args.your_solution || 'Not specified'} |
 ${competitorWon ? `| **Competitor Won** | ${competitorWon} |` : ''}
@@ -2842,10 +2853,7 @@ ${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().incl
 
 `;
         }
-        analysis += `
----
-
-## Deal Details Analysis
+        analysis += `${['won', 'lost', 'no_decision'].includes(dealOutcome) ? '\n---\n\n' : ''}## Deal Details Analysis
 
 ${dealDetails ? `### Provided Context
 ${dealDetails}
@@ -3065,7 +3073,7 @@ function executePricingNegotiationGuide(args) {
     const discountedValue = dealValue - (dealValue * discountRequested / 100);
     const revenueAtRisk = dealValue * discountRequested / 100;
     // Display text (output only; the figures above are unchanged)
-    const dealValueText = hasValue(args.deal_value) ? `$${dealValue.toLocaleString('en-US')}` : NOT_SUPPLIED;
+    const dealValueText = hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED;
     const bothPricingInputs = hasValue(args.deal_value) && hasValue(args.discount_requested);
     const pricingNotComputed = 'not computed: needs deal value and discount';
     const valueReframe = !valueDelivered
@@ -3079,7 +3087,7 @@ At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's a [your
         : dealValue
             ? `
 You supplied this value: ${valueDelivered}. The example below does not use it: it assumes an example value instead. Replace these figures with your own.
-- If value is $${(dealValue * 3).toLocaleString('en-US')}, price is only ${Math.round(100 / 3)}% of first-year value ${EXAMPLE}
+- If value is ${money(dealValue * 3)}, price is only ${Math.round(100 / 3)}% of first-year value ${EXAMPLE}
 - ROI of ${Math.round((dealValue * 3 - dealValue) / dealValue * 100)}% in year one ${EXAMPLE}`
             : `
 You supplied this value: ${valueDelivered}. Add the deal value to compare the price with that value.`;
@@ -3092,8 +3100,8 @@ You supplied this value: ${valueDelivered}. Add the deal value to compare the pr
 |--------|-------|
 | **Deal Value** | ${dealValueText} |
 | **Discount Requested** | ${hasValue(args.discount_requested) ? `${discountRequested}%` : NOT_SUPPLIED} |
-| **Revenue at Risk** | ${bothPricingInputs ? `$${revenueAtRisk.toLocaleString('en-US')}` : pricingNotComputed} |
-| **Post-Discount Value** | ${bothPricingInputs ? `$${discountedValue.toLocaleString('en-US')}` : pricingNotComputed} |
+| **Revenue at Risk** | ${bothPricingInputs ? money(revenueAtRisk) : pricingNotComputed} |
+| **Post-Discount Value** | ${bothPricingInputs ? money(discountedValue) : pricingNotComputed} |
 | **Decision Timeline** | ${decisionTimeline || 'Not specified'} |
 | **Approval Authority** | ${approvalAuthority || 'Not specified'} |
 
@@ -5773,7 +5781,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.17';
+exports.SERVER_VERSION = '1.2.18';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",

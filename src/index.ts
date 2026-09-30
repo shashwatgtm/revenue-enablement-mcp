@@ -4249,7 +4249,7 @@ These questions help surface ${competitor}'s weaknesses without being negative:
 ### Capability Landmines
 ${competitorWeaknesses ? `Based on ${competitor}'s known weaknesses:\n${competitorWeaknesses.split(/\n|,(?!\d{3}(?!\d))/).map(w => `
 **Weakness:** ${w.trim()}
-**Landmine Question:** "How important is ${lowerFirstIfCommon(w.trim())} to your evaluation? Can you show me how ${competitor} handles this specific scenario?"
+**Landmine Question:** "How important is this area to your evaluation (${lowerFirstIfCommon(w.trim())})? Can you show me how ${competitor} handles this specific scenario?"
 **Why It Works:** When they test ${competitor} on this, they'll discover the gap.
 `).join('\n')}` : `
 - "Can you walk me through how you'd handle [scenario where they're weak]?"

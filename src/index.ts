@@ -880,6 +880,11 @@ const NOT_SUPPLIED = 'not supplied';
 const hasValue = (v: unknown): boolean => v !== undefined && v !== null && v !== '';
 
 // Tool 1: Account Plan Builder
+// Run 17 R17-41: a figure rounded to whole dollars keeps its cents when it is under $1 (D55); $1 or more is rounded as before.
+function wholeDollars(n: number): number {
+  return Math.abs(n) < 1 ? n : Math.round(n);
+}
+
 // Run 17 D55: money under $1 prints 2 decimals; a positive amount that rounds to $0.00 says so (the ICP rule, run 16 N2).
 // An amount of $1 or more prints exactly as before.
 function money(n: number): string {
@@ -2384,8 +2389,8 @@ ${EXAMPLES}
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
 | **Solution Cost**${priceSupplied ? '' : ` (${NOT_SUPPLIED}) ${EXAMPLE}`} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} |
-| **Implementation** ${EXAMPLE} | ${invCell(Math.round(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
-| **Total Investment** | ${invCell(Math.round(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
+| **Implementation** ${EXAMPLE} | ${invCell(wholeDollars(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
+| **Total Investment** | ${invCell(wholeDollars(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
 
 ---
 
@@ -2439,11 +2444,11 @@ The assumptions above are examples built into this tool, not findings from publi
 
 ${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
-- Annual Value: ${valueComputed ? `${money(Math.round(totalValue * 0.5))}` : nc}
+- Annual Value: ${valueComputed ? `${money(wholeDollars(totalValue * 0.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
 - Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
 ### Aggressive Scenario (150% of projected value)
-- Annual Value: ${valueComputed ? `${money(Math.round(totalValue * 1.5))}` : nc}
+- Annual Value: ${valueComputed ? `${money(wholeDollars(totalValue * 1.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
 - Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
 
@@ -2487,7 +2492,7 @@ ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]
-- Cost of delay: ${valueComputed ? `${money(Math.round(totalValue / 12))}/month ${EXAMPLE}` : nc}
+- Cost of delay: ${valueComputed ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : nc}
 - Implementation timeline: ${timelineText}
 
 ---

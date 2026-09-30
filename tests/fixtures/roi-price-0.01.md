@@ -21,8 +21,8 @@
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
 | **Solution Cost** | $0.01 | $0.01 | $0.01 |
-| **Implementation** (Example figure: replace with your own) | $0 | $0 | $0 |
-| **Total Investment** | $0 (Example figure: replace with your own) | $0.01 | $0.01 |
+| **Implementation** (Example figure: replace with your own) | under $0.01 | $0 | $0 |
+| **Total Investment** | $0.01 (Example figure: replace with your own) | $0.01 | $0.01 |
 
 ---
 

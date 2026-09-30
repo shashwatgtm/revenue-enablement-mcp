@@ -22,7 +22,9 @@
 <meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
 <meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/Archivo-latin-1.woff2?v=8f704806db" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/VT323-latin-400.woff2?v=8ddbebcc10" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/fonts.css?v=a7f7495a4f">
@@ -204,7 +206,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.15.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.16.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -245,13 +247,14 @@
 <tr><td>1.2.12</td><td>29 September 2026</td><td>GitHub, commit 62cb780</td></tr>
 <tr><td>1.2.13</td><td>29 September 2026</td><td>GitHub, commit 33349e8</td></tr>
 <tr><td>1.2.14</td><td>30 September 2026</td><td>GitHub, commit fbf67f1</td></tr>
-<tr><td>1.2.15 (this site)</td><td>30 September 2026</td><td>GitHub, commit 63b225e</td></tr>
+<tr><td>1.2.15</td><td>30 September 2026</td><td>GitHub, commit 63b225e</td></tr>
+<tr><td>1.2.16 (this site)</td><td>30 September 2026</td><td>GitHub, commit 30e854f</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.15.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.16.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>

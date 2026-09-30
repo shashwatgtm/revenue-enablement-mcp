@@ -2185,7 +2185,10 @@ function executeRoiBusinessCaseBuilder(args) {
     if (primaryValueDriver === 'cost_reduction' || primaryValueDriver === 'multiple') {
         // Cost reduction calculation
         const hoursSavedPerEmployee = 5; // hours per week
-        const impactedEmployees = Math.max(10, estimatedEmployees * 0.1);
+        // Run 16 R16-41 (D45): an employee figure that is 0 because of a typed 0 (employee_count 0, or employees estimated from an
+        // annual revenue of 0) is used as 0; the example minimum of 10 applies only to an employee figure above 0.
+        const employeesZeroFromInput = employeesIsZero || (revenueIsZero && !employeesGiven);
+        const impactedEmployees = employeesZeroFromInput ? 0 : Math.max(10, estimatedEmployees * 0.1);
         const weeklySavings = hoursSavedPerEmployee * impactedEmployees * industryBenchmark.cost_of_manual_work_per_hour;
         const annualCostSavings = weeklySavings * 50; // 50 working weeks
         totalValue += annualCostSavings;
@@ -2259,7 +2262,8 @@ ${EXAMPLES}
     const priceSupplied = priceGiven;
     // D45: a revenue of 0 (or an employee count of 0 when no revenue was given) makes the revenue based value 0. The figures
     // that multiply are computed with 0; the ones that divide by that value (or by the example price taken from it) say what to add.
-    const zeroWhat = revenueIsZero ? 'annual revenue' : (employeesIsZero && !revenueGiven ? 'employee count' : '');
+    // Run 16 R16-41: an employee count of 0 also makes the cost reduction value 0, so it is named when the revenue was not 0.
+    const zeroWhat = revenueIsZero ? 'annual revenue' : (employeesIsZero ? 'employee count' : '');
     const valueIsZeroFromInput = totalValue === 0 && zeroWhat !== '';
     const valueComputed = totalValue > 0 || valueIsZeroFromInput;
     // A figure that divides by the price: with a price of 0 it prints the line below instead of a number

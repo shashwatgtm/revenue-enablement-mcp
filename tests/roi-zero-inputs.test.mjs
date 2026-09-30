@@ -144,11 +144,13 @@ test("employee_count 0 (revenue given): shown as 0 (your input), never estimated
   assert.ok(!text.includes("not computed"));
 });
 
-test("employee_count 0 (revenue given), cost_reduction: the existing minimum of 10 impacted employees applies", async () => {
+// Run 16 R16-41 (the verifier's Medium note): this case first pinned the old minimum of 10 impacted employees for a typed 0;
+// D45 uses a typed 0 as 0, so it now expects 0 impacted employees and payback naming the employee count.
+test("employee_count 0 (revenue given), cost_reduction: 0 impacted employees, payback says add your employee count", async () => {
   const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 10000000, employee_count: 0, solution_price: 40000 });
   assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 0 (your input) |");
-  assert.match(row(text, "Employees impacted:"), /Employees impacted: 10$/);
-  assert.ok(!text.includes("not computed"));
+  assert.match(row(text, "Employees impacted:"), /Employees impacted: 0$/);
+  assert.ok(row(text, "| **Payback Period** |").includes("not computed: add your employee count"));
 });
 
 test("employee_count 0 and no revenue: revenue is 0 from 0 employees, and figures that divide by the value say add your employee count", async () => {

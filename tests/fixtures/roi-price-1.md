@@ -22,7 +22,7 @@
 |------------|--------|--------|--------|
 | **Solution Cost** | $1 | $1 | $1 |
 | **Implementation** (Example figure: replace with your own) | $0.15 | $0 | $0 |
-| **Total Investment** | $1 (Example figure: replace with your own) | $1 | $1 |
+| **Total Investment** | $1.15 (Example figure: replace with your own) | $1 | $1 |
 
 ---
 

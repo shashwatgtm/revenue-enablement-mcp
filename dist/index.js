@@ -873,16 +873,38 @@ const hasValue = (v) => v !== undefined && v !== null && v !== '';
 function wholeDollars(n) {
     return Math.abs(n) < 1 ? n : Math.round(n);
 }
+// Run 18 D65 (display only; no calculation uses this): an amount rounded to whole cents, half up, as it is read in decimal.
+// The toPrecision(15) step removes binary float noise first (0.555 * 100 is 55.50000000000001, 1.005 * 100 is 100.49999999999999).
+// A value too large for cents to be exact in a double is returned as it is.
+function cents(n) {
+    const a = Math.abs(n) * 100;
+    if (!Number.isFinite(a) || a >= 1e15)
+        return n;
+    const r = Math.round(Number(a.toPrecision(15))) / 100;
+    return n < 0 ? -r : r;
+}
+// Run 18 D65: a printed total is the sum of its printed parts. Each term is rounded to cents the way money() prints it, then added.
+// If every term that is not 0 prints under $0.01 and the sum would print as $0, the unrounded sum is returned so money() still says
+// "under $0.01".
+function printedSum(terms) {
+    const sum = terms.reduce((acc, t) => acc + cents(t), 0);
+    if (cents(sum) === 0 && terms.some((t) => t !== 0 && cents(t) === 0))
+        return terms.reduce((acc, t) => acc + t, 0);
+    return sum;
+}
 // Run 17 D55: money under $1 prints 2 decimals; a positive amount that rounds to $0.00 says so (the ICP rule, run 16 N2).
-// An amount of $1 or more prints exactly as before.
+// Run 18 D65: every amount is rounded to cents (cents() above) and prints at most 2 decimals; an amount that is not a whole number
+// of dollars prints exactly 2 decimals ("$4.60", "$1,234.50"); a whole amount prints as before ("$5", "$20,000").
 function money(n) {
     const a = Math.abs(n);
+    const c = cents(a);
     if (a > 0 && a < 1) {
-        if (a.toFixed(2) === '0.00')
+        if (c === 0)
             return n < 0 ? 'a loss under $0.01' : 'under $0.01';
-        return `${n < 0 ? '-' : ''}$${a.toFixed(2)}`;
+        return `${n < 0 ? '-' : ''}$${c.toFixed(2)}`;
     }
-    return `${n < 0 ? '-' : ''}$${a.toLocaleString('en-US')}`;
+    const digits = Number.isInteger(c) ? {} : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    return `${n < 0 ? '-' : ''}$${c.toLocaleString('en-US', digits)}`;
 }
 function executeAccountPlanBuilder(args) {
     const accountName = args.account_name || 'Target Account';
@@ -2177,11 +2199,14 @@ function executeRoiBusinessCaseBuilder(args) {
     // Generate ROI calculations based on value driver
     let valueCalculations = '';
     let totalValue = 0;
+    // Run 18 D65: the value amounts as they are printed, so the printed Total Quantified Value is the sum of its printed parts.
+    const valueParts = [];
     let confidenceLevel = 'Medium';
     if (primaryValueDriver === 'revenue_increase' || primaryValueDriver === 'multiple') {
         // Revenue impact calculation
         const revenueImpact = estimatedRevenue * 0.02; // Conservative 2% improvement
         totalValue += revenueImpact;
+        valueParts.push(revenueImpact);
         valueCalculations += `
 ### Revenue Impact
 
@@ -2207,6 +2232,7 @@ function executeRoiBusinessCaseBuilder(args) {
         const weeklySavings = hoursSavedPerEmployee * impactedEmployees * industryBenchmark.cost_of_manual_work_per_hour;
         const annualCostSavings = weeklySavings * 50; // 50 working weeks
         totalValue += annualCostSavings;
+        valueParts.push(annualCostSavings);
         valueCalculations += `
 ### Cost Reduction
 
@@ -2214,7 +2240,7 @@ function executeRoiBusinessCaseBuilder(args) {
 ${EXAMPLES}
 - Hours saved per employee per week: ${hoursSavedPerEmployee} hours
 - Employees impacted: ${impactedEmployees.toFixed(0)}
-- Hourly cost of labor: $${industryBenchmark.cost_of_manual_work_per_hour}
+- Hourly cost of labor: ${money(industryBenchmark.cost_of_manual_work_per_hour)}
 - Weekly savings: ${money(weeklySavings)}
 - Annual Cost Savings: **${money(annualCostSavings)}**
 
@@ -2229,6 +2255,7 @@ ${EXAMPLES}
         // Productivity calculation
         const productivityGain = estimatedRevenue * 0.01; // 1% productivity improvement
         totalValue += productivityGain;
+        valueParts.push(productivityGain);
         valueCalculations += `
 ### Productivity Gains
 
@@ -2248,6 +2275,7 @@ ${EXAMPLES}
         // Risk mitigation calculation
         const riskReduction = estimatedRevenue * 0.005; // 0.5% risk reduction value
         totalValue += riskReduction;
+        valueParts.push(riskReduction);
         valueCalculations += `
 ### Risk Mitigation
 
@@ -2303,6 +2331,13 @@ ${EXAMPLES}
     const ignoredInputs = [currentProcess ? 'current process' : '', knownMetrics ? 'known metrics' : ''].filter(Boolean).join(' and ');
     // Without a price, the investment is a share of the value, so it cannot be shown when no value is computed
     const invCell = (n) => (priceSupplied || valueComputed ? `${money(n)}` : nc);
+    // Run 18 D65 (display only; every calculation above keeps full precision): the printed totals are sums or differences of the
+    // printed parts: Year 1 Total Investment = Solution Cost + Implementation, Total Quantified Value = the printed value parts
+    // (one part, or four in "multiple" mode), Net Annual Benefit = Total Quantified Value - Annual Investment.
+    const implementationYear1 = wholeDollars(investment * 0.15);
+    const year1Total = printedSum([investment, implementationYear1]);
+    const printedValue = printedSum(valueParts);
+    const printedNet = printedSum([printedValue, -investment]);
     return `# ROI Business Case: ${customerName}
 
 *Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
@@ -2326,8 +2361,8 @@ ${EXAMPLES}
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
 | **Solution Cost**${priceSupplied ? '' : ` (${NOT_SUPPLIED}) ${EXAMPLE}`} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} | ${priceIsZero ? '$0 (your input)' : invCell(investment)} |
-| **Implementation** ${EXAMPLE} | ${invCell(wholeDollars(investment * 0.15))} | ${invCell(0)} | ${invCell(0)} |
-| **Total Investment** | ${invCell(wholeDollars(investment * 1.15))} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
+| **Implementation** ${EXAMPLE} | ${invCell(implementationYear1)} | ${invCell(0)} | ${invCell(0)} |
+| **Total Investment** | ${invCell(year1Total)} ${EXAMPLE} | ${invCell(investment)} | ${invCell(investment)} |
 
 ---
 
@@ -2342,9 +2377,9 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | ${valueComputed ? `**${money(totalValue)}** ${EXAMPLE}` : nc} |
+| **Total Quantified Value** | ${valueComputed ? `**${money(printedValue)}** ${EXAMPLE}` : nc} |
 | **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
-| **Net Annual Benefit** | ${valueComputed ? `${usd(totalValue - investment)} ${EXAMPLE}` : nc} |
+| **Net Annual Benefit** | ${valueComputed ? `${usd(printedNet)} ${EXAMPLE}` : nc} |
 
 ### Key Metrics
 
@@ -2423,7 +2458,7 @@ ${yourSolution} addresses these challenges through [key capabilities].
 
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
-- **${money(totalValue)}** in annual value
+- **${money(printedValue)}** in annual value
 ${roiSummary}
 ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
@@ -3105,7 +3140,7 @@ You supplied this value: ${valueDelivered}. Add the deal value to compare the pr
 | **Deal Value** | ${dealValueText} |
 | **Discount Requested** | ${hasValue(args.discount_requested) ? `${discountRequested}%` : NOT_SUPPLIED} |
 | **Revenue at Risk** | ${bothPricingInputs ? money(revenueAtRisk) : pricingNotComputed} |
-| **Post-Discount Value** | ${bothPricingInputs ? money(discountedValue) : pricingNotComputed} |
+| **Post-Discount Value** | ${bothPricingInputs ? money(printedSum([dealValue, -revenueAtRisk])) : pricingNotComputed} |
 | **Decision Timeline** | ${decisionTimeline || 'Not specified'} |
 | **Approval Authority** | ${approvalAuthority || 'Not specified'} |
 
@@ -5785,7 +5820,7 @@ ${SUGGESTIONS_FOOTER}`;
 // message when a required input is missing. Tool code above is unchanged.
 // =============================================================================
 exports.SERVER_NAME = 'revenue-enablement-mcp';
-exports.SERVER_VERSION = '1.2.19';
+exports.SERVER_VERSION = '1.2.20';
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES = {
     "account_plan_builder": "Account Plan Builder",

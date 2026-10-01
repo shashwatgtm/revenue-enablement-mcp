@@ -20,7 +20,7 @@ const call = async (name, args) => {
 test("account_plan_builder: Current ARR under $1 prints 2 decimals or 'under $0.01'", async () => {
   assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 0.123 }), /\| \*\*Current ARR\*\* \| \$0\.12 \|/);
   assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 0.004 }), /\| \*\*Current ARR\*\* \| under \$0\.01 \|/);
-  assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 1234.5 }), /\| \*\*Current ARR\*\* \| \$1,234\.5 \|/);
+  assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 1234.5 }), /\| \*\*Current ARR\*\* \| \$1,234\.50 \|/); // run 18 D65: was $1,234.5
 });
 
 test("deal_strategy_coach and win_loss_analyzer: Deal Value under $1", async () => {

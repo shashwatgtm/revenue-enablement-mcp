@@ -36,7 +36,7 @@ exports.VERTICALS = [
     },
     {
         id: 'fintech', name: 'fintech',
-        match: /\b(fintech|spend management|expenses?|reimburse\w*|payments?|payouts?|corporate cards?|prepaid cards?|lending|loans?|credit|banking|banks?|treasury|reconcil\w*|payroll|invoic\w*|accounts payable|wealth|invest\w*|asset (?:managers?|allocators?)|insur\w*|portfolios?|funds?|nbfc)\b/i,
+        match: /\b(fintech|spend management|expenses?|erp|month-end|close the books|reimburse\w*|payments?|payouts?|corporate cards?|prepaid cards?|lending|loans?|credit|banking|banks?|treasury|reconcil\w*|payroll|invoic\w*|accounts payable|wealth|invest\w*|asset (?:managers?|allocators?)|insur\w*|portfolios?|funds?|nbfc)\b/i,
         vocabulary: ['reconciliation', 'month-end close', 'policy controls', 'audit trail', 'accounts payable', 'ERP posting', 'compliance review', 'approval workflow', 'data residency'],
         buyerRoles: ['Chief Financial Officer', 'Finance Controller', 'Head of Accounts Payable', 'Head of Treasury', 'Internal Audit Lead', 'Compliance Officer', 'Head of IT'],
         committee: 'The CFO signs; the Finance Controller or the head of the affected finance team champions; internal audit and compliance review controls; IT checks ERP integration and security; HR joins when employees are affected.',
@@ -221,22 +221,20 @@ exports.VERTICALS = [
 ];
 // The order in which the sectors are tried: the specific ones first, SaaS last (most text mentions software).
 const ORDER = ['vertical-saas', 'logistics-tech', 'telecom', 'cybersecurity', 'ites', 'ai-native', 'fintech', 'software', 'saas'];
-/** The sector read from what the user typed, or null when nothing names one. Counts matches per sector; ties go to ORDER. */
+/** The sector read from what the user typed, or null when the text does not name one clearly. Counts the DIFFERENT sector
+ * words found per sector; a sector is chosen only with at least 2 different words and more than any other sector, so a
+ * single shared word (for example "security" or "delivery") never puts a company in the wrong sector. */
 function detectVertical(...texts) {
     const t = texts.filter((x) => typeof x === 'string' && x.trim()).join(' \n ');
     if (!t)
         return null;
-    let best = null;
-    let bestN = 0;
-    for (const id of ORDER) {
+    const scored = ORDER.map((id) => {
         const v = exports.VERTICALS.find((x) => x.id === id);
-        const n = (t.match(new RegExp(v.match.source, 'gi')) || []).length;
-        if (n > bestN) {
-            best = v;
-            bestN = n;
-        }
-    }
-    return best;
+        const n = new Set((t.match(new RegExp(v.match.source, 'gi')) || []).map((w) => w.toLowerCase())).size;
+        return { v, n };
+    }).sort((a, b) => b.n - a.n);
+    const [first, second] = scored;
+    return first.n >= 2 && first.n > second.n ? first.v : null;
 }
 exports.BUSINESS_MODELS = ['saas', 'services', 'connectivity', 'transactions', 'marketplace', 'hardware_software', 'investment'];
 exports.MODEL_NAME = {

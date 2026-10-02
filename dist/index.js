@@ -2628,7 +2628,7 @@ ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 *Confidence: ${confidenceLevel.toLowerCase()}. ${exampleOnly ? 'The value figures rest on example assumptions until you replace them with customer-provided metrics.' : 'The value comes from the figures you supplied; confirm them with the buyer before sharing.'}*
 
-${SUGGESTIONS_FOOTER}`;
+${(() => { const c = readContext(undefined, yourSolution, customerName, knownMetrics, currentProcess, args.industry); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
 }
 // Tool 5: Mutual Action Plan Generator
 function executeMutualActionPlanGenerator(args) {
@@ -3792,7 +3792,8 @@ Enterprise deals often have multiple vendors. Position on value, not price:
 - Right to case study/reference`
     };
     const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
-    return generator();
+    const pricingSector = ctx.v ? `\n\n---\n\n${sectorNotes(ctx.v, 'objections')}` : '';
+    return `${generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${yourSolution}`)}${pricingSector}`;
 }
 // Tool 11: Champion Enablement Kit
 function executeChampionEnablementKit(args) {
@@ -5161,7 +5162,7 @@ ${SUGGESTIONS_FOOTER}`
     // Generate the requested section
     const generator = sections[sectionType];
     if (generator) {
-        return generator();
+        return `${generator()}${propCtx.v ? `\n\n---\n\n${sectorNotes(propCtx.v, 'committee')}` : ''}`;
     }
     return `Section type '${sectionType}' not recognized. Available sections: ${Object.keys(sections).join(', ')}`;
 }

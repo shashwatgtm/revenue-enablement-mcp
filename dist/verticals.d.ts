@@ -17,7 +17,9 @@ export interface Vertical {
     discovery: string[];
 }
 export declare const VERTICALS: Vertical[];
-/** The sector read from what the user typed, or null when nothing names one. Counts matches per sector; ties go to ORDER. */
+/** The sector read from what the user typed, or null when the text does not name one clearly. Counts the DIFFERENT sector
+ * words found per sector; a sector is chosen only with at least 2 different words and more than any other sector, so a
+ * single shared word (for example "security" or "delivery") never puts a company in the wrong sector. */
 export declare function detectVertical(...texts: unknown[]): Vertical | null;
 export type BusinessModel = 'saas' | 'services' | 'connectivity' | 'transactions' | 'marketplace' | 'hardware_software' | 'investment';
 export declare const BUSINESS_MODELS: BusinessModel[];

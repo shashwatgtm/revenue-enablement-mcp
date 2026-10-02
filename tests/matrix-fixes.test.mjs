@@ -63,10 +63,13 @@ test("win_loss_analyzer: a loss with no stated reason still has something under 
   assert.doesNotMatch(after, /^### Loss Categories/);
 });
 
+// Run 19 (D80, problem 2): a weakness is the seller's own note and is never read out inside a question to the buyer, so this
+// test now checks that each weakness gets its own question, that the question does not quote it, and that the note is kept.
 test("competitive_trap_setter: each weakness gets its own landmine question", async () => {
   const r = await call("competitive_trap_setter", { your_solution: "FlowOps", competitor: "Competitor A", trap_type: "discovery_questions", competitor_weaknesses: "Charges extra for text reminders, No two-way rescheduling" });
   const qs = [...r.text.matchAll(/\*\*Landmine Question:\*\* "([^"]+)"/g)].map((m) => m[1]);
   assert.equal(qs.length, 2);
   assert.notEqual(qs[0], qs[1]);
-  assert.match(qs[0], /text reminders/);
+  assert.doesNotMatch(qs[0], /text reminders/);
+  assert.match(r.text, /Charges extra for text reminders/);
 });

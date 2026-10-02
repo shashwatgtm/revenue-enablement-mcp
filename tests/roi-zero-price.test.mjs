@@ -31,6 +31,8 @@ const call = async (args) => {
 
 // Claude chat's measurement C-REV-01 (B44): productivity, annual revenue 10,000,000.
 const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
+// Run 19 (D80, problem 5): the fixtures were regenerated once; the only change is the honest confidence line (Low when the value
+// rests on example assumptions) and, where the example ROI is very high, a note to add the buyer's own figures.
 const fixture = (name) => readFileSync(new URL("./fixtures/" + name, import.meta.url), "utf8");
 const row = (text, label) => {
   const line = text.split("\n").find((l) => l.includes(label));

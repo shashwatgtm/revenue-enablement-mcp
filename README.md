@@ -1,9 +1,9 @@
-# Revenue Enablement MCP v1.2.20
+# Revenue Enablement MCP v1.2.21
 **Deal Strategy & Sales Enablement Engine**: 12 tools for sales execution, deal management, and revenue acceleration.
 
 ## Use it hosted (no install)
 
-Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.20). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
+Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.21). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
 
 The npm package below is an older version (1.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 
@@ -38,14 +38,14 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list, and checked again on 2 October 2026 against `tools/list` of revenue-enablement-mcp 1.2.20 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Generated on 27 September 2026 from the server's own tool list, and checked again on 2 October 2026 against `tools/list` of revenue-enablement-mcp 1.2.21 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
 | 1 | `account_plan_builder` | Account Plan Builder | Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. |
 | 2 | `deal_strategy_coach` | Deal Strategy Coach | Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. |
 | 3 | `discovery_question_bank` | Discovery Question Bank | Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect. |
-| 4 | `roi_business_case_builder` | ROI Business Case Builder | Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary. |
+| 4 | `roi_business_case_builder` | ROI Business Case Builder | Build an ROI business case from your inputs: the annual value comes from the buyer's own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary. |
 | 5 | `mutual_action_plan_generator` | Mutual Action Plan Generator | Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. |
 | 6 | `win_loss_analyzer` | Win/Loss Analyzer | Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate. |
 | 7 | `proposal_section_writer` | Proposal Section Writer | Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more. |
@@ -112,7 +112,10 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `annual_revenue` | No | number (0 or more) | Customer annual revenue |
 | `employee_count` | No | number (0 or more) | Number of employees |
 | `solution_price` | No | number (0 or more) | Annual cost of your solution |
-| `known_metrics` | No | string | Metrics the prospect shared. Shown in the output; not used in the calculation |
+| `known_metrics` | No | string | Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate |
+| `current_annual_cost` | No | number (0 or more) | Optional: what the problem or the current process costs the buyer a year, in dollars (their figure) |
+| `expected_improvement_percent` | No | number (0 to 100) | Optional: the share of that annual cost the buyer expects to save, in percent (their figure) |
+| `annual_value_estimate` | No | number (0 or more) | Optional: the buyer's own estimate of the annual value in dollars; used as the value when given |
 | `current_process` | No | string | How they do it today. Shown in the output; not used in the calculation |
 | `implementation_timeline` | No | string | Expected implementation time. Shown in the output; not used in the calculation |
 
@@ -209,6 +212,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `your_leverage` | No | string | Your leverage points (unique features, timeline, etc.) |
 | `decision_timeline` | No | string | When decision needs to be made |
 | `approval_authority` | No | string | Who has final approval on pricing |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out |
 
 #### 11. Champion Enablement Kit (`champion_enablement_kit`)
 
@@ -238,6 +242,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `buyer_priorities` | No | string | What the buyer cares most about |
 | `buyer_persona` | No | string | Role of key evaluator |
 | `trap_type` | No | one of: `discovery_questions`, `evaluation_criteria`, `reference_questions`, `technical_requirements`, `commercial_terms`, `all` | Type of competitive positioning |
+| `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out |
 
 ## Who Is This For?
 

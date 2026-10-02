@@ -12,7 +12,7 @@
 | **Est. Annual Revenue** | $10,000,000 |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
 | **Solution** | Helix Platform |
-| **Confidence Level** | Medium: the value figures rest on example assumptions, not on the customer's data |
+| **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
 
 ---
 
@@ -140,7 +140,6 @@ Example figures: replace with your own.
 
 ---
 
-*Confidence: medium. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
-*Recommend validation with customer-provided metrics*
+*Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
 
 Suggested timings, lengths and counts: adjust them to your own.

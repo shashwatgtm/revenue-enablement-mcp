@@ -12,7 +12,7 @@
 | **Est. Annual Revenue** | $10,000,000 |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
 | **Solution** | Helix Platform |
-| **Confidence Level** | Medium: the value figures rest on example assumptions, not on the customer's data |
+| **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
 
 ---
 
@@ -50,6 +50,8 @@
 | **Total Quantified Value** | **$100,000** (Example figure: replace with your own) |
 | **Annual Investment** | $0.01 |
 | **Net Annual Benefit** | $99,999.99 (Example figure: replace with your own) |
+
+*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current_annual_cost and expected_improvement_percent, or annual_value_estimate).*
 
 ### Key Metrics
 
@@ -140,7 +142,6 @@ Example figures: replace with your own.
 
 ---
 
-*Confidence: medium. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
-*Recommend validation with customer-provided metrics*
+*Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
 
 Suggested timings, lengths and counts: adjust them to your own.

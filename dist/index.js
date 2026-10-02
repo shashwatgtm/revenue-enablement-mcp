@@ -2331,12 +2331,12 @@ function executeRoiBusinessCaseBuilder(args) {
     const noSizeData = !revenueGiven && !employeesGiven;
     const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
     const revenueCell = revenueGiven
-        ? (revenueIsZero ? '$0 (your input)' : `${money(annualRevenue)}`)
+        ? (revenueIsZero ? '$0 (your input)' : `${money(annualRevenue)} (your input)`) // run 19 (ledger B16-18): every given value is labelled
         : employeesGiven
             ? `${money(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
             : NOT_SUPPLIED;
     const employeesCell = employeesGiven
-        ? (employeesIsZero ? '0 (your input)' : fmt(employeeCount))
+        ? (employeesIsZero ? '0 (your input)' : `${fmt(employeeCount)} (your input)`)
         : revenueGiven
             ? `${fmt(estimatedEmployees)}, estimated from your annual revenue ${EXAMPLE}`
             : NOT_SUPPLIED;
@@ -2505,8 +2505,8 @@ ${EXAMPLES}
 | **Customer** | ${args.customer_name || NOT_SUPPLIED} |
 | **Industry** | ${args.industry || NOT_SUPPLIED} |
 | **Company Size** | ${args.company_size ? sizeText : `${NOT_SUPPLIED} (treated as ${sizeText})`} |
-| **Est. Annual Revenue** | ${revenueCell} |
-| **Est. Employees** | ${employeesCell} |
+| **${revenueGiven ? '' : 'Est. '}Annual Revenue** | ${revenueCell} |
+| **${employeesGiven ? '' : 'Est. '}Employees** | ${employeesCell} |
 | **Solution** | ${yourSolution} |
 | **Confidence Level** | ${confidenceText} |
 

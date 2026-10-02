@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/#app",
    "name": "ROI Business Case Builder (Revenue Enablement)",
-   "description": "Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary.",
+   "description": "Build an ROI business case from your inputs: the annual value comes from the buyer's own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary.",
    "url": "https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -280,7 +280,7 @@
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run ROI Business Case Builder">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run ROI Business Case Builder</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/roi_business_case_builder" data-tool="roi_business_case_builder" data-title="ROI Business Case Builder"><p class="hx-help">You need: Your solution, Primary value driver. You can add: Customer name, Industry, Company size, Annual revenue, Employee count, Solution price, Known metrics, Current process, Implementation timeline.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run ROI Business Case Builder</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/roi_business_case_builder" data-tool="roi_business_case_builder" data-title="ROI Business Case Builder"><p class="hx-help">You need: Your solution, Primary value driver. You can add: Customer name, Industry, Company size, Annual revenue, Employee count, Solution price, Known metrics, Current annual cost, Expected improvement percent, Annual value estimate, Current process, Implementation timeline.</p>
 <div class="hx-field"><label for="f-customer_name">Customer name <span class="hx-opt">(optional)</span></label><input id="f-customer_name" name="customer_name" type="text" maxlength="6000" data-kind="string" aria-describedby="f-customer_name-help"><p class="hx-help" id="f-customer_name-help">Customer/prospect name</p></div>
 <div class="hx-field"><label for="f-industry">Industry <span class="hx-opt">(optional)</span></label><select id="f-industry" name="industry" data-kind="string" aria-describedby="f-industry-help"><option value="">Not specified</option><option value="Technology">Technology</option><option value="Financial_Services">Financial Services</option><option value="Healthcare">Healthcare</option><option value="Manufacturing">Manufacturing</option><option value="Retail">Retail</option></select><p class="hx-help" id="f-industry-help">Industry for the example benchmarks. Not specified uses Technology.</p></div>
 <div class="hx-field"><label for="f-company_size">Company size <span class="hx-opt">(optional)</span></label><select id="f-company_size" name="company_size" data-kind="string" aria-describedby="f-company_size-help"><option value="">Not specified</option><option value="startup">Startup</option><option value="smb">Small and mid-size business</option><option value="mid_market">Mid-market</option><option value="enterprise">Enterprise</option></select><p class="hx-help" id="f-company_size-help">Company size tier</p></div>
@@ -289,7 +289,10 @@
 <div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
 <div class="hx-field"><label for="f-solution_price">Solution price <span class="hx-opt">(optional)</span></label><input id="f-solution_price" name="solution_price" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-solution_price-help"><p class="hx-help" id="f-solution_price-help">Annual cost of your solution</p></div>
 <div class="hx-field"><label for="f-primary_value_driver">Primary value driver <span class="hx-req" aria-hidden="true">*</span></label><select id="f-primary_value_driver" name="primary_value_driver" data-kind="string" required aria-required="true" aria-describedby="f-primary_value_driver-help"><option value="" disabled selected>Choose one</option><option value="revenue_increase">Revenue increase</option><option value="cost_reduction">Cost reduction</option><option value="productivity">Productivity</option><option value="risk_mitigation">Risk mitigation</option><option value="multiple">Multiple</option></select><p class="hx-help" id="f-primary_value_driver-help">Primary value category</p></div>
-<div class="hx-field"><label for="f-known_metrics">Known metrics <span class="hx-opt">(optional)</span></label><textarea id="f-known_metrics" name="known_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-known_metrics-help"></textarea><p class="hx-help" id="f-known_metrics-help">Metrics the prospect shared. Shown in the output; not used in the calculation</p></div>
+<div class="hx-field"><label for="f-known_metrics">Known metrics <span class="hx-opt">(optional)</span></label><textarea id="f-known_metrics" name="known_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-known_metrics-help"></textarea><p class="hx-help" id="f-known_metrics-help">Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</p></div>
+<div class="hx-field"><label for="f-current_annual_cost">Current annual cost <span class="hx-opt">(optional)</span></label><input id="f-current_annual_cost" name="current_annual_cost" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-current_annual_cost-help"><p class="hx-help" id="f-current_annual_cost-help">Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</p></div>
+<div class="hx-field"><label for="f-expected_improvement_percent">Expected improvement percent <span class="hx-opt">(optional)</span></label><input id="f-expected_improvement_percent" name="expected_improvement_percent" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-expected_improvement_percent-help"><p class="hx-help" id="f-expected_improvement_percent-help">Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</p></div>
+<div class="hx-field"><label for="f-annual_value_estimate">Annual value estimate <span class="hx-opt">(optional)</span></label><input id="f-annual_value_estimate" name="annual_value_estimate" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-annual_value_estimate-help"><p class="hx-help" id="f-annual_value_estimate-help">Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</p></div>
 <div class="hx-field"><label for="f-current_process">Current process <span class="hx-opt">(optional)</span></label><textarea id="f-current_process" name="current_process" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-current_process-help"></textarea><p class="hx-help" id="f-current_process-help">How they do it today. Shown in the output; not used in the calculation</p></div>
 <div class="hx-field"><label for="f-implementation_timeline">Implementation timeline <span class="hx-opt">(optional)</span></label><textarea id="f-implementation_timeline" name="implementation_timeline" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-implementation_timeline-help"></textarea><p class="hx-help" id="f-implementation_timeline-help">Expected implementation time. Shown in the output; not used in the calculation</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-roi_business_case_builder">Leave this empty</label><input id="hp-roi_business_case_builder" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
@@ -300,7 +303,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"customer_name": "Example Clinic Group", "industry": "Healthcare", "your_solution": "ExampleCo Scheduler", "primary_value_driver": "revenue_increase", "company_size": "smb", "annual_revenue": "6000000", "employee_count": "45", "solution_price": "40000"}</script></div>
+  <script type="application/json" data-example>{"customer_name": "Example Retail Co", "industry": "Retail", "your_solution": "Lanehop", "primary_value_driver": "cost_reduction", "company_size": "mid_market", "annual_revenue": "60000000", "employee_count": "800", "solution_price": "90000"}</script></div>
 </section>
 
 <section class="hx-section" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -321,7 +324,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -329,35 +332,39 @@
       <p class="hxr-meta"><span>Made with ROI Business Case Builder by Helix GTM Consulting</span><span>Based on the made-up example inputs</span><span>https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/</span></p>
     </header>
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
-    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">ROI Business Case: Example Clinic Group</h4>
+    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">ROI Business Case: Example Retail Co</h4>
 <p><em>Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.</em></p>
 <h5 class="hxr-h3">Executive Summary</h5>
-<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td><strong>Customer</strong></td><td>Example Clinic Group</td></tr><tr><td><strong>Industry</strong></td><td>Healthcare</td></tr><tr><td><strong>Company Size</strong></td><td>SMB</td></tr><tr><td><strong>Est. Annual Revenue</strong></td><td>$6,000,000</td></tr><tr><td><strong>Est. Employees</strong></td><td>45</td></tr><tr><td><strong>Solution</strong></td><td>ExampleCo Scheduler</td></tr><tr><td><strong>Confidence Level</strong></td><td>Medium: the value figures rest on example assumptions, not on the customer's data</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td><strong>Customer</strong></td><td>Example Retail Co</td></tr><tr><td><strong>Industry</strong></td><td>Retail</td></tr><tr><td><strong>Company Size</strong></td><td>mid market</td></tr><tr><td><strong>Est. Annual Revenue</strong></td><td>$60,000,000</td></tr><tr><td><strong>Est. Employees</strong></td><td>800</td></tr><tr><td><strong>Solution</strong></td><td>Lanehop</td></tr><tr><td><strong>Confidence Level</strong></td><td>Low: the value figures rest on example assumptions, not on the customer's data</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Investment Summary</h5>
-<div class="hx-table"><table><thead><tr><th>Investment</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead><tbody><tr><td><strong>Solution Cost</strong></td><td>$40,000</td><td>$40,000</td><td>$40,000</td></tr><tr><td><strong>Implementation</strong> (Example figure: replace with your own)</td><td>$6,000</td><td>$0</td><td>$0</td></tr><tr><td><strong>Total Investment</strong></td><td>$46,000 (Example figure: replace with your own)</td><td>$40,000</td><td>$40,000</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Investment</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead><tbody><tr><td><strong>Solution Cost</strong></td><td>$90,000</td><td>$90,000</td><td>$90,000</td></tr><tr><td><strong>Implementation</strong> (Example figure: replace with your own)</td><td>$13,500</td><td>$0</td><td>$0</td></tr><tr><td><strong>Total Investment</strong></td><td>$103,500 (Example figure: replace with your own)</td><td>$90,000</td><td>$90,000</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Value Breakdown</h5>
-<h6 class="hxr-h4">Revenue Impact</h6>
+<h6 class="hxr-h4">Cost Reduction</h6>
 <p><strong>Calculation Methodology:</strong></p>
+<p>Example figures: replace with your own.</p>
 <ul>
-<li>Estimated Annual Revenue: $6,000,000</li>
-<li>Assumed impact: 2% (example range: 1-5%) (Example figure: replace with your own)</li>
-<li>Annual Revenue Impact: <strong>$120,000</strong> (Example figure: replace with your own)</li>
+<li>Hours saved per employee per week: 5 hours</li>
+<li>Employees impacted: 80</li>
+<li>Hourly cost of labor: $45</li>
+<li>Weekly savings: $18,000</li>
+<li>Annual Cost Savings: <strong>$900,000</strong></li>
 </ul>
 <p><strong>Validation Questions:</strong></p>
 <ul>
-<li>"What's your current win rate?" (Baseline for improvement)</li>
-<li>"What would a 10% improvement in win rate mean in revenue?" (Example figure: replace with your own)</li>
-<li>"How much revenue is lost to no-decision or competitor?"</li>
+<li>"How many hours per week do your team spend on [manual task]?"</li>
+<li>"What's the fully-loaded cost of your team members?"</li>
+<li>"How many people are doing this work today?"</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">ROI Analysis</h5>
 <h6 class="hxr-h4">Total Annual Value</h6>
-<div class="hx-table"><table><thead><tr><th>Category</th><th>Annual Value</th></tr></thead><tbody><tr><td><strong>Total Quantified Value</strong></td><td><strong>$120,000</strong> (Example figure: replace with your own)</td></tr><tr><td><strong>Annual Investment</strong></td><td>$40,000</td></tr><tr><td><strong>Net Annual Benefit</strong></td><td>$80,000 (Example figure: replace with your own)</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Category</th><th>Annual Value</th></tr></thead><tbody><tr><td><strong>Total Quantified Value</strong></td><td><strong>$900,000</strong> (Example figure: replace with your own)</td></tr><tr><td><strong>Annual Investment</strong></td><td>$90,000</td></tr><tr><td><strong>Net Annual Benefit</strong></td><td>$810,000 (Example figure: replace with your own)</td></tr></tbody></table></div>
+<p><em>This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (Current annual cost and Expected improvement percent, or Annual value estimate).</em></p>
 <h6 class="hxr-h4">Key Metrics</h6>
 <p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th><th>Example threshold</th></tr></thead><tbody><tr><td><strong>ROI</strong></td><td>200%</td><td>&gt;100% considered strong</td></tr><tr><td><strong>Payback Period</strong></td><td>4.0 months</td><td>&lt;12 months considered fast</td></tr><tr><td><strong>3-Year Net Value</strong></td><td>$240,000</td><td>-</td></tr><tr><td><strong>Value/Cost Ratio</strong></td><td>3.0x</td><td>&gt;3x considered excellent</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th><th>Example threshold</th></tr></thead><tbody><tr><td><strong>ROI</strong></td><td>900%</td><td>&gt;100% considered strong</td></tr><tr><td><strong>Payback Period</strong></td><td>1.2 months</td><td>&lt;12 months considered fast</td></tr><tr><td><strong>3-Year Net Value</strong></td><td>$2,430,000</td><td>-</td></tr><tr><td><strong>Value/Cost Ratio</strong></td><td>10.0x</td><td>&gt;3x considered excellent</td></tr></tbody></table></div>
 <p>ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.</p>
 <hr>
 <h5 class="hxr-h3">Assumptions</h5>
@@ -365,8 +372,8 @@
 <ol>
 <li value="1">Implementation timeline: 90 days (Example figure: replace with your own)</li>
 <li value="2">Full value realization: 6-12 months post-implementation (Example figure: replace with your own)</li>
-<li value="3">Benchmark set used for hourly labor cost and revenue per employee: Healthcare</li>
-<li value="4">Company size multiplier: 0.8x (SMB), not used here, because revenue and employees were both supplied</li>
+<li value="3">Benchmark set used for hourly labor cost and revenue per employee: Retail</li>
+<li value="4">Company size multiplier: 1x (mid market), not used here, because revenue and employees were both supplied</li>
 </ol>
 <h6 class="hxr-h4">Validation Needed</h6>
 <ul>
@@ -381,15 +388,15 @@
 <p>Example figures: replace with your own.</p>
 <h6 class="hxr-h4">Conservative Scenario (50% of projected value)</h6>
 <ul>
-<li>Annual Value: $60,000</li>
-<li>ROI: 50%</li>
-<li>Payback: 8.0 months</li>
+<li>Annual Value: $450,000</li>
+<li>ROI: 400%</li>
+<li>Payback: 2.4 months</li>
 </ul>
 <h6 class="hxr-h4">Aggressive Scenario (150% of projected value)</h6>
 <ul>
-<li>Annual Value: $180,000</li>
-<li>ROI: 350%</li>
-<li>Payback: 2.7 months</li>
+<li>Annual Value: $1,350,000</li>
+<li>ROI: 1400%</li>
+<li>Payback: 0.8 months</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Risk Factors &amp; Mitigation</h5>
@@ -404,27 +411,26 @@
 </ol>
 <hr>
 <h5 class="hxr-h3">One-Page Executive Summary</h5>
-<h6 class="hxr-h4">Why ExampleCo Scheduler for Example Clinic Group</h6>
+<h6 class="hxr-h4">Why Lanehop for Example Retail Co</h6>
 <p><strong>The Problem:</strong></p>
 <p>[The customer's problem in their words]</p>
 <p><strong>The Solution:</strong></p>
-<p>ExampleCo Scheduler addresses these challenges through [key capabilities].</p>
+<p>Lanehop addresses these challenges through [key capabilities].</p>
 <p><strong>The Value:</strong></p>
 <p>Example figures: replace with your own.</p>
 <ul>
-<li><strong>$120,000</strong> in annual value</li>
-<li><strong>200%</strong> ROI</li>
-<li><strong>4.0 months</strong> payback</li>
+<li><strong>$900,000</strong> in annual value</li>
+<li><strong>900%</strong> ROI</li>
+<li><strong>1.2 months</strong> payback</li>
 </ul>
 <p><strong>Why Now:</strong></p>
 <ul>
 <li>[Why this customer should act now, for example competitive pressure, if it applies]</li>
-<li>Cost of delay: $10,000/month (Example figure: replace with your own)</li>
+<li>Cost of delay: $75,000/month (Example figure: replace with your own)</li>
 <li>Implementation timeline: 90 days (Example figure: replace with your own)</li>
 </ul>
 <hr>
-<p><em>Confidence: medium. The value figures rest on example assumptions until you replace them with customer-provided metrics.</em></p>
-<p><em>Recommend validation with customer-provided metrics</em></p>
+<p><em>Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.</em></p>
 <p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/</span></footer>
   </article>
@@ -443,7 +449,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use ROI Business Case Builder from Claude?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude or ChatGPT</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s ROI Business Case Builder tool. customer name: Example Clinic Group; industry: Healthcare; your solution: ExampleCo Scheduler; primary value driver: Revenue increase; company size: Small and mid-size business; annual revenue: 6000000; employee count: 45; solution price: 40000.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s ROI Business Case Builder tool. customer name: Example Retail Co; industry: Retail; your solution: Lanehop; primary value driver: Cost reduction; company size: Mid-market; annual revenue: 60000000; employee count: 800; solution price: 90000.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -463,14 +469,14 @@
   <p class="hx-prose">MCP tool name: <code>roi_business_case_builder</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/roi_business_case_builder</code> with this JSON body (see <a href="/docs/#roi-business-case-builder">Docs</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
-    &quot;customer_name&quot;: &quot;Example Clinic Group&quot;,
-    &quot;industry&quot;: &quot;Healthcare&quot;,
-    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;,
-    &quot;primary_value_driver&quot;: &quot;revenue_increase&quot;,
-    &quot;company_size&quot;: &quot;smb&quot;,
-    &quot;annual_revenue&quot;: 6000000,
-    &quot;employee_count&quot;: 45,
-    &quot;solution_price&quot;: 40000
+    &quot;customer_name&quot;: &quot;Example Retail Co&quot;,
+    &quot;industry&quot;: &quot;Retail&quot;,
+    &quot;your_solution&quot;: &quot;Lanehop&quot;,
+    &quot;primary_value_driver&quot;: &quot;cost_reduction&quot;,
+    &quot;company_size&quot;: &quot;mid_market&quot;,
+    &quot;annual_revenue&quot;: 60000000,
+    &quot;employee_count&quot;: 800,
+    &quot;solution_price&quot;: 90000
   }
 }</pre>
   </details>

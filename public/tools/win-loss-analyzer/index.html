@@ -299,7 +299,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"analysis_type": "single_deal", "deal_outcome": "lost", "loss_reason": "price", "competitor_won": "Competitor A", "deal_value": "30000", "your_solution": "ExampleCo Scheduler", "sales_cycle_days": "60"}</script></div>
+  <script type="application/json" data-example>{"analysis_type": "single_deal", "deal_outcome": "lost", "loss_reason": "price", "competitor_won": "Competitor A", "deal_value": "36000", "your_solution": "Lanehop", "sales_cycle_days": "75"}</script></div>
 </section>
 
 <section class="hx-section" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -320,7 +320,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -330,7 +330,7 @@
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Win/Loss Analysis: Single Deal</h4>
 <h5 class="hxr-h3">Deal Overview</h5>
-<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Outcome</strong></td><td>Lost</td></tr><tr><td><strong>Deal Value</strong></td><td>$30,000</td></tr><tr><td><strong>Sales Cycle</strong></td><td>60 days</td></tr><tr><td><strong>Solution</strong></td><td>ExampleCo Scheduler</td></tr><tr><td><strong>Competitor Won</strong></td><td>Competitor A</td></tr><tr><td><strong>Stated Reason</strong></td><td>price</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Outcome</strong></td><td>Lost</td></tr><tr><td><strong>Deal Value</strong></td><td>$36,000</td></tr><tr><td><strong>Sales Cycle</strong></td><td>75 days</td></tr><tr><td><strong>Solution</strong></td><td>Lanehop</td></tr><tr><td><strong>Competitor Won</strong></td><td>Competitor A</td></tr><tr><td><strong>Stated Reason</strong></td><td>price</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Loss Analysis</h5>
 <h6 class="hxr-h4">Why We Lost (Hypothesis)</h6>
@@ -350,6 +350,8 @@
 <li>Did we position against their strengths?</li>
 <li>Were evaluation criteria stacked against us?</li>
 </ul>
+<h6 class="hxr-h4">What the Stated Reason Points To</h6>
+<p><strong>Price or budget:</strong> check whether the value case was agreed in the buyer's own numbers before price came up.</p>
 <h6 class="hxr-h4">Loss Categories</h6>
 <p><em>Check first: set by this tool's rule (High when no stakeholders were given for Champion Failure, or when a competitor won for Competitive Loss; otherwise Medium). It is not a finding about your deal.</em></p>
 <div class="hx-table"><table><thead><tr><th>Category</th><th>Check first</th><th>Investigation Needed</th></tr></thead><tbody><tr><td><strong>Champion Failure</strong></td><td>High</td><td>Did we have a true champion?</td></tr><tr><td><strong>Value Not Proven</strong></td><td>Medium</td><td>Was ROI quantified and believed?</td></tr><tr><td><strong>Competitive Loss</strong></td><td>High</td><td>What did competitor do better?</td></tr><tr><td><strong>Product Gap</strong></td><td>Medium</td><td>Was this real or perceived?</td></tr><tr><td><strong>Sales Execution</strong></td><td>Medium</td><td>Did we run the right process?</td></tr></tbody></table></div>
@@ -417,7 +419,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Win/Loss Analyzer from Claude?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude or ChatGPT</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Win/Loss Analyzer tool. analysis type: Single deal; deal outcome: Lost; loss reason: price; competitor won: Competitor A; deal value: 30000; your solution: ExampleCo Scheduler; sales cycle days: 60.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Win/Loss Analyzer tool. analysis type: Single deal; deal outcome: Lost; loss reason: price; competitor won: Competitor A; deal value: 36000; your solution: Lanehop; sales cycle days: 75.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -441,9 +443,9 @@
     &quot;deal_outcome&quot;: &quot;lost&quot;,
     &quot;loss_reason&quot;: &quot;price&quot;,
     &quot;competitor_won&quot;: &quot;Competitor A&quot;,
-    &quot;deal_value&quot;: 30000,
-    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;,
-    &quot;sales_cycle_days&quot;: 60
+    &quot;deal_value&quot;: 36000,
+    &quot;your_solution&quot;: &quot;Lanehop&quot;,
+    &quot;sales_cycle_days&quot;: 75
   }
 }</pre>
   </details>

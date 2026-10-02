@@ -297,7 +297,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"framework": "meddpicc", "deal_stage": "discovery", "prospect_industry": "Healthcare", "prospect_role": "Operations Director", "your_solution": "ExampleCo Scheduler"}</script></div>
+  <script type="application/json" data-example>{"framework": "meddpicc", "deal_stage": "discovery", "prospect_industry": "Third-party logistics", "prospect_role": "Head of Last-Mile Operations", "your_solution": "Lanehop"}</script></div>
 </section>
 
 <section class="hx-section" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -318,7 +318,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -329,10 +329,25 @@
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Discovery Question Bank</h4>
 <h5 class="hxr-h3">Context</h5>
 <ul>
-<li><strong>Prospect Industry:</strong> Healthcare</li>
-<li><strong>Contact Role:</strong> Operations Director</li>
+<li><strong>Prospect Industry:</strong> Third-party logistics</li>
+<li><strong>Contact Role:</strong> Head of Last-Mile Operations</li>
 <li><strong>Deal Stage:</strong> discovery</li>
-<li><strong>Your Solution:</strong> ExampleCo Scheduler</li>
+<li><strong>Your Solution:</strong> Lanehop</li>
+</ul>
+<p><em>Sector: read from your inputs as logistics tech. Business model: software subscription (the usual model in this sector, assumed; set Business model to change it).</em></p>
+<hr>
+<h5 class="hxr-h3">Questions in the language of logistics tech</h5>
+<ul>
+<li>"How do you plan routes today, and how often does a dispatcher re-plan during the day?"</li>
+<li>"What happens when an order, a driver or a road changes after the vehicles have left?"</li>
+<li>"How do you measure cost per delivery and first-attempt delivery today, and who owns those numbers?"</li>
+<li>"Which systems hold the orders and the addresses (TMS, WMS, ERP, order management)?"</li>
+<li>"Where do failed deliveries come from: addresses, time windows, driver allocation or something else?"</li>
+</ul>
+<h6 class="hxr-h4">Sector notes: logistics tech</h6>
+<ul>
+<li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last-Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the TMS, WMS and order systems; finance checks the cost per delivery case.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">MEDDPICC Framework Questions</h5>
@@ -515,7 +530,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Discovery Question Bank from Claude?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude or ChatGPT</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Discovery Question Bank tool. framework: MEDDPICC; deal stage: Discovery; prospect industry: Healthcare; prospect role: Operations Director; your solution: ExampleCo Scheduler.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Discovery Question Bank tool. framework: MEDDPICC; deal stage: Discovery; prospect industry: Third-party logistics; prospect role: Head of Last-Mile Operations; your solution: Lanehop.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -537,9 +552,9 @@
   &quot;input&quot;: {
     &quot;framework&quot;: &quot;meddpicc&quot;,
     &quot;deal_stage&quot;: &quot;discovery&quot;,
-    &quot;prospect_industry&quot;: &quot;Healthcare&quot;,
-    &quot;prospect_role&quot;: &quot;Operations Director&quot;,
-    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;
+    &quot;prospect_industry&quot;: &quot;Third-party logistics&quot;,
+    &quot;prospect_role&quot;: &quot;Head of Last-Mile Operations&quot;,
+    &quot;your_solution&quot;: &quot;Lanehop&quot;
   }
 }</pre>
   </details>

@@ -226,13 +226,13 @@
 </section>
 
 <div class="hx-body">
-<section class="hx-section" aria-labelledby="try-h"><h2 id="try-h">Try these prompts</h2><div class="hx-panel"><ol><li>Use Revenue Enablement to build an account plan for Example Clinic Group, a healthcare customer paying $24,000 a year for our ExampleCo Scheduler product.</li><li>Use Revenue Enablement to give me a MEDDPICC discovery question bank for a discovery call.</li><li>Create a mutual action plan with Revenue Enablement for the Example Clinic Group expansion deal, target close date 2026-12-15, currently in evaluation.</li></ol></div></section>
+<section class="hx-section" aria-labelledby="try-h"><h2 id="try-h">Try these prompts</h2><div class="hx-panel"><ol><li>Use Revenue Enablement to build an account plan for Example Logistics Co, a third-party logistics customer paying $36,000 a year for our Lanehop route planning.</li><li>Use Revenue Enablement to give me a MEDDPICC discovery question bank for a discovery call with a head of last-mile operations at a third-party logistics company.</li><li>Create a mutual action plan with Revenue Enablement for the Example Logistics Co expansion deal, target close date 2026-12-15, currently in evaluation.</li></ol></div></section>
 <section class="hx-section" aria-labelledby="mcp-h">
   <h2 id="mcp-h">MCP server</h2>
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.20.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.21.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -243,7 +243,7 @@
   <p class="hx-prose">Send <code>POST https://revenue-enablement.gtmhelix.com/api/tools/&lt;tool name&gt;</code> with a JSON body <code>{"input": {...}}</code>. The answer is JSON: <code>{"ok": true, "tool": "...", "title": "...", "text": "..."}</code>, where <code>text</code> is the same Markdown the MCP tool returns. The endpoint calls the same server code as the MCP address.</p>
   <div class="win "><div class="win-bar"><span class="t">Terminal</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><div class="win-body"><pre class="hx-code-block hx11-in-win">curl -s -X POST https://revenue-enablement.gtmhelix.com/api/tools/account_plan_builder \
   -H "Content-Type: application/json" \
-  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Clinic Group&quot;, &quot;industry&quot;: &quot;healthcare&quot;, &quot;current_arr&quot;: 24000, &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;, &quot;current_products&quot;: &quot;ExampleCo Scheduler at 3 of their 12 clinics&quot;}}'</pre></div></div>
+  -d '{&quot;input&quot;: {&quot;account_name&quot;: &quot;Example Logistics Co&quot;, &quot;industry&quot;: &quot;third-party logistics&quot;, &quot;current_arr&quot;: 36000, &quot;your_solution&quot;: &quot;Lanehop&quot;, &quot;current_products&quot;: &quot;Lanehop route planning in 3 of their 12 cities&quot;}}'</pre></div></div>
   <ul class="hx-prose">
     <li>Errors: 400 with <code>errors</code> (missing or invalid fields), 404 for an unknown tool, 405 for methods other than POST, 413 above 32,000 bytes, 422 when the tool itself refuses the input (<code>ok</code> is false and <code>error</code> holds the tool's message), 429 when the rate limit is reached, 500 if the tool fails.</li>
     <li>Limits: 30 requests per minute per IP address; the whole request up to 32,000 bytes; top-level text fields up to 6,000 characters and top-level lists up to 50 items.</li>
@@ -278,13 +278,14 @@
 <tr><td>1.2.17</td><td>30 September 2026</td><td>GitHub, commit 939b1a3</td></tr>
 <tr><td>1.2.18</td><td>1 October 2026</td><td>GitHub, commit 552b944</td></tr>
 <tr><td>1.2.19</td><td>1 October 2026</td><td>GitHub, commit 72bc033</td></tr>
-<tr><td>1.2.20 (this site)</td><td>2 October 2026</td><td>GitHub, commit f608cb0</td></tr>
+<tr><td>1.2.20</td><td>2 October 2026</td><td>GitHub, commit f608cb0</td></tr>
+<tr><td>1.2.21 (this site)</td><td>2 October 2026</td><td>GitHub, commit e1fc180</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.20.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.21.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>
@@ -338,7 +339,7 @@
 <section class="hx-section" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
   <h3 id="d-roi-business-case-builder">ROI Business Case Builder</h3>
   <p><code>roi_business_case_builder</code></p>
-  <p class="hx-prose">Build an ROI business case template from your inputs: value, ROI and payback calculated with example assumptions and benchmarks that are labelled for you to replace, plus an executive summary. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
+  <p class="hx-prose">Build an ROI business case from your inputs: the annual value comes from the buyer&#x27;s own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
@@ -348,7 +349,10 @@
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>solution_price</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
 <tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
-<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</td></tr>
+<tr><td><code>current_annual_cost</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</td></tr>
+<tr><td><code>expected_improvement_percent</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</td></tr>
+<tr><td><code>annual_value_estimate</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
 <tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
 <tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
   </tbody></table></div>
@@ -457,6 +461,7 @@
 <tr><td><code>your_leverage</code></td><td>string</td><td>no</td><td></td><td>Your leverage points (unique features, timeline, etc.)</td></tr>
 <tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>
 <tr><td><code>approval_authority</code></td><td>string</td><td>no</td><td></td><td>Who has final approval on pricing</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="champion-enablement-kit" aria-labelledby="d-champion-enablement-kit">
@@ -490,6 +495,7 @@
 <tr><td><code>buyer_priorities</code></td><td>string</td><td>no</td><td></td><td>What the buyer cares most about</td></tr>
 <tr><td><code>buyer_persona</code></td><td>string</td><td>no</td><td></td><td>Role of key evaluator</td></tr>
 <tr><td><code>trap_type</code></td><td>string</td><td>no</td><td>discovery_questions, evaluation_criteria, reference_questions, technical_requirements, commercial_terms, all</td><td>Type of competitive positioning</td></tr>
+<tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
   </tbody></table></div>
 </section>
 </div>

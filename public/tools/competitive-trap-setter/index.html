@@ -280,7 +280,7 @@
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Competitive Trap Setter">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Competitive Trap Setter</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/competitive_trap_setter" data-tool="competitive_trap_setter" data-title="Competitive Trap Setter"><p class="hx-help">You need: Competitor, Your solution. You can add: Competitor weaknesses, Your strengths, Evaluation stage, Buyer priorities, Buyer persona, Trap type.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Competitive Trap Setter</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/competitive_trap_setter" data-tool="competitive_trap_setter" data-title="Competitive Trap Setter"><p class="hx-help">You need: Competitor, Your solution. You can add: Competitor weaknesses, Your strengths, Evaluation stage, Buyer priorities, Buyer persona, Trap type, Business model.</p>
 <div class="hx-field"><label for="f-competitor">Competitor <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-competitor" name="competitor" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-competitor-help"></textarea><p class="hx-help" id="f-competitor-help">Primary competitor to position against</p></div>
 <div class="hx-field"><label for="f-competitor_weaknesses">Competitor weaknesses <span class="hx-opt">(optional)</span></label><textarea id="f-competitor_weaknesses" name="competitor_weaknesses" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-competitor_weaknesses-help"></textarea><p class="hx-help" id="f-competitor_weaknesses-help">Known competitor weaknesses</p></div>
 <div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
@@ -289,6 +289,7 @@
 <div class="hx-field"><label for="f-buyer_priorities">Buyer priorities <span class="hx-opt">(optional)</span></label><textarea id="f-buyer_priorities" name="buyer_priorities" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-buyer_priorities-help"></textarea><p class="hx-help" id="f-buyer_priorities-help">What the buyer cares most about</p></div>
 <div class="hx-field"><label for="f-buyer_persona">Buyer persona <span class="hx-opt">(optional)</span></label><textarea id="f-buyer_persona" name="buyer_persona" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-buyer_persona-help"></textarea><p class="hx-help" id="f-buyer_persona-help">Role of key evaluator</p></div>
 <div class="hx-field"><label for="f-trap_type">Trap type <span class="hx-opt">(optional)</span></label><select id="f-trap_type" name="trap_type" data-kind="string" aria-describedby="f-trap_type-help"><option value="">Not specified</option><option value="discovery_questions">Discovery questions</option><option value="evaluation_criteria">Evaluation criteria</option><option value="reference_questions">Reference questions</option><option value="technical_requirements">Technical requirements</option><option value="commercial_terms">Commercial terms</option><option value="all">All</option></select><p class="hx-help" id="f-trap_type-help">Type of competitive positioning</p></div>
+<div class="hx-field"><label for="f-business_model">Business model <span class="hx-opt">(optional)</span></label><select id="f-business_model" name="business_model" data-kind="string" aria-describedby="f-business_model-help"><option value="">Not specified</option><option value="saas">SaaS</option><option value="services">Services</option><option value="connectivity">Connectivity</option><option value="transactions">Transactions</option><option value="marketplace">Marketplace</option><option value="hardware_software">Hardware software</option><option value="investment">Investment</option></select><p class="hx-help" id="f-business_model-help">Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-competitive_trap_setter">Leave this empty</label><input id="hp-competitive_trap_setter" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run Competitive Trap Setter</button>
@@ -297,7 +298,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"competitor": "Competitor A", "your_solution": "ExampleCo Scheduler", "evaluation_stage": "mid", "trap_type": "discovery_questions", "buyer_persona": "Operations Director", "your_strengths": "Live in two weeks without IT help\nText reminders included in the price\nOne calendar for every clinic", "competitor_weaknesses": "Charges extra for text reminders\nNeeds a separate calendar for each location"}</script></div>
+  <script type="application/json" data-example>{"competitor": "Competitor A", "your_solution": "Lanehop", "evaluation_stage": "mid", "trap_type": "discovery_questions", "buyer_persona": "Head of Last-Mile Operations", "your_strengths": "Live in six weeks without IT help\nCleans unstructured addresses automatically\nRe-plans routes during the day", "competitor_weaknesses": "Months of setup before the first route\nStruggles with unstructured addresses"}</script></div>
 </section>
 
 <section class="hx-section" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -318,7 +319,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -330,91 +331,72 @@
 <h5 class="hxr-h3">Situation</h5>
 <ul>
 <li><strong>Competitor:</strong> Competitor A</li>
-<li><strong>Your Solution:</strong> ExampleCo Scheduler</li>
+<li><strong>Your Solution:</strong> Lanehop</li>
 <li><strong>Evaluation Stage:</strong> mid</li>
-<li><strong>Buyer Persona:</strong> Operations Director</li>
+<li><strong>Buyer Persona:</strong> Head of Last-Mile Operations</li>
 </ul>
+<p><em>Sector: read from your inputs as logistics tech. Business model: software subscription (the usual model in this sector, assumed; set Business model to change it).</em></p>
 <hr>
 <h5 class="hxr-h3">Competitive Intelligence</h5>
 <h6 class="hxr-h4">Your Strengths</h6>
 <ul>
-<li>Live in two weeks without IT help</li>
-<li>Text reminders included in the price</li>
-<li>One calendar for every clinic</li>
+<li>Live in six weeks without IT help</li>
+<li>Cleans unstructured addresses automatically</li>
+<li>Re-plans routes during the day</li>
 </ul>
-<h6 class="hxr-h4">Competitor A Weaknesses</h6>
+<h6 class="hxr-h4">Competitor A: Weak Points (your notes, never read out to the buyer)</h6>
 <ul>
-<li>Charges extra for text reminders</li>
-<li>Needs a separate calendar for each location</li>
+<li>Months of setup before the first route</li>
+<li>Struggles with unstructured addresses</li>
+</ul>
+<h6 class="hxr-h4">Sector notes: logistics tech</h6>
+<ul>
+<li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last-Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the TMS, WMS and order systems; finance checks the cost per delivery case.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Positioning Strategy</h5>
 <h6 class="hxr-h4">Golden Rule</h6>
 <p><strong>Never go negative.</strong> Let the buyer discover competitor weaknesses through their own evaluation.</p>
-<h6 class="hxr-h4">Your Approach</h6>
-<ol>
-<li value="1">Establish evaluation criteria that favor your strengths</li>
-<li value="2">Ask questions that expose competitor weaknesses</li>
-<li value="3">Provide proof points for your differentiators</li>
-<li value="4">Help buyer ask the right questions</li>
-</ol>
 <hr>
 <h5 class="hxr-h3">Discovery Questions (Landmines)</h5>
-<p>These questions help surface Competitor A's weaknesses without being negative:</p>
+<p>These questions let the buyer find Competitor A's gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.</p>
 <h6 class="hxr-h4">General Competitive Discovery</h6>
 <ul>
-<li>"What other solutions are you evaluating, and what criteria are you using?"</li>
+<li>"What other options are you evaluating, and what criteria are you using?"</li>
 <li>"What's most important to you in making this decision?"</li>
-<li>"Have you defined must-haves vs nice-to-haves?"</li>
+<li>"Have you defined must-haves versus nice-to-haves?"</li>
+<li>"How do you plan routes today, and how often does a dispatcher re-plan during the day?"</li>
+<li>"What happens when an order, a driver or a road changes after the vehicles have left?"</li>
 </ul>
 <h6 class="hxr-h4">Capability Landmines</h6>
-<p>Based on Competitor A's known weaknesses:</p>
-<p><strong>Weakness:</strong> Charges extra for text reminders</p>
-<p><strong>Landmine Question:</strong> "How important is this area to your evaluation (charges extra for text reminders)? Can you show me how Competitor A handles this specific scenario?"</p>
-<p><strong>Why It Works:</strong> When they test Competitor A on this, they'll discover the gap.</p>
-<p><strong>Weakness:</strong> Needs a separate calendar for each location</p>
-<p><strong>Landmine Question:</strong> "How important is this area to your evaluation (needs a separate calendar for each location)? Can you show me how Competitor A handles this specific scenario?"</p>
-<p><strong>Why It Works:</strong> When they test Competitor A on this, they'll discover the gap.</p>
+<p><strong>Their weak point (your note, not for the buyer):</strong> Months of setup before the first route</p>
+<p><strong>Landmine Question:</strong> "How will you test the time from signing to the first real result in each option? Could each vendor show it live, with your own data?"</p>
+<p><strong>Why It Works:</strong> The buyer tests the area themselves, so the gap shows up in their own evaluation.</p>
+<p><strong>Their weak point (your note, not for the buyer):</strong> Struggles with unstructured addresses</p>
+<p><strong>Landmine Question:</strong> "How will you test the handling of your own data and the systems it must connect to in each option? Could each vendor show it live, with your own data?"</p>
+<p><strong>Why It Works:</strong> The buyer tests the area themselves, so the gap shows up in their own evaluation.</p>
 <h6 class="hxr-h4">Implementation Landmines</h6>
 <ul>
-<li>"What's their typical implementation timeline? Have you talked to customers about actual vs promised?"</li>
+<li>"What is their typical implementation timeline? Have you talked to customers about actual versus promised?"</li>
 <li>"Who from their team will be involved in implementation?"</li>
-<li>"What's included in the price vs what costs extra?"</li>
+<li>"What is included in the price and what costs extra?"</li>
 </ul>
 <h6 class="hxr-h4">Support Landmines</h6>
 <ul>
 <li>"What level of support is included? What happens when you have an urgent issue?"</li>
 <li>"Can you talk to customers who've been through their support process?"</li>
-<li>"What's their track record on SLAs?"</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Stage-Specific Tactics</h5>
 <h6 class="hxr-h4">Mid Stage Recommendations</h6>
-<p><strong>Mid Stage: Differentiate</strong></p>
 <ul>
-<li>Ensure your differentiators are being tested</li>
+<li>Make sure your differentiators are being tested</li>
 <li>Provide proof points and references</li>
-<li>Surface competitor limitations through questions</li>
-<li>Build champion with competitive ammo</li>
+<li>Surface competitor limitations through the buyer's own tests</li>
 </ul>
 <hr>
-<h5 class="hxr-h3">Do's and Don'ts</h5>
-<p><strong>Do:</strong></p>
-<ul>
-<li>Ask questions that expose weaknesses</li>
-<li>Let them discover issues through testing</li>
-<li>Provide proof for your claims</li>
-<li>Be helpful and consultative</li>
-</ul>
-<p><strong>Don't:</strong></p>
-<ul>
-<li>Trash talk the competitor</li>
-<li>Make claims you can't prove</li>
-<li>Ignore competitor strengths</li>
-<li>Be defensive</li>
-</ul>
-<hr>
-<p><em>Use these tactics professionally and honestly</em></p></div></details>
+<p><em>Use these tactics professionally and honestly: claim nothing you cannot prove.</em></p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/</span></footer>
   </article>
   <p class="figcap">How the answer is laid out, using the sections the tool prints. Early, mid, late and finalist are the stages you can choose; the answer gives tactics for the stage you pick.</p>
@@ -432,7 +414,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Competitive Trap Setter from Claude?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude or ChatGPT</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Competitive Trap Setter tool. competitor: Competitor A; your solution: ExampleCo Scheduler; evaluation stage: Mid; trap type: Discovery questions; buyer persona: Operations Director; your strengths: live in two weeks without IT help, text reminders included in the price and one calendar for every clinic; competitor weaknesses: charges extra for text reminders and needs a separate calendar for each location.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Competitive Trap Setter tool. competitor: Competitor A; your solution: Lanehop; evaluation stage: Mid; trap type: Discovery questions; buyer persona: Head of Last-Mile Operations; your strengths: live in six weeks without IT help, cleans unstructured addresses automatically and re-plans routes during the day; competitor weaknesses: months of setup before the first route and struggles with unstructured addresses.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -453,12 +435,12 @@
   <pre class="hx-code-block">{
   &quot;input&quot;: {
     &quot;competitor&quot;: &quot;Competitor A&quot;,
-    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;,
+    &quot;your_solution&quot;: &quot;Lanehop&quot;,
     &quot;evaluation_stage&quot;: &quot;mid&quot;,
     &quot;trap_type&quot;: &quot;discovery_questions&quot;,
-    &quot;buyer_persona&quot;: &quot;Operations Director&quot;,
-    &quot;your_strengths&quot;: &quot;Live in two weeks without IT help\nText reminders included in the price\nOne calendar for every clinic&quot;,
-    &quot;competitor_weaknesses&quot;: &quot;Charges extra for text reminders\nNeeds a separate calendar for each location&quot;
+    &quot;buyer_persona&quot;: &quot;Head of Last-Mile Operations&quot;,
+    &quot;your_strengths&quot;: &quot;Live in six weeks without IT help\nCleans unstructured addresses automatically\nRe-plans routes during the day&quot;,
+    &quot;competitor_weaknesses&quot;: &quot;Months of setup before the first route\nStruggles with unstructured addresses&quot;
   }
 }</pre>
   </details>

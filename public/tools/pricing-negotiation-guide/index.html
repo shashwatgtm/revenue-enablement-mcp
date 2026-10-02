@@ -280,7 +280,7 @@
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Pricing Negotiation Guide">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Pricing Negotiation Guide</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/pricing_negotiation_guide" data-tool="pricing_negotiation_guide" data-title="Pricing Negotiation Guide"><p class="hx-help">You need: Scenario. You can add: Deal value, Discount requested, Competitor price, Value delivered, Buyer leverage, Your leverage, Decision timeline, Approval authority.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Pricing Negotiation Guide</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/pricing_negotiation_guide" data-tool="pricing_negotiation_guide" data-title="Pricing Negotiation Guide"><p class="hx-help">You need: Scenario. You can add: Deal value, Discount requested, Competitor price, Value delivered, Buyer leverage, Your leverage, Decision timeline, Approval authority, Business model.</p>
 <div class="hx-field"><label for="f-scenario">Scenario <span class="hx-req" aria-hidden="true">*</span></label><select id="f-scenario" name="scenario" data-kind="string" required aria-required="true" aria-describedby="f-scenario-help"><option value="" disabled selected>Choose one</option><option value="discount_request">Discount request</option><option value="budget_objection">Budget objection</option><option value="competitor_pricing">Competitor pricing</option><option value="procurement_pressure">Procurement pressure</option><option value="multi_year_negotiation">Multi-year negotiation</option><option value="enterprise_agreement">Enterprise agreement</option><option value="renewal_negotiation">Renewal negotiation</option></select><p class="hx-help" id="f-scenario-help">Negotiation scenario</p></div>
 <div class="hx-field"><label for="f-deal_value">Deal value <span class="hx-opt">(optional)</span></label><input id="f-deal_value" name="deal_value" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-deal_value-help"><p class="hx-help" id="f-deal_value-help">Current deal value</p></div>
 <div class="hx-field"><label for="f-discount_requested">Discount requested <span class="hx-opt">(optional)</span></label><input id="f-discount_requested" name="discount_requested" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-discount_requested-help"><p class="hx-help" id="f-discount_requested-help">Discount percentage requested</p></div>
@@ -290,6 +290,7 @@
 <div class="hx-field"><label for="f-your_leverage">Your leverage <span class="hx-opt">(optional)</span></label><textarea id="f-your_leverage" name="your_leverage" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_leverage-help"></textarea><p class="hx-help" id="f-your_leverage-help">Your leverage points (unique features, timeline, etc.)</p></div>
 <div class="hx-field"><label for="f-decision_timeline">Decision timeline <span class="hx-opt">(optional)</span></label><textarea id="f-decision_timeline" name="decision_timeline" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-decision_timeline-help"></textarea><p class="hx-help" id="f-decision_timeline-help">When decision needs to be made</p></div>
 <div class="hx-field"><label for="f-approval_authority">Approval authority <span class="hx-opt">(optional)</span></label><textarea id="f-approval_authority" name="approval_authority" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-approval_authority-help"></textarea><p class="hx-help" id="f-approval_authority-help">Who has final approval on pricing</p></div>
+<div class="hx-field"><label for="f-business_model">Business model <span class="hx-opt">(optional)</span></label><select id="f-business_model" name="business_model" data-kind="string" aria-describedby="f-business_model-help"><option value="">Not specified</option><option value="saas">SaaS</option><option value="services">Services</option><option value="connectivity">Connectivity</option><option value="transactions">Transactions</option><option value="marketplace">Marketplace</option><option value="hardware_software">Hardware software</option><option value="investment">Investment</option></select><p class="hx-help" id="f-business_model-help">Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-pricing_negotiation_guide">Leave this empty</label><input id="hp-pricing_negotiation_guide" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
     <div class="hx-actions">
       <button type="submit" class="hx-btn">Run Pricing Negotiation Guide</button>
@@ -319,7 +320,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -329,6 +330,7 @@
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Pricing Negotiation Guide: Discount Request</h4>
 <h5 class="hxr-h3">Situation Analysis</h5>
+<p><em>Sector: not clear from your inputs (name the industry for sector notes). Business model: not clear from your inputs; set Business model (saas, services, connectivity, transactions, marketplace, Hardware software or investment) for advice that fits it.</em></p>
 <div class="hx-table"><table><thead><tr><th>Factor</th><th>Value</th></tr></thead><tbody><tr><td><strong>Deal Value</strong></td><td>$30,000</td></tr><tr><td><strong>Discount Requested</strong></td><td>20%</td></tr><tr><td><strong>Revenue at Risk</strong></td><td>$6,000</td></tr><tr><td><strong>Post-Discount Value</strong></td><td>$24,000</td></tr><tr><td><strong>Decision Timeline</strong></td><td>end of quarter</td></tr><tr><td><strong>Approval Authority</strong></td><td>CFO</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Leverage Assessment</h5>
@@ -355,7 +357,7 @@
 <h6 class="hxr-h4">Rule #1: Never Discount Without Getting Something</h6>
 <p><strong>Acceptable Trades:</strong></p>
 <p>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>What They Want</th><th>What You Get</th></tr></thead><tbody><tr><td>10% discount</td><td>3-year commitment (vs 1-year)</td></tr><tr><td>15% discount</td><td>Payment upfront (vs net 30)</td></tr><tr><td>10% discount</td><td>Case study + reference rights</td></tr><tr><td>5% discount</td><td>Expanded scope (more users/seats)</td></tr><tr><td>Volume discount</td><td>Multi-year deal + price lock</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>What They Want</th><th>What You Ask For In Return</th></tr></thead><tbody><tr><td>10% discount</td><td>A longer term</td></tr><tr><td>15% discount</td><td>Payment upfront</td></tr><tr><td>5% discount</td><td>A wider scope</td></tr><tr><td>10% discount</td><td>A case study and reference rights</td></tr></tbody></table></div>
 <h6 class="hxr-h4">Rule #2: Understand the Real Ask</h6>
 <p><strong>Discovery Questions:</strong></p>
 <ul>
@@ -383,7 +385,7 @@
 <li>"[Only if true and provable: We've already priced this competitively.] What specifically is the concern?"</li>
 <li>"What would need to happen for our current pricing to work?"</li>
 </ul>
-<h6 class="hxr-h4">"Your competitor is 20% cheaper" (Example figure: replace with your own)</h6>
+<h6 class="hxr-h4">"Your competitor is [X]% cheaper" (Example figure: replace with your own)</h6>
 <p><strong>Don't Say:</strong> "We can match that."</p>
 <p><strong>Do Say:</strong></p>
 <ul>

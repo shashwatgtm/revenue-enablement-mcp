@@ -300,7 +300,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"deal_name": "Example Clinic Group expansion", "deal_stage": "demo", "deal_value": "45000", "champion_status": "potential_champion", "days_in_stage": "20", "your_solution": "ExampleCo Scheduler", "close_date": "2026-12-15"}</script></div>
+  <script type="application/json" data-example>{"deal_name": "Example Logistics Co expansion", "deal_stage": "demo", "deal_value": "90000", "champion_status": "potential_champion", "days_in_stage": "20", "your_solution": "Lanehop", "close_date": "2026-12-15"}</script></div>
 </section>
 
 <section class="hx-section" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -321,7 +321,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.20 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -329,9 +329,9 @@
       <p class="hxr-meta"><span>Made with Deal Strategy Coach by Helix GTM Consulting</span><span>Based on the made-up example inputs</span><span>https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/</span></p>
     </header>
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
-    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Deal Strategy Coach: Example Clinic Group expansion</h4>
+    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Deal Strategy Coach: Example Logistics Co expansion</h4>
 <h5 class="hxr-h3">Deal Health Assessment</h5>
-<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td><strong>Deal Name</strong></td><td>Example Clinic Group expansion</td></tr><tr><td><strong>Deal Value</strong></td><td>$45,000</td></tr><tr><td><strong>Current Stage</strong></td><td>Demo</td></tr><tr><td><strong>Days in Stage</strong></td><td>20</td></tr><tr><td><strong>Target Close</strong></td><td>2026-12-15</td></tr><tr><td><strong>Solution</strong></td><td>ExampleCo Scheduler</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td><strong>Deal Name</strong></td><td>Example Logistics Co expansion</td></tr><tr><td><strong>Deal Value</strong></td><td>$90,000</td></tr><tr><td><strong>Current Stage</strong></td><td>Demo</td></tr><tr><td><strong>Days in Stage</strong></td><td>20</td></tr><tr><td><strong>Target Close</strong></td><td>2026-12-15</td></tr><tr><td><strong>Solution</strong></td><td>Lanehop</td></tr></tbody></table></div>
 <h6 class="hxr-h4">Health Score: 55/100 (Needs Attention)</h6>
 <p><em>Set by this tool's rule: a base score adjusted for champion status, economic buyer, days in stage, competitors and blockers (the factors below).</em></p>
 <p><strong>Health Factors:</strong></p>
@@ -372,6 +372,13 @@
 <li value="3"><strong>Follow the money</strong>: Where does this budget come from?</li>
 <li value="4"><strong>Request introduction</strong>: "Can you help me understand the approval process?"</li>
 </ol>
+<h6 class="hxr-h4">Sector notes: logistics tech</h6>
+<ul>
+<li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last-Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the TMS, WMS and order systems; finance checks the cost per delivery case.</li>
+<li><strong>What this sector measures:</strong> cost per delivery, first-attempt delivery rate, on-time delivery, deliveries per vehicle per day, vehicle utilisation, failed delivery and return rate, dispatch planning time.</li>
+<li><strong>Objections this sector often raises:</strong> we already have a tms; drivers will not use a new app; integration effort; our margins are too thin for this.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
+</ul>
 <h5 class="hxr-h3">Immediate Actions</h5>
 <h6 class="hxr-h4">Next 24-48 Hours</h6>
 <ol>
@@ -419,7 +426,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use Deal Strategy Coach from Claude?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude or ChatGPT</a>), then ask in plain words. A prompt built from the tested example:</p>
-  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Deal Strategy Coach tool. deal name: Example Clinic Group expansion; deal stage: Demo; deal value: 45000; champion status: Potential champion; days in stage: 20; your solution: ExampleCo Scheduler; close date: 2026-12-15.</blockquote>
+  <blockquote class="hx-quote">Use Revenue Enablement&#x27;s Deal Strategy Coach tool. deal name: Example Logistics Co expansion; deal stage: Demo; deal value: 90000; champion status: Potential champion; days in stage: 20; your solution: Lanehop; close date: 2026-12-15.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -439,12 +446,12 @@
   <p class="hx-prose">MCP tool name: <code>deal_strategy_coach</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/deal_strategy_coach</code> with this JSON body (see <a href="/docs/#deal-strategy-coach">Docs</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
-    &quot;deal_name&quot;: &quot;Example Clinic Group expansion&quot;,
+    &quot;deal_name&quot;: &quot;Example Logistics Co expansion&quot;,
     &quot;deal_stage&quot;: &quot;demo&quot;,
-    &quot;deal_value&quot;: 45000,
+    &quot;deal_value&quot;: 90000,
     &quot;champion_status&quot;: &quot;potential_champion&quot;,
     &quot;days_in_stage&quot;: 20,
-    &quot;your_solution&quot;: &quot;ExampleCo Scheduler&quot;,
+    &quot;your_solution&quot;: &quot;Lanehop&quot;,
     &quot;close_date&quot;: &quot;2026-12-15&quot;
   }
 }</pre>

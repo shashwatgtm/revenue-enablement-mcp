@@ -192,3 +192,21 @@ test("/mcp answers carry Referrer-Policy, a frame rule and a JSON content policy
     assert.equal(r.headers.get("x-content-type-options"), "nosniff");
   }
 });
+
+// Run 19 R19-61 (verifier finding M1; D80 problem 7): no tool suggests a promise the user did not type, for every choice of
+// every enum input of pricing_negotiation_guide and proposal_section_writer.
+test("no invented promise in any pricing scenario or proposal section", async () => {
+  const tools = (await rpc("tools/list", {})).result.tools;
+  const base = {
+    pricing_negotiation_guide: { your_solution: "Lanehop", list_price: "120000", competitor_price: "about 15% lower", customer_name: "Example Logistics Co" },
+    proposal_section_writer: { customer_name: "Example Logistics Co", your_solution: "Lanehop", customer_challenges: "late deliveries; manual route planning" },
+  };
+  for (const name of Object.keys(base)) {
+    const props = tools.find((t) => t.name === name).inputSchema.properties;
+    const enums = Object.entries(props).filter(([, p]) => Array.isArray(p.enum));
+    for (const [key, p] of enums) for (const v of p.enum) {
+      const { text } = await call(name, { ...base[name], [key]: v });
+      assert.doesNotMatch(text, /guarantee|price protection|no long-term commitment/i, `${name} ${key}=${v}`);
+    }
+  }
+});

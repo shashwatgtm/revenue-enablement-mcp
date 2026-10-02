@@ -3679,7 +3679,7 @@ Multi-year deals benefit both parties. Structure them to reflect that.
 - Less sales effort on renewal
 
 ## What They Get:
-- Price protection
+- A price agreed for the whole term (only if you offer one: say it in your contract's words)
 - Budget predictability
 - Reduced procurement cycles
 - Deeper partnership
@@ -4877,9 +4877,9 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 ### Investment Protection
 
 *Include only the protections you actually offer:*
-- **Satisfaction Guarantee:** We stand behind our solution
+- **Satisfaction commitment:** [only if you offer one, in your contract's words]
 - **Flexible Terms:** Options for payment structure
-- **Price Lock:** Protection from future increases
+- **Price for the term:** [only if you fix the price for the term, and for how long]
 - **Success Commitment:** We succeed when you succeed
 
 ---
@@ -4933,10 +4933,10 @@ We prepare for scenarios through:
 - Alternative approaches
 - Escalation procedures
 
-### Commitments & Guarantees
+### Commitments
 
 *Include only the commitments you actually offer:*
-- **SLA:** 99.9% uptime guarantee ${EXAMPLE}
+- **SLA:** [the service level in your contract, for example the uptime you commit to and the credit if you miss it]
 - **Support:** [your support hours, for example 24/7 critical issue response]
 - **Security:** [your security practices, for example regular audits and updates]
 - **Success:** [your success model, for example a dedicated success manager]

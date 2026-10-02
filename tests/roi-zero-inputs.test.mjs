@@ -7,6 +7,8 @@
 //     is computed with 0.
 //   an ordinary value: unchanged.
 // The /mcp input check counts a null member as not given, so null is not refused: it means the same as omitted.
+// Run 19 R19-36 (ledger B16-18): a value you give is labelled "(your input)" and its row drops "Est."; only an estimated value keeps
+// "Est." and its example label. The expectations below changed with that rule and nothing else.
 // Run: node --test tests/roi-zero-inputs.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -53,9 +55,9 @@ for (const [label, rev] of [["omitted", undefined], ["null", null]]) {
     const { isError, text } = await call(args);
     assert.equal(isError, false);
     assert.match(row(text, "| **Est. Annual Revenue** |"), /\$25,000,000, estimated from your employee count \(Example figure: replace with your own\)/);
-    assert.match(row(text, "| **Est. Employees** |"), /\| 100 \|$/);
+    assert.match(row(text, "| **Employees** |"), /\| 100 \(your input\) \|$/);
     assert.match(row(text, "Annual Productivity Value"), /\*\*\$250,000\*\*/);
-    assert.ok(!text.includes("(your input)"));
+    assert.ok(!row(text, "| **Est. Annual Revenue** |").includes("(your input)"));
     assert.ok(!text.includes("add your annual revenue"));
   });
 }
@@ -63,8 +65,8 @@ for (const [label, rev] of [["omitted", undefined], ["null", null]]) {
 test("annual_revenue 0 (employees given): shown as $0 (your input), never estimated from the employees", async () => {
   const { isError, text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100 });
   assert.equal(isError, false);
-  assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | $0 (your input) |");
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 100 |");
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 100 (your input) |");
   assert.ok(!text.includes("$25,000,000"), "revenue was estimated from the employee count");
   assert.ok(!/estimated from your employee count/.test(text), "revenue was estimated from the employee count");
   assert.match(row(text, "Revenue baseline:"), /Revenue baseline: \$0 \(your input\)$/);
@@ -108,15 +110,15 @@ test("annual_revenue 0 with a price: ROI and the ratio are computed, payback div
 test("annual_revenue 0 with cost_reduction: the value does not come from revenue, so every figure is computed", async () => {
   const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 0, employee_count: 100, solution_price: 40000 });
   assert.ok(!text.includes("not computed"));
-  assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | $0 (your input) |");
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
 });
 
 test("annual_revenue ordinary value: shown as given, not estimated", async () => {
   const { text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 100 });
-  assert.match(row(text, "| **Est. Annual Revenue** |"), /\| \$10,000,000 \|$/);
+  assert.match(row(text, "| **Annual Revenue** |"), /\| \$10,000,000 \(your input\) \|$/);
   assert.match(row(text, "Annual Productivity Value"), /\*\*\$100,000\*\*/);
   assert.ok(!text.includes("not computed"));
-  assert.ok(!text.includes("(your input)"));
+  assert.ok(!text.includes("| **Est. "), "nothing is estimated when both are given");
 });
 
 // ---------- employee_count ----------
@@ -128,7 +130,7 @@ for (const [label, emp] of [["omitted", undefined], ["null", null]]) {
     const { isError, text } = await call(args);
     assert.equal(isError, false);
     assert.match(row(text, "| **Est. Employees** |"), /\| 40, estimated from your annual revenue \(Example figure: replace with your own\) \|$/);
-    assert.ok(!text.includes("(your input)"));
+    assert.ok(!row(text, "| **Est. Employees** |").includes("(your input)"));
     assert.ok(!text.includes("add your employee count"));
   });
 }
@@ -136,9 +138,9 @@ for (const [label, emp] of [["omitted", undefined], ["null", null]]) {
 test("employee_count 0 (revenue given): shown as 0 (your input), never estimated from the revenue", async () => {
   const { isError, text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 0 });
   assert.equal(isError, false);
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 0 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
   assert.ok(!/estimated from your annual revenue/.test(text), "employees were estimated from the revenue");
-  assert.match(row(text, "| **Est. Annual Revenue** |"), /\| \$10,000,000 \|$/);
+  assert.match(row(text, "| **Annual Revenue** |"), /\| \$10,000,000 \(your input\) \|$/);
   // Nothing divides by the employee count, so the revenue figures are computed as usual.
   assert.match(row(text, "Annual Productivity Value"), /\*\*\$100,000\*\*/);
   assert.ok(!text.includes("not computed"));
@@ -148,14 +150,14 @@ test("employee_count 0 (revenue given): shown as 0 (your input), never estimated
 // D45 uses a typed 0 as 0, so it now expects 0 impacted employees and payback naming the employee count.
 test("employee_count 0 (revenue given), cost_reduction: 0 impacted employees, payback says add your employee count", async () => {
   const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 10000000, employee_count: 0, solution_price: 40000 });
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 0 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
   assert.match(row(text, "Employees impacted:"), /Employees impacted: 0$/);
   assert.ok(row(text, "| **Payback Period** |").includes("not computed: add your employee count"));
 });
 
 test("employee_count 0 and no revenue: revenue is 0 from 0 employees, and figures that divide by the value say add your employee count", async () => {
   const { text } = await call({ ...PROD, employee_count: 0 });
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 0 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
   assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | $0, estimated from your employee count " + EX + " |");
   assert.match(row(text, "**Total Quantified Value**"), /\*\*\$0\*\*/);
   assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | " + NEEDS_EMPLOYEES + " |"));
@@ -166,7 +168,7 @@ test("employee_count 0 and no revenue: revenue is 0 from 0 employees, and figure
 
 test("employee_count ordinary value: shown as given, not estimated", async () => {
   const { text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 100 });
-  assert.match(row(text, "| **Est. Employees** |"), /\| 100 \|$/);
+  assert.match(row(text, "| **Employees** |"), /\| 100 \(your input\) \|$/);
   assert.ok(!/estimated from your annual revenue/.test(text));
 });
 
@@ -175,8 +177,8 @@ test("employee_count ordinary value: shown as given, not estimated", async () =>
 test("annual_revenue 0 and employee_count 0: both shown as given, nothing estimated", async () => {
   const { isError, text } = await call({ ...PROD, annual_revenue: 0, employee_count: 0 });
   assert.equal(isError, false);
-  assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | $0 (your input) |");
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | 0 (your input) |");
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
   assert.ok(!/estimated from your/.test(text.split("## Assumptions")[0]));
   assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | " + NEEDS_REVENUE + " |"));
   assert.ok(!/Infinity|NaN/.test(text));

@@ -29,10 +29,15 @@ const LONG_TEXT = {
   ]
 };
 // Answers are never cached (privacy page: web and MCP answers are sent with Cache-Control: no-store).
+// Run 19 R19-36 (safety-live.md Part 4 gap 3): the same frame rule, referrer rule and JSON content policy as the /api/tools
+// answers (api.mjs SECURITY and JSON_CSP), because _headers does not reach function answers.
 const SECURITY_HEADERS = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
   "Strict-Transport-Security": "max-age=31536000",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 };
 
 function rpcError(id, code, message, status, extraHeaders) {

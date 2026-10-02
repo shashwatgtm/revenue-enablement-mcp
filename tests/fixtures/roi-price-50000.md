@@ -9,7 +9,7 @@
 | **Customer** | not supplied |
 | **Industry** | not supplied |
 | **Company Size** | not supplied (treated as mid market) |
-| **Est. Annual Revenue** | $10,000,000 |
+| **Annual Revenue** | $10,000,000 (your input) |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
 | **Solution** | Helix Platform |
 | **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
@@ -31,7 +31,7 @@
 ### Productivity Gains
 
 **Calculation Methodology:**
-- Revenue baseline: $10,000,000
+- Revenue baseline: $10,000,000 (your input)
 - Productivity improvement: 1% (assumed) (Example figure: replace with your own)
 - Annual Productivity Value: **$100,000** (Example figure: replace with your own)
 

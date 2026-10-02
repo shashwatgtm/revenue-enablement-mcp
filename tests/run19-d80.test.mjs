@@ -165,3 +165,30 @@ test("account_plan_builder: given contacts are used, not asked for; sector notes
   assert.match(r.text, /Head of Last-Mile Operations/);
   assert.match(r.text, /cost per delivery|first-attempt|fleet/i);
 });
+
+// Run 19 R19-36 (ledger B16-18): a revenue or employee count you give is labelled as yours, and its row is not called an estimate.
+test("roi_business_case_builder: given revenue and employees are labelled as your input, estimated ones keep Est.", async () => {
+  const row = (text, start) => text.split("\n").find((l) => l.startsWith(start)) || "";
+  const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
+    primary_value_driver: "cost_reduction", company_size: "mid_market", annual_revenue: 60000000, employee_count: 500, solution_price: 90000 })).text;
+  assert.equal(row(both, "| **Annual Revenue** |"), "| **Annual Revenue** | $60,000,000 (your input) |");
+  assert.equal(row(both, "| **Employees** |"), "| **Employees** | 500 (your input) |");
+  assert.ok(!both.includes("| **Est. Annual Revenue** |") && !both.includes("| **Est. Employees** |"));
+  const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
+    primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 })).text;
+  assert.match(row(est, "| **Est. Annual Revenue** |"), /estimated from your employee count/);
+  assert.equal(row(est, "| **Employees** |"), "| **Employees** | 500 (your input) |");
+});
+
+// Run 19 R19-36 (safety-live.md Part 4 gap 3): /mcp answers carry the same security headers as the JSON answers of /api/tools.
+test("/mcp answers carry Referrer-Policy, a frame rule and a JSON content policy", async () => {
+  for (const req of [new Request("https://x.gtmhelix.com/mcp", { method: "GET" }),
+    new Request("https://x.gtmhelix.com/mcp", { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }) })]) {
+    const r = await handler(req);
+    assert.equal(r.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+    assert.equal(r.headers.get("x-frame-options"), "DENY");
+    assert.equal(r.headers.get("content-security-policy"), "default-src 'none'; frame-ancestors 'none'");
+    assert.equal(r.headers.get("x-content-type-options"), "nosniff");
+  }
+});

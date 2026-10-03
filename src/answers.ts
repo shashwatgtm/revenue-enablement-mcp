@@ -293,9 +293,9 @@ export const ROLE_KNOWLEDGE: Record<RoleFamily, RoleKnowledge> = {
     nextStep: 'Agree a pilot site, the measure and the people who will use it', owns: 'the pilot and the operational rollout',
   },
   sales: {
-    label: 'sales leader', cares: 'coverage, orders, rep adoption and how fast the field sees a result', worry: 'reps who will not use another app, and a rollout that takes a season',
-    needs: 'a pilot in one region with a measure against a comparable region', questions: ['How do your reps capture orders and plan visits today?', 'How late is your view of what sold, by outlet or account?', 'What would make reps keep using a new tool?'],
-    nextStep: 'Agree a pilot region and the measure, and who in the field will lead it', owns: 'the field pilot and the sales rollout',
+    label: 'sales leader', cares: 'pipeline coverage, win rates, rep adoption and how fast the team sees a result', worry: 'reps who will not use another tool, and a rollout that slows selling',
+    needs: 'a pilot with one team and a measure against a comparable team', questions: ['How does a rep find, work and record a deal today?', 'How late is your view of what is in the pipeline and what closed?', 'What would make reps keep using a new tool?'],
+    nextStep: 'Agree a pilot team and the measure, and who on the team will lead it', owns: 'the pilot and the sales team rollout',
   },
   product: {
     label: 'product leader', cares: 'speed of change, the customer experience and the engineering time a project takes', worry: 'a dependency on engineering that slows the roadmap',

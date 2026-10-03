@@ -103,3 +103,11 @@ test("a sentence that begins with the solution phrase starts with a capital", as
     assert.ok(!m, `${tool}: ${m && out.slice(Math.max(0, m.index - 20), m.index + 60)}`);
   }
 });
+
+// Run 21c round 3 (test first): with one stated pain and several features to show, the demo script said the whole pain sentence in every step and again in the recap (five times each).
+test("demo_script_builder: one stated pain is spelled out once per use, not in every step", async () => {
+  const pain = "site teams re-key the same change order into three tools and the budget lags the field by weeks";
+  const out = await call("demo_script_builder", { demo_type: "first_look", your_solution: "Gridbeam, a construction management platform for general contractors: job costing, change orders, field daily logs, owner reports and a subcontractor portal", key_pain_points: pain, must_show_features: "job costing; change orders; field daily logs; owner reports", primary_audience: "VP Operations" });
+  const n = out.split(pain).length - 1;
+  assert.ok(n <= 6, `the pain sentence appears ${n} times`);
+});

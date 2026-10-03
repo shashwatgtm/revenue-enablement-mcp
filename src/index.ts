@@ -5578,11 +5578,16 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
     ask(typeQuestion[demoType] || typeQuestion.first_look),
   ].join('\n\n');
 
+  // run 21c round 3: one stated pain is spelled out the first time a step uses it; later steps with the same pain say "the same problem"
+  const seenPain = new Set<string>();
   const stepBlocks = steps.map((s, i) => {
+    const again = !!s.pain && seenPain.has(s.pain);
+    if (s.pain) seenPain.add(s.pain);
+    const painTxt = again ? 'the same problem' : dsLow(s.pain || '');
     const lines = [`**Step ${i + 1}: ${s.title}** (about ${perStep} ${perStep === 1 ? 'minute' : 'minutes'})`];
-    lines.push(`On screen: ${s.title}${s.pain ? `, run on one real case of ${dsLow(s.pain)}${i === 0 && customerIndustry ? `, using an example from ${customerIndustry}` : ''}` : ''}.${s.label ? ` Run it only if it works live (${s.label}).` : ''}`);
-    lines.push(`Say: "${s.pain ? `This one is for what you told me about: ${dsLow(s.pain)}. ` : ''}Here is ${s.show}."`);
-    lines.push(ask(s.metric ? `What is ${s.metric} for you today, and what would you want it to be after this?` : s.pain ? `You told me: ${dsLow(s.pain)}. How often does that happen today, and who has to step in when it does?` : 'How often does this happen today, and who has to step in when it does?'));
+    lines.push(`On screen: ${s.title}${s.pain ? `, run on one real case of ${painTxt}${i === 0 && customerIndustry ? `, using an example from ${customerIndustry}` : ''}` : ''}.${s.label ? ` Run it only if it works live (${s.label}).` : ''}`);
+    lines.push(`Say: "${s.pain ? (again ? 'This one is for the same problem. ' : `This one is for what you told me about: ${painTxt}. `) : ''}Here is ${s.show}."`);
+    lines.push(ask(s.metric ? `What is ${s.metric} for you today, and what would you want it to be after this?` : s.pain ? `${again ? 'Same problem: ' : `You told me: ${painTxt}. `}How often does that happen today, and who has to step in when it does?` : 'How often does this happen today, and who has to step in when it does?'));
     for (const o of atStep[i] || []) lines.push(objectionBlock(o));
     return lines.join('\n');
   });
@@ -5601,7 +5606,9 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
     ...atDiscussion.map(objectionBlock),
   ].join('\n\n');
 
-  const recap = steps.length ? steps.map((s) => (s.pain ? `You told me about ${dsLow(s.pain)}, and you saw ${s.low}.` : `You saw ${s.low}.`)).join(' ') : `You saw ${P}.`;
+  const recapGroups: { pain: string; seen: string[] }[] = [];
+  for (const st of steps) { const last = recapGroups[recapGroups.length - 1]; if (last && last.pain === (st.pain || '')) last.seen.push(st.low); else recapGroups.push({ pain: st.pain || '', seen: [st.low] }); }
+  const recap = steps.length ? recapGroups.map((g) => (g.pain ? `You told me about ${dsLow(g.pain)}, and you saw ${joinList(g.seen)}.` : `You saw ${joinList(g.seen)}.`)).join(' ') : `You saw ${P}.`;
   const nextStepOption = v ? dsLow((MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'Pilot discussion' }])[0].m) : '';
   const closeBlock = [
     `Say: "Here is what we covered. ${recap}"`,

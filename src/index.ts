@@ -1809,7 +1809,8 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   // Run 21c (draft rewrite): the list is written from the inputs. Each framework section asks about the product's parts, the pain clauses, the
   // prospect's role, the measures of the sector (ordered by the user's own words) and the deal details given; the standard lists are gone.
   const v = ctx.v;
-  const sectorMetrics = v ? rankMeasures(v.metrics, knownPainPoints, yourSolution) : []; // the sector's measures, led by the ones the user's own pain and solution words point to (run 21b)
+  const sellerSw = !!v && v.id === 'saas' && !!prospectIndustry && !/software|saas|technology|internet|app\b/i.test(prospectIndustry); // a software seller's own measures and questions describe its customers, not a buyer in another industry
+  const sectorMetrics = v && !sellerSw ? rankMeasures(v.metrics, knownPainPoints, yourSolution) : []; // the sector's measures, led by the ones the user's own pain and solution words point to (run 21b)
   const brief = solutionBrief(yourSolution);
   const P = brief.short || clip(lowerFirstIfCommon(yourSolution), 70) || 'this solution';
   const investment = ctx.model === 'investment';
@@ -1818,7 +1819,7 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const roleTxt = prospectRole ? lowerFirstIfCommon(prospectRole) : '';
   const youRole = roleTxt && !isPluralRole(roleTxt) ? anOfPhrase(roleTxt) : 'you';
   const indLow = prospectIndustry ? lowerFirstIfCommon(prospectIndustry) : '';
-  const pains = painClausesWide(knownPainPoints);
+  const pains = painClausesWide(knownPainPoints).length ? painClausesWide(knownPainPoints) : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
   const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
   const XL = painLead ? q(painLead) : 'the problem you came to fix'; // the pain in the user's own words, quoted inside a sentence
   const X = painLead && painLead.split(/\s+/).length > 7 ? 'that problem' : XL; // a long clause is quoted once (the opening) and then called "that problem"
@@ -1826,7 +1827,8 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const signer = signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
   const kp = productKindAndParts(brief);
   const partNames = kp.parts;
-  const rankedParts = rankMeasures(partNames, knownPainPoints, '');
+  const rankedParts = knownPainPoints ? partsNearPain(partNames, knownPainPoints) : partNames.slice(0, 4);
+  const farParts = partNames.filter((x) => !rankedParts.includes(x));
   const critA = rankedParts[0] || shortKind(kp.kind, brief.name) || (yourSolution ? P : 'this area');
   const critB = rankedParts[1] || sectorMetrics[0] || 'the outcome you care about';
   const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics);
@@ -1875,27 +1877,36 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const openSection = `## Opening for a ${dealStage.replace(/_/g, ' ')} conversation\n\nSay it in your own voice:\n${qs(OPEN[dealStage] || OPEN.discovery)}\n\n---\n\n`;
 
   // the prospect's role
-  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\n${upperFirst(aAn(roleKnow.label))} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}.\n\n${qs(roleKnow.questions)}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
+  const roleOwn = roleKnow ? [
+    rankedParts.length ? `Which of ${joinList(rankedParts.slice(0, 2), 'and')} would matter most to ${youRole}${indLow ? ` in ${indLow}` : ''}, and why?` : '',
+    painLead ? `What does ${XL} mean for the targets ${youRole} answers for${indLow ? ` in ${indLow}` : ''}?` : (indLow ? `What does ${critA} mean for the targets ${youRole} answers for in ${indLow}?` : ''),
+    `Who does ${youRole} turn to first when this goes wrong${indLow ? ` in ${indLow}` : ''}, and what do they say?`,
+  ] : [];
+  // a role the tool has no knowledge of (family "other") gets only the questions built from the inputs, not a stock paragraph
+  const roleKnown = !!roleKnow && roleFam !== 'other';
+  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\n${roleKnown ? `${upperFirst(aAn(roleKnow.label))} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}.\n\n` : ''}${qs([...roleOwn, ...(roleKnown ? roleKnow.questions : [])])}\n\n${roleKnown ? `**What they need to see before they say yes:** ${roleKnow.needs}.\n\n` : ''}---\n\n` : '';
   // A SaaS company's own activation and expansion questions do not suit a finance, security or IT leader who is buying from it.
-  const sectorFits = !(v && v.id === 'saas' && ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam));
-  const sectorSection = v ? `## Questions in the language of ${v.name}\n\n${sectorFits ? qs(v.discovery) : `The usual ${v.name} questions are about the prospect's own customers (activation, expansion). They do not fit ${roleKnow ? aAn(roleKnow.label) : 'a buyer in this role'}, so use the questions above and below.`}\n\n---\n\n` : '';
+  const sectorFits = !(v && v.id === 'saas' && (sellerSw || ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam)));
+  const sectorSection = v ? `## Questions in the language of ${v.name}\n\n${sectorFits ? qs(v.discovery) : `The usual ${v.name} questions are about a software company's own customers. They do not fit ${sellerSw ? `a buyer in ${indLow}` : roleKnow ? aAn(roleKnow.label) : 'a buyer in this role'}, so use the questions above and below.`}\n\n---\n\n` : '';
   // the pain, one clause at a time
   const painShells = [
     (p: string, m: string) => `On ${q(p)}: where does it start, who deals with it, and ${m ? `which of ${m} does it show up in first` : 'what does it cost in time, money or risk'}?`,
     (p: string, m: string) => `On ${q(p)}: what have you tried so far, and what stopped it from holding?`,
     (p: string) => `On ${q(p)}: how is it tracked today, and who would notice first if it went away?`,
   ];
-  const painLines = pains.map((p, i) => painShells[i % 3](lowerFirstIfCommon(p), v ? joinList(rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : ''));
+  const painLines = pains.map((p, i) => painShells[i % 3](lowerFirstIfCommon(p), v && !sellerSw ? joinList(rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : ''));
   const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${qs([...painLines, pains.length > 1 ? `Of ${pains.length === 2 ? 'the two' : `the ${pains.length}`} pains above, which hurts most, and which one would ${signer} pick?` : ''])}\n\n---\n\n` : '';
   // the product's parts, each tied to the pain
   const partShells = [
     (n: string) => `${cap(n)}: in the case of ${X}, which step touches it, who does that step today, and with what?`,
     (n: string) => `${cap(n)}: what do you use for it today, and what would you want it to do that it does not?`,
-    (n: string) => `${cap(n)}: who owns it, and whose work changes if it changes?`,
-    (n: string) => `${cap(n)}: which of your systems does it have to work with, and who owns each one?`,
   ];
-  const shownParts = rankedParts.slice(0, 8);
-  const partSection = shownParts.length ? `## Questions on what ${P} covers\n\nOne question for each part you listed, the ones closest to the pain first.\n${rankedParts.length > shownParts.length ? `Not used in the draft: ${joinList(rankedParts.slice(8))}, because the list stops at eight parts.\n` : ''}\n${qs(shownParts.map((n, i) => partShells[i % 4](n)))}\n\n---\n\n` : '';
+  // the parts closest to the pain first; when fewer than three are close, the first parts of the user's list fill up to three
+  const shownParts = [...rankedParts, ...farParts].slice(0, Math.max(3, Math.min(rankedParts.length, 5)));
+  const notAsked = [...rankedParts, ...farParts].filter((x) => !shownParts.includes(x));
+  const partSection = shownParts.length || notAsked.length ? `## Questions on what ${P} covers
+
+${shownParts.length ? `One question for each part, the ones closest to the pain you gave first.\n\n${qs(shownParts.map((n, i) => partShells[i % 2](n)))}\n\n` : ''}${notAsked.length ? `Parts not asked about${knownPainPoints ? ' (they do not touch the pain you gave as closely)' : ''}: ${notAsked.join('; ')}.\n\n` : ''}---\n\n` : '';
 
   // the framework sections, each question written from the inputs
   const metricsQs = knownMetrics ? (noMetrics
@@ -1981,7 +1992,7 @@ ${openSection}${gapSection}${roleSection}${sectorSection}${painSection}${partSec
   if (framework === 'spiced' || framework === 'all') output += spiced + '\n\n---\n\n';
   if (framework === 'challenger' || framework === 'all') output += challenger + '\n\n---\n\n';
   if (framework === 'gap_selling' || framework === 'all') output += gapSelling + '\n\n---\n\n';
-  output += `${closeSection}${objSection}${v ? `${sectorNotes(v, 'committee')}\n\n` : ''}${SUGGESTIONS_FOOTER}`;
+  output += `${closeSection}${objSection}${v ? `${sellerSw ? `### Sector notes: ${v.name}\n- The notes for this sector describe a software company's own customers, so they are left out for a buyer in ${indLow}.` : sectorNotes(v, 'committee')}\n\n` : ''}${SUGGESTIONS_FOOTER}`;
   return output;
 }
 
@@ -4808,9 +4819,11 @@ function shortKind(kind: string, name: string): string {
 // The separate pains in a typed pain statement, up to 16 words each (painClauses stops at 9): split at semicolons and commas outside brackets.
 function painClausesWide(text: string): string[] {
   if (!text.trim()) return [];
-  const raw = text.split(/\n|;/).flatMap((x) => splitTopLevel(x));
+  // a list after "across", "between" or "among" ("across marketing, sales and service") stays inside its clause
+  const guarded = text.replace(/\b(across|between|among)\s+([^,;]+(?:,\s+[^,;]+)*?),?\s+(and|or)\s+([^,;]+)/gi, (m) => m.replace(/,/g, '\u0001'));
+  const raw = guarded.split(/\n|;/).flatMap((x) => splitTopLevel(x)).map((x) => x.replace(/\u0001/g, ','));
   const out = raw.map((x) => x.replace(/^(?:and|with|plus|while|but|also)\s+/i, '').replace(/[.]+$/, '').trim())
-    .filter((x) => { const n = x.split(/\s+/).length; return n >= 2 && n <= 16 && x.length > 4 && !/^(?:so|most|which|that|this|it|they|these|those)\b/i.test(x) && !/\b(?:that|this|it|them)$/i.test(x); });
+    .filter((x) => { const n = x.split(/\s+/).length; return n >= 2 && n <= 40 && x.length > 4 && !/^(?:so|most|which|that|this|it|they|these|those)\b/i.test(x) && !/\b(?:that|this|it|them)$/i.test(x); });
   const uniq: string[] = [];
   for (const o of out) if (!uniq.includes(o)) uniq.push(o);
   return uniq.slice(0, 6);
@@ -4820,6 +4833,14 @@ function isPluralRole(role: string): boolean {
   const head = role.trim().split(/\s+(?:who|that|responsible|in|at|of|for)\s+/i)[0];
   const last = head.split(/\s+/).pop() || '';
   return /s$/i.test(last) && !/(?:ss|us|is|sales|operations|analytics|business|logistics|success|services|news)$/i.test(last);
+}
+// The parts of a product that share a word with the pain or the value the user gave (generic words such as sales, service, customer do not count),
+// the closest first. A part that shares none is not made the topic of an email or a question.
+const NEAR_STOP = new Set(['sale', 'serv', 'cust', 'mark', 'team', 'tool', 'data', 'mana', 'syst', 'plat', 'proc', 'work', 'with', 'more', 'from', 'that', 'this', 'have', 'they', 'your', 'their', 'into', 'over', 'only', 'also', 'each', 'such', 'than', 'solu', 'prod', 'busi', 'comp', 'enab', 'help', 'real', 'time', 'fast', 'lowe', 'fewe', 'high', 'effi', 'when', 'what', 'ente', 'need', 'many', 'much', 'across']);
+const stemSet = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.replace(/s$/, '').slice(0, 4)).filter((w) => !NEAR_STOP.has(w)));
+function partsNearPain(parts: string[], text: string): string[] {
+  const st = stemSet(text);
+  return parts.map((x, i) => ({ x, i, n: [...stemSet(x)].filter((w) => st.has(w)).length })).filter((o) => o.n > 0).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.x);
 }
 function productKindAndParts(b: SolutionBrief): { kind: string; parts: string[] } {
   if (b.parts.length) return { kind: b.kind, parts: b.parts.map(partLabel).filter(Boolean) };
@@ -4880,14 +4901,18 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
   const valueMain = ((valueItems.find((x) => !x.label) || valueItems[0])?.text || '').replace(/[.]+$/, '');
   const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);
-  const rankedParts = rankMeasures(partNames, painPlain, valueMain);
+  // a software seller's own sector notes (renewal rate, time to value, activation) describe its customers, not a buyer in another industry
+  const sellerSw = !!v && v.id === 'saas' && !/software|saas|technology|internet|app\b/i.test(targetIndustry);
+  const rankedParts = partsNearPain(partNames, `${painPlain} ${valueMain}`);
   const kindTopic = shortKind(kp.kind, brief.name);
-  const topic = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 24 ? kindTopic : '') || (v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem');
+  const topicIsKind = !rankedParts.find((x) => x.length <= 28) && !!kindTopic && kindTopic.length <= 32;
+  const topic = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 32 ? kindTopic : '') || (v && !sellerSw ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem');
+  const handle = topicIsKind ? `choosing ${anOf(topic)}` : `changing how they handle ${topic}`;
   const stripLead = (t: string, n: string) => (n && t.toLowerCase().startsWith(n.toLowerCase()) ? t.slice(n.length).replace(/^[,:\s]+/, '') : t);
   const kindClean = stripLead(stripLead(kp.kind, brief.name), P).trim();
-  const subjT = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 24 ? kindTopic : '') || P; // the topic in a subject that must read well on its own
+  const subjT = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 32 ? kindTopic : '') || P; // the topic in a subject that must read well on its own
   const whatIs = kindClean ? (/^(?:a|an|the)\s/i.test(kindClean) ? `${P} is ${lowerFirstIfCommon(kindClean)}.` : `${P} offers ${lowerFirstIfCommon(kindClean)}.`) : '';
-  const covers = partNames.length ? `${whatIs ? 'It' : P} covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}.` : '';
+  const covers = rankedParts.length ? `${whatIs ? 'It' : P} covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}.` : '';
   const valueLine = valueMain ? `${P} is aimed at this: ${valueMain}.` : '';
   const valueIt = valueMain ? `${whatIs || covers ? 'It' : P} is aimed at this: ${valueMain}.` : '';
   const ownVoice = (t: string) => t.replace(/^the (?:[a-z]+ )?(?:page|site|website|home page)\s+(cites|claims|says|shows|reports)\b/i, `${P} $1`).replace(/[.]+$/, '');
@@ -4914,7 +4939,9 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
     if (sto.length) out.push(`${sto.length === 1 ? 'An example' : 'Examples'}: ${sto.join('; ')}.`);
     if (sca.length) out.push(`On scale: ${sca.join('; ')}.`);
     for (const x of items.filter((y) => y.kind === 'quote')) { const t = quoteOf(x); out.push(/["\u201d]$/.test(t) ? t : `${t}.`); }
-    for (const x of items.filter((y) => y.kind === 'recognition')) { const t = proofPhrase(x).replace(/[.]+$/, ''); out.push(/^named\b/i.test(t) ? `${P} was ${lowerFirstIfCommon(t)}.` : `Recognition: ${t}.`); }
+    const rec = items.filter((y) => y.kind === 'recognition').map((x) => proofPhrase(x).replace(/[.]+$/, ''));
+    if (rec.length === 1 && /^named\b/i.test(rec[0])) out.push(`${P} was ${lowerFirstIfCommon(rec[0])}.`);
+    else if (rec.length) out.push(`Recognition: ${rec.join('; ')}.`);
     return out.join(' ');
   };
   const used: ProofItem[] = [];
@@ -4922,9 +4949,9 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const claimsPara = (): string => { const c = valueClaims.splice(0); for (const x of c) used.push(x); return c.length ? `${c.map((x) => { const t = ownVoice(x.text); return t.startsWith(P) ? t : `Also on record: ${t}`; }).join('. ')}.` : ''; };
 
   // the people around the persona and the questions of the sector
-  const otherRoles = v ? v.buyerRoles.filter((r) => familyOf(r, investment) !== familyOf(targetPersona, investment)).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
-  const sectorQs = v ? v.discovery : rk.questions.filter((x) => !/\bthat\b/i.test(x));
-  const measures = v ? rankMeasures(v.metrics, painPlain, valueMain) : [];
+  const otherRoles = v && !sellerSw ? v.buyerRoles.filter((r) => familyOf(r, investment) !== familyOf(targetPersona, investment) && !['risk', 'procurement'].includes(familyOf(r, investment))).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
+  const sectorQs = v && !sellerSw ? v.discovery : rk.questions.filter((x) => !/\bthat\b/i.test(x));
+  const measures = v && !sellerSw ? rankMeasures(v.metrics, painPlain, valueMain) : [];
 
   // tone: the greeting, the closing and the way the ask is worded
   const hello = tone === 'casual' ? 'Hi,' : 'Hello,';
@@ -4958,11 +4985,14 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
     const kept = paras.filter(Boolean).filter((x) => { const k = x.split(': ').pop() || x; if (/\?$/.test(k)) { if (seen.has(k)) return false; seen.add(k); } return true; });
     emails.push(`### Email ${n}: ${title}${day ? ` (${day})` : ''}\n\n**Subject:** ${clip(subject, 70)}\n\n**Body:**\n\n${hello}\n\n${kept.join('\n\n')}\n\n${sig}`);
   };
-  const tail = () => { const rest = bag.splice(0); for (const r of rest) used.push(r); return rest.length ? `More that I can stand behind: ${proofParas(rest)}` : ''; };
+  const tail = () => { const rest = bag.splice(0); for (const r of rest) used.push(r); return rest.length ? proofParas(rest) : ''; };
   const roleQ = (i: number) => (i === 0 ? rk.questions[0] : sectorQs[i - 1] || rk.questions[0]);
+  const qPool = [...rk.questions, ...sectorQs].filter((x, i, a) => a.indexOf(x) === i);
+  let qNext = 0;
+  const nextQ = (): string => qPool[qNext++ % qPool.length]; // each use gives a question not yet asked in this sequence, while any are left
   const painOpen = painS ? (tone === 'provocative' ? `A direct question: ${painS}. Is that true on your side?` : `I am writing to ${plural}${inInd} because of one problem: ${painS}.`) : `I am writing to ${plural}${inInd} about ${topic}. ${roleQ(0)}`;
   const topicSubj = (pre: string) => `${pre} ${topic}`;
-  const objs = v ? v.objections.slice(0, 2) : [];
+  const objs = v && !sellerSw ? v.objections.slice(0, 2) : [];
   const toYou = (t: string) => t.replace(/on the buyer side/gi, 'on your side').replace(/the buyer's/gi, 'your').replace(/the buyer/gi, 'your team');
   const objPara = (o: { objection: string; response: string }, i = 0) => `${i === 0 ? 'A concern worth naming before you raise it' : 'Another'}: ${lowerFirstIfCommon(o.objection).replace(/[.]+$/, '')}. We would ${toYou(lowerFirstIfCommon(o.response)).replace(/[.]+$/, '')}.`;
   const measuresLine = measures.length ? `The measures ${plural}${inInd} tend to watch here are ${joinList(measures.slice(0, 3))}.` : '';
@@ -4972,22 +5002,22 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
       mail('Day 1', 'Opening', painHead ? cap(painHead) : topicSubj('A question about'), [painOpen, [whatIs, covers, valueIt].filter(Boolean).join(' '), ask(0)]);
       const r2 = mark(take(['result', 'scale'], 2));
       mail('Day 3', 'Result and question', r2.length ? `A result on ${subjT}` : topicSubj('One question on'), [
-        r2.length ? `${proofParas(r2)}` : `I have no result to quote in this note, so here is a question instead.`,
+        r2.length ? `${proofParas(r2)}` : '',
         claimsPara(),
-        `The question that usually decides whether a change like this matters to ${aAn(rk.label)} is this: ${roleQ(0)}`,
+        `The question that usually decides whether a change like this matters to ${aAn(rk.label)} is this: ${nextQ()}`,
         ask(1)]);
       const r3 = mark(take(['quote', 'story'], 2));
-      mail('Day 7', 'In a customer\'s words', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${subjT}` : r3.length ? `An example on ${subjT}` : `${cap(topic)} on the ground`, [
-        r3.length ? proofParas(r3) : `I have no customer story to quote in this note. What I can offer is how ${plural}${inInd} measure this before a change: ${measures.length ? joinList(measures.slice(0, 3)) : 'with a number they already track'}.`,
-        painT ? `The second part of the problem: ${painT}.` : sectorQs[0] ? `A question from the same place: ${sectorQs[0]}` : '',
-        rankedParts[0] ? `The part of ${P} that speaks to this is ${rankedParts[0]}.` : valueLine,
+      mail('Day 7', r3.length ? 'In a customer\'s words' : 'Another angle', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${subjT}` : r3.length ? `An example on ${subjT}` : `${cap(topic)} on the ground`, [
+        r3.length ? proofParas(r3) : measuresLine,
+        painT ? `The second part of the problem: ${painT}.` : `A question from the same place: ${nextQ()}`,
+        rankedParts[0] ? `The part of ${P} that speaks to this is ${rankedParts[0]}.` : '',
         ask(1)]);
       mail('Day 12', 'Right person?', `Who owns ${topic}${inInd}?`, [
         `I have written a few times about ${painS && painS.length <= 120 ? q(painS) : painRef ? q(painRef) : topic} and have not heard back, so I will ask plainly: is this yours, or does it sit with someone else${otherRoles.length ? `, for example your ${joinList(otherRoles, 'or')}` : ''}?`,
         `If the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.`]);
       const r5 = mark(take(['recognition', 'result', 'scale', 'quote', 'story'], 1));
       mail('Day 17', 'Questions to keep', `Questions on ${topic}${inInd}`, [
-        `This is my last note. Here are the questions ${plural}${inInd} can ask themselves before changing how they handle ${topic}, useful even if we never speak:\n${sectorQs.slice(0, 3).map((x, i) => `${i + 1}. ${x}`).join('\n')}`,
+        `This is my last note. Here are the questions ${plural}${inInd} can ask themselves before ${handle}, useful even if we never speak:\n${sectorQs.slice(0, 3).map((x, i) => `${i + 1}. ${x}`).join('\n')}`,
         r5.length ? proofParas(r5) : '', tail(),
         `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`]);
     },
@@ -4999,16 +5029,16 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
       const r2 = mark(take(['result', 'scale'], 2));
       mail('Day 3', 'Something useful', `For ${aAn(rk.label)}: ${measures[0] || topic}`, [
         `One question I have been thinking about since we spoke: ${roleQ(0)}`,
-        measuresLine, r2.length ? proofParas(r2) : '', claimsPara()]);
+        measuresLine, r2.length ? proofParas(r2) : valueLine, claimsPara(), painT ? `We also touched on this: ${painT}.` : '']);
       const r3 = mark(take(['quote', 'story', 'recognition'], 2));
       mail('Day 7', 'Checking in', `Checking in on ${topic}`, [
         painT ? `We also touched on this: ${painT}.` : painRef ? `I wanted to come back to ${q(painRef)}.` : '',
-        r3.length ? proofParas(r3) : '', tail(),
+        r3.length ? proofParas(r3) : `A question I would put to your own team: ${sectorQs[0] || roleQ(0)}`, tail(), r3.length ? '' : valueLine,
         ask(1)]);
     },
     post_demo: () => {
       mail('same day', 'Thank you', `Thank you for the demo of ${P}`, [
-        `Thank you for the time today. You saw ${P}${partNames.length ? `, which covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}` : brief.kind ? `, ${lowerFirstIfCommon(brief.kind)}` : ''}.`,
+        `Thank you for the time today. You saw ${P}${rankedParts.length ? `, which covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}` : brief.kind ? `, ${lowerFirstIfCommon(brief.kind)}` : ''}.`,
         painS ? `The problem we set out to address: ${painS}.` : '', valueLine,
         `If anything about ${topic} was unclear after the demo, send me the question and I will answer it in writing.`]);
       mail('Day 2', 'Likely concerns', objs[0] ? `Before you decide: ${lowerFirstIfCommon(objs[0].objection).replace(/[.]+$/, '')}` : `Questions after the demo of ${P}`, [
@@ -5031,7 +5061,7 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
         ask(0)]);
       const r2 = mark(take(['result', 'scale', 'quote', 'story'], 2));
       mail('', 'What is new', `What ${P} has to show on ${topic}`, [
-        r2.length ? `${proofParas(r2)}` : `I have nothing new to report in this note, so here is a question: ${roleQ(0)}`,
+        r2.length ? `${proofParas(r2)}` : `A question while you think about it: ${roleQ(0)}`,
         claimsPara(), valueLine]);
       const r3 = mark(take(['recognition'], 1));
       mail('', 'A direct question', `Close the loop on ${topic}?`, [
@@ -5044,10 +5074,10 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
         [whatIs, covers].filter(Boolean).join(' '), valueLine,
         `${ask(0)} I would walk through it section by section and take your questions as we go.`]);
       mail('Day 3', 'Questions', objs[0] ? `On the proposal: ${lowerFirstIfCommon(objs[0].objection).replace(/[.]+$/, '')}` : `Questions on the proposal for ${topic}`, [
-        objs.length ? objs.map((o, i) => objPara(o, i)).join('\n\n') : '', `One question for whoever reviews it: ${roleQ(1)}`, measuresLine]);
+        objs.length ? objs.map((o, i) => objPara(o, i)).join('\n\n') : '', `One question for whoever reviews it: ${roleQ(1)}`, measuresLine, objs.length ? '' : valueLine, objs.length || !painT ? '' : `The second part of the problem, which the proposal also covers: ${painT}.`]);
       const r3 = mark(take(['result', 'quote', 'story', 'scale'], 2));
       mail('Day 7', 'Reviewers', otherRoles[0] ? `Who else reviews the proposal: your ${otherRoles[0]}?` : `Evidence for the proposal on ${topic}`, [
-        r3.length ? `${proofParas(r3)}` : `I have no customer evidence to add in this note.`,
+        r3.length ? `${proofParas(r3)}` : [whatIs, valueIt].filter(Boolean).join(' '),
         claimsPara(),
         otherRoles.length ? `Who on your side besides you reviews it: your ${joinList(otherRoles, 'or')}? I can prepare a short version for each.` : `Who on your side besides you reviews it? I can prepare a short version for each.`]);
       const r4 = mark(take(['recognition'], 1));
@@ -5066,8 +5096,8 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
         valueLine && rankedParts[0] ? valueLine : '', claimsPara(), `A question for you: ${roleQ(0)}`]);
       const r3 = mark(take(['result', 'quote', 'story', 'scale'], 2));
       mail('Week 4', 'A customer', r3.length ? `What a customer saw on ${subjT}` : `${cap(subjT)} for ${plural}`, [
-        r3.length ? proofParas(r3) : `I have no customer story to quote in this note. A question from ${v ? 'the sector' : 'the role'} instead: ${sectorQs[1] || roleQ(1)}`,
-        painT ? `The other half of the problem: ${painT}.` : '', `A question for you: ${sectorQs[1] || roleQ(1)}`]);
+        r3.length ? proofParas(r3) : '',
+        painT ? `The other half of the problem: ${painT}.` : '', r3.length ? '' : valueLine, `A question for you: ${sectorQs[1] || roleQ(1)}`]);
       const r4 = mark(take(['recognition'], 1));
       mail('Week 6', 'An open door', `If ${topic} is on your list`, [
         `${painRef ? `If ${q(painRef)} is on your list` : `If ${topic} is on your list`}, ${ctaVerb ? `you can ${ctaText}` : `I am happy to set up ${ctaText}`} at a time that suits you.`,
@@ -5079,8 +5109,8 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
         [whatIs, valueIt].filter(Boolean).join(' '), ask(0)]);
       const r2 = mark(take(['result', 'scale', 'quote', 'story'], 2));
       mail('Day 4', 'Follow-up', `Following the event: ${topic}`, [
-        r2.length ? `${proofParas(r2)}` : `I have no customer result to quote in this note. A question instead: ${roleQ(0)}`,
-        claimsPara(), covers]);
+        r2.length ? `${proofParas(r2)}` : `A question for you: ${roleQ(0)}`,
+        claimsPara(), covers, r2.length ? '' : valueLine, r2.length || !painT ? '' : `The second part of the problem: ${painT}.`]);
       const r3 = mark(take(['recognition'], 1));
       mail('Day 9', 'A direct ask', `Still worth ${ctaVerb ? 'a conversation' : ctaText}?`, [
         `I met a lot of people at the event and I would rather ask than guess: is ${painRef ? q(painRef) : topic} something you are working on?`,
@@ -5114,7 +5144,6 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const notGiven: string[] = [];
   if (!specificPainPoint) notGiven.push('specific_pain_point (the emails ask a question about the topic instead of naming a problem)');
   if (!keyValueProp) notGiven.push('key_value_prop (the emails describe the product by what it is)');
-  if (!socialProof) notGiven.push('social_proof (no result or quote is cited)');
   if (!callToAction) notGiven.push('call_to_action (the ask is a short call)');
   if (!senderContext) notGiven.push('sender_context (the emails are signed with the product name)');
   if (!targetIndustry) notGiven.push('target_industry (the emails speak of the persona without a sector)');
@@ -5124,12 +5153,13 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const checkItems = [...used].filter((x, i, a) => a.indexOf(x) === i);
   const checks: string[] = [`Add the recipient's name.`];
   if (sequenceType === 'event_follow_up') checks.push(`Name the event in email 1.`);
+  if (!proofAll.length) checks.push(`No social_proof was given, so no email quotes a result or a customer. Add social_proof (a result, a customer quote or an award you may name) and run it again to give the emails something to quote.`);
   checks.push(...(checkItems.length ? [`Check these before sending (each is used as you gave it):\n${checkItems.map((p) => `- ${proofPhrase(p)} (${p.label || 'as you gave it'})`).join('\n')}`] : []));
   const fixed = EMAIL_COUNTS[sequenceType] || emails.length;
   const emailsText = hasValue(args.num_emails) ? (args.num_emails as number).toLocaleString('en-US') : `${fixed}`;
   const fixedNote = hasValue(args.num_emails) ? `\n*This sequence type has ${fixed} emails and num_emails is not used yet: add or remove emails to match the number you need.*` : '';
   const title = sequenceType.split('_').map((w, i) => (i === 0 ? upperFirst(w) : w)).join(' ');
-  const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}` : '';
+  const notes = v ? `\n\n---\n\n${sellerSw ? `### Sector notes: ${v.name}\n- The notes for this sector describe a software company's own customers, so they are left out for a buyer${indLow ? ` in ${indLow}` : ' in another industry'}.` : sectorNotes(v, 'metrics')}` : '';
   return `# ${title === 'Cold outreach' ? 'Cold Outreach' : title === 'Warm follow up' ? 'Warm Follow-Up' : title === 'Post demo' ? 'Post-Demo' : title === 'Re engagement' ? 'Re-Engagement' : title} Sequence
 
 ## Target: ${targetPersona}${indLow ? ` in ${indLow}` : ''}

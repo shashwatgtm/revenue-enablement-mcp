@@ -418,3 +418,41 @@ test("pricing_negotiation_guide: every scenario is free of placeholders and uses
     assert.match(r.text, /Branchwire/, scenario);
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// champion_enablement_kit: [Challenge 1: describe current pain] and the like, objections with non-answers, the description pasted
+// ---------------------------------------------------------------------------------------------------------------------------
+test("champion_enablement_kit internal_business_case: no placeholder, objections answered by kind, value points used", async () => {
+  const r = await call("champion_enablement_kit", { asset_type: "internal_business_case", your_solution: LANEHOP, champion_role: "Head of Last-mile", target_stakeholder: "Chief Operating Officer",
+    key_value_points: "plan routes faster; keep every delivery promise", known_objections: "Do our drivers need to be online all the time?; Does it connect to our TMS?; How long until the first hub is live?",
+    competitive_context: "manual spreadsheet routing; a legacy TMS that plans once a day", budget_context: "$150,000 a year (hypothetical)", urgency_drivers: "the peak season starts in November" });
+  assert.equal(r.isError, false);
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.doesNotMatch(r.text, /\$XX|X,XXX|\bXX%/);
+  assert.doesNotMatch(r.text, NO_ANSWER);
+  assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1);
+  assert.match(r.text, /plan routes faster/); assert.match(r.text, /keep every delivery promise/);
+  assert.match(r.text, /manual spreadsheet routing/); assert.match(r.text, /a legacy TMS that plans once a day/);
+  assert.match(r.text, /\$150,000 a year \(hypothetical\)/);
+  assert.match(r.text, /the peak season starts in November/);
+  assert.equal((r.text.match(/Confirm before you say it/g) || []).length, 3);
+  assert.match(r.text, /operations leader/);
+  assert.match(r.text, /pilot hub|pilot at one hub/i);
+});
+test("champion_enablement_kit: the same role as champion and target is noticed", async () => {
+  const r = await call("champion_enablement_kit", { asset_type: "executive_brief", your_solution: SPENDRILL, champion_role: "CFO", target_stakeholder: "CFO" });
+  assert.match(r.text, /same role/i);
+});
+test("champion_enablement_kit: every asset type is free of placeholders and made-up figures", async () => {
+  const tools = (await rpc("tools/list", {})).result.tools;
+  const types = tools.find((t) => t.name === "champion_enablement_kit").inputSchema.properties.asset_type.enum;
+  assert.equal(types.length, 8);
+  for (const asset_type of types) {
+    const r = await call("champion_enablement_kit", { asset_type, your_solution: BRANCHWIRE, champion_role: "IT Infrastructure Head", target_stakeholder: "CIO", key_value_points: "fewer outages across branch sites", known_objections: "Is the price per site higher than the national operator?" });
+    assert.equal(r.isError, false, asset_type);
+    assert.doesNotMatch(r.text, BRACKET, asset_type);
+    assert.doesNotMatch(r.text, /\$XX|X,XXX|\bXX%|\$X\b|\bX:1|X months/, `${asset_type}: made-up figure`);
+    assert.match(r.text, /Branchwire/, asset_type);
+    assert.match(r.text, /fewer outages across branch sites/i, asset_type);
+  }
+});

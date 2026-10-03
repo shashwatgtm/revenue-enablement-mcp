@@ -41,17 +41,4 @@ export interface RoleKnowledge {
 export declare const ROLE_KNOWLEDGE: Record<RoleFamily, RoleKnowledge>;
 /** The role knowledge for a job title. */
 export declare function roleFor(title: string, investmentBuyer?: boolean): RoleKnowledge;
-export declare const INVESTMENT_OVERLAY: {
-    buyerRoles: string[];
-    committee: string;
-    objections: {
-        objection: string;
-        response: string;
-    }[];
-    metrics: string[];
-    proofShape: string;
-    discovery: string[];
-    salesMotion: string;
-    vocabulary: string[];
-};
 //# sourceMappingURL=answers.d.ts.map

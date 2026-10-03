@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.INVESTMENT_OVERLAY = exports.ROLE_KNOWLEDGE = void 0;
+exports.ROLE_KNOWLEDGE = void 0;
 exports.namedThings = namedThings;
 exports.answerBlocker = answerBlocker;
 exports.blockerLines = blockerLines;
@@ -327,31 +327,4 @@ exports.ROLE_KNOWLEDGE = {
 function roleFor(title, investmentBuyer = false) {
     return exports.ROLE_KNOWLEDGE[(0, dealtext_ts_1.familyOf)(title, investmentBuyer)];
 }
-// ---------------------------------------------------------------------------------------------------------------------------
-// Model overlay: a seller that manages money (investment strategies, funds, portfolios) is not sold like software for a finance team.
-// src/verticals.ts keeps one set of notes per sector; when the business model read from the seller is investment management, these
-// notes replace the committee, objections, metrics, proof shape, discovery questions and vocabulary of the sector it was read in.
-// Words only, no figure (B82).
-// ---------------------------------------------------------------------------------------------------------------------------
-exports.INVESTMENT_OVERLAY = {
-    buyerRoles: ['Chief Investment Officer', 'Portfolio Manager', 'Head of Manager Research', 'Head of Risk', 'Compliance Officer', 'Investment Committee Chair'],
-    committee: 'The CIO or the investment committee decides; portfolio managers sponsor the strategy and use it inside their process; risk and compliance review limits, explainability and reporting; legal and operations handle the mandate, custody and reporting set-up.',
-    objections: [
-        { objection: 'A black box cannot be explained to our committee', response: 'Show how each position or signal is explained in words the committee can use, and agree the reporting before the mandate starts.' },
-        { objection: 'The track record is too short', response: 'State the period, the method and the benchmark of every result you show, label back-tested results as back-tested, and offer a small phased first allocation instead of arguing the record.' },
-        { objection: 'It does not fit our investment process', response: 'Map where the strategy sits in the buyer\'s process (idea, sizing, risk limits, review) and what stays under the buyer\'s control.' },
-        { objection: 'Fees and minimums', response: 'Set out the full fee schedule, including any performance fee and minimum, next to what the buyer pays today, on the same basis.' },
-    ],
-    metrics: ['return and risk against the benchmark the buyer uses', 'drawdown in a bad month', 'tracking error', 'turnover and costs', 'explainability of positions and signals', 'reporting timeliness'],
-    proofShape: 'Results shown with their period, method and benchmark (back-tested results labelled as back-tested), plus how a bad month was explained to a committee.',
-    discovery: [
-        'How does an idea reach a decision in your investment process today, and who signs it off?',
-        'What must you be able to explain to your committee, and in what form?',
-        'Which risk limits and constraints must any strategy respect?',
-        'What reporting do you expect each month, and after a bad month?',
-        'What would a first allocation look like, and how would you judge it?',
-    ],
-    salesMotion: 'A long, committee-led process: manager research, due diligence and a small first allocation before a larger mandate.',
-    vocabulary: ['mandate', 'allocation', 'benchmark', 'tracking error', 'drawdown', 'investment committee', 'due diligence', 'explainability', 'reporting'],
-};
 //# sourceMappingURL=answers.js.map

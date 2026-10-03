@@ -2836,7 +2836,20 @@ function measureOf(text: string): string {
 // IT, security or risk reviewer, not to the champion. Each blocker is answered by its kind (src/answers.ts) with the owner for it.
 type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
 interface Step { m: string; who: Who }
+// Run 21b: MAP_EVAL and DEMO_SHOW were written around one kind of company in each vertical (last mile delivery, FMCG retail execution, spend and expense,
+// operators and enterprise connectivity, cloud security, API testing). They are used only for that kind; every other company of the vertical gets the generic entry.
+const STOCK_KIND: Record<string, string> = { 'logistics-tech': 'last-mile', 'vertical-saas': 'fmcg-retail-execution', fintech: 'spend-expense', telecom: 'operators-connectivity', cybersecurity: 'cloud-security', software: 'testing' };
+function stockKey(v: Vertical | null, key: string): string {
+  const kind = v && key === v.id ? STOCK_KIND[v.id] : undefined;
+  return kind && v && v.subtype !== kind ? 'generic' : key;
+}
 const MAP_EVAL: Record<string, Step[]> = {
+  generic: [
+    { m: 'Agree the pilot scope, a baseline and the measure the buyer names', who: 'both' },
+    { m: 'Connect the systems and data the pilot needs', who: 'it' },
+    { m: 'Run the pilot with the buyer\'s champion over a full business cycle', who: 'champion' },
+    { m: 'Review the pilot against the baseline and agree the rollout order', who: 'both' },
+  ],
   'logistics-tech': [
     { m: 'Agree the pilot hub, the baseline and the measure (cost per delivery, first-attempt delivery, dispatch planning time)', who: 'both' },
     { m: 'Connect the pilot hub to the order, TMS and WMS data it needs', who: 'it' },
@@ -2983,7 +2996,7 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
   };
 
   // ---- the steps of each phase ----
-  const evalSteps: Step[] = [...(MAP_EVAL[modelKey] || MAP_GENERIC_EVAL)];
+  const evalSteps: Step[] = [...(MAP_EVAL[stockKey(v, modelKey)] || MAP_GENERIC_EVAL)];
   if (!evalSteps.some((s) => /security|compliance|risk/i.test(s.m))) evalSteps.push({ m: 'Security and compliance review of the vendor and its data handling', who: 'security' });
   evalSteps.push(brief.short ? { m: `Reference calls with similar ${P} customers (only if one has agreed)`, who: 'champion' } : { m: 'Reference calls with similar customers (only if one has agreed)', who: 'champion' });
   const dedup = (steps: Step[]) => steps.filter((s, i) => steps.findIndex((t) => t.m === s.m) === i);
@@ -3500,7 +3513,7 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const v = ctx.v;
   const trades = MODEL_TRADES[ctx.model || 'unknown'];
   const modelKey = ctx.model === 'investment' ? 'investment' : v ? v.id : '';
-  const evalSteps = MAP_EVAL[modelKey] || [{ m: 'a pilot with one team', who: 'both' as Who }];
+  const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' as Who }];
   const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
   const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
   const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
@@ -4086,7 +4099,7 @@ function executeChampionEnablementKit(args: Record<string, unknown>): string {
   const budgetLine = budgetContext ? budgetContext : 'Not given. Add budget_context (the budget situation and the price) to put it here.';
   const objBlock = objectionItems.length ? objectionItems.map((o) => `### Objection: ${q(o)}\n\n${blockerLines(o, bctx).join('\n')}\n\n**If they push back:** acknowledge the concern, answer with evidence, and ask what would settle it.\n`).join('\n') : '';
   const altsLine = alts.length ? `We looked at: ${joinList(alts)}.` : 'No alternatives were given (competitive_context). Name the options that were considered, including doing nothing.';
-  const pilotSteps = (MAP_EVAL[modelKey] || []).slice(0, 4);
+  const pilotSteps = (MAP_EVAL[stockKey(v, modelKey)] || []).slice(0, 4);
   const implRows = pilotSteps.length ? pilotSteps.map((s, i) => `| Step ${i + 1} | ${s.m} |`).join('\n') : `| Step 1 | Agree the scope, the owner on each side and the measure of success |\n| Step 2 | Run a first phase with one team |\n| Step 3 | Review the result and decide the wider rollout |`;
   const risks = v ? v.objections.map((o) => `| ${o.objection} | ${o.response} |`).join('\n') : '| Implementation delay | Phased approach |\n| User adoption | Pilot with the people who will use it |\n| Integration | Technical validation before signing |';
   const whyNow = urgencyDrivers ? `**Why Now:** ${urgencyDrivers}` : 'Why now: no urgency driver was given (urgency_drivers). Name the date, renewal, audit or target that sets the timing.';
@@ -4803,7 +4816,7 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const claims = claimsIn(keyDifferentiators, yourSolution.length < 200 ? yourSolution : '');
   const rollout = implementationApproach
     ? `${cap(implementationApproach.trim().replace(/[.]$/, ''))}.`
-    : (MAP_EVAL[modelKey] || []).length ? `No rollout plan was given (implementation_approach). In ${v ? v.name : 'this sector'} a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [])[0].m)}; (2) ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [])[(MAP_EVAL[modelKey] || []).length > 2 ? 2 : 1].m)}.` : `No rollout plan was given (implementation_approach). Describe the phases, who is involved on both sides and when value starts.`;
+    : (MAP_EVAL[stockKey(v, modelKey)] || []).length ? `No rollout plan was given (implementation_approach). In ${v ? v.name : 'this sector'} a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[0].m)}; (2) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[(MAP_EVAL[stockKey(v, modelKey)] || []).length > 2 ? 2 : 1].m)}.` : `No rollout plan was given (implementation_approach). Describe the phases, who is involved on both sides and when value starts.`;
   const audienceLine = primaryAudience && AUDIENCE_NOTE[primaryAudience] ? `*Audience: written for ${AUDIENCE_NOTE[primaryAudience]}.*\n\n` : '';
   const claimsBlock = claims.length ? `\n### Claims to source before you send\n\nThese statements are yours. A buyer will ask for the source of each, so add it or soften the wording:\n${claims.map((c) => `- ${q(c)}`).join('\n')}\n` : '';
   const sectorProof = v ? `In ${v.name}, the evidence that lands is this: ${proofOf(v)}.` : '';
@@ -5713,6 +5726,7 @@ ${SUGGESTIONS_FOOTER}`;
 // Tool 9: Demo Script Builder
 // What a demo for each kind of seller shows (formats of evidence, not claims about any product: show only what the product really does).
 const DEMO_SHOW: Record<string, string[]> = {
+  generic: ['The workflow the buyer described, end to end, with their own example', 'The controls, reports and audit trail the buyer\'s reviewers will ask for', 'Where it sits among the systems the buyer already runs'],
   'logistics-tech': ['A live re-plan when an order changes after the vehicles have left', 'The dispatcher view and the driver view of the same day', 'A before-and-after of cost per delivery or first-attempt delivery for one hub, if you have one you may show'],
   'vertical-saas': ['An order captured in the outlet on a low-end phone, including with no signal', 'Secondary sales by outlet and by SKU as the sales head sees them', 'A beat plan and a trade scheme reaching the rep'],
   fintech: ['One expense from capture to approval to posting in the ledger', 'The controls and the audit trail an internal auditor would ask for', 'What the finance team stops doing by hand at month end'],
@@ -5757,7 +5771,7 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const CREDENTIAL = /\b(?:\d[\d,.+]*\s*(?:years|engineers|customers|companies|countries|partners|brands|users)|partnerships?|partners with|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|award|recogni\w*|leader in|trusted by|fortune|uptime|gartner|empanel\w*)\b/i;
   const credentials = allFeats.filter((x) => CREDENTIAL.test(x.text));
   const showable = allFeats.filter((x) => !CREDENTIAL.test(x.text));
-  const fallbackSteps: ListItem[] = (DEMO_SHOW[modelKey] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
+  const fallbackSteps: ListItem[] = (DEMO_SHOW[stockKey(v, modelKey)] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
   const feats = showable.length ? showable : fallbackSteps;
   const room = parseContacts(attendees, investment);
 
@@ -5825,7 +5839,7 @@ No must-show features were given (must_show_features). Show the one capability t
 ---
 
 `;
-  const showList = (DEMO_SHOW[modelKey] || []).map((x) => `- ${x}`).join('\n');
+  const showList = (DEMO_SHOW[stockKey(v, modelKey)] || []).map((x) => `- ${x}`).join('\n');
   const closeLines = (feats.length ? feats.slice(0, 3) : [{ text: P, label: '' }]).map((f, i) => `${i + 1}. ${pains[i] ? q(lowerFirstIfCommon(pains[i])) : 'Your priority'} → ${P}: ${lowerFirstIfCommon(clip(f.text, 80))}`).join('\n');
   const objItems = splitItems(knownObjections);
   const likelyQs = ['How long does implementation take?', 'What does it need from our IT team?', 'What does pricing look like?'];
@@ -5987,7 +6001,7 @@ ${desiredOutcome === 'advance the deal' ? `
 Options might be:
 ${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
 - Reference call with a similar customer (only if one has agreed)
-- ${v ? `A pilot: ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [{ m: 'Pilot discussion' }])[0].m)}` : 'Pilot/POC discussion'}
+- ${v ? `A pilot: ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'Pilot discussion' }])[0].m)}` : 'Pilot/POC discussion'}
 
 What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accomplished that? What else do you need?"`}
 

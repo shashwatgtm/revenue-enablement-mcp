@@ -18,24 +18,31 @@ export interface Vertical {
     discovery: string[];
 }
 export declare const VERTICALS: Vertical[];
-/** What the reader looks at. `seller` holds the seller's own words (what it sells, its category, its product description,
- * its value points); `buyer` holds the buyer's words (target customer, industry, role) and any other context. The seller's
- * words are read first; the buyer's words only when the seller's words name no sector. */
+/** What the reader looks at, in this order, each only when the earlier ones name no sector:
+ *  - `seller`: the seller's own words (what it sells, its category, its product description, its value points);
+ *  - `context`: free text about the deal (pain points, blockers, objections, notes, competitors), which tells what the product
+ *    is for; a sector needs a second sector word (strong or weak) beside its strong word here, because words such as
+ *    "security review" or "delivery" turn up in every deal;
+ *  - `role`: the buyer's job titles (a CISO buys security, a head of last-mile operations buys logistics tools);
+ *  - `buyer`: who the buyer is (target customer, industry, company name), the weakest evidence of what the seller sells.
+ * One strong word is enough in `seller`, `role` and `buyer`. */
 export interface ReaderInput {
     seller?: unknown[];
+    context?: unknown[];
+    role?: unknown[];
     buyer?: unknown[];
 }
 /** The sector read, with the words that decided it and where they came from ('seller' or 'buyer'). */
 export declare function explainSector(...args: unknown[]): {
     vertical: Vertical | null;
-    source: 'seller' | 'buyer' | null;
+    source: 'seller' | 'context' | 'role' | 'buyer' | null;
     strong: string[];
     weak: string[];
 };
 /** The sector read from what the user typed, or null when the words do not name one. Give plain texts (each is split at its
- * buyer marker such as "for banks") or { seller: [...], buyer: [...] } to say which words are the seller's and which the
- * buyer's. The seller's words come first; the buyer's words are used only when the seller's name no sector. One strong word
- * is enough; broad words alone are not. */
+ * buyer marker such as "for banks") or { seller, context, role, buyer } (see ReaderInput) to say which words are the seller's,
+ * which are free text about the deal, which are job titles and which say who the buyer is. The seller's words come first; the
+ * later groups are used only when the earlier ones name no sector. Broad words alone never name a sector. */
 export declare function detectVertical(...args: unknown[]): Vertical | null;
 export type BusinessModel = 'saas' | 'services' | 'connectivity' | 'transactions' | 'marketplace' | 'hardware_software' | 'investment';
 export declare const BUSINESS_MODELS: BusinessModel[];

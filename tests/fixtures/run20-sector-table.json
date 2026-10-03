@@ -529,6 +529,124 @@
       "sector": "telecom",
       "model": "connectivity",
       "note": "the seller words name no sector, so the buyer words are used; the model is the sector's usual one"
+    },
+    {
+      "id": "tc-17",
+      "seller": [
+        "Lanehop"
+      ],
+      "buyer": [],
+      "context": [
+        "Security review pending",
+        "Legal sign-off next week"
+      ],
+      "sector": null,
+      "model": null,
+      "note": "free text: one ordinary word such as security never names a sector"
+    },
+    {
+      "id": "tc-18",
+      "seller": [
+        "Spendrill"
+      ],
+      "buyer": [],
+      "context": [
+        "our ERP already has an expense module"
+      ],
+      "sector": "fintech",
+      "model": "saas",
+      "note": "free text with a strong word and a second sector word is read; the sector's usual model"
+    },
+    {
+      "id": "tc-19",
+      "seller": [
+        "our solution"
+      ],
+      "buyer": [
+        "Technology"
+      ],
+      "context": [
+        "delivery"
+      ],
+      "sector": null,
+      "model": null,
+      "note": "a broad word alone is not a sector"
+    },
+    {
+      "id": "tc-20",
+      "seller": [
+        "Cloud platform"
+      ],
+      "buyer": [
+        "Banks"
+      ],
+      "context": [
+        "Security questionnaire"
+      ],
+      "sector": "fintech",
+      "model": "saas",
+      "note": "one ordinary word in the context (security) is ignored, so the buyer words decide; with a second sector word in the context the context would come before the buyer"
+    },
+    {
+      "id": "tc-21",
+      "seller": [
+        "our solution"
+      ],
+      "buyer": [
+        "Logistics"
+      ],
+      "context": [],
+      "sector": "logistics-tech",
+      "model": "saas",
+      "note": "an industry typed as one word is read"
+    },
+    {
+      "id": "tc-22",
+      "seller": [
+        "Cloud platform"
+      ],
+      "buyer": [
+        "Banks"
+      ],
+      "context": [
+        "Security questionnaire, SOC 2 report and SIEM integration"
+      ],
+      "sector": "cybersecurity",
+      "model": "saas",
+      "note": "the context (two cybersecurity words) comes before the buyer's industry: a security vendor selling to banks"
+    },
+    {
+      "id": "tc-23",
+      "seller": [
+        "Brand name only"
+      ],
+      "context": [
+        "thousands of cloud alerts with no clear order to fix them"
+      ],
+      "role": [
+        "Chief Information Security Officer"
+      ],
+      "buyer": [
+        "Fintech and lending"
+      ],
+      "sector": "cybersecurity",
+      "model": "saas",
+      "note": "the seller gave a brand name only: the buyer's job title (a security officer) is read before the buyer's industry"
+    },
+    {
+      "id": "tc-24",
+      "seller": [
+        "Brand name only"
+      ],
+      "role": [
+        "CISO"
+      ],
+      "buyer": [
+        "Banks and insurers"
+      ],
+      "sector": "cybersecurity",
+      "model": "saas",
+      "note": "one unmistakable job title is enough and comes before the industry"
     }
   ]
 }

@@ -34,7 +34,7 @@ export interface Vertical {
 export const VERTICALS: Vertical[] = [
   {
     id: 'logistics-tech', name: 'logistics tech',
-    match: /\b(logistics?|(?:first|mid|last)[- ]mile|[34]pls?|fleets?|dispatch\w*|routing|route (?:planning|optimi[sz]ation|optimi[sz]er)|freight|shipping|shipments?|couriers?|(?<!software )supply chain|warehous\w*|fulfil\w*|transportation|trucking|truckers?|trucks?|truckload|haulage|tms|wms|telematics|cold chain|proof of delivery|delivery (?:management|tracking|orchestration|software|app)|load boards?|freight forwarders?)\b/i,
+    match: /\b(logistics?|(?:first|mid|last)[- ]mile|[34]pls?|fleets?|dispatch\w*|routing|route (?:planning|optimi[sz]ation|optimi[sz]er)|freight|shipping|shipments?|couriers?|(?<!software )supply chain|(?<!data )(?<!cloud )warehous\w*\b(?!-native)|fulfil\w*|transportation|trucking|truckers?|trucks?|truckload|haulage|tms|wms|telematics|cold chain|proof of delivery|delivery (?:management|tracking|orchestration|software|app)|load boards?|freight forwarders?)\b/i,
     weak: /\b(routes?|deliver(?:y|ies)|carriers?|transport|drivers?|vehicles?)\b/i,
     vocabulary: ['dispatch', 'fleet', 'last-mile', 'route plan', 'first-attempt delivery', 'proof of delivery', '3PL', 'cost per delivery', 'delivery SLA', 'TMS'],
     buyerRoles: ['Chief Operating Officer', 'Head of Supply Chain', 'Head of Last-Mile Operations', 'Fleet Manager', 'Transport Manager', 'Head of IT'],
@@ -106,8 +106,8 @@ export const VERTICALS: Vertical[] = [
   },
   {
     id: 'ai-native', name: 'AI native',
-    match: /\b(ai agents?|agents? that|agentic|autonomous agents?|voice agents?|ai assistants?|ai copilots?|copilots?|llms?|genai|gen ai|generative ai|ai[- ]native|ai[- ]first|foundation models?|large language models?|conversational ai|ai platform|ai models?|adaptive ai|ai sdr|ai workforce|ai (?:company|startup))\b/i,
-    weak: /\b(ai|ai[- ]powered|ai[- ]led|ai[- ]driven|machine learning|forecasts?|predictions?|voice|automation|chatbots?)\b/i,
+    match: /\b(ai agents?|agents? that|agentic|autonomous agents?|voice agents?|ai assistants?|ai copilots?|copilots?|llms?|genai|gen ai|generative ai|ai[- ]native|ai[- ]first|foundation models?|large language models?|conversational ai|ai platform|ai models?|adaptive ai|ai sdr|ai workforce|ai (?:company|startup)|ai(?![- ]?(?:powered|led|driven|based|enabled|enhanced|assisted)))\b/i,
+    weak: /\b(ai[- ]powered|ai[- ]led|ai[- ]driven|machine learning|forecasts?|predictions?|voice|automation|chatbots?)\b/i,
     vocabulary: ['resolution rate', 'evaluation set', 'human in the loop', 'guardrails', 'accuracy', 'hallucination', 'data privacy', 'inference cost', 'automation rate'],
     buyerRoles: ['Head of Customer Experience', 'Chief Technology Officer', 'Head of Data and AI', 'CISO', 'Chief Operating Officer', 'Legal Counsel'],
     committee: 'The owner of the workflow being automated signs; the data or AI lead evaluates the model; security and legal review data use and privacy; the operations team that hands work to the AI uses it.',
@@ -178,7 +178,7 @@ export const VERTICALS: Vertical[] = [
   },
   {
     id: 'cybersecurity', name: 'cybersecurity',
-    match: /\b(cyber\w*|infosec|cisos?|soc(?! ?2)|siem|soar|edr|xdr|mdr|cnapp|cspm|cwpp|ciem|sase|zero trust|iam|identity and access management|managed detection|vulnerab\w*|penetration test\w*|pentest\w*|phishing|ransomware|malware|misconfig\w*|attack surface|threat (?:detection|intelligence|hunting)|dark web|dlp|firewalls?|(?:cloud|network|endpoint|application|email|identity|data|api|information) security|security (?:operations|posture)|(?<!social )(?<!job )(?<!food )(?<!energy )security)\b/i,
+    match: /\b(cyber\w*|infosec|cisos?|soc(?! ?2)|siem|soar|edr|xdr|mdr|cnapp|cspm|cwpp|ciem|sase|zero trust|iam|identity and access management|managed detection|vulnerab\w*|penetration test\w*|pentest\w*|phishing|ransomware|malware|misconfig\w*|attack surface|threat (?:detection|intelligence|hunting)|dark web|dlp|firewalls?|(?:cloud|network|endpoint|application|email|identity|data|api|information|supply chain) security|security (?:operations|posture)|(?<!social )(?<!job )(?<!food )(?<!energy )security)\b/i,
     weak: /\b(posture|exposures?|breach\w*|threats?|encryption|compliance)\b/i,
     vocabulary: ['attack surface', 'exposure', 'misconfiguration', 'alert fatigue', 'mean time to detect', 'mean time to respond', 'SOC', 'compliance audit', 'risk register', 'threat intelligence'],
     buyerRoles: ['CISO', 'Head of Security Operations', 'Cloud Security Lead', 'Security Architect', 'Chief Information Officer', 'Head of Risk and Compliance'],
@@ -202,7 +202,7 @@ export const VERTICALS: Vertical[] = [
   },
   {
     id: 'software', name: 'software',
-    match: /\b(developers?|devops|devsecops|dev tools|ci\/cd|ci pipelines?|observability|databases?|open[- ]source|engineering teams?|qa|test(?:ing|s)? (?:platform|automation|tools?)|test automation|software testing|unit tests?|source code|version control|git|kubernetes|microservices|sdlc|feature flags?|low-code|infrastructure as code|apm|backend)\b/i,
+    match: /\b(developers?|api (?:testing|tests?|platform|management|gateway|monitoring|design|development)|devops|devsecops|dev tools|ci\/cd|ci pipelines?|observability|databases?|open[- ]source|engineering teams?|qa|test(?:ing|s)? (?:platform|automation|tools?)|test automation|software testing|unit tests?|source code|version control|git|kubernetes|microservices|sdlc|feature flags?|low-code|infrastructure as code|apm|backend)\b/i,
     weak: /\b(apis?|sdks?|code|release|releases|deploy\w*|testing|tests?|debug\w*|logging)\b/i,
     vocabulary: ['CI pipeline', 'developer experience', 'test coverage', 'release frequency', 'API', 'SDK', 'technical debt', 'open-source alternative', 'mean time to recovery'],
     buyerRoles: ['VP Engineering', 'Chief Technology Officer', 'Head of QA', 'Platform Engineering Lead', 'Engineering Manager', 'Security Lead'],
@@ -254,23 +254,28 @@ export const VERTICALS: Vertical[] = [
 // tie only after the score and the position of the first strong word.
 const ORDER: VerticalId[] = ['vertical-saas', 'logistics-tech', 'telecom', 'cybersecurity', 'ites', 'ai-native', 'fintech', 'software', 'saas'];
 
-/** What the reader looks at. `seller` holds the seller's own words (what it sells, its category, its product description,
- * its value points); `buyer` holds the buyer's words (target customer, industry, role) and any other context. The seller's
- * words are read first; the buyer's words only when the seller's words name no sector. */
-export interface ReaderInput { seller?: unknown[]; buyer?: unknown[]; }
+/** What the reader looks at, in this order, each only when the earlier ones name no sector:
+ *  - `seller`: the seller's own words (what it sells, its category, its product description, its value points);
+ *  - `context`: free text about the deal (pain points, blockers, objections, notes, competitors), which tells what the product
+ *    is for; a sector needs a second sector word (strong or weak) beside its strong word here, because words such as
+ *    "security review" or "delivery" turn up in every deal;
+ *  - `role`: the buyer's job titles (a CISO buys security, a head of last-mile operations buys logistics tools);
+ *  - `buyer`: who the buyer is (target customer, industry, company name), the weakest evidence of what the seller sells.
+ * One strong word is enough in `seller`, `role` and `buyer`. */
+export interface ReaderInput { seller?: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[]; }
 
 // Words that start the buyer part inside one text ("... platform for banks", "... sold to telecom operators", "customers are banks").
 // Everything before the first of them is the seller's part; the rest is the buyer's part.
 const BUYER_MARK = /\b(?:for|serving|serves|sold to|sells? to|selling to|used by|aimed at|targeting|targeted at|built for|designed for|(?:whose|its|our|their)\s+(?:customers?|clients?|users?)\s+(?:are|include|such as)|(?:customers?|clients?)\s+(?:are|include|such as)|popular with|adopted by|deployed (?:at|by))\b/i;
 
 function isReaderInput(x: unknown): x is ReaderInput {
-  return !!x && typeof x === 'object' && !Array.isArray(x) && ('seller' in (x as object) || 'buyer' in (x as object));
+  return !!x && typeof x === 'object' && !Array.isArray(x) && ['seller', 'buyer', 'context', 'role'].some((k) => k in (x as object));
 }
 function texts(list: unknown[] | undefined): string[] {
   return (Array.isArray(list) ? list : []).filter((x): x is string => typeof x === 'string' && x.trim().length > 0);
 }
-/** Splits what was given into the seller's words and the buyer's words. Each seller text is cut at its first buyer marker. */
-function sides(args: unknown[]): { seller: string; buyer: string } {
+/** Splits what was given into the seller's words, the buyer's words and the context. Each seller text is cut at its first buyer marker. */
+function sides(args: unknown[]): { seller: string; buyer: string; context: string; role: string } {
   const input: ReaderInput = args.length === 1 && isReaderInput(args[0]) ? (args[0] as ReaderInput) : { seller: args };
   const seller: string[] = [];
   const buyer: string[] = texts(input.buyer);
@@ -278,7 +283,7 @@ function sides(args: unknown[]): { seller: string; buyer: string } {
     const m = BUYER_MARK.exec(t);
     if (m && /[a-z]{2}/i.test(t.slice(0, m.index))) { seller.push(t.slice(0, m.index)); buyer.push(t.slice(m.index)); } else seller.push(t);
   }
-  return { seller: seller.join(' \n '), buyer: buyer.join(' \n ') };
+  return { seller: seller.join(' \n '), buyer: buyer.join(' \n '), context: texts(input.context).join(' \n '), role: texts(input.role).join(' \n ') };
 }
 
 /** The distinct words a pattern finds. Matches may overlap ("AI agents that" gives "ai agents" and "agents that"). */
@@ -295,15 +300,16 @@ function scan(re: RegExp, text: string): string[] {
 }
 
 interface Candidate { v: Vertical; strong: string[]; weak: string[]; score: number; first: number; }
-function candidates(text: string): Candidate[] {
+function candidates(text: string, minWords: number): Candidate[] {
   const out: Candidate[] = [];
   for (const id of ORDER) {
     const v = VERTICALS.find((x) => x.id === id)!;
     const strong = scan(v.match, text);
     if (!strong.length) continue;                       // broad words alone never name a sector
     const weak = scan(v.weak, text).filter((w) => !strong.some((s) => s.split(' ').includes(w)));
+    if (strong.length + weak.length < minWords) continue; // free text: a strong word needs a second sector word beside it
     // AI native is a way of building, not a trade: its own words (AI agents, LLM, generative AI) outweigh the trade words beside them.
-    const score = strong.length + Math.min(weak.length, 3) * 0.25 + (id === 'ai-native' ? 1 : 0);
+    const score = strong.length + Math.min(weak.length, 3) * 0.25 + (id === 'ai-native' && strong.some((w) => w !== 'ai') ? 1 : 0);
     const first = Math.min(...strong.map((w) => text.toLowerCase().indexOf(w)).filter((i) => i >= 0), text.length);
     out.push({ v, strong, weak, score, first });
   }
@@ -311,29 +317,36 @@ function candidates(text: string): Candidate[] {
 }
 /** The sector one text names, or null. A named trade beats the general SaaS words; then the higher score, the earlier first
  * strong word, and the order above decide. */
-function pick(text: string): Candidate | null {
+function pick(text: string, minWords = 1): Candidate | null {
   if (!text.trim()) return null;
-  const c = candidates(text);
-  const trades = c.filter((x) => x.v.id !== 'saas');
-  const pool = trades.length ? trades : c;
+  const c = candidates(text, minWords);
+  // A named trade beats the general SaaS words, and a bare "AI" (a CRM "with AI features") ranks with them: it only names AI native when nothing else is named.
+  const bareAi = (x: Candidate) => x.v.id === 'ai-native' && x.strong.every((w) => w === 'ai');
+  const trades = c.filter((x) => x.v.id !== 'saas' && !bareAi(x));
+  const generic = c.filter((x) => x.v.id === 'saas');
+  const pool = trades.length ? trades : generic.length ? generic : c;
   if (!pool.length) return null;
   return pool.slice().sort((a, b) => b.score - a.score || a.first - b.first || ORDER.indexOf(a.v.id) - ORDER.indexOf(b.v.id))[0];
 }
 
 /** The sector read, with the words that decided it and where they came from ('seller' or 'buyer'). */
-export function explainSector(...args: unknown[]): { vertical: Vertical | null; source: 'seller' | 'buyer' | null; strong: string[]; weak: string[] } {
-  const { seller, buyer } = sides(args);
+export function explainSector(...args: unknown[]): { vertical: Vertical | null; source: 'seller' | 'context' | 'role' | 'buyer' | null; strong: string[]; weak: string[] } {
+  const { seller, buyer, context, role } = sides(args);
   const s = pick(seller);
   if (s) return { vertical: s.v, source: 'seller', strong: s.strong, weak: s.weak };
+  const c = pick(context, 2);
+  if (c) return { vertical: c.v, source: 'context', strong: c.strong, weak: c.weak };
+  const r = pick(role);
+  if (r) return { vertical: r.v, source: 'role', strong: r.strong, weak: r.weak };
   const b = pick(buyer);
   if (b) return { vertical: b.v, source: 'buyer', strong: b.strong, weak: b.weak };
   return { vertical: null, source: null, strong: [], weak: [] };
 }
 
 /** The sector read from what the user typed, or null when the words do not name one. Give plain texts (each is split at its
- * buyer marker such as "for banks") or { seller: [...], buyer: [...] } to say which words are the seller's and which the
- * buyer's. The seller's words come first; the buyer's words are used only when the seller's name no sector. One strong word
- * is enough; broad words alone are not. */
+ * buyer marker such as "for banks") or { seller, context, role, buyer } (see ReaderInput) to say which words are the seller's,
+ * which are free text about the deal, which are job titles and which say who the buyer is. The seller's words come first; the
+ * later groups are used only when the earlier ones name no sector. Broad words alone never name a sector. */
 export function detectVertical(...args: unknown[]): Vertical | null {
   return explainSector(...args).vertical;
 }
@@ -351,12 +364,13 @@ export const MODEL_NAME: Record<BusinessModel, string> = {
 const DEVICE = '(?:devices?|sensors?|terminals?|scanners?|trackers?|readers?|cameras?)';
 const MODEL_MATCH: { model: BusinessModel; re: RegExp; not?: RegExp }[] = [
   // the seller manages money: it runs funds or portfolios, or is an asset or wealth manager. Software for asset managers is not this.
-  { model: 'investment', re: /\b(?:(?:asset|wealth|fund|portfolio|investment) (?:management|managers?|advisory|advisors?)|hedge funds?|mutual funds?|venture (?:fund|capital)|private equity|family offices?|aum|assets under management|(?:manages?|managing|runs|invests?|investing|allocates?)\b[^.;,]{0,40}\b(?:funds?|portfolios?|client money|capital|wealth|investments?))\b/i, not: /\b(?:software|saas|platform|apps?|apis?|analytics|tools?|dashboards?|systems?)\b/i },
+  { model: 'investment', re: /\b(?:investment strateg\w*|systematic strateg\w*|hedge funds?|mutual funds?|venture (?:fund|capital)|private equity|family offices?|aum|assets under management|(?:manages?|managing|runs|invests?|investing|allocates?)\b[^.;,]{0,40}\b(?:funds?|portfolios?|client money|capital|wealth|investments?))\b/i, not: /\b(?:software|saas)\b/i },
+  { model: 'investment', re: /\b(?:asset|wealth|fund|portfolio|investment) (?:management|managers?|advisory|advisors?)\b/i, not: /\b(?:software|saas|platform|apps?|apis?|analytics|tools?|dashboards?|systems?)\b/i },
   { model: 'connectivity', re: /\b(?:sd-?wan|mpls|leased lines?|connectivity|bandwidth|per site|per link|5g|business internet|internet access|broadband|isps?|voip|sip trunk\w*|managed network|wi-?fi|colocation|mobile network|(?:telecom\w*|network|mobile|wireless|fib(?:re|er)) (?:operator|provider|carrier|services?))\b/i, not: /\b(?:software|saas|subscriptions?|analytics|dashboards?|tools?)\b/i },
   { model: 'services', re: /\b(?:managed (?:(?:it|network|cloud|security) )?services?|managed (?:detection|security)|mdr|service desk|help ?desk|outsourc\w*|bpo|bpm|kpo|consulting|consultancy|per fte|per ticket|staff augmentation|it staffing|systems? integrators?|it services|statements? of work|contact cent(?:re|er)s?|call cent(?:re|er)s?|application maintenance|dedicated (?:\w+ ){0,2}teams?)\b/i, not: /\b(?:software|saas|subscriptions?|platform|apps?|apis?|analytics|dashboards?|tools?)\b/i },
   { model: 'marketplace', re: /\b(?:marketplace|take rate|gmv|two-sided|takes? an? (?:commission|cut|percentage))\b/i, not: /\b(?:software|saas|analytics|tools?)\b/i },
   // payments sellers are paid per transaction or by volume
-  { model: 'transactions', re: /(?:\b(?:per[- ]transaction|transaction fees?|payments? (?:apis?|gateways?|processing|processors?|platforms?|infrastructure|orchestration|rails|acquiring|providers?|companies|stack)|payouts?|checkout|interchange|remittances?|merchant acquiring|card issuing|upi)\b|(?:^|\n)\s*payments?\b)/i, not: /\b(?:software|saas|subscriptions?|analytics|dashboards?|tools?|reconcil\w*|security|fraud|risk|compliance)\b/i },
+  { model: 'transactions', re: /(?:\b(?:per[- ]transaction|transaction fees?|payments? (?:apis?|gateways?|processing|processors?|platforms?|infrastructure|orchestration|rails|acquiring|providers?|companies|stack)|payouts?|checkout|interchange|remittances?|merchant acquiring|card issuing|upi)\b|(?:^|\n)\s*payments?\b)/i, not: /\b(?:software|saas|subscriptions?|analytics|dashboards?|tools?|reconcil\w*|security|fraud|risk|compliance|expense\w*|spend|travel|invoic\w*|billing|payroll)\b/i },
   // hardware only when the seller makes, sells or ships devices, or names devices it sells; "test on real devices" is not that
   { model: 'hardware_software', re: new RegExp(`\\b(?:hardware|(?:sells?|makes?|makers? of|manufactur\\w*|ships?|produces?)\\b[^.;]{0,40}\\b${DEVICE}\\b|${DEVICE}\\b[^.;]{0,20}(?:\\bplus\\b|\\bwith\\b|\\+)[^.;]{0,20}\\b(?:software|apps?|dashboard)\\b|(?:smart|iot|connected|handheld|rugged|gps|pos|wearable|embedded) (?:\\w+ )?${DEVICE})\\b`, 'i') },
   { model: 'saas', re: /\b(?:saas|subscriptions?|software|platform|apps?|per seat|per user|licen[cs]es?|cloud|apis?|sdks?|tools?|analytics)\b/i },
@@ -371,7 +385,7 @@ export const SECTOR_MODEL: Record<VerticalId, BusinessModel> = {
  * null. Give plain texts or { seller: [...], buyer: [...] } as for detectVertical. */
 export function detectModel(explicit: unknown, ...args: unknown[]): { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' } {
   if (typeof explicit === 'string' && (BUSINESS_MODELS as string[]).includes(explicit)) return { model: explicit as BusinessModel, how: 'input' };
-  const { seller } = sides(args);
+  const { seller } = sides(args);   // the seller's words only: what the buyer's side says about its own money is not the seller's model
   for (const { model, re, not } of MODEL_MATCH) if (re.test(seller) && !(not && not.test(seller))) return { model, how: 'read' };
   const v = detectVertical(...args);
   if (v) return { model: SECTOR_MODEL[v.id], how: 'sector' };

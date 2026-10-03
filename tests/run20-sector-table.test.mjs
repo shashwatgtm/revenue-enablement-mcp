@@ -34,13 +34,14 @@ for (const r of table.descriptions) {
   });
 }
 
-// Table 2: the same kind of text split into the seller's fields first and the buyer's fields second, as the tools pass them.
+// Table 2: the same kind of text split into the seller's fields first and the buyer's fields second, as the tools pass them
+// (free text about the deal goes last, as "context"; there a strong word needs a second sector word beside it).
 for (const r of table.toolcalls) {
-  test(`tool call ${r.id}: seller ${JSON.stringify(r.seller)} / buyer ${JSON.stringify(r.buyer)}`, () => {
-    const input = { seller: r.seller, buyer: r.buyer };
+  test(`tool call ${r.id}: seller ${JSON.stringify(r.seller)} / buyer ${JSON.stringify(r.buyer)}${r.context ? ` / context ${JSON.stringify(r.context)}` : ""}`, () => {
+    const input = { seller: r.seller, buyer: r.buyer || [], context: r.context || [], role: r.role || [] };
     const v = detectVertical(input);
     assert.equal(v ? v.id : null, r.sector, "sector");
-    if (r.model) assert.equal(detectModel(undefined, input).model, r.model, "model");
+    assert.equal(detectModel(undefined, input).model, r.model, "model");
   });
 }
 

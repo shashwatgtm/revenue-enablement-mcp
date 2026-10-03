@@ -101,6 +101,8 @@ test("roi_business_case_builder: the buyer's cost and improvement drive the valu
     employee_count: 120, known_metrics: "45% of tickets resolved without a human" });
   assert.doesNotMatch(ex.text, /\*\*Confidence:\*\* High|High: set because you supplied metrics/);
   assert.match(ex.text, /45% of tickets resolved without a human/);
+  // Run 20 round 1 (B81): revenue, employees and typed metrics are not a buyer figure, so no ROI is printed at all.
+  assert.doesNotMatch(ex.text, /\*\*ROI\*\*\s*\||Payback Period|Total Quantified Value/);
 });
 
 // Problem 3: every blocker gets its own answer
@@ -167,7 +169,8 @@ test("account_plan_builder: given contacts are used, not asked for; sector notes
 });
 
 // Run 19 R19-36 (ledger B16-18): a revenue or employee count you give is labelled as yours, and its row is not called an estimate.
-test("roi_business_case_builder: given revenue and employees are labelled as your input, estimated ones keep Est.", async () => {
+// Run 20 round 1 (B81): nothing is estimated any more, so a size you did not give says "not supplied" and no row is called "Est.".
+test("roi_business_case_builder: given revenue and employees are labelled as your input; one not given says not supplied", async () => {
   const row = (text, start) => text.split("\n").find((l) => l.startsWith(start)) || "";
   const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
     primary_value_driver: "cost_reduction", company_size: "mid_market", annual_revenue: 60000000, employee_count: 500, solution_price: 90000 })).text;
@@ -176,7 +179,8 @@ test("roi_business_case_builder: given revenue and employees are labelled as you
   assert.ok(!both.includes("| **Est. Annual Revenue** |") && !both.includes("| **Est. Employees** |"));
   const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
     primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 })).text;
-  assert.match(row(est, "| **Est. Annual Revenue** |"), /estimated from your employee count/);
+  assert.equal(row(est, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
+  assert.ok(!est.includes("| **Est. Annual Revenue** |") && !/estimated from your/.test(est));
   assert.equal(row(est, "| **Employees** |"), "| **Employees** | 500 (your input) |");
 });
 

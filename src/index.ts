@@ -2317,189 +2317,41 @@ function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
   const userValueText = ownEstimate !== null ? `your own estimate of the annual value, ${money(ownEstimate)}`
     : ownCost !== null && ownPct !== null ? `${ownPct}% of the current annual cost you supplied (${money(ownCost)})` : '';
 
-  // Industry benchmarks for ROI calculations
-  const benchmarks: Record<string, Record<string, number>> = {
-    Technology: {
-      revenue_per_employee: 250000,
-      cost_of_manual_work_per_hour: 75,
-      average_churn_rate: 0.08,
-      sales_cycle_days: 45
-    },
-    Financial_Services: {
-      revenue_per_employee: 350000,
-      cost_of_manual_work_per_hour: 100,
-      average_churn_rate: 0.05,
-      sales_cycle_days: 60
-    },
-    Healthcare: {
-      revenue_per_employee: 150000,
-      cost_of_manual_work_per_hour: 65,
-      average_churn_rate: 0.06,
-      sales_cycle_days: 75
-    },
-    Manufacturing: {
-      revenue_per_employee: 200000,
-      cost_of_manual_work_per_hour: 55,
-      average_churn_rate: 0.04,
-      sales_cycle_days: 60
-    },
-    Retail: {
-      revenue_per_employee: 120000,
-      cost_of_manual_work_per_hour: 45,
-      average_churn_rate: 0.10,
-      sales_cycle_days: 30
-    }
-  };
-
-  const industryBenchmark = benchmarks[industry] || benchmarks['Technology'];
-
-  // Size multipliers
-  const sizeMultipliers: Record<string, number> = {
-    startup: 0.5,
-    smb: 0.8,
-    mid_market: 1.0,
-    enterprise: 1.5
-  };
-  const sizeMultiplier = sizeMultipliers[companySize] || 1.0;
-
-  // Calculate estimated company metrics if not provided
-  // A revenue given as 0 is never estimated from the employees; an employee count given as 0 is never estimated from the revenue.
-  const estimatedRevenue = revenueGiven ? annualRevenue : (employeeCount * industryBenchmark.revenue_per_employee * sizeMultiplier);
-  const estimatedEmployees = employeesGiven ? employeeCount : Math.round(annualRevenue / (industryBenchmark.revenue_per_employee * sizeMultiplier));
+  // Run 20 round 1 (rule B81, D80 problem 6): without a buyer figure this tool calculates nothing. It used to apply a fixed share of
+  // revenue (2 percent, 1 percent, 0.5 percent) and an uncited table of five industries (revenue per employee, hourly labour cost) and
+  // print an ROI from them. Now the answer names the missing inputs and gives the structure of the case. Revenue and employee count
+  // describe the customer's size; they are shown as the user's input and nothing is estimated from them. The industry is wording only.
+  if (userValue === null) {
+    return roiStructureAnswer(args, { customerName, industry, companySize, yourSolution, primaryValueDriver, knownMetrics, currentProcess, implementationTimeline, revenueGiven, employeesGiven, annualRevenue, employeeCount, priceGiven, solutionPrice, ownCost, ownPct });
+  }
 
   // Display helpers (output text only; no calculation below changes). The user's own inputs are shown
   // as given; every figure built from this tool's example assumptions carries the EXAMPLE label.
   const fmt = (n: number) => n.toLocaleString('en-US');
   const usd = (n: number) => money(n);  // run 15: -$17,640, not $-17,640; run 17 D55: money() adds the rule for amounts under $1
-  const noSizeData = !revenueGiven && !employeesGiven;
-  const NOT_COMPUTED = 'not computed: needs annual revenue or employee count';
   const revenueCell = revenueGiven
     ? (revenueIsZero ? '$0 (your input)' : `${money(annualRevenue)} (your input)`)  // run 19 (ledger B16-18): every given value is labelled
-    : employeesGiven
-      ? `${money(estimatedRevenue)}, estimated from your employee count ${EXAMPLE}`
-      : NOT_SUPPLIED;
+    : NOT_SUPPLIED;
   const employeesCell = employeesGiven
     ? (employeesIsZero ? '0 (your input)' : `${fmt(employeeCount)} (your input)`)
-    : revenueGiven
-      ? `${fmt(estimatedEmployees)}, estimated from your annual revenue ${EXAMPLE}`
-      : NOT_SUPPLIED;
-  const revenueValueCell = (n: number) => (noSizeData ? NOT_COMPUTED : `**${money(n)}** ${EXAMPLE}`);
+    : NOT_SUPPLIED;
 
-  // Generate ROI calculations based on value driver
+  // The value comes from the buyer's own figures (userValue is not null here). Run 19 D80 (problems 5 and 6).
   let valueCalculations = '';
   let totalValue = 0;
   // Run 18 D65: the value amounts as they are printed, so the printed Total Quantified Value is the sum of its printed parts.
   const valueParts: number[] = [];
-  let confidenceLevel = userValue !== null ? 'Medium' : 'Low';
+  const confidenceLevel = 'Medium';
 
-  if (userValue !== null) {
-    totalValue = userValue;
-    valueParts.push(userValue);
-    valueCalculations += `
+  totalValue = userValue;
+  valueParts.push(userValue);
+  valueCalculations += `
 ### Value From Your Figures
 
 **Calculation:**
 - Annual value: ${userValueText} = **${money(userValue)}**
 ${ownEstimate === null && ownCost !== null && ownPct !== null ? `- Check with the buyer: does ${money(ownCost)} cover the whole cost of the problem today, and is ${ownPct}% the improvement they expect, not the best case?\n` : ''}
 `;
-  }
-
-  if (userValue === null && (primaryValueDriver === 'revenue_increase' || primaryValueDriver === 'multiple')) {
-    // Revenue impact calculation
-    const revenueImpact = estimatedRevenue * 0.02; // Conservative 2% improvement
-    totalValue += revenueImpact;
-    valueParts.push(revenueImpact);
-    
-    valueCalculations += `
-### Revenue Impact
-
-**Calculation Methodology:**
-- Estimated Annual Revenue: ${revenueCell}
-- Assumed impact: 2% (example range: 1-5%) ${EXAMPLE}
-- Annual Revenue Impact: ${revenueValueCell(revenueImpact)}
-
-**Validation Questions:**
-- "What's your current win rate?" (Baseline for improvement)
-- "What would a 10% improvement in win rate mean in revenue?" ${EXAMPLE}
-- "How much revenue is lost to no-decision or competitor?"
-
-`;
-  }
-
-  if (userValue === null && (primaryValueDriver === 'cost_reduction' || primaryValueDriver === 'multiple')) {
-    // Cost reduction calculation
-    const hoursSavedPerEmployee = 5; // hours per week
-    // Run 16 R16-41 (D45): an employee figure that is 0 because of a typed 0 (employee_count 0, or employees estimated from an
-    // annual revenue of 0) is used as 0; the example minimum of 10 applies only to an employee figure above 0.
-    const employeesZeroFromInput = employeesIsZero || (revenueIsZero && !employeesGiven);
-    const impactedEmployees = employeesZeroFromInput ? 0 : Math.max(10, estimatedEmployees * 0.1);
-    const weeklySavings = hoursSavedPerEmployee * impactedEmployees * industryBenchmark.cost_of_manual_work_per_hour;
-    const annualCostSavings = weeklySavings * 50; // 50 working weeks
-    totalValue += annualCostSavings;
-    valueParts.push(annualCostSavings);
-
-    valueCalculations += `
-### Cost Reduction
-
-**Calculation Methodology:**
-${EXAMPLES}
-- Hours saved per employee per week: ${hoursSavedPerEmployee} hours
-- Employees impacted: ${impactedEmployees.toFixed(0)}
-- Hourly cost of labor: ${money(industryBenchmark.cost_of_manual_work_per_hour)}
-- Weekly savings: ${money(weeklySavings)}
-- Annual Cost Savings: **${money(annualCostSavings)}**
-
-**Validation Questions:**
-- "How many hours per week do your team spend on [manual task]?"
-- "What's the fully-loaded cost of your team members?"
-- "How many people are doing this work today?"
-
-`;
-  }
-
-  if (userValue === null && (primaryValueDriver === 'productivity' || primaryValueDriver === 'multiple')) {
-    // Productivity calculation
-    const productivityGain = estimatedRevenue * 0.01; // 1% productivity improvement
-    totalValue += productivityGain;
-    valueParts.push(productivityGain);
-
-    valueCalculations += `
-### Productivity Gains
-
-**Calculation Methodology:**
-- Revenue baseline: ${revenueCell}
-- Productivity improvement: 1% (assumed) ${EXAMPLE}
-- Annual Productivity Value: ${revenueValueCell(productivityGain)}
-
-**Validation Questions:**
-- "How much time does your team spend on low-value tasks?"
-- "What could your team achieve with 10% more time?" ${EXAMPLE}
-- "Where are the biggest time sinks today?"
-
-`;
-  }
-
-  if (userValue === null && (primaryValueDriver === 'risk_mitigation' || primaryValueDriver === 'multiple')) {
-    // Risk mitigation calculation
-    const riskReduction = estimatedRevenue * 0.005; // 0.5% risk reduction value
-    totalValue += riskReduction;
-    valueParts.push(riskReduction);
-
-    valueCalculations += `
-### Risk Mitigation
-
-**Calculation Methodology:**
-- Revenue baseline: ${revenueCell}
-- Risk reduction factor: 0.5% ${EXAMPLE}
-- Annual Risk Mitigation Value: ${revenueValueCell(riskReduction)}
-
-**Validation Questions:**
-- "What's the cost of a compliance incident?"
-- "How much revenue is at risk from [risk factor]?"
-- "What would a data breach or outage cost you?"
-
-`;
-  }
 
   // Calculate ROI metrics
   const investment = priceGiven ? solutionPrice : totalValue * 0.1; // Assume 10% of value if price not supplied (omitted or null)
@@ -2529,16 +2381,7 @@ ${EXAMPLES}
   const roiSummary = priceIsZero || (valueIsZeroFromInput && !priceGiven) ? `- **ROI:** ${byInvestment('')}` : `- **${roi.toFixed(0)}%** ROI`;
   const paybackSummary = priceIsZero || valueIsZeroFromInput ? `- **Payback:** ${byValue('')}` : `- **${paybackMonths.toFixed(1)} months** payback`;
   const sizeText = companySize === 'smb' ? 'SMB' : companySize.replace(/_/g, ' ');
-  const benchmarkText = !args.industry
-    ? 'Technology (no industry supplied)'
-    : benchmarks[industry]
-      ? industry
-      : `Technology (your industry "${industry}" matched none of the built-in sets: ${Object.keys(benchmarks).join(', ')})`;
-  const confidenceText = userValue !== null
-    ? `${confidenceLevel}: the value comes from your own figures (${userValueText}); confirm them with the buyer`
-    : `${confidenceLevel}: the value figures rest on example assumptions, not on the customer's data${knownMetrics ? '. The metrics you supplied are listed below; add current_annual_cost and expected_improvement_percent (or annual_value_estimate) to turn them into the value' : ''}`;
-  const exampleOnly = userValue === null;
-  const VL = exampleOnly ? ` ${EXAMPLE}` : '';
+  const confidenceText = `${confidenceLevel}: the value comes from your own figures (${userValueText}); confirm them with the buyer`;
   const timelineText = `${implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`}`;
   const ignoredInputs = [currentProcess ? 'current process' : '', knownMetrics ? 'known metrics' : ''].filter(Boolean).join(' and ');
   // Without a price, the investment is a share of the value, so it cannot be shown when no value is computed
@@ -2562,8 +2405,8 @@ ${EXAMPLES}
 | **Customer** | ${(args.customer_name as string) || NOT_SUPPLIED} |
 | **Industry** | ${(args.industry as string) || NOT_SUPPLIED} |
 | **Company Size** | ${args.company_size ? sizeText : `${NOT_SUPPLIED} (treated as ${sizeText})`} |
-| **${revenueGiven ? '' : 'Est. '}Annual Revenue** | ${revenueCell} |
-| **${employeesGiven ? '' : 'Est. '}Employees** | ${employeesCell} |
+| **Annual Revenue** | ${revenueCell} |
+| **Employees** | ${employeesCell} |
 | **Solution** | ${yourSolution} |
 | **Confidence Level** | ${confidenceText} |
 
@@ -2590,10 +2433,9 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | ${valueComputed ? `**${money(printedValue)}**${VL}` : nc} |
+| **Total Quantified Value** | ${valueComputed ? `**${money(printedValue)}**` : nc} |
 | **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
-| **Net Annual Benefit** | ${valueComputed ? `${usd(printedNet)}${VL}` : nc} |
-${exampleOnly && valueComputed && priceSupplied && !priceIsZero && roi > 500 ? `\n*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current_annual_cost and expected_improvement_percent, or annual_value_estimate).*\n` : ''}
+| **Net Annual Benefit** | ${valueComputed ? `${usd(printedNet)}` : nc} |
 
 ### Key Metrics
 
@@ -2614,8 +2456,7 @@ ROI, payback and three-year value use the annual price and leave out the one-tim
 ### Key Assumptions
 1. Implementation timeline: ${timelineText}
 2. Full value realization: 6-12 months post-implementation ${EXAMPLE}
-3. Benchmark set used for hourly labor cost and revenue per employee: ${benchmarkText}
-4. Company size multiplier: ${sizeMultiplier}x (${sizeText}), ${revenueGiven && employeesGiven ? 'not used here, because revenue and employees were both supplied' : `used only to estimate revenue or employees that were not supplied ${EXAMPLE}`}
+3. Industry and company size are used for wording only; this tool applies no industry or size figures to the calculation
 
 ${currentProcess ? `### Current State\n${currentProcess}\n` : ''}
 
@@ -2674,7 +2515,7 @@ ${yourSolution} addresses these challenges through [key capabilities].
 ${valueComputed ? `${EXAMPLES}
 - **${money(printedValue)}** in annual value
 ${roiSummary}
-${paybackSummary}` : `- ${NOT_COMPUTED}`}
+${paybackSummary}` : `- not computed: the annual value you gave is 0`}
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]
@@ -2683,9 +2524,146 @@ ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 ---
 
-*Confidence: ${confidenceLevel.toLowerCase()}. ${exampleOnly ? 'The value figures rest on example assumptions until you replace them with customer-provided metrics.' : 'The value comes from the figures you supplied; confirm them with the buyer before sharing.'}*
+*Confidence: ${confidenceLevel.toLowerCase()}. The value comes from the figures you supplied; confirm them with the buyer before sharing.*
 
 ${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [knownMetrics, currentProcess], buyer: [args.industry, customerName] }); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
+}
+
+// Run 20 round 1 (rule B81, D80 problem 6): the answer of roi_business_case_builder when the buyer gave no cost or value figure.
+// It prints no ROI percentage, payback period, headline return, benchmark or example amount. It names the missing inputs (the
+// exact input names), gives the value drivers for the stated driver and industry, the questions that collect the figures and
+// how the calculation will work once they are in. The user's own inputs are shown as typed and labelled "(your input)".
+interface RoiStructureInput {
+  customerName: string; industry: string; companySize: string; yourSolution: string; primaryValueDriver: string;
+  knownMetrics: string; currentProcess: string; implementationTimeline: string;
+  revenueGiven: boolean; employeesGiven: boolean; annualRevenue: number; employeeCount: number;
+  priceGiven: boolean; solutionPrice: number; ownCost: number | null; ownPct: number | null;
+}
+const ROI_DRIVERS: Record<string, { title: string; where: string; figure: string; questions: string[] }> = {
+  revenue_increase: {
+    title: 'Revenue increase',
+    where: 'More revenue won or kept: a higher win rate, larger deals, less revenue lost to no-decision or to a competitor.',
+    figure: 'the revenue the buyer expects to add or keep in a year because of this, or the revenue the problem costs them today',
+    questions: ['What is your current win rate, and how many deals end in no decision?', 'How much revenue was lost to no-decision or to a competitor in the last year?', 'Which part of that loss would this change, and why?'],
+  },
+  cost_reduction: {
+    title: 'Cost reduction',
+    where: 'Less money spent on the work or on the failure it causes today: hours, rework, errors, outside spend.',
+    figure: 'what the problem or the current process costs the buyer in a year (current_annual_cost) and the share they expect to remove (expected_improvement_percent)',
+    questions: ['How many hours a week does your team spend on the manual work this would replace?', 'What is the fully loaded cost of the people doing it?', 'How many people do this work today, and what does rework or error clean-up cost on top?'],
+  },
+  productivity: {
+    title: 'Productivity',
+    where: 'Time given back to people, to spend on work that earns more or costs less.',
+    figure: 'the yearly cost of the time lost today, and the share of it the buyer expects to get back',
+    questions: ['How much time does your team spend on low-value tasks each week?', 'Where are the biggest time sinks today?', 'What would the team do with that time, and what is it worth?'],
+  },
+  risk_mitigation: {
+    title: 'Risk mitigation',
+    where: 'Losses avoided: compliance incidents, outages, breaches, penalties, lost customers.',
+    figure: 'what one incident costs the buyer, how often it happens, and the share they expect to avoid',
+    questions: ['What does a compliance incident, outage or breach cost you when it happens?', 'How often has it happened in the last few years?', 'How much revenue is at risk from the exposure this addresses?'],
+  },
+};
+
+function roiStructureAnswer(args: Record<string, unknown>, i: RoiStructureInput): string {
+  const sizeText = i.companySize === 'smb' ? 'SMB' : i.companySize.replace(/_/g, ' ');
+  const money0 = (n: number) => money(n);
+  const given = (n: number | null) => (n === null ? null : `${money0(n)} (your input)`);
+  const costGiven = i.ownCost !== null;
+  const pctGiven = i.ownPct !== null;
+  const status = (isGiven: boolean, text: string) => (isGiven ? `given: ${text}` : 'missing');
+  const driverKeys = i.primaryValueDriver === 'multiple' ? ['revenue_increase', 'cost_reduction', 'productivity', 'risk_mitigation'] : [i.primaryValueDriver in ROI_DRIVERS ? i.primaryValueDriver : 'cost_reduction'];
+  const drivers = driverKeys.map((k) => ROI_DRIVERS[k]);
+  const revenueCell = i.revenueGiven ? (i.annualRevenue === 0 ? '$0 (your input)' : `${money0(i.annualRevenue)} (your input)`) : NOT_SUPPLIED;
+  const employeesCell = i.employeesGiven ? (i.employeeCount === 0 ? '0 (your input)' : `${i.employeeCount.toLocaleString('en-US')} (your input)`) : NOT_SUPPLIED;
+  const priceCell = i.priceGiven ? (i.solutionPrice === 0 ? '$0 (your input)' : `${money0(i.solutionPrice)} (your input)`) : NOT_SUPPLIED;
+  const ctx = readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
+  const customer = (args.customer_name as string) || 'your customer';
+
+  const partial = costGiven && !pctGiven
+    ? `You gave current_annual_cost (${given(i.ownCost)}). Add **expected_improvement_percent**, the share of that cost the buyer expects to save, and the value can be calculated.`
+    : pctGiven && !costGiven
+      ? `You gave expected_improvement_percent (${i.ownPct} percent, your input). Add **current_annual_cost**, what the problem costs the buyer in a year, and the value can be calculated.`
+      : 'Give one of the two options below.';
+
+  const driverSections = drivers.map((d) => `### ${d.title}
+
+${d.where}
+
+- **The buyer's figure to ask for:** ${d.figure}.
+- **Questions to ask:**
+${d.questions.map((q) => `  - "${q}"`).join('\n')}`).join('\n\n');
+
+  return `# ROI Business Case: ${customer}
+
+*Your inputs are shown as you gave them. No ROI percentage, payback period or headline return is shown because no buyer cost or value figure was given: this tool does not make one up. The answer below names what to add and gives the structure of the business case.*
+
+## What is missing
+
+${partial}
+
+| Input | What it is | Status |
+|-------|------------|--------|
+| \`annual_value_estimate\` | Option A: the buyer's own estimate of the annual value, in dollars | ${status(false, '')} |
+| \`current_annual_cost\` | Option B: what the problem or the current process costs the buyer in a year, in dollars | ${status(costGiven, given(i.ownCost) || '')} |
+| \`expected_improvement_percent\` | Option B: the share of that cost the buyer expects to save, from 0 to 100 | ${status(pctGiven, i.ownPct === null ? '' : `${i.ownPct} percent (your input)`)} |
+| \`solution_price\` | Your annual price, in dollars. Without it, ROI and payback use a labelled example price | ${i.priceGiven ? `given: ${priceCell}` : 'not supplied'} |
+
+Either option A on its own, or option B (both of its inputs), is enough to calculate the value.${i.priceGiven ? '' : ' Add `solution_price` as well.'} Then run roi_business_case_builder again.
+${i.revenueGiven || i.employeesGiven ? '\n`annual_revenue` and `employee_count` describe the customer\'s size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.\n' : ''}
+## What you gave
+
+| Item | Value |
+|------|-------|
+| **Customer** | ${(args.customer_name as string) || NOT_SUPPLIED} |
+| **Industry** | ${(args.industry as string) || NOT_SUPPLIED} (used for wording only; no industry figures are applied) |
+| **Company Size** | ${args.company_size ? sizeText : `${NOT_SUPPLIED} (treated as ${sizeText})`} |
+| **Annual Revenue** | ${revenueCell} |
+| **Employees** | ${employeesCell} |
+| **Solution** | ${i.yourSolution} |
+| **Annual price** | ${priceCell} |
+| **Implementation timeline** | ${i.implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`} |
+| **Confidence Level** | Not rated: no buyer figure was given, so no value or return is calculated |
+
+## Value drivers${args.industry ? ` for ${args.industry}` : ''}
+
+${i.primaryValueDriver === 'multiple' ? 'You chose several drivers. Each one needs its own figure from the buyer; do not add them up until each is checked.' : 'The driver you chose is described below.'}
+
+${driverSections}
+
+${ctx.line}
+
+${ctx.v ? `${sectorNotes(ctx.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${ctx.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n` : `*Name the industry or describe what you sell and this section adds the sector's measures and buyer roles.*\n`}
+## Questions to collect the figures
+
+1. What does this problem or process cost you in a year in total (people, rework, errors, outside spend)? This is \`current_annual_cost\`.
+2. What share of that cost do you expect to remove, and what is that based on? This is \`expected_improvement_percent\`.
+3. If you can value the result directly, what is it worth to you in a year? This is \`annual_value_estimate\`.
+4. What is the annual price of the solution? This is \`solution_price\`.
+5. Who in finance will check these figures before the decision, and what proof will they need?
+6. When would the value start (the implementation timeline), and what could delay it?
+
+## How the calculation will work
+
+Once the buyer's figures are in, the tool calculates in this order, and shows every step:
+
+1. **Annual value** = \`annual_value_estimate\`, or \`current_annual_cost\` × \`expected_improvement_percent\` ÷ 100.
+2. **Annual investment** = \`solution_price\` (the one-time implementation cost is shown but left out of ROI, payback and three-year value).
+3. **Net annual benefit** = annual value minus annual investment.
+4. **ROI** = net annual benefit ÷ annual investment, shown as a percentage.
+5. **Payback** (in months) = annual investment ÷ annual value × the months in a year.
+6. **Three-year net value** = three years of value minus three years of investment.
+7. **Sensitivity**: the same sums with half the value and with one and a half times the value.
+
+${i.currentProcess ? `## Current State\n${i.currentProcess}\n\n` : ''}${i.knownMetrics ? `## Customer-Provided Metrics\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers above.\n\n` : ''}## Next Steps
+
+1. **Collect the figures**: put the questions above to the buyer and write down where each number comes from.
+2. **Run the tool again** with the inputs named under "What is missing".
+3. **Have the buyer's finance contact check the figures** before the case goes to the economic buyer.
+4. **Identify champions**: find the stakeholders who gain from the result.
+
+${SUGGESTIONS_FOOTER}`;
 }
 
 // Tool 5: Mutual Action Plan Generator

@@ -44,7 +44,7 @@ test("demo_script_builder: demo_duration 0 falls back to the labelled default; 1
 });
 
 test("roi_business_case_builder: negative money prints as -$, not $-", async () => {
-  const r = await call("roi_business_case_builder", { your_solution: "FlowOps", primary_value_driver: "revenue_increase", company_size: "smb", annual_revenue: 1, employee_count: 1, solution_price: 1 });
+  const r = await call("roi_business_case_builder", { your_solution: "FlowOps", primary_value_driver: "revenue_increase", company_size: "smb", annual_value_estimate: 0.02, annual_revenue: 1, employee_count: 1, solution_price: 1 });
   assert.doesNotMatch(r.text, /\$-\d/);
   assert.match(r.text, /\| \*\*Net Annual Benefit\*\* \| -\$0\.98 /);
 });

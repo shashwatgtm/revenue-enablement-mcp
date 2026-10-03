@@ -30,7 +30,13 @@ const call = async (args) => {
 };
 
 // Claude chat's measurement C-REV-01 (B44): productivity, annual revenue 10,000,000.
-const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
+// Run 20 round 1 (B81): the value is the buyer's own annual_value_estimate, 100,000, which is what the old example model (1 percent of
+// the revenue) gave for this revenue, so every ROI, payback and ratio line below is unchanged. The fixtures were regenerated once more;
+// by hand against the previous ones, only these lines differ: the Employees row (no longer estimated from the revenue), the confidence
+// line (Medium, from the buyer's figure), the Productivity Gains block (now Value From Your Figures), the "(Example figure)" label
+// after Total Quantified Value and Net Annual Benefit, the high-ROI note, assumption lines 3 and 4 (the benchmark set and the size
+// multiplier are gone) and the closing confidence line.
+const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000, annual_value_estimate: 100000 };
 // Run 19 (D80, problem 5): the fixtures were regenerated once; the only change is the honest confidence line (Low when the value
 // rests on example assumptions) and, where the example ROI is very high, a note to add the buyer's own figures.
 // Run 19 R19-36 (ledger B16-18): regenerated again; the only change is the revenue you give, labelled "(your input)" in the

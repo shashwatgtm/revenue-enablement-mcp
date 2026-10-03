@@ -9,10 +9,10 @@
 | **Customer** | not supplied |
 | **Industry** | not supplied |
 | **Company Size** | not supplied (treated as mid market) |
-| **Annual Revenue** | $10,000,000 (your input) |
-| **Employees** | not supplied |
-| **Solution** | Helix Platform |
-| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
+| **Annual Revenue** | $0 (your input) |
+| **Est. Employees** | 0, estimated from your annual revenue (Example figure: replace with your own) |
+| **Solution** | Lanehop |
+| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $0); confirm them with the buyer |
 
 ---
 
@@ -20,9 +20,9 @@
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost** | $0.01 | $0.01 | $0.01 |
-| **Implementation** (Example figure: replace with your own) | under $0.01 | $0 | $0 |
-| **Total Investment** | $0.01 (Example figure: replace with your own) | $0.01 | $0.01 |
+| **Solution Cost** | $30,000 | $30,000 | $30,000 |
+| **Implementation** (Example figure: replace with your own) | $4,500 | $0 | $0 |
+| **Total Investment** | $34,500 (Example figure: replace with your own) | $30,000 | $30,000 |
 
 ---
 
@@ -31,7 +31,7 @@
 ### Value From Your Figures
 
 **Calculation:**
-- Annual value: your own estimate of the annual value, $100,000 = **$100,000**
+- Annual value: your own estimate of the annual value, $0 = **$0**
 
 ---
 
@@ -40,19 +40,19 @@
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$100,000** |
-| **Annual Investment** | $0.01 |
-| **Net Annual Benefit** | $99,999.99 |
+| **Total Quantified Value** | **$0** |
+| **Annual Investment** | $30,000 |
+| **Net Annual Benefit** | -$30,000 |
 
 ### Key Metrics
 
 Example figures: replace with your own.
 | Metric | Value | Example threshold |
 |--------|-------|-------------------|
-| **ROI** | 999999900% | >100% considered strong |
-| **Payback Period** | 0.0 months | <12 months considered fast |
-| **3-Year Net Value** | $299,999.97 | - |
-| **Value/Cost Ratio** | 10000000.0x | >3x considered excellent |
+| **ROI** | -100% | >100% considered strong |
+| **Payback Period** | not computed: add your annual revenue | <12 months considered fast |
+| **3-Year Net Value** | -$90,000 | - |
+| **Value/Cost Ratio** | 0.0x | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
 
@@ -63,7 +63,8 @@ ROI, payback and three-year value use the annual price and leave out the one-tim
 ### Key Assumptions
 1. Implementation timeline: 90 days (Example figure: replace with your own)
 2. Full value realization: 6-12 months post-implementation (Example figure: replace with your own)
-3. Industry and company size are used for wording only; this tool applies no industry or size figures to the calculation
+3. Benchmark set used for hourly labor cost and revenue per employee: Technology (no industry supplied)
+4. Company size multiplier: 1x (mid market), used only to estimate revenue or employees that were not supplied (Example figure: replace with your own)
 
 ### Validation Needed
 - Customer metrics not yet provided
@@ -79,13 +80,13 @@ The assumptions above are examples built into this tool, not findings from publi
 
 Example figures: replace with your own.
 ### Conservative Scenario (50% of projected value)
-- Annual Value: $50,000
-- ROI: 499999900%
-- Payback: 0.0 months
+- Annual Value: $0
+- ROI: -100%
+- Payback: not computed: add your annual revenue
 ### Aggressive Scenario (150% of projected value)
-- Annual Value: $150,000
-- ROI: 1499999900%
-- Payback: 0.0 months
+- Annual Value: $0
+- ROI: -100%
+- Payback: not computed: add your annual revenue
 
 ---
 
@@ -111,23 +112,23 @@ Example figures: replace with your own.
 
 ## One-Page Executive Summary
 
-### Why Helix Platform for [Customer name]
+### Why Lanehop for [Customer name]
 
 **The Problem:**
 [The customer's problem in their words]
 
 **The Solution:**
-Helix Platform addresses these challenges through [key capabilities].
+Lanehop addresses these challenges through [key capabilities].
 
 **The Value:**
 Example figures: replace with your own.
-- **$100,000** in annual value
-- **999999900%** ROI
-- **0.0 months** payback
+- **$0** in annual value
+- **-100%** ROI
+- **Payback:** not computed: add your annual revenue
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]
-- Cost of delay: $8,333/month (Example figure: replace with your own)
+- Cost of delay: $0/month (Example figure: replace with your own)
 - Implementation timeline: 90 days (Example figure: replace with your own)
 
 ---

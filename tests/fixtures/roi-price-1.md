@@ -10,9 +10,9 @@
 | **Industry** | not supplied |
 | **Company Size** | not supplied (treated as mid market) |
 | **Annual Revenue** | $10,000,000 (your input) |
-| **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
+| **Employees** | not supplied |
 | **Solution** | Helix Platform |
-| **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
+| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
 
 ---
 
@@ -28,17 +28,10 @@
 
 ## Value Breakdown
 
-### Productivity Gains
+### Value From Your Figures
 
-**Calculation Methodology:**
-- Revenue baseline: $10,000,000 (your input)
-- Productivity improvement: 1% (assumed) (Example figure: replace with your own)
-- Annual Productivity Value: **$100,000** (Example figure: replace with your own)
-
-**Validation Questions:**
-- "How much time does your team spend on low-value tasks?"
-- "What could your team achieve with 10% more time?" (Example figure: replace with your own)
-- "Where are the biggest time sinks today?"
+**Calculation:**
+- Annual value: your own estimate of the annual value, $100,000 = **$100,000**
 
 ---
 
@@ -47,11 +40,9 @@
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$100,000** (Example figure: replace with your own) |
+| **Total Quantified Value** | **$100,000** |
 | **Annual Investment** | $1 |
-| **Net Annual Benefit** | $99,999 (Example figure: replace with your own) |
-
-*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current_annual_cost and expected_improvement_percent, or annual_value_estimate).*
+| **Net Annual Benefit** | $99,999 |
 
 ### Key Metrics
 
@@ -72,8 +63,7 @@ ROI, payback and three-year value use the annual price and leave out the one-tim
 ### Key Assumptions
 1. Implementation timeline: 90 days (Example figure: replace with your own)
 2. Full value realization: 6-12 months post-implementation (Example figure: replace with your own)
-3. Benchmark set used for hourly labor cost and revenue per employee: Technology (no industry supplied)
-4. Company size multiplier: 1x (mid market), used only to estimate revenue or employees that were not supplied (Example figure: replace with your own)
+3. Industry and company size are used for wording only; this tool applies no industry or size figures to the calculation
 
 ### Validation Needed
 - Customer metrics not yet provided
@@ -142,6 +132,6 @@ Example figures: replace with your own.
 
 ---
 
-*Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
+*Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.*
 
 Suggested timings, lengths and counts: adjust them to your own.

@@ -1,8 +1,10 @@
 // Run 16 R16-41 (the verifier's Medium note, a D45 gap): in roi_business_case_builder the Cost Reduction figures used
 // Math.max(10, employees x 0.1), so an employee count given as 0 still showed "Employees impacted: 10" and a saving.
-// D45: a typed 0 is used as 0. An employee figure that is 0 because of a typed 0 (employee_count 0, or employees estimated
-// from an annual revenue of 0) gives 0 impacted employees and $0 savings; payback, which divides by the value, says what
-// to add. Omitted, null and ordinary values are unchanged (the minimum of 10 stays for them).
+// Run 20 round 1 (rule B81): that example model is gone. The tool no longer turns revenue or employee count into a value or an
+// "employees impacted" count (it applied the uncited labour rate of five industries and a minimum of 10 employees). The D45 rule it
+// protected now reads: an employee count or revenue typed as 0 is shown as the user's input, nothing is estimated from it, no
+// "employees impacted" or saving is printed, and a value the buyer gave (annual_value_estimate, or current_annual_cost with
+// expected_improvement_percent) is calculated as given whatever the employee count is. The cases below are the old four, re-written.
 // Run: node --test tests/roi-zero-employees-cost.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -17,29 +19,36 @@ const call = async (args) => {
   const j = await r.json();
   return j.result.content.map((c) => c.text).join("\n");
 };
-const BASE = { customer_name: "Example Clinic Group", your_solution: "FlowOps", company_size: "smb", solution_price: 50000 };
+const BASE = { customer_name: "Branchwire", your_solution: "Lanehop", company_size: "smb", solution_price: 50000 };
 
-test("cost_reduction with employee_count 0: 0 impacted, $0 savings, payback says what to add", async () => {
+test("cost_reduction with employee_count 0 and no buyer figure: shown as 0 (your input), no impacted employees, no saving, no ROI", async () => {
   const t = await call({ ...BASE, primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: 0 });
-  assert.match(t, /- Employees impacted: 0\n/);
-  assert.match(t, /- Annual Cost Savings: \*\*\$0\*\*/);
-  assert.match(t, /\| \*\*Payback Period\*\* \| not computed: add your employee count \|/);
+  assert.match(t, /\| \*\*Employees\*\* \| 0 \(your input\) \|/);
+  assert.doesNotMatch(t, /Employees impacted|Annual Cost Savings|Weekly savings|Hourly cost of labor/);
+  assert.doesNotMatch(t, /\*\*ROI\*\*\s*\||Payback Period|\d\s*%/);
+  assert.match(t, /annual_value_estimate/);
 });
 
-test("multiple with employee_count 0: the Cost Reduction part uses 0 impacted employees", async () => {
+test("multiple with employee_count 0 and no buyer figure: nothing is estimated from the 0", async () => {
   const t = await call({ ...BASE, primary_value_driver: "multiple", annual_revenue: 5000000, employee_count: 0 });
-  assert.match(t, /- Employees impacted: 0\n/);
+  assert.doesNotMatch(t, /Employees impacted|estimated from your/);
+  assert.match(t, /\| \*\*Employees\*\* \| 0 \(your input\) \|/);
 });
 
-test("cost_reduction with annual_revenue 0 and no employee count: the estimate from 0 gives 0 impacted", async () => {
+test("cost_reduction with annual_revenue 0 and no employee count: the 0 revenue is shown and no employee count is estimated from it", async () => {
   const t = await call({ ...BASE, primary_value_driver: "cost_reduction", annual_revenue: 0 });
-  assert.match(t, /- Employees impacted: 0\n/);
+  assert.match(t, /\| \*\*Annual Revenue\*\* \| \$0 \(your input\) \|/);
+  assert.match(t, /\| \*\*Employees\*\* \| not supplied \|/);
+  assert.doesNotMatch(t, /Employees impacted|estimated from your/);
 });
 
-test("omitted, null and ordinary employee counts keep the minimum of 10", async () => {
-  for (const e of [undefined, null, 45]) {
-    const t = await call({ ...BASE, primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: e });
-    const m = t.match(/- Employees impacted: (\d+)\n/);
-    assert.ok(m && Number(m[1]) >= 10, String(e));
+test("with the buyer's own value, any employee count (omitted, null, 0, ordinary) leaves the calculation the same", async () => {
+  const roi = [];
+  for (const e of [undefined, null, 0, 45]) {
+    const t = await call({ ...BASE, primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: e, annual_value_estimate: 200000 });
+    assert.doesNotMatch(t, /Employees impacted/);
+    roi.push(t.match(/\| \*\*ROI\*\* \| ([^|]*) \|/)[1]);
+    assert.match(t, /\| \*\*Total Quantified Value\*\* \| \*\*\$200,000\*\* \|/);
   }
+  assert.deepEqual([...new Set(roi)], ["300%"]);
 });

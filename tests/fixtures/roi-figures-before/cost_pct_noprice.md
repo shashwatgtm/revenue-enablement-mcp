@@ -1,4 +1,4 @@
-# ROI Business Case: [Customer name]
+# ROI Business Case: Branchwire
 
 *Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
 
@@ -6,13 +6,13 @@
 
 | Metric | Value |
 |--------|-------|
-| **Customer** | not supplied |
+| **Customer** | Branchwire |
 | **Industry** | not supplied |
 | **Company Size** | not supplied (treated as mid market) |
-| **Annual Revenue** | $10,000,000 (your input) |
-| **Employees** | not supplied |
-| **Solution** | Helix Platform |
-| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
+| **Est. Annual Revenue** | not supplied |
+| **Est. Employees** | not supplied |
+| **Solution** | Lanehop |
+| **Confidence Level** | Medium: the value comes from your own figures (30% of the current annual cost you supplied ($900,000)); confirm them with the buyer |
 
 ---
 
@@ -20,9 +20,9 @@
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost** | $0.01 | $0.01 | $0.01 |
-| **Implementation** (Example figure: replace with your own) | under $0.01 | $0 | $0 |
-| **Total Investment** | $0.01 (Example figure: replace with your own) | $0.01 | $0.01 |
+| **Solution Cost** (not supplied) (Example figure: replace with your own) | $27,000 | $27,000 | $27,000 |
+| **Implementation** (Example figure: replace with your own) | $4,050 | $0 | $0 |
+| **Total Investment** | $31,050 (Example figure: replace with your own) | $27,000 | $27,000 |
 
 ---
 
@@ -31,7 +31,8 @@
 ### Value From Your Figures
 
 **Calculation:**
-- Annual value: your own estimate of the annual value, $100,000 = **$100,000**
+- Annual value: 30% of the current annual cost you supplied ($900,000) = **$270,000**
+- Check with the buyer: does $900,000 cover the whole cost of the problem today, and is 30% the improvement they expect, not the best case?
 
 ---
 
@@ -40,19 +41,19 @@
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$100,000** |
-| **Annual Investment** | $0.01 |
-| **Net Annual Benefit** | $99,999.99 |
+| **Total Quantified Value** | **$270,000** |
+| **Annual Investment** | $27,000 (Example figure: replace with your own) |
+| **Net Annual Benefit** | $243,000 |
 
 ### Key Metrics
 
 Example figures: replace with your own.
 | Metric | Value | Example threshold |
 |--------|-------|-------------------|
-| **ROI** | 999999900% | >100% considered strong |
-| **Payback Period** | 0.0 months | <12 months considered fast |
-| **3-Year Net Value** | $299,999.97 | - |
-| **Value/Cost Ratio** | 10000000.0x | >3x considered excellent |
+| **ROI** | 900% | >100% considered strong |
+| **Payback Period** | 1.2 months | <12 months considered fast |
+| **3-Year Net Value** | $729,000 | - |
+| **Value/Cost Ratio** | 10.0x | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
 
@@ -63,7 +64,8 @@ ROI, payback and three-year value use the annual price and leave out the one-tim
 ### Key Assumptions
 1. Implementation timeline: 90 days (Example figure: replace with your own)
 2. Full value realization: 6-12 months post-implementation (Example figure: replace with your own)
-3. Industry and company size are used for wording only; this tool applies no industry or size figures to the calculation
+3. Benchmark set used for hourly labor cost and revenue per employee: Technology (no industry supplied)
+4. Company size multiplier: 1x (mid market), used only to estimate revenue or employees that were not supplied (Example figure: replace with your own)
 
 ### Validation Needed
 - Customer metrics not yet provided
@@ -79,13 +81,13 @@ The assumptions above are examples built into this tool, not findings from publi
 
 Example figures: replace with your own.
 ### Conservative Scenario (50% of projected value)
-- Annual Value: $50,000
-- ROI: 499999900%
-- Payback: 0.0 months
+- Annual Value: $135,000
+- ROI: 400%
+- Payback: 2.4 months
 ### Aggressive Scenario (150% of projected value)
-- Annual Value: $150,000
-- ROI: 1499999900%
-- Payback: 0.0 months
+- Annual Value: $405,000
+- ROI: 1400%
+- Payback: 0.8 months
 
 ---
 
@@ -111,23 +113,23 @@ Example figures: replace with your own.
 
 ## One-Page Executive Summary
 
-### Why Helix Platform for [Customer name]
+### Why Lanehop for Branchwire
 
 **The Problem:**
 [The customer's problem in their words]
 
 **The Solution:**
-Helix Platform addresses these challenges through [key capabilities].
+Lanehop addresses these challenges through [key capabilities].
 
 **The Value:**
 Example figures: replace with your own.
-- **$100,000** in annual value
-- **999999900%** ROI
-- **0.0 months** payback
+- **$270,000** in annual value
+- **900%** ROI
+- **1.2 months** payback
 
 **Why Now:**
 - [Why this customer should act now, for example competitive pressure, if it applies]
-- Cost of delay: $8,333/month (Example figure: replace with your own)
+- Cost of delay: $22,500/month (Example figure: replace with your own)
 - Implementation timeline: 90 days (Example figure: replace with your own)
 
 ---

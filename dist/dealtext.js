@@ -47,7 +47,9 @@ function splitTopLevel(text, sep = /,/) {
             depth--;
         else if (ch === '"' || ch === '“' || ch === '”')
             quote = !quote;
-        if (depth === 0 && !quote) {
+        // a comma inside a number ("700,000+") is never a separator
+        const inNumber = ch === ',' && /\d/.test(text[i - 1] || '') && /^\d{3}(?!\d)/.test(text.slice(i + 1));
+        if (depth === 0 && !quote && !inNumber) {
             const m = re.exec(text.slice(i));
             if (m && m.index === 0 && m[0].length > 0) {
                 out.push(cur);

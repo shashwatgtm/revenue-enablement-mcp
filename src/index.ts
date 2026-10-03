@@ -4576,8 +4576,11 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const strip = (w: string) => w.trim().replace(new RegExp('^' + competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i'), (m) => m.replace(competitor, '').trimStart() ? m.replace(new RegExp(competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trimStart() : '');
   const weaknesses = splitItems(competitorWeaknesses);
   const allStrengths = splitItems(yourStrengths);
-  const credentials = allStrengths.filter((s) => CRED_RE.test(s));
-  const strengths = allStrengths.filter((s) => !CRED_RE.test(s));
+  // A strength that opens with a credential ("named a Leader in ...", "certified ...") is a credential; one that merely ends with a backer or an award
+  // ("the first agentic X, backed by Y") is a capability and stays a criterion.
+  const isCred = (x: string) => { const m = x.match(CRED_RE); return !!m && (m.index || 0) <= 40; };
+  const credentials = allStrengths.filter(isCred);
+  const strengths = allStrengths.filter((x) => !isCred(x));
   const claimsHere = claimsIn(yourStrengths);
   const topicOf = (w: string): { topic: string; q: string } => TRAP_TOPICS.find((t) => t.re.test(w)) || { topic: 'the scenario you care most about', q: 'How will you test the scenario you care most about in each option? Could each vendor show it live, with your own data?' };
   const sectorQ = v ? v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
@@ -5275,7 +5278,8 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const pains = painClauses(painPlain);
   const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
   const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 140 ? q(lowerFirstIfCommon(painPlain)) : '';
-  const areaNoun = v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem';
+  const areaChoices = [...brief.parts.map((x) => partLabel(x)).filter((x) => x.length <= 28), ...(v ? v.metrics.slice(0, 4) : [])];
+  const areaNoun = areaChoices.length ? areaChoices.sort((x, y) => x.length - y.length)[0] : 'this problem';
   const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
   const valueMain = (valueItems.find((x) => !x.label) || valueItems[0])?.text || '';
   const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);

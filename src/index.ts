@@ -5277,9 +5277,11 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const painPlain = specificPainPoint.replace(/\s*\((?:page claim|customer words|customer quote|a seller's words|implied by[^)]*)\)/gi, '').trim();
   const pains = painClauses(painPlain);
   const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
-  const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 140 ? q(lowerFirstIfCommon(painPlain)) : '';
-  const areaChoices = [...brief.parts.map((x) => partLabel(x)).filter((x) => x.length <= 28), ...(v ? v.metrics.slice(0, 4) : [])];
-  const areaNoun = areaChoices.length ? areaChoices.sort((x, y) => x.length - y.length)[0] : 'this problem';
+  const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 175 ? q(lowerFirstIfCommon(painPlain.replace(/[.]+$/, ''))) : '';
+  // the topic of a subject line: a short part of the product, else what the product is, else a measure of the sector
+  const kindTopic = brief.kind.replace(/^(?:a|an|the)\s+/i, '').replace(/\s+(?:platform|system|software|tool|solution|product|service|services)$/i, '').trim();
+  const partTopics = brief.parts.map((x) => partLabel(x)).filter((x) => x.length <= 28).sort((x, y) => x.length - y.length);
+  const areaNoun = partTopics[0] || (kindTopic && kindTopic.length <= 28 ? kindTopic : '') || (v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem');
   const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
   const valueMain = (valueItems.find((x) => !x.label) || valueItems[0])?.text || '';
   const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);

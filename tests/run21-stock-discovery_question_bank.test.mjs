@@ -23,18 +23,19 @@ test("logistics: a last mile company and a freight marketplace are asked about t
   const a = await call(LASTMILE), b = await call(FREIGHT);
   assert.match(a, /How do you measure first attempt delivery rate today/);
   assert.match(b, /How do you measure time to book a load today/);
-  assert.match(a, /Quantify business case \(first attempt delivery rate/);
-  assert.match(b, /Quantify business case \(time to book a load/);
-  assert.match(line(a, "Which of the numbers you track"), /\(first attempt delivery rate/);
-  assert.match(line(b, "Which of the numbers you track"), /\(time to book a load/);
+  // run 21c: draft rewrite: the old "Quantify business case (...)" outline line is now the opening line "in terms of ..."; the intent (each company's own measure first) is kept
+  assert.match(a, /in terms of first attempt delivery rate/);
+  assert.match(b, /in terms of time to book a load/);
+  assert.match(line(a, "would move first if it were fixed"), /Which of first attempt delivery rate/); // run 21c: draft rewrite
+  assert.match(line(b, "would move first if it were fixed"), /Which of time to book a load/);
   assert.doesNotMatch(a, /load fill rate|time to book a load|carrier acceptance/i);
   assert.doesNotMatch(b, /first attempt|cost per delivery|deliveries per vehicle/i);
 });
 
 test("fintech: a spend and expense company and a payments API company are asked about their own measure", async () => {
   const a = await call(EXPENSE), b = await call(PAYAPI);
-  assert.match(a, /Quantify business case \(approval cycle time/);
-  assert.match(b, /Quantify business case \(time to first live payment/);
+  assert.match(a, /in terms of approval cycle time/); // run 21c: draft rewrite
+  assert.match(b, /in terms of time to first live payment/);
   assert.match(a, /How do you measure approval cycle time today/);
   assert.match(b, /How do you measure time to first live payment today/);
   assert.doesNotMatch(a, /payment success rate|authorisation rate|chargeback/i);
@@ -44,5 +45,5 @@ test("fintech: a spend and expense company and a payments API company are asked 
 test("a pain that shares no word with the measures keeps the sector's usual order (nothing is dropped, nothing is invented)", async () => {
   const a = await call({ ...LASTMILE, known_pain_points: "Our operations team is overloaded" });
   assert.match(a, /How do you measure cost per delivery today/);
-  assert.match(a, /Quantify business case \(cost per delivery, first attempt delivery rate, on time delivery\)/);
+  assert.match(a, /in terms of cost per delivery, first attempt delivery rate or on time delivery/); // run 21c: draft rewrite
 });

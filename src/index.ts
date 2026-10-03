@@ -1786,6 +1786,10 @@ ${SUGGESTIONS_FOOTER}`;
 // solution description) comes first; the rest keep the sector's order, so nothing is dropped and nothing is added. No match: the sector's order stands.
 const MEASURE_STOP = new Set(['rate', 'time', 'share', 'effort', 'cost', 'number', 'count', 'average', 'total', 'per', 'and', 'the', 'for', 'with', 'from', 'that', 'this', 'your']);
 const measureStems = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !MEASURE_STOP.has(w)).map((w) => w.replace(/s$/, '').slice(0, 4)));
+// A job title in running text: each capitalised word is lowered, an acronym is kept ("Project Executive" becomes "project executive", "Head of IT" keeps IT).
+// "a" or "an" before a title or phrase; an acronym is read by its first letter's name (an HR leader, an SVP, a CFO).
+const anOfPhrase = (w: string): string => { const t = w.trim(); const first = t.split(/\s+/)[0] || ''; const an = /^[A-Z]{2,5}$/.test(first) ? /^[AEIOFHLMNRSX]/.test(first) : /^(?:[aeiou]|8\b|8\d|11|18)/i.test(t); return `${an ? 'an' : 'a'} ${t}`; };
+const lowerRole = (r: string): string => r.replace(/\b([A-Z])([a-z]+)\b/g, (_m, a, b) => `${a.toLowerCase()}${b}`);
 function rankMeasures(measures: string[], pain: string, solution: string): string[] {
   const p = measureStems(pain), d = measureStems(solution);
   const score = (m: string) => [...measureStems(m)].reduce((n, w) => n + (p.has(w) ? 2 : 0) + (d.has(w) ? 1 : 0), 0);
@@ -1793,601 +1797,191 @@ function rankMeasures(measures: string[], pain: string, solution: string): strin
 }
 function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const framework = (args.framework as string) || 'meddpicc';
-  const prospectIndustry = (args.prospect_industry as string) || '';
-  const prospectRole = (args.prospect_role as string) || '';
-  const knownPainPoints = (args.known_pain_points as string) || '';
-  const knownMetrics = (args.known_metrics as string) || '';
+  const prospectIndustry = ((args.prospect_industry as string) || '').trim();
+  const prospectRole = ((args.prospect_role as string) || '').trim();
+  const knownPainPoints = ((args.known_pain_points as string) || '').trim();
+  const knownMetrics = ((args.known_metrics as string) || '').trim();
   const dealStage = (args.deal_stage as string) || 'discovery';
-  const yourSolution = (args.your_solution as string) || 'your solution';
-  const gapsToFill = (args.gaps_to_fill as string) || '';
+  const yourSolution = ((args.your_solution as string) || '').trim();
+  const gapsToFill = ((args.gaps_to_fill as string) || '').trim();
   // Run 19 D80 (problems 2, 3 and 8): gaps first, in the sector's language; "none" is never echoed back as if it were a metric.
   const ctx = readContext(undefined, { seller: [yourSolution], context: [knownPainPoints], role: [prospectRole], buyer: [prospectIndustry] });
-  // Run 20 round 1b (D92): no bracket placeholder where the input or the sector notes can supply the words; the pain the user typed is
-  // split into its separate pains instead of being quoted whole again and again; the prospect's role and the parts of the solution
-  // each get their own questions.
-  const sectorMetrics = ctx.v ? rankMeasures(ctx.v.metrics, knownPainPoints, args.your_solution ? yourSolution : '') : []; // the sector's measures, led by the ones the user's own pain and solution words point to (run 21b)
-  const brief = solutionBrief(args.your_solution ? yourSolution : '');
-  const P = brief.short || 'your solution';
+  // Run 21c (draft rewrite): the list is written from the inputs. Each framework section asks about the product's parts, the pain clauses, the
+  // prospect's role, the measures of the sector (ordered by the user's own words) and the deal details given; the standard lists are gone.
+  const v = ctx.v;
+  const sectorMetrics = v ? rankMeasures(v.metrics, knownPainPoints, yourSolution) : []; // the sector's measures, led by the ones the user's own pain and solution words point to (run 21b)
+  const brief = solutionBrief(yourSolution);
+  const P = brief.short || clip(lowerFirstIfCommon(yourSolution), 70) || 'this solution';
   const investment = ctx.model === 'investment';
   const roleKnow = prospectRole ? roleFor(prospectRole, investment) : null;
   const roleFam = prospectRole ? familyOf(prospectRole, investment) : 'other';
-  const pains = painClauses(knownPainPoints);
+  const roleTxt = prospectRole ? lowerFirstIfCommon(prospectRole) : '';
+  const youRole = roleTxt && !isPluralRole(roleTxt) ? anOfPhrase(roleTxt) : 'you';
+  const indLow = prospectIndustry ? lowerFirstIfCommon(prospectIndustry) : '';
+  const pains = painClausesWide(knownPainPoints);
   const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
-  const signerClause = ctx.v ? lowerFirstIfCommon(ctx.v.committee.split(';')[0]).replace(/\s+signs?$/i, '') : '';
+  const XL = painLead ? q(painLead) : 'the problem you came to fix'; // the pain in the user's own words, quoted inside a sentence
+  const X = painLead && painLead.split(/\s+/).length > 7 ? 'that problem' : XL; // a long clause is quoted once (the opening) and then called "that problem"
+  const signerClause = v ? lowerFirstIfCommon(v.committee.split(';')[0]).replace(/\s+signs?$/i, '') : '';
   const signer = signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
-  const partNames = brief.parts.map(partLabel);
-  const critA = partNames[0] || (brief.kind ? lowerFirstIfCommon(brief.kind) : P);
-  const critB = partNames[1] || sectorMetrics[0] || 'the outcome you care about';
-  const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics.trim());
-  const firstMetric = ctx.v ? sectorMetrics[0] : 'the number this problem moves';
-  const metricsFollowUp = !knownMetrics ? '' : noMetrics
-    ? `**Not known yet:** no metrics shared so far. Ask for a baseline first:\n- "How do you measure ${firstMetric} today, and who owns that number?"`
-    : `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${q(lowerFirstIfCommon(clip(knownMetrics, 120)))}. How are you measuring that today, and how often?"`;
+  const kp = productKindAndParts(brief);
+  const partNames = kp.parts;
+  const rankedParts = rankMeasures(partNames, knownPainPoints, '');
+  const critA = rankedParts[0] || shortKind(kp.kind, brief.name) || (yourSolution ? P : 'this area');
+  const critB = rankedParts[1] || sectorMetrics[0] || 'the outcome you care about';
+  const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics);
+  const M1 = sectorMetrics[0] || 'the number this problem moves';
+  const Mlist = sectorMetrics.length >= 2 ? joinList(sectorMetrics.slice(0, 3), 'or') : M1;
+  const otherRoles = v ? v.buyerRoles.filter((r) => familyOf(r, investment) !== roleFam).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
+  const otherTxt = otherRoles.length ? joinList(otherRoles.map((r) => `your ${r}`), 'or') : 'someone else on your side';
+  const inInd = indLow ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
+  const qs = (items: string[]) => items.filter(Boolean).map((x) => `- ${x}`).join('\n');
+
+  // gaps first (the questions are built from the product and the pain too)
   const GAP_QUESTIONS: [RegExp, string, string][] = [
-    [/economic buyer|budget owner|sign/i, 'Economic buyer', '"Who signs off a decision like this, and have they seen this problem first-hand?"'],
-    [/decision process|process|approval/i, 'Decision process', '"What steps does a purchase like this go through here, and who is involved at each step?"'],
-    [/budget/i, 'Budget', '"Is there budget for this in the current year, and which line does it sit under?"'],
-    [/criteria/i, 'Decision criteria', '"How will you compare the options: what has to be true for a yes?"'],
-    [/paper|legal|procurement|contract/i, 'Paper process', '"What do legal, security and procurement need to see, and how long do they usually take?"'],
-    [/timeline|timing|critical event|deadline|when/i, 'Timeline', '"What happens if nothing changes by the end of the quarter?"'],
-    [/champion/i, 'Champion', '"Who besides you wants this fixed, and what would they gain?"'],
-    [/competi|alternative/i, 'Competition', '"What else are you considering, including doing nothing?"'],
-    [/metric|baseline|number/i, 'Metrics', `"How do you measure ${firstMetric} today?"`],
+    [/economic buyer|budget owner|sign/i, 'Economic buyer', `Who signs off a purchase like ${P}${inInd}, and have they seen ${X} first-hand?`],
+    [/decision process|process|approval/i, 'Decision process', `What steps does a decision on ${critA} go through here, and who is involved at each step?`],
+    [/budget/i, 'Budget', `Is there budget this year for ${critA}, and which line does it sit under?`],
+    [/criteria/i, 'Decision criteria', `How will you compare the options for ${critA}: what has to be true for a yes?`],
+    [/paper|legal|procurement|contract/i, 'Paper process', `What do legal, security and procurement need to see before ${P} can be signed, and how long do they usually take?`],
+    [/timeline|timing|critical event|deadline|when/i, 'Timeline', `What happens if ${X} is not fixed by the end of the quarter?`],
+    [/champion/i, 'Champion', `Who besides you wants ${X} fixed, and what would they gain?`],
+    [/competi|alternative/i, 'Competition', `What else are you considering for ${critA}, including doing nothing?`],
+    [/metric|baseline|number/i, 'Metrics', `How do you measure ${M1} today?`],
   ];
   const gaps = splitItems(gapsToFill);
-  const gapRows = gaps.map((g) => { const m = GAP_QUESTIONS.find(([re]) => re.test(g)); return `- **${cap(g)}:** ${m ? m[2] : `"Can you walk me through ${lowerFirstIfCommon(g)}?"`}`; });
+  const gapRows = gaps.map((g) => { const m = GAP_QUESTIONS.find(([re]) => re.test(g)); return `- **${cap(g)}:** ${m ? m[2] : `Can you walk me through ${lowerFirstIfCommon(g)} for ${critA}?`}`; });
   const gapSection = gaps.length ? `## Gaps to fill first\n\nYou said these are still open, so ask about them before anything else:\n${gapRows.join('\n')}\n\n---\n\n` : '';
+
+  // the opening, in spoken lines, by stage
+  const OPEN: Record<string, string[]> = {
+    first_call: [
+      `Thanks for the time. Before I say anything about ${P}, I would like to hear how ${XL} shows up in your week.`,
+      `What made you take a call about ${critA}?`,
+      `I will leave time at the end to say what ${P} does and whether it fits.`],
+    discovery: [
+      `I would like to go deep on ${XL}: where it starts, who it touches and what it costs${v ? `, in terms of ${Mlist}` : ''}.`,
+      `Who else should be part of this conversation about ${critA}${roleTxt ? `, besides ${youRole}` : ''}?`],
+    deep_dive: [
+      `We have covered ${XL}. Today I would like to test it against the detail of ${critA}${rankedParts[1] ? ` and ${rankedParts[1]}` : ''}.`,
+      `What has changed since we last spoke about ${critA}?`],
+    technical: [
+      `I would like to understand the systems around ${critA}: where the data lives, what has to connect, and who owns each link.`,
+      `Who from your technical side should be in the room for ${rankedParts[1] || critA}?`],
+    executive: [
+      `I will keep this to the outcome. ${cap(XL)} is the problem; what would ${youRole} need to see to back a change in ${critA}?`,
+      `${v ? `Which of ${Mlist} do you answer for, and to whom?` : 'Which number do you answer for, and to whom?'}`],
+  };
+  const openSection = `## Opening for a ${dealStage.replace(/_/g, ' ')} conversation\n\nSay it in your own voice:\n${qs(OPEN[dealStage] || OPEN.discovery)}\n\n---\n\n`;
+
+  // the prospect's role
+  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\n${upperFirst(aAn(roleKnow.label))} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}.\n\n${qs(roleKnow.questions)}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
   // A SaaS company's own activation and expansion questions do not suit a finance, security or IT leader who is buying from it.
-  const sectorFits = !(ctx.v && ctx.v.id === 'saas' && ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam));
-  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\n${upperFirst(aAn(roleKnow.label))} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}. Open with their concern, not with your product.\n\n${roleKnow.questions.map((x) => `- "${x}"`).join('\n')}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
-  const sectorSection = ctx.v ? `## Questions in the language of ${ctx.v.name}\n\n${sectorFits ? ctx.v.discovery.map((x) => `- "${x}"`).join('\n') : `The usual ${ctx.v.name} questions are about the prospect's own customers (activation, expansion). They do not fit a ${roleKnow ? roleKnow.label : 'buyer in this role'}, so use the questions above and below.`}\n\n${sectorNotes(ctx.v, 'committee')}\n\n---\n\n` : '';
-  const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${pains.map((p) => `- On ${q(lowerFirstIfCommon(p))}: where does it show up in your work, who deals with it, and what does it cost in time, money or risk?`).join('\n')}${pains.length ? '\n' : ''}- Of the pains in the context line above, which hurts most, and which one would the people who sign this off pick?\n- What have you already tried for it, and why did it not hold?\n\n---\n\n` : '';
-  const partSection = partNames.length ? `## Questions on what ${P} covers\n\nOne question for each part you listed. Use only the ones that touch the pain above.\n\n${partNames.slice(0, 6).map((n) => `- ${cap(n)}: "How do you handle this today, who owns it, and what breaks?"`).join('\n')}\n\n---\n\n` : '';
+  const sectorFits = !(v && v.id === 'saas' && ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam));
+  const sectorSection = v ? `## Questions in the language of ${v.name}\n\n${sectorFits ? qs(v.discovery) : `The usual ${v.name} questions are about the prospect's own customers (activation, expansion). They do not fit ${roleKnow ? aAn(roleKnow.label) : 'a buyer in this role'}, so use the questions above and below.`}\n\n---\n\n` : '';
+  // the pain, one clause at a time
+  const painShells = [
+    (p: string, m: string) => `On ${q(p)}: where does it start, who deals with it, and ${m ? `which of ${m} does it show up in first` : 'what does it cost in time, money or risk'}?`,
+    (p: string, m: string) => `On ${q(p)}: what have you tried so far, and what stopped it from holding?`,
+    (p: string) => `On ${q(p)}: how is it tracked today, and who would notice first if it went away?`,
+  ];
+  const painLines = pains.map((p, i) => painShells[i % 3](lowerFirstIfCommon(p), v ? joinList(rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : ''));
+  const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${qs([...painLines, pains.length > 1 ? `Of ${pains.length === 2 ? 'the two' : `the ${pains.length}`} pains above, which hurts most, and which one would ${signer} pick?` : ''])}\n\n---\n\n` : '';
+  // the product's parts, each tied to the pain
+  const partShells = [
+    (n: string) => `${cap(n)}: in the case of ${X}, which step touches it, who does that step today, and with what?`,
+    (n: string) => `${cap(n)}: what do you use for it today, and what would you want it to do that it does not?`,
+    (n: string) => `${cap(n)}: who owns it, and whose work changes if it changes?`,
+    (n: string) => `${cap(n)}: which of your systems does it have to work with, and who owns each one?`,
+  ];
+  const shownParts = rankedParts.slice(0, 8);
+  const partSection = shownParts.length ? `## Questions on what ${P} covers\n\nOne question for each part you listed, the ones closest to the pain first.\n${rankedParts.length > shownParts.length ? `Not used in the draft: ${joinList(rankedParts.slice(8))}, because the list stops at eight parts.\n` : ''}\n${qs(shownParts.map((n, i) => partShells[i % 4](n)))}\n\n---\n\n` : '';
+
+  // the framework sections, each question written from the inputs
+  const metricsQs = knownMetrics ? (noMetrics
+    ? [`No metrics are known yet. How do you measure ${M1} today, and who owns that number?`]
+    : [`You said ${q(lowerFirstIfCommon(clip(knownMetrics, 120)))}. How is that measured today, how often, and what would ${X} do to it?`]) : [`How do you measure ${M1} today, and who owns that number?`];
+  const painIQs = pains.length ? pains.slice(0, 3).map((p, i) => [`You said ${q(lowerFirstIfCommon(p))}. Who feels it most, and what does it cost them?`, `You said ${q(lowerFirstIfCommon(p))}. What happens each week it stays that way?`, `You said ${q(lowerFirstIfCommon(p))}. Who first raised it, and why then?`][i % 3]) : [`What is not working today in ${critA}${inInd}?`];
+  const heading = (t: string, items: string[]) => `### ${t}\n\n${qs(items)}`;
+  const meddpicc = `## MEDDPICC questions\n\n` + [
+    heading('M: Metrics', [...metricsQs, `If ${X} were fixed, which of ${Mlist} would move first, and by how much would it have to move to matter to ${youRole}?`, `What does ${X} cost each month today in time, money or risk, and how did you arrive at that figure?`]),
+    heading('E: Economic buyer', [`Who signs off a purchase like ${P}${inInd}, and have they seen ${X} first-hand?`, `What would ${signer} need to see to move forward on ${P}?`, `Can we include ${signer} in the next conversation about ${critA}?`]),
+    heading('D: Decision criteria', [rankedParts.length >= 2 ? `Which of ${joinList(rankedParts.slice(0, 3), 'or')} would be a must-have for ${youRole}, and which would be nice to have?` : `What would be a must-have in ${critA} for ${youRole}, and what would be nice to have?`, `How much weight does ${M1} carry when you compare options for ${critA}?`, `What would make you drop an option for ${critA}?`]),
+    heading('D: Decision process', [`What steps does a decision on ${critA} go through${inInd}, and who is involved at each step?`, `What date are you working back from to have ${X} fixed, and what happens if it slips?`]),
+    heading('P: Paper process', [`What do legal, security and procurement need to see before ${P} can be signed, and how long does each take?`, rankedParts.length >= 2 ? `Which of ${joinList(rankedParts.slice(0, 2), 'and')} would those reviewers look at hardest?` : `What would those reviewers look at hardest in ${critA}?`]),
+    heading('I: Identify pain', painIQs),
+    heading('C: Champion', [`Besides ${youRole}, who else wants ${X} fixed${otherRoles.length ? `: ${otherTxt}` : ''}?`, `If I gave you a business case for ${P}, would you take it to ${signer}?`, `What would that person need from us to push for ${critA}?`]),
+    heading('C: Competition', [`What do you use today for ${critA}, and what do you like about it?`, `Have you looked at building ${critA} in house, or at doing nothing about ${X}?`, `Which other vendors are you speaking to about ${critA}?`]),
+  ].join('\n\n');
+  const bant = `## BANT questions\n\n` + [
+    heading('B: Budget', [`Is there budget this year for fixing ${X}, and which line does it sit under?`, `What do you spend today on ${critA}, including your team's time?`, `Who controls the budget for a purchase like ${P}${inInd}: ${signer}?`]),
+    heading('A: Authority', [`What is your part in choosing ${critA}${inInd}?`, `Who signs off on ${critA}${inInd}, and who else must agree${otherRoles.length ? `: ${otherTxt}` : ''}?`, `What would you need in order to recommend ${P} internally?`]),
+    heading('N: Need', pains.length ? pains.slice(0, 3).map((p) => `On ${q(lowerFirstIfCommon(p))}: how many people or processes does it affect, and what does it cost?`) : [`What drives your interest in ${critA} now, and how does it rank among ${youRole === 'you' ? 'your' : 'the'} priorities?`]),
+    heading('T: Timeline', [`What happens if ${X} is not fixed by the end of the quarter?`, `Is there a date or an event that you are working back from for ${critA}?`]),
+  ].join('\n\n');
+  const spiced = `## SPICED questions\n\n` + [
+    heading('S: Situation', [`How do you handle ${critA} today, who is involved, and with which tools?`, rankedParts.length >= 2 ? `Which of ${joinList(rankedParts.slice(0, 3), 'and')} is already in place${inInd}?` : `What is already in place for ${critA}${inInd}?`]),
+    heading('P: Pain', pains.length ? pains.slice(0, 3).map((p) => `On ${q(lowerFirstIfCommon(p))}: where does it break down, and who feels it first?`) : [`Where does ${critA} break down today, and who feels it first?`]),
+    heading('I: Impact', [`If ${X} were fixed, which of ${Mlist} would change, and what would that be worth to ${youRole}?`, `What would success on ${critA} look like in a year?`]),
+    heading('C: Critical event', [`What date or event makes ${critA} urgent now?`, `What is the cost of delay on ${X}?`]),
+    heading('E: Event and decision', [`How will you compare options for ${critA}, and who decides?`, `What could speed up or slow down a decision on ${P}?`]),
+    heading('D: Decision criteria', [`How important is ${critB} to you when you choose?`, `Is there a deal-breaker on ${critA} that we should know about?`]),
+  ].join('\n\n');
+  const pilotQ = v && v.discovery.length ? v.discovery[v.discovery.length - 1] : `What would a first trial of ${P} have to show for you to go further?`;
+  const challenger = `## Challenger questions\n\n` + [
+    heading('Teach', [painLead ? `You described ${X}. Where does it start: before the work reaches your team, inside it, or at the handover?` : `Where does the problem in ${critA} start: before the work reaches your team, inside it, or at the handover?`, `Which of ${Mlist} would move first if it were fixed?`, ...(v ? [`If you hold data on ${M1} across your customers, open with the pattern it shows, with its source and period. If a before-and-after exists (${proofOf(v)}), tell it in two sentences and name what changed. If you cannot show an insight, ask the question instead.`] : [])]),
+    heading('Tailor', [`Where does ${X} cost ${youRole} most?`, `How would ${signer} react to seeing ${M1} next to ${critA}?`, `What is different about your situation${inInd} that we should factor in?`]),
+    heading('Take control', [`Given ${X}, I would start with ${critA}. Who needs to be in that conversation?`, pilotQ, `What would need to be true for ${youRole} to try ${P}?`]),
+  ].join('\n\n');
+  const gapSelling = `## Gap Selling questions\n\n` + [
+    heading('Current state', [`Walk me through how ${critA} runs today: who does each step and with which tools?`, `How does ${X} show up in ${M1} today?`]),
+    heading('Future state', [`If ${X} were gone a year from now, what would ${youRole} be doing differently?`, `How would you measure that: ${Mlist}?`]),
+    heading('The gap', [`What does the gap between today and that cost each quarter, in terms of ${M1}?`, `Who else feels the gap in ${critA}, and what do they lose?`]),
+    heading('Problems behind the problem', [`Why do you think ${X} happens, and what have you tried to fix it?`, `What in your systems or process makes it hard to fix${rankedParts[0] ? `, starting with ${rankedParts[0]}` : ''}?`]),
+  ].join('\n\n');
+
+  // the close, by stage
+  const CLOSE: Record<string, string> = {
+    first_call: `Would a second call about ${critA} with ${signer} in it make sense?`,
+    discovery: `I would suggest we put a baseline on ${M1} before the next call. Who can give it to us?`,
+    deep_dive: `Shall we agree what a trial of ${critA} must show before anyone commits?`,
+    technical: `Who owns the systems around ${critA}, and can they join the next call?`,
+    executive: `What would you need from us to take ${P} to a decision on ${critA}?`,
+  };
+  const closeSection = `## Closing the call\n\n${qs([
+    `Here is what I heard: ${XL}${knownMetrics && !noMetrics ? `, measured today as ${q(lowerFirstIfCommon(clip(knownMetrics, 100)))}` : ''}${roleTxt ? `, and it sits with ${youRole}` : ''}. Have I got that right?`,
+    gaps.length ? `The open points are ${joinList(gaps.map((g) => lowerFirstIfCommon(g)))}. Who can I speak to about each one?` : `What should I have asked about ${critA} and did not?`,
+    CLOSE[dealStage] || CLOSE.discovery])}\n\n---\n\n`;
+  const objSection = v ? `## If you hear an objection\n\n${qs(v.objections.map((o) => `If you hear ${q(lowerFirstIfCommon(o.objection))}: ${o.response}`))}\n\n---\n\n` : '';
+
+  // what was not given, said once
+  const notGiven: string[] = [];
+  if (!prospectIndustry) notGiven.push('prospect_industry (the questions do not name a sector)');
+  if (!prospectRole) notGiven.push('prospect_role (there is no section for the person you meet)');
+  if (!knownPainPoints) notGiven.push('known_pain_points (the questions ask about the area, not about a pain)');
+  if (!yourSolution) notGiven.push('your_solution (there is no section on what it covers)');
+  const notGivenLine = notGiven.length ? `**Not given:** ${notGiven.join('; ')}. Add them to use them in the list.\n\n` : '';
 
-  // MEDDPICC Questions
-  const meddpiccQuestions = `
-## MEDDPICC Framework Questions
-
-### M: Metrics
-*What are the quantified goals or benefits the customer expects?*
-
-**Initial Discovery:**
-- "What metrics does your team get measured on?"
-- "If this problem was solved, what would improve?"
-- "How much time/money is this problem costing you today?"
-
-**Deepening:**
-- "How did you arrive at that number?"
-- "Who else is impacted by these metrics?"
-- "What happens to your goals if you don't address this?"
-
-${metricsFollowUp}
-
----
-
-### E: Economic Buyer
-*Who has the final authority to approve the spend?*
-
-**Identification:**
-- "Who has final sign-off on an investment like this?"
-- "Walk me through your approval process for new vendors."
-- "When you've made purchases like this before, who was involved?"
-
-**Engagement:**
-- "What would ${signer} need to see to move forward?"
-- "How is ${signer} thinking about this problem?"
-- "Can we include ${signer} in our next conversation?"
-
----
-
-### D: Decision Criteria
-*What are the formal requirements for making a decision?*
-
-**Understanding:**
-- "What criteria will you use to evaluate solutions?"
-- "What's most important to you in making this decision?"
-- "Are there must-haves vs nice-to-haves?"
-
-**Influencing:**
-- "Have you considered ${critA} as a criterion?"
-- "How important is ${critB} in your evaluation?"
-- "What would cause you to eliminate a vendor?"
-
----
-
-### D: Decision Process
-*What is the process for making and approving the decision?*
-
-**Mapping:**
-- "Can you walk me through your typical buying process?"
-- "What steps happen between now and signing?"
-- "Who needs to be involved at each stage?"
-
-**Timing:**
-- "When do you need to make a decision by?"
-- "What's driving that timeline?"
-- "What happens if the decision is delayed?"
-
----
-
-### P: Paper Process
-*What is the formal process for getting contracts signed?*
-
-**Understanding:**
-- "What does your procurement process look like?"
-- "How long does legal review typically take?"
-- "Are there security or compliance reviews required?"
-
-**Preparing:**
-- "Can we start the paperwork in parallel?"
-- "What documents do you need from us?"
-- "Who in procurement should I connect with?"
-
----
-
-### I: Identify Pain
-*What are the business problems driving the initiative?*
-
-**Surface Level:**
-- "What prompted you to look at solutions like this?"
-- "What's not working today?"
-- "If you do nothing, what happens?"
-
-**Deepening:**
-${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "${painLead ? `You mentioned ${q(painLead)}` : 'You described the pain in the context above'}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
-- "Who else in the organization feels this pain?"
-
----
-
-### C: Champion
-*Who will sell internally on your behalf?*
-
-**Identification:**
-- "Who else in your organization sees this as a priority?"
-- "Who would benefit most from solving this problem?"
-- "Who's driven similar changes before?"
-
-**Testing:**
-- "If I gave you a compelling business case, would you share it with ${signer}?"
-- "What obstacles do you see, and would you help me address them?"
-- "Can you help me understand the internal dynamics?"
-
----
-
-### C: Competition
-*What alternatives are being considered?*
-
-**Direct:**
-- "Who else are you evaluating?"
-- "Have you looked at building this internally?"
-- "What's the option of doing nothing?"
-
-**Positioning:**
-- "What do you like about the way you handle this today?"
-- "What concerns do you have about the options you are looking at?"
-- "How are you thinking about the differences between options?"`;
-
-  // BANT Questions
-  const bantQuestions = `
-## BANT Framework Questions
-
-### B: Budget
-*Is there budget allocated for this initiative?*
-
-**Discovery:**
-- "Is there budget allocated for solving this problem?"
-- "What's your typical investment for solutions in this area?"
-- "How does budget get approved for new initiatives?"
-
-**Qualifying:**
-- "If you saw the right solution, is budget available this quarter?"
-- "What budget range are you working within?"
-- "Who controls the budget for this type of purchase?"
-
----
-
-### A: Authority
-*Does this person have the authority to buy?*
-
-**Understanding:**
-- "Who typically makes decisions on investments like this?"
-- "What's your role in the evaluation process?"
-- "Who else needs to be involved in this decision?"
-
-**Navigating:**
-- "Can you help me understand the approval chain?"
-- "Would it make sense to include ${signer} in our conversation?"
-- "What would you need to recommend us internally?"
-
----
-
-### N: Need
-*Is there a genuine business need?*
-
-**Validating:**
-- "What's driving your interest in solving this now?"
-- "How does this rank among your team's priorities?"
-- "What happens if you don't address this?"
-
-**Quantifying:**
-- "What's the cost of the current situation?"
-- "How many people/processes are affected?"
-- "What would solving this mean for your goals?"
-
----
-
-### T: Timeline
-*When do they need to make a decision?*
-
-**Understanding:**
-- "When do you need this solution in place?"
-- "What's driving that timeline?"
-- "What happens if the timeline slips?"
-
-**Creating Urgency:**
-- "Is there an event or deadline creating urgency?"
-- "When does budget need to be used by?"
-- "What are the consequences of waiting?"`;
-
-  // SPICED Questions
-  const spicedQuestions = `
-## SPICED Framework Questions
-
-### S: Situation
-*What is the prospect's current state?*
-
-**Understanding:**
-- "Help me understand your current setup."
-- "How are you handling this today?"
-- "Who's involved in this process currently?"
-
-**Context:**
-- "How has this evolved over time?"
-- "What's worked and what hasn't?"
-- "What tools/processes are in place today?"
-
----
-
-### P: Pain
-*What problems are they experiencing?*
-
-**Surface:**
-- "What's frustrating about the current situation?"
-- "What would you change if you could?"
-- "Where do things break down?"
-
-**Impact:**
-${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "${painLead ? `You mentioned ${q(painLead)}` : 'You described the pain in the context above'}. How does that affect your team's performance?"` : '- "How is this problem affecting your team?"'}
-- "What's the ripple effect of this issue?"
-- "How much time/money does this cost?"
-
----
-
-### I: Impact
-*What is the business impact of the pain?*
-
-**Quantifying:**
-- "If you could solve this, what would improve?"
-- "What would success look like in a year?"
-- "How would you measure the impact?"
-
-**Expanding:**
-- "Who else benefits when this is solved?"
-- "How does this affect your company's goals?"
-- "What becomes possible once this is fixed?"
-
----
-
-### C: Critical Event
-*What's creating urgency?*
-
-**Identifying:**
-- "What's happening that makes this important now?"
-- "Is there a deadline or event driving this?"
-- "What happens if this isn't solved by the end of the quarter?"
-
-**Leveraging:**
-- "What would the impact be of missing that deadline?"
-- "How does this fit with your planning cycle?"
-- "What's the cost of delay?"
-
----
-
-### E: Event (or Expected Decision Process)
-*How will they make the decision?*
-
-**Process:**
-- "Walk me through how you'll evaluate options."
-- "What criteria matter most to you?"
-- "Who needs to be involved in this decision?"
-
-**Timeline:**
-- "What's your target timeline for a decision?"
-- "What could speed up or slow down the process?"
-- "What do you need from us to move forward?"
-
----
-
-### D: Decision Criteria
-*What factors will drive the decision?*
-
-**Understanding:**
-- "What matters most in making this decision?"
-- "What would cause you to choose one vendor over another?"
-- "Are there any deal-breakers we should know about?"
-
-**Influencing:**
-- "How important is ${critA} to you?"
-- "Have you considered ${ctx.v ? sectorMetrics[0] : 'the measure you will judge the result by'} as a criterion?"
-- "What's the weighting between price and value?"`;
-
-  // Challenger Questions
-  const challengerQuestions = `
-## Challenger Sale Framework Questions
-
-### Teach: Share Insights
-*Lead with something the buyer had not seen about their own business*
-
-**Reframe Questions:**
-${painLead ? `- "You described ${q(painLead)}. Where does it start: before the work reaches your team, inside it, or at the handover?"` : '- "Where does the problem start: before the work reaches your team, inside it, or at the handover?"'}
-- "Which of the numbers you track${ctx.v ? ` (${sectorMetrics.slice(0, 3).join(', ')})` : ''} would move first if this were fixed?"
-- "What would you have to believe for this not to be worth fixing this year?"
-
-**Insight starters (use only what you can show):**
-- If you hold data on ${ctx.v ? sectorMetrics[0] : 'the measure that matters'} across your customers, open with the pattern it shows, with its source and period.
-- If a customer's before-and-after exists${ctx.v ? ` (${proofOf(ctx.v)})` : ''}, tell it in two sentences and name what changed.
-- If you cannot show an insight, ask the question instead of stating one.
-
----
-
-### Tailor: Customize the Message
-*Connect insights to their specific situation*
-
-**Resonance Questions:**
-- "How does this match what you're seeing?"
-- "Where do you think this applies most in your organization?"
-- "What would this mean for your specific goals?"
-
-**Personalization:**
-- "Given your role${prospectRole ? ` as ${prospectRole}` : ''}, where do you see the biggest impact?"
-- "How would ${signer} react to this insight?"
-- "What's unique about your situation that we should factor in?"
-
----
-
-### Take Control: Guide the Process
-*Assertively lead the conversation and process*
-
-**Direction Setting:**
-- "Based on what I'm hearing, here's what I think we should do next..."
-- "The path forward I'd suggest is..."
-- "Let me suggest a different way to think about this..."
-
-**Constructive Tension:**
-- "I'm going to push back a bit on that assumption..."
-- "Have you stress-tested that approach?"
-- "What would need to be true for that to work?"`;
-
-  // Gap Selling Questions
-  const gapSellingQuestions = `
-## Gap Selling Framework Questions
-
-### Current State
-*Deep understanding of where they are today*
-
-**Process:**
-- "Walk me through exactly how you do this today."
-- "Who's involved at each step?"
-- "What tools and systems are you using?"
-
-**Performance:**
-- "How is that working for you? (Scale 1-10)"
-- "What's the gap between where you are and where you want to be?"
-- "How long has it been this way?"
-
----
-
-### Future State
-*Vision of where they want to be*
-
-**Goals:**
-- "What would ideal look like?"
-- "If we fast-forward a year, what's different?"
-- "What does success look like for you personally?"
-
-**Specifics:**
-- "How would you measure that success?"
-- "What capabilities do you need that you don't have today?"
-- "What's the timeline for achieving that future state?"
-
----
-
-### The Gap
-*Quantify the difference between current and future*
-
-**Impact:**
-- "What's the cost of staying in the current state?"
-- "What opportunities are you missing?"
-- "How does this gap affect your team/company?"
-
-**Urgency:**
-- "How much is this gap costing you per month/quarter/year?"
-- "What's the risk of not closing this gap?"
-- "Who else feels the pain of this gap?"
-
----
-
-### Problems Behind the Problems
-*Uncover root causes*
-
-**Root Cause:**
-- "Why do you think this problem exists?"
-- "What's preventing you from solving it internally?"
-- "What have you tried before? Why didn't it work?"
-
-**Technical Debt:**
-- "What decisions from the past are creating problems now?"
-- "What would you do differently if starting from scratch?"
-- "What constraints are you working within?"`;
-
-  // Build output based on framework selection
   let output = `# Discovery Question Bank
 
 ## Context
-- **Prospect Industry:** ${prospectIndustry || 'Not specified'}
-- **Contact Role:** ${prospectRole || 'Not specified'}
+- **Prospect Industry:** ${prospectIndustry || 'not given'}
+- **Contact Role:** ${prospectRole || 'not given'}
 - **Deal Stage:** ${dealStage.replace(/_/g, ' ')}
-- **Your Solution:** ${(args.your_solution as string) || NOT_SUPPLIED}
-${knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}` : ''}
-${knownMetrics ? `- **Known Metrics:** ${knownMetrics}` : ''}
-${gapsToFill ? `- **Information Gaps:** ${gapsToFill}` : ''}
-
-${ctx.line}
+- **Solution:** ${yourSolution || 'not given'}
+${knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}\n` : ''}${knownMetrics ? `- **Known Metrics:** ${knownMetrics}\n` : ''}${gapsToFill ? `- **Information Gaps:** ${gapsToFill}\n` : ''}
+${notGivenLine}${ctx.line}
 
 ---
 
-${gapSection}${roleSection}${sectorSection}${painSection}${partSection}`;
+${openSection}${gapSection}${roleSection}${sectorSection}${painSection}${partSection}`;
 
-  if (framework === 'meddpicc' || framework === 'all') {
-    output += meddpiccQuestions + '\n\n---\n\n';
-  }
-  if (framework === 'bant' || framework === 'all') {
-    output += bantQuestions + '\n\n---\n\n';
-  }
-  if (framework === 'spiced' || framework === 'all') {
-    output += spicedQuestions + '\n\n---\n\n';
-  }
-  if (framework === 'challenger' || framework === 'all') {
-    output += challengerQuestions + '\n\n---\n\n';
-  }
-  if (framework === 'gap_selling' || framework === 'all') {
-    output += gapSellingQuestions + '\n\n---\n\n';
-  }
-
-  // Stage-specific recommendations
-  const area = painLead || (brief.kind ? lowerFirstIfCommon(brief.kind) : 'this area');
-  const stageRecommendations: Record<string, string> = {
-    first_call: `
-## First Call Recommendations
-
-**Focus Areas:**
-1. Build rapport and establish credibility
-2. Understand their world before pitching
-3. Identify pain and quantify impact
-4. Determine if there's a fit
-
-**Questions to Prioritize:**
-- "What prompted you to take this meeting?"
-- "What's your biggest challenge in ${area}?"
-- "If you could wave a magic wand, what would change?"
-
-**Avoid:**
-- Pitching too early
-- Yes/no questions
-- Talking more than the buyer does`,
-
-    discovery: `
-## Discovery Stage Recommendations
-
-**Focus Areas:**
-1. Deep-dive into pain and impact${painLead ? ` (start with ${q(painLead)})` : ''}
-2. Identify all stakeholders${ctx.v ? ` (${ctx.v.buyerRoles.slice(0, 4).join(', ')} are the usual ones in ${ctx.v.name})` : ''}
-3. Understand buying process
-4. Quantify business case${ctx.v ? ` (${sectorMetrics.slice(0, 3).join(', ')})` : ''}
-
-**Questions to Prioritize:**
-- Pain quantification questions
-- Stakeholder mapping questions
-- Process and timeline questions
-
-**Key Outcome:**
-Leave with clear understanding of the business case and path to decision`,
-
-    deep_dive: `
-## Deep Dive Recommendations
-
-**Focus Areas:**
-1. Technical requirements
-2. Integration needs
-3. Success criteria
-4. Risk factors
-
-**Questions to Prioritize:**
-- Technical validation questions
-- Implementation concerns
-- Success metrics definition
-
-**Key Outcome:**
-Technical fit confirmed, implementation path clear`,
-
-    technical: `
-## Technical Discovery Recommendations
-
-**Focus Areas:**
-1. Current architecture
-2. Integration requirements
-3. Security and compliance
-4. Performance needs
-
-**Questions to Prioritize:**
-- "What's your current tech stack?"
-- "What systems would this need to integrate with?"
-- "What are your security requirements?"
-- "What's your deployment preference?"
-
-**Key Outcome:**
-Technical validation complete, architecture approved`,
-
-    executive: `
-## Executive Meeting Recommendations
-
-**Focus Areas:**
-1. Business impact and ROI
-2. Strategic alignment
-3. Risk mitigation
-4. Decision authority
-
-**Questions to Prioritize:**
-- "How does this fit with your strategic priorities?"
-- "What would success mean for the business?"
-- "What concerns would we need to address?"
-
-**Key Outcome:**
-Executive sponsorship and path to decision`
-  };
-
-  output += stageRecommendations[dealStage] || stageRecommendations['discovery'];
-
-  output += `
-
----
-
-## Pro Tips
-
-**Active Listening:**
-1. **Wait 3 seconds** after they finish before responding
-2. **Summarize** what you heard to confirm understanding
-3. **Go deeper**: "Tell me more about that"
-4. **Take notes**: Show you're capturing what matters
-
-**Question Sequencing:**
-1. **Open** with broad questions (situation)
-2. **Narrow** to specific pains
-3. **Quantify** the impact
-4. **Expand** to organizational impact
-5. **Confirm** understanding
-
-**Red Flags to Probe:**
-- "We're just looking" → "What triggered the looking?"
-- "No budget" → "If ROI was clear, would budget become available?"
-- "Happy with current vendor" → "What would ideal look like?"
-
----
-
-*Use these questions as a guide, not a script. Listen more than you talk.*
-
-${SUGGESTIONS_FOOTER}`;
-
+  if (framework === 'meddpicc' || framework === 'all') output += meddpicc + '\n\n---\n\n';
+  if (framework === 'bant' || framework === 'all') output += bant + '\n\n---\n\n';
+  if (framework === 'spiced' || framework === 'all') output += spiced + '\n\n---\n\n';
+  if (framework === 'challenger' || framework === 'all') output += challenger + '\n\n---\n\n';
+  if (framework === 'gap_selling' || framework === 'all') output += gapSelling + '\n\n---\n\n';
+  output += `${closeSection}${objSection}${v ? `${sectorNotes(v, 'committee')}\n\n` : ''}${SUGGESTIONS_FOOTER}`;
   return output;
 }
 
@@ -3200,245 +2794,184 @@ function alternativesIn(details: string, competitorWon: string): AltRead[] {
   return out;
 }
 
+// Run 21c (draft rewrite): the answer is now a finished short write-up built from the deal inputs (the headline, the deal facts, the
+// stated reason read against the sector's usual reasons, the people with the positions the user gave, the alternatives the buyer weighed),
+// followed by what the outcome and the reason would add when they are missing, the questions for the review call, the sector notes and the
+// inputs as given. Nothing is concluded that an input does not say. No placeholder is printed: a missing input is named once, in one line.
+const WL_COMMON = /^(?:already|their|there|about|which|would|these|those|being|other|still|because|should|could|where|while|using|every|first)$/;
+function wlWords(s: string): string[] { return s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 5 && !WL_COMMON.test(w)); }
+
 function executeWinLossAnalyzer(args: Record<string, unknown>): string {
   const analysisType = (args.analysis_type as string) || 'single_deal';
   const dealOutcome = (args.deal_outcome as string) || '';
-  const dealDetails = (args.deal_details as string) || '';
-  const lossReason = (args.loss_reason as string) || '';
-  const competitorWon = (args.competitor_won as string) || '';
+  const dealDetails = ((args.deal_details as string) || '').trim();
+  const lossReason = ((args.loss_reason as string) || '').trim();
+  const competitorWon = ((args.competitor_won as string) || '').trim();
   const dealValue = (args.deal_value as number) || 0;
   const salesCycleDays = (args.sales_cycle_days as number) || 0;
   const stakeholdersInvolved = (args.stakeholders_involved as string) || '';
-  const yourSolution = (args.your_solution as string) || 'your solution';
-  const multipleDeals = (args.multiple_deals as string) || '';
+  const yourSolution = (args.your_solution as string) || '';
+  const multipleDeals = ((args.multiple_deals as string) || '').trim();
   // Run 19 D80 (problem 3): the stated reason and the stakeholders are read, not only echoed.
   const wlCtx = readContext(undefined, { seller: [yourSolution], context: [dealDetails, lossReason, stakeholdersInvolved, multipleDeals] });
-  const brief = solutionBrief(args.your_solution ? yourSolution : '');
-  const P = brief.short || 'your solution';
-  const bctx: BlockerContext = { product: brief.short, sectorObjections: wlCtx.v?.objections, sectorName: wlCtx.v?.name, model: wlCtx.model };
+  const brief = solutionBrief(yourSolution);
+  const P = brief.short || 'the solution';
+  const v = wlCtx.v;
   const investment = wlCtx.model === 'investment';
   const contacts = parseContacts(stakeholdersInvolved, investment);
   const alts = alternativesIn(dealDetails, competitorWon);
-  const people = splitItems(stakeholdersInvolved).map((x) => {
-    const m = x.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-    return m ? { who: m[1].trim(), stance: m[2].trim().toLowerCase() } : { who: x.trim(), stance: '' };
-  });
+  const isPortfolio = analysisType === 'deal_portfolio' || analysisType === 'loss_pattern';
+  const days = (n: number) => `${n.toLocaleString('en-US')} ${n === 1 ? 'day' : 'days'}`;
+  const full = (t: string) => `${t.trim().replace(/[.!?]+$/, '')}.`;
+  const named = competitorWon && !/^(?:no decision|none|nobody|n\/a)\.?$/i.test(competitorWon) ? competitorWon : '';
   const against = contacts.filter((p) => tagKind(p.tag) === 'blocker');
-  const support = contacts.filter((p) => tagKind(p.tag) === 'champion');
-  const r = lossReason.toLowerCase();
-  const readings: string[] = [];
-  if (/bundle|one vendor|single vendor|suite|together|all-in-one/.test(r)) readings.push('**Bundle loss:** the buyer preferred one vendor for more than your product covers. Ask whether you could have partnered for the missing part, or qualified out earlier.');
-  if (/\b(hr|it|finance|procurement|legal|operations|security)\b.*\b(owned|decided|led|chose)|\b(owned|led) the decision/.test(r)) readings.push('**The decision sat with another function:** the stated reason says a team you did not sell to made the call. Map who owns the budget and the decision in the first two meetings next time.');
-  if (/price|cost|budget|expensive|cheaper|discount/.test(r)) readings.push('**Price or budget:** check whether the value case was agreed in the buyer\'s own numbers before price came up.');
-  if (/feature|product|capabilit|missing|gap|integrat/.test(r)) readings.push('**Product or fit gap:** decide whether the gap was real or a demonstration problem, and whether the requirement could have been shaped earlier.');
-  if (/timing|priority|later|next year|freeze|no decision/.test(r)) readings.push('**Timing or priority:** look for the event that would have made this urgent, and whether the status quo was acceptable to them.');
-  if (/relationship|incumbent|existing|renew|stayed/.test(r)) readings.push('**Incumbent advantage:** the buyer stayed with what they know. Ask what the incumbent fixed or promised during your evaluation.');
-  const readingBlock = lossReason ? `### What the Stated Reason Points To\n\n${readings.length ? readings.join('\n\n') : `The stated reason (${q(lossReason)}) matches none of the usual patterns: ask the buyer what sat behind it.`}\n\n` : '';
-  const execNamed = contacts.some((p) => p.level === 'exec' || p.level === 'head');
-  const ebNamed = contacts.some((p) => ['economic', 'buyer'].includes(tagKind(p.tag) || '') || /\b(cfo|ceo|coo|cio|cto|ciso|chief|economic buyer|budget)\b/i.test(p.title));
-  const yesNo = (v: boolean | null, why: string) => (v === null ? `Not known from your input: check (${why})` : v ? `Yes (from your input: ${why})` : `No (from your input: ${why})`);
+  const backing = contacts.filter((p) => tagKind(p.tag) === 'champion' || /support/.test(p.tag || ''));
+  const deciders = contacts.filter((p) => ['economic', 'buyer'].includes(tagKind(p.tag) || ''));
+  const untagged = contacts.filter((p) => !p.tag);
+  const hasV = hasValue(args.deal_value), hasD = hasValue(args.sales_cycle_days);
 
-  // ---- sections shared by every analysis type ----
-  const gave = [
-    `| **Solution** | ${args.your_solution ? `${brief.short}${brief.kind ? `, ${brief.kind}` : ''}` : NOT_SUPPLIED} |`,
-    `| **Deal Value** | ${hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED} |`,
-    `| **Sales Cycle** | ${hasValue(args.sales_cycle_days) ? `${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}` : NOT_SUPPLIED} |`,
-    `| **Outcome** | ${dealOutcome ? upperFirst(dealOutcome.replace(/_/g, ' ')) : 'not given'} |`,
-    `| **Stated reason** | ${lossReason ? cap(lossReason) : 'not given'} |`,
-    `| **Competitor who won** | ${competitorWon ? cap(competitorWon) : 'not given'} |`,
-    `| **Stakeholders** | ${contacts.length ? contacts.map((c) => c.raw).join('; ') : 'not given'} |`,
-  ].join('\n');
-  const detailsBlock = dealDetails ? `\n**Deal details as you gave them:**\n\n> ${dealDetails.replace(/\n+/g, '\n> ')}\n` : '';
-  const wholeProduct = args.your_solution && yourSolution.trim().length > P.length + 3 ? `\n**What you sell, as you described it:** ${yourSolution.trim()}\n` : '';
+  // ---- the line that names what is missing, once ----
+  const notGiven: string[] = [];
+  if (!args.your_solution) notGiven.push('the solution (`your_solution`; the write-up says "the solution")');
+  if (!dealOutcome && !isPortfolio) notGiven.push('the outcome (`deal_outcome`)');
+  if (!lossReason && dealOutcome !== 'won' && !isPortfolio) notGiven.push('the stated reason (`loss_reason`)');
+  if (!competitorWon && (dealOutcome === 'won' || dealOutcome === 'lost') && !isPortfolio) notGiven.push('the competitor (`competitor_won`)');
+  if (!hasV) notGiven.push('the deal value (`deal_value`)');
+  if (!hasD) notGiven.push('the sales cycle (`sales_cycle_days`)');
+  if (!contacts.length) notGiven.push('the stakeholders (`stakeholders_involved`)');
+  if (!dealDetails && !isPortfolio) notGiven.push('the deal details (`deal_details`)');
+  if (isPortfolio && !multipleDeals) notGiven.push('the deals (`multiple_deals`)');
+  const notGivenLine = notGiven.length ? `Not given: ${joinList(notGiven)}. The write-up says what it can from the rest.\n\n` : '';
 
-  const missing: string[] = [];
-  if (!dealOutcome) missing.push('`deal_outcome`: won, lost or no_decision. This decides which analysis applies, so it is the first thing to add.');
-  if (dealOutcome !== 'won' && !lossReason) missing.push('`loss_reason`: the reason the buyer gave, in the buyer\'s own words, and who said it. For a win, put the reason they gave for choosing you in `deal_details`.');
-  if (!competitorWon) missing.push(`\`competitor_won\`: which alternative the buyer chose${alts.length ? ` (you described ${joinList(alts.map((a) => `"${a.text}"`))})` : ''}, or "no decision" if they chose none.`);
-  if (contacts.length && !contacts.some((c) => c.tag)) missing.push('The position of each stakeholder in brackets after the name, for example "' + `${contacts[0].title} (supporter)` + '" or "(against)".');
-  if (!contacts.length) missing.push('`stakeholders_involved`: who took part, with a position for each in brackets, for example "CFO (neutral)".');
-  if (!hasValue(args.sales_cycle_days)) missing.push('`sales_cycle_days`: how long the deal ran, and in `deal_details` the stage where it was decided.');
-  const asks = missing.length ? `## What to add to finish the analysis\n\n${missing.map((m, i) => `${i + 1}. ${m}`).join('\n')}\n\nThen run the tool again with \`analysis_type\` set to \`single_deal\`.\n\n` : '';
-
-  const altBlock = alts.length ? `## The alternatives in this deal\n\nThese come from your ${competitorWon ? 'competitor_won and ' : ''}deal details. None of them is called a winner here: you have not said which one the buyer chose.\n\n| Alternative | What kind it is | Why a buyer keeps it | What to find out in the review |\n|---|---|---|---|\n${alts.map((a) => `| ${cap(a.text)} | ${a.label} | ${cap(a.why)} | ${a.check} |`).join('\n')}\n\n` : '';
-
-  const reasonRows = wlCtx.v ? wlCtx.v.objections.map((o) => `| ${o.objection} | ${o.response} |`).join('\n') : '';
-  const sectorBlock = wlCtx.v ? `## Why deals like this are usually lost in ${wlCtx.v.name}\n\nThese are the objections this sector most often raises (from the sector notes in this tool, not from your deal). Check each against the deal: was it raised, by whom, and was it answered before the proposal?\n\n| Usual reason | Pattern of a good answer |\n|---|---|\n${reasonRows}\n\n**How deals usually run:** ${wlCtx.v.salesMotion}\n\n**What this sector measures** (ask which of these the buyer used to judge the result): ${wlCtx.v.metrics.join(', ')}.\n\n` : '';
-
-  const learn = (c: Contact): string => {
-    const k = tagKind(c.tag);
-    if (k === 'blocker') return 'What did they need that you did not give them, and when did they turn against you?';
-    if (k === 'champion') return 'Did they have the power and the material to sell this internally, and what did they say when the decision was made?';
-    if (k === 'economic' || k === 'buyer') return 'Did they ever hear your case from you directly, or only through someone else?';
-    return roleFor(c.title, investment).questions[0];
-  };
-  const peopleBlock = contacts.length ? `## Who was involved\n\n| Stakeholder | Position you recorded | What to learn in the review |\n|---|---|---|\n${contacts.map((c) => `| ${cap(c.title)} | ${c.tag ? cap(c.tag) : 'not recorded'} | ${learn(c)} |`).join('\n')}\n\n${(() => {
-    const note: string[] = [];
-    if (!support.length) note.push('No champion is recorded. If there was none, that is a finding in itself; if there was one, name them.');
-    if (against.length) note.push(`Against you: ${against.map((p) => p.title).join(', ')}. Their view is the first thing to learn in the loss review.`);
-    if (wlCtx.v) {
+  // ---- the write-up ----
+  const para: string[] = [];
+  const solutionSentence = args.your_solution
+    ? (yourSolution.trim().length > P.length + 3 ? `What was sold: ${full(yourSolution)}` : `What was sold: ${P}.`)
+    : '';
+  const sizeSentence = hasV && hasD ? `The deal was worth ${money(dealValue)} and ran ${days(salesCycleDays)}.` : hasV ? `The deal was worth ${money(dealValue)}.` : hasD ? `The deal ran ${days(salesCycleDays)}.` : '';
+  if (isPortfolio) {
+    const deals = splitItems(multipleDeals);
+    const kind = (d: string) => (/\bno[ _-]?decision\b/i.test(d) ? 'nd' : /\b(?:lost|loss)\b/i.test(d) ? 'lost' : /\b(?:won|win)\b/i.test(d) ? 'won' : 'open');
+    const n = { won: 0, lost: 0, nd: 0, open: 0 };
+    deals.forEach((d) => { n[kind(d) as 'won' | 'lost' | 'nd' | 'open']++; });
+    if (deals.length) {
+      const counts = [`${n.won} won`, `${n.lost} lost`, `${n.nd} no decision`, n.open ? `${n.open} with no outcome written` : ''].filter(Boolean);
+      para.push(`**The deals you listed.** You listed ${deals.length} deal${deals.length === 1 ? '' : 's'}: ${counts.join(', ')}. These are counts of your own lines, not a benchmark.\n\n${deals.map((d) => `- ${d}`).join('\n')}`);
+      if (n.won + n.lost + n.nd > 0 && n.won + n.lost > 0) para.push(`**Win rate on these lines.** Of the ${n.won + n.lost} deals marked won or lost, ${n.won} ${n.won === 1 ? 'was' : 'were'} won.`);
+    } else {
+      para.push(`**The deals.** No deals were listed, so there is nothing to count. The write-up below covers ${P} from the deal inputs that were given.`);
+    }
+    if (solutionSentence) para.push(`**What was sold.** ${solutionSentence.replace(/^What was sold: /, '')}`);
+    if (sizeSentence) para.push(`**The deal facts you gave.** ${sizeSentence}`);
+    if (named) para.push(`**Who won.** You named ${named} as the competitor who won.`);
+    if (dealDetails) para.push(`**Deal notes.** In your words:\n\n> ${dealDetails.replace(/\n+/g, '\n> ')}`);
+  } else {
+    // the headline
+    const withWho = (a: string, b: string) => (named ? a : b);
+    if (dealOutcome === 'lost') para.push(`**${upperFirst(P)} lost this deal${withWho(` to ${named}`, '')}.** ${sizeSentence}`.trim());
+    else if (dealOutcome === 'won') para.push(`**${upperFirst(P)} won this deal${withWho(`, ahead of ${named}`, '')}.** ${sizeSentence}`.trim());
+    else if (dealOutcome === 'no_decision') para.push(`**This deal ended with no decision.** ${sizeSentence}`.trim());
+    else if (dealOutcome === 'mixed') para.push(`**You marked this outcome as mixed.** Split the deals into won, lost and no_decision and run the tool for each, or use \`deal_portfolio\` with a summary in \`multiple_deals\`. ${sizeSentence}`.trim());
+    else para.push(`**The deal.** ${args.your_solution ? `${P} was in this deal.` : 'No facts about the deal itself were given.'} ${sizeSentence}`.trim());
+    if (solutionSentence && (dealOutcome || brief.kind || yourSolution.length > P.length + 3)) para.push(solutionSentence);
+    if (dealDetails) para.push(`**Deal notes.** In your words:\n\n> ${dealDetails.replace(/\n+/g, '\n> ')}`);
+    // the reason
+    if (dealOutcome === 'lost' && lossReason) {
+      const rw = wlWords(lossReason);
+      const overlapN = (o: { objection: string }) => wlWords(o.objection).filter((w) => rw.some((x) => x.slice(0, 5) === w.slice(0, 5))).length;
+      const near = v ? v.objections.map((o) => ({ o, n: overlapN(o) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 1).map((x) => x.o) : [];
+      const r = lossReason.toLowerCase();
+      const readings: string[] = [];
+      if (/bundle|one vendor|single vendor|suite|together|all-in-one/.test(r)) readings.push('A bundle loss: the buyer preferred one vendor for more than your product covers. Ask whether you could have partnered for the missing part, or qualified out earlier.');
+      if (/\b(hr|it|finance|procurement|legal|operations|security)\b.*\b(owned|decided|led|chose)|\b(owned|led) the decision/.test(r)) readings.push('The decision sat with another function: a team you did not sell to made the call. Map who owns the budget and the decision in the first two meetings next time.');
+      if (/price|cost|budget|expensive|cheaper|discount/.test(r)) readings.push('Price or budget: check whether the value case was agreed in the buyer\'s own numbers before price came up.');
+      if (/feature|product|capabilit|missing|gap|integrat/.test(r)) readings.push('A product or fit gap: decide whether the gap was real or a demonstration problem, and whether the requirement could have been shaped earlier.');
+      if (/timing|priority|later|next year|freeze|no decision/.test(r)) readings.push('Timing or priority: look for the event that would have made this urgent, and whether the status quo was acceptable to them.');
+      if (/relationship|incumbent|existing|renew|stayed/.test(r)) readings.push('Incumbent advantage: the buyer stayed with what they know. Ask what the incumbent fixed or promised during your evaluation.');
+      let text = `**The stated reason.** The reason the buyer gave, in the words you recorded: ${q(lossReason)}.`;
+      if (near.length) text += ` ${near.length === 1 ? 'It is close to a usual objection' : 'It is close to usual objections'} in ${v!.name}: ${joinList(near.slice(0, 2).map((o) => q(o.objection)))}. The pattern of an answer that tends to work there: ${lowerFirstIfCommon(near[0].response)}`;
+      para.push(text);
+      para.push(`**What the reason points to.**\n\n${readings.length ? readings.map((x) => `- ${x}`).join('\n') : `- The reason matches none of the usual patterns, so ask the buyer what sat behind it.`}`);
+    } else if (lossReason) {
+      para.push(`**The reason you gave.** ${q(lossReason)}.`);
+    } else if (dealOutcome === 'won' && dealDetails) {
+      const why = sentences(dealDetails).find((s) => /\b(?:chose|choose|picked|selected|because|decid\w+|reason|won|after)\b/i.test(s) && !/hypothetical/i.test(s));
+      if (why) para.push(`**Why it was won.** The reason in your notes: ${q(why)}. Check it with the buyer and write down their own words.`);
+    }
+    // the alternatives
+    if (alts.length) {
+      const list = alts.some((a) => /,/.test(a.text)) ? alts.map((a) => a.text).join('; ') : joinList(alts.map((a) => a.text));
+      const onlyNamed = alts.every((a) => a.named);
+      const label = dealOutcome === 'lost' && named ? (onlyNamed ? `The buyer chose ${named}.` : `The buyer compared ${P} with ${list}, and chose ${named}.`) : `The buyer compared ${P} with ${list}.`;
+      const each = alts.map((a) => a.named
+        ? `- **${cap(a.text)}** is the competitor you named. ${dealOutcome === 'won' ? `Ask the buyer what ${a.text} did better, in their own words, and at which stage ${P} pulled ahead.` : `Ask the buyer what it did better, in their own words, and at which stage it pulled ahead.`}`
+        : `- **${cap(a.text)}** is ${a.label}. A buyer keeps it when ${a.why}. ${P} can win against it ${a.win}. Ask the buyer: ${a.check}`);
+      para.push(`**What the buyer weighed.** ${label}\n\n${each.join('\n')}`);
+    } else if (named) {
+      para.push(`**What the buyer weighed.** The buyer compared ${P} with ${named}. Ask the buyer what ${named} did better, in their own words, and at which stage it pulled ahead.`);
+    }
+  }
+  // the people
+  if (contacts.length) {
+    const groups: string[] = [];
+    if (backing.length) groups.push(`Backing ${P}: ${joinList(backing.map((c) => c.title))}.`);
+    if (against.length) groups.push(`Against: ${joinList(against.map((c) => c.title))}.`);
+    if (deciders.length) groups.push(`Recorded as the buyer: ${joinList(deciders.map((c) => c.title))}.`);
+    if (!contacts.some((c) => c.tag)) groups.push('No position was recorded for any of them.');
+    else if (!backing.length) groups.push('No champion is recorded.');
+    let notNamedLine = '';
+    if (v) {
       const ACR: Record<string, string> = { cfo: 'financial', coo: 'operating', cio: investment ? 'investment' : 'information', cto: 'technology', ciso: 'security', cmo: 'marketing', cro: 'revenue' };
-      const sig = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ACR[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director'].includes(w));
+      const sig = (t: string) => t.toLowerCase().split(/[^a-z0-9]+/).map((w) => ACR[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director'].includes(w));
       const given = new Set(contacts.flatMap((c) => sig(c.title)));
-      const notNamed = wlCtx.v.buyerRoles.filter((role) => !sig(role).some((w) => given.has(w)));
-      if (notNamed.length) note.push(`Roles this sector usually involves that you did not list: ${joinList(notNamed.slice(0, 4))}. Were they part of the deal, and what did they think?`);
+      const notNamed = v.buyerRoles.filter((role) => !sig(role).some((w) => given.has(w)));
+      if (notNamed.length) notNamedLine = ` Roles this sector usually involves that you did not list: ${joinList(notNamed.slice(0, 4))}. Were they part of the deal, and what did they think?`;
     }
-    return note.length ? note.map((n) => `- ${n}`).join('\n') + '\n\n' : '';
-  })()}` : '';
-
-  const engagement = contacts.length ? `### Engagement Assessment\n| Question | Check |\n|----------|-------|\n| Did we have an executive sponsor? | ${execNamed ? `Possibly: a senior role is named (${contacts.filter((p) => p.level === 'exec' || p.level === 'head').map((p) => p.title).join(', ')}); confirm they sponsored the deal` : 'Not known from your input: no senior role named'} |\n| Was economic buyer engaged? | ${ebNamed ? 'Possibly: a buyer is named in your input; confirm how often they were met' : 'Not known from your input: no economic buyer named'} |\n| Did we multi-thread? | ${yesNo(contacts.length >= 3 ? true : contacts.length ? false : null, `${contacts.length} stakeholder${contacts.length === 1 ? '' : 's'} named`)} |\n| Was there a true champion? | ${support.length ? `Possibly: ${support.map((p) => p.title).join(', ')} recorded as champion; test whether they had power and material` : 'Not known from your input: nobody recorded as supporter or champion'} |\n\n` : '';
-
-  const intro = (title: string) => `# ${title}: ${P}\n\n## What you gave\n\n| Item | Value |\n|---|---|\n${gave}\n${detailsBlock}${wholeProduct}\n${wlCtx.line}\n\n`;
-  const reviewQs = (extra: string[] = []) => {
-    const qs = [...extra];
-    if (hasValue(args.sales_cycle_days)) qs.push(`The deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}: which stage took longest, and was that the buyer's process or a stall you could have moved?`);
-    if (hasValue(args.deal_value)) qs.push(`The deal was worth ${money(dealValue)}: did the price or the size of the commitment come up as a reason, and who raised it?`);
-    if (wlCtx.v) qs.push(`Did the buyer judge the result on ${wlCtx.v.metrics.slice(0, 3).join(', ')} or on something else?`);
-    qs.push('What was the real reason (not only the stated one), and when did the deal actually turn?');
-    return qs.map((x, i) => `${i + 1}. ${x}`).join('\n');
-  };
-
-  if (analysisType === 'single_deal') {
-    let analysis = `${intro('Win/Loss Analysis: Single Deal')}${dealOutcome ? '' : `## What this analysis can and cannot say yet\n\nYou gave the deal context but not the outcome, so nothing below says why the deal was won or lost. It is the structure for the review, built from what you gave. Add the inputs listed at the end and run it again.\n\n`}---\n\n`;
-    if (dealOutcome === 'won') {
-      analysis += `## Win Analysis
-
-### Evidence in your inputs
-${[
-        contacts.length ? `- Stakeholders engaged: ${contacts.map((c) => c.raw).join('; ')}` : '- No stakeholders were given, so engagement cannot be judged.',
-        competitorWon ? `- Beat: ${competitorWon}` : '',
-        hasValue(args.sales_cycle_days) ? `- The deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}.` : '',
-      ].filter(Boolean).join('\n')}
-
-### What to replicate
-Ask the buyer which of these decided it, and write down their words:
-- The discovery that found the pain (${wlCtx.v ? `did it cover ${wlCtx.v.metrics.slice(0, 2).join(' and ')}?` : 'which questions mattered?'})
-- The people who backed you and what each of them gained
-- The proof that landed (${wlCtx.v ? proofOf(wlCtx.v) : 'which evidence did they quote back to you?'})
-
-### Questions for Win Review
-1. Why did they choose us over the alternatives${alts.length ? ` (${joinList(alts.map((a) => a.text))})` : ''}?
-2. What was the tipping point in the decision?
-3. What almost derailed the deal?
-4. What would they tell others considering us?
-5. What surprised them (good or bad)?
-
-`;
-    } else if (dealOutcome === 'lost') {
-      analysis += `## Loss Analysis
-
-### Why We Lost (Hypothesis)
-
-${lossReason ? `**Stated Reason:** ${lossReason}` : '**Stated Reason:** Not provided'}
-
-**Common Root Causes to Investigate:**
-${wlCtx.v ? wlCtx.v.objections.map((o) => `- ${o.objection}`).join('\n') : '- Price or budget\n- A gap in fit or product\n- Timing or priority\n- A champion who could not carry the decision\n- An incumbent the buyer knew better'}
-
-${readingBlock}${competitorWon ? `#### Competitive Loss\n- Why did ${competitorWon} win?\n- What did they offer that we didn't?\n- Did we position against their strengths?\n- Were evaluation criteria stacked against us?\n\n` : ''}${/price|cost|budget|expensive|cheaper|discount/.test(r) ? `#### Pricing/Budget Issues
-- Was the business case strong enough to justify investment?
-- Did we understand their budget constraints upfront?
-- Could we have structured the deal differently?
-- Did a competitor offer better terms or a discount?
-
-` : ''}${/feature|product|capabilit|missing|gap/.test(r) ? `#### Product/Feature Gap
-- Was this a real gap or perception issue?
-- Did we fail to demonstrate capability?
-- Was the evaluation criteria set against us?
-- Could we have changed the requirements?
-
-` : ''}${/timing|priority/.test(r) ? `#### Timing/Priority Issues
-- Was there a real compelling event?
-- Did priorities shift during the evaluation?
-- Could we have created more urgency?
-- Was the status quo acceptable to them?
-
-` : ''}### Loss Categories
-
-*Check first: set by this tool's rule (High when no stakeholders were given for Champion Failure, or when a competitor won for Competitive Loss; otherwise Medium). It is not a finding about your deal.*
-
-| Category | Check first | Investigation Needed |
-|----------|------------|---------------------|
-| **Champion Failure** | ${stakeholdersInvolved ? 'Medium' : 'High'} | Did we have a true champion? |
-| **Value Not Proven** | Medium | Was ROI quantified and believed? |
-| **Competitive Loss** | ${competitorWon ? 'High' : 'Medium'} | What did the competitor do better? |
-| **Product Gap** | Medium | Was this real or perceived? |
-| **Sales Execution** | Medium | Did we run the right process? |
-
-### Recovery Opportunity
-
-| Timeframe | Action | Goal |
-|-----------|--------|------|
-| Now | Request honest feedback call | Understand true reasons |
-| 30 days | Check in on implementation | Be helpful, stay relevant |
-| 90 days | Share relevant content/news | Stay top of mind |
-| 6 months | Explore if situation changed | New evaluation opportunity |
-
-`;
-    } else if (dealOutcome === 'no_decision') {
-      analysis += `## No-Decision Analysis
-
-### Why No Decision Happened
-
-**Common Causes:**
-1. **No compelling event**: Status quo was acceptable${alts.length ? ` (the buyer's status quo in your details: ${joinList(alts.map((a) => a.text))})` : ''}
-2. **Champion failure**: No one willing to drive change${support.length ? `; you recorded ${joinList(support.map((s) => s.title))} as champion, so ask what stopped them` : ''}
-3. **Budget reallocation**: Priorities shifted
-4. **Risk aversion**: Fear of change or failure
-5. **Evaluation fatigue**: Too long, lost momentum${hasValue(args.sales_cycle_days) ? ` (the deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'})` : ''}
-
-### Investigation Framework
-
-| Question | Purpose | Action |
-|----------|---------|--------|
-| Was there a real problem? | Validate need | Review discovery notes |
-| Did we have a champion? | Check internal support | Was anyone advocating? |
-| Was budget confirmed? | Verify funding | Did we talk to economic buyer? |
-| What created urgency? | Check compelling event | Was there a deadline? |
-| What happened to momentum? | Find stall point | When did engagement drop? |
-
-### No-Decision Recovery
-
-| Timeframe | Action |
-|-----------|--------|
-| Immediately | Confirm if evaluation is paused or ended |
-| 2 weeks | New trigger event or insight to share |
-| Monthly | Light touch to stay relevant |
-| Quarterly | Re-qualify: Has anything changed? |
-
-`;
-    } else if (dealOutcome === 'mixed') {
-      analysis += `## Mixed Outcome\n\nYou marked the outcome as mixed. Split the deals into won, lost and no_decision and run the tool for each, or use \`deal_portfolio\` with a summary in \`multiple_deals\`. The sections below apply to whichever deal you review first.\n\n`;
-    }
-    analysis += `${altBlock}${sectorBlock}${peopleBlock}${engagement}## Questions for the review call\n\n${reviewQs()}\n\n${asks}---\n\n*For best results, combine this analysis with direct buyer feedback.*\n\n${SUGGESTIONS_FOOTER}`;
-    return analysis;
+    para.push(`**The people.** ${contacts.length === 1 ? 'One stakeholder was' : `${contacts.length} stakeholders were`} involved: ${joinList(contacts.map((c) => c.raw))}. ${groups.join(' ')}${notNamedLine}`);
   }
 
-  if (analysisType === 'deal_portfolio' || analysisType === 'loss_pattern') {
-    return `${intro(analysisType === 'loss_pattern' ? 'Loss Pattern Analysis' : 'Deal Portfolio Analysis')}${multipleDeals ? `### Deals you gave\n\n${multipleDeals}\n\n` : `## What to give me\n\nA list of deals, one per line, with the outcome and the reason, for example in the form: deal name, outcome (won, lost or no_decision), value, days, reason, who won. Write your own deals: the form is the only thing to copy. Put them in \`multiple_deals\`.\n\n`}## What the analysis will look at
+  // ---- what the missing inputs would add (said once) ----
+  const sectorWord = v ? `the usual reasons in ${v.name}` : 'the usual reasons';
+  let adds = '';
+  if (!dealOutcome && !isPortfolio) adds = `## What the outcome and the reason would add\n\nThe outcome (\`deal_outcome\`: won, lost or no_decision) would turn this from a description of the deal into a write-up of who the deal was won against or lost to. The stated reason (\`loss_reason\`, in the buyer's own words and with who said it) would be read against ${sectorWord} and would name what to change. For a win, put the reason the buyer gave for choosing ${P} in \`deal_details\`.\n\n`;
+  else if (dealOutcome === 'lost' && !lossReason && !isPortfolio) adds = `## What the stated reason would add\n\nWithout \`loss_reason\` this write-up cannot say why ${P} lost. The reason, in the buyer's own words and with who said it, would be read against ${sectorWord} and would name what to change.\n\n`;
+  const also: string[] = [];
+  if (!isPortfolio && dealOutcome !== 'won' && !competitorWon) also.push(`\`competitor_won\`: which alternative the buyer chose${alts.length ? ` (you described ${joinList(alts.map((a) => q(a.text)))})` : ''}, or "no decision" if they chose none.`);
+  if (contacts.length && !contacts.some((c) => c.tag)) also.push(`A position in brackets after each stakeholder, for example ${q(`${contacts[0].title} (supporter)`)} or "(against)".`);
+  if (isPortfolio && !multipleDeals) also.push('`multiple_deals`: one deal per line, with the outcome and the reason, for example "deal name, lost, value, days, reason, who won".');
+  const alsoBlock = also.length ? `${adds ? '' : '## What else to add\n\n'}${adds ? 'Also useful:\n\n' : 'Useful to add:\n\n'}${also.map((a) => `- ${a}`).join('\n')}\n\n` : '';
 
-1. **Win rate** overall, by deal size, by segment and by competitor, using your own deals.
-2. **Loss reasons**: the most common reasons, the stage where deals are lost and who you lose to.
-3. **No-decision**: the share that ends with no decision, and how long before deals go quiet.
-4. **Sales cycle**: the length by deal size and by outcome, and where deals stall.
+  // ---- questions for the review call, each built from an input ----
+  const qs: string[] = [];
+  if (alts.length && !dealOutcome) qs.push(`Which did the buyer weigh most: ${alts.some((a) => /,/.test(a.text)) ? alts.map((a) => a.text).join('; ') : joinList(alts.map((a) => a.text), 'or')}? What did they say about ${alts[0].text}?`);
+  if (hasD) qs.push(`The deal ran ${days(salesCycleDays)}: which stage took longest, and was that the buyer's process or a stall you could have moved?`);
+  if (hasV) qs.push(`The deal was worth ${money(dealValue)}: did the price or the size of the commitment come up as a reason, and who raised it?`);
+  const ROLE_WORD = /\b(?:manager|director|vp|head|lead|chief|officer|president|engineer|analyst|architect|developer|owner|controller|founder|cfo|ceo|coo|cio|cto|ciso|cmo|cro|it|hr|finance|operations|security|procurement|legal|team|teams|support|sales|marketing|product|buyer|sponsor)\b/i;
+  const ref = (c: Contact) => (ROLE_WORD.test(c.title) ? `the ${lowerFirstIfCommon(c.title)}` : c.title);
+  against.forEach((c) => qs.push(`What did ${ref(c)} need that you did not give them, and when did they turn against you?`));
+  backing.forEach((c) => qs.push(`Did ${ref(c)} have the power and the material to sell this inside, and what did they say when the decision was made?`));
+  deciders.forEach((c) => qs.push(`Did ${ref(c)} ever hear your case from you directly, or only through someone else?`));
+  if (untagged.length > 1) qs.push(`Which of ${joinList(untagged.map((c) => ref(c)))} spoke for ${P} and which against, and whom did the buyer listen to most?`);
+  if (v) qs.push(`Did the buyer judge the result on ${v.metrics.slice(0, 3).join(', ')}, or on something else?`);
+  const qBlock = qs.length ? `## Questions for the review call\n\n${qs.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n\n` : '';
 
-No benchmark is shown: compare your own quarters with each other, and your segments with each other.
+  // ---- sector notes, below the draft ----
+  const reasonRows = v ? v.objections.map((o) => `| ${o.objection} | ${o.response} |`).join('\n') : '';
+  const sectorBlock = v ? `## Sector notes: ${v.name}\n\nThe objections this sector most often raises (from the sector notes in this tool, not from your deal). Check each against the deal: was it raised, by whom, and was it answered before the proposal?\n\n| Usual reason | Pattern of a good answer |\n|---|---|\n${reasonRows}\n\n**Who usually decides:** ${v.committee}\n\n**How deals usually run:** ${v.salesMotion}\n\n**What this sector measures:** ${v.metrics.join(', ')}.\n\n**A proof point that lands:** ${v.proofShape}\n\n` : '';
 
-${altBlock}${sectorBlock}${peopleBlock}## Questions for the portfolio review
+  // ---- the inputs as given (only the ones that were given) ----
+  const rows: string[] = [];
+  if (args.your_solution) rows.push(`| **Solution** | ${P}${brief.kind ? `, ${brief.kind}` : ''} |`);
+  if (hasV) rows.push(`| **Deal Value** | ${money(dealValue)} |`);
+  if (hasD) rows.push(`| **Sales Cycle** | ${days(salesCycleDays)} |`);
+  if (dealOutcome) rows.push(`| **Outcome** | ${upperFirst(dealOutcome.replace(/_/g, ' '))} |`);
+  if (lossReason) rows.push(`| **Stated reason** | ${cap(lossReason)} |`);
+  if (competitorWon) rows.push(`| **Competitor who won** | ${cap(competitorWon)} |`);
+  if (contacts.length) rows.push(`| **Stakeholders** | ${contacts.map((c) => c.raw).join('; ')} |`);
+  const given = rows.length ? `## Inputs as you gave them\n\n| Item | Value |\n|---|---|\n${rows.join('\n')}\n` : '';
 
-1. What do won deals have in common that lost deals lack${wlCtx.v ? ` (for example the roles involved: ${wlCtx.v.buyerRoles.slice(0, 3).join(', ')})` : ''}?
-2. Where do deals stall in the process?
-3. Which alternatives beat you most often?
-4. What is the profile of your best customers?
-5. When do you know you are going to lose?
-
-${asks}---
-
-${SUGGESTIONS_FOOTER}`;
-  }
-
-  // competitor_analysis
-  const headToHead = alts.length ? `## Head-to-head by alternative\n\n${alts.map((a) => `### ${cap(a.text)}\n\n- **What it is:** ${a.label}.\n- **Where you tend to win** (confirm from your won deals): ${a.win}.\n- **Where you tend to lose** (confirm from your lost deals): when ${a.why}.\n- **Ask the buyer:** ${a.check}`).join('\n\n')}\n\n` : `## Head-to-head\n\nNo alternative was named in your deal details or in \`competitor_won\`. Name the alternatives the buyer used (the current way of working counts as one), one per line, to get a section for each.\n\n`;
-  return `${intro('Competitive Win/Loss Analysis')}## What this analysis can and cannot say yet\n\n${dealOutcome ? '' : 'You gave the deal context but not the outcome or the reason, so nothing below says who won or why. '}It is the structure for the review, built from what you gave. Add the inputs listed at the end and run it again.\n\n---\n\n${altBlock ? '' : ''}${headToHead}${sectorBlock}${peopleBlock}## Questions for the review call\n\n${reviewQs(alts.length ? [`Which of the alternatives did the buyer give the most weight, and what did they say about ${alts[0].text}?`] : [])}\n\n## Battle card, once the outcome is known\n\n| Element | What to write | From your inputs |\n|---|---|---|\n| **Positioning** | The one thing that made the buyer pick, or not pick, ${P} | ${brief.kind ? cap(brief.kind) : 'your solution description'} |\n| **Landmines** | Questions that bring out the gap the buyer felt | The alternatives above and the sector's usual reasons |\n| **Objection handling** | The pattern of an answer for each usual reason | ${wlCtx.v ? `${wlCtx.v.objections.length} usual reasons in ${wlCtx.v.name} above` : 'the sector reasons, once the sector is clear'} |\n| **Proof points** | Evidence the buyer accepted | ${wlCtx.v ? wlCtx.v.proofShape : 'a customer result you can show'} |\n\n${asks}---\n\n${SUGGESTIONS_FOOTER}`;
+  const title = analysisType === 'single_deal' ? 'Win/Loss Analysis: Single Deal' : analysisType === 'competitor_analysis' ? 'Competitive Win/Loss Analysis' : analysisType === 'loss_pattern' ? 'Loss Pattern Analysis' : 'Deal Portfolio Analysis';
+  return `# ${title}: ${P}\n\n${notGivenLine}${wlCtx.line}\n\n## Write-up\n\n${para.join('\n\n')}\n\n${adds}${alsoBlock}${qBlock}${sectorBlock}${given}`.replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
 }
 
 
@@ -4538,6 +4071,24 @@ Compare the cost of acting with the cost of waiting, in our own numbers, and wri
 // mentioned, never turned into something to demo live; a competitor that is a way of working (manual routing, an in-house build,
 // disconnected tools) is not asked about a contract, references or support; each weakness becomes a question about its own topic;
 // the buyer's persona and priorities shape the questions; no bracket is left.
+const CRED_RE = /\b(?:named|leader|award|recogni\w+|analyst|quadrant|backed by|inner circle|launch partner|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|partners? with|partnerships?|trusted by|\d[\d,.+]*\s*(?:years|customers|companies|countries|engineers))\b/i;
+// Run 21c (draft rewrite): the answer is a set of landmine questions built from the inputs. Each weakness becomes a question about its
+// own topic (a question never quotes the note), each priority a question, each strength a criterion; a strength that answers a weakness
+// is shown next to it; the figures keep their source label. Generic coaching lines are gone. Rules are about kinds of input (a charge, a
+// limit, a missing capability, a delay, a manual step), never about one company.
+const TRAP_STOP = /^(?:their|which|there|these|those|about|would|could|where|while|other|every|first|still|under|after|before|again)$/;
+function trapWords(s: string): string[] { return s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 5 && !TRAP_STOP.test(w)).map((w) => w.slice(0, 5)); }
+function trapShares(a: string, b: string): number { const wb = new Set(trapWords(b)); return trapWords(a).filter((w) => wb.has(w)).length; }
+const TRAP_VERBS = new Set('works runs sends handles cleans re-plans replans plans approves connects syncs tracks reads writes shows gives lets keeps moves routes pulls pushes builds checks alerts flags scores matches books bills pays collects captures reports detects blocks stops finds fixes explains learns adapts scales integrates automates covers supports includes offers provides delivers replaces reduces cuts speeds raises loads stores encrypts logs audits signs files posts notifies escalates assigns updates generates predicts prioritises prioritizes validates verifies resolves ranks recommends turns takes brings combines unifies monitors enforces records measures reconciles'.split(' '));
+function trapBase(verb: string): string { return /(?:ss|sh|ch|x)es$/.test(verb) ? verb.slice(0, -2) : /ies$/.test(verb) ? `${verb.slice(0, -3)}y` : verb.replace(/s$/, ''); }
+// A strength as a criterion question: a verb phrase ("Works offline ...") becomes "Which of the options work offline ...?"; a noun phrase is shown on a case of the buyer's own.
+function trapCriterion(s: string): string {
+  const t = s.trim().replace(/[.]+$/, '');
+  const first = (t.split(/\s+/)[0] || '').toLowerCase();
+  if (TRAP_VERBS.has(first)) return `Which of the options ${lowerFirstIfCommon(t.replace(/^\S+/, trapBase(first)))}?`;
+  return `Which of the options can show ${lowerFirstIfCommon(t)}, on one of your own cases?`;
+}
+// When a note is a clause whose verb is not one of the kinds below, its topic is found by the words in it and a question about that topic is asked.
 const TRAP_TOPICS: { re: RegExp; topic: string; q: string }[] = [
   { re: /setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/i, topic: 'the time from signing to the first real result', q: 'How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?' },
   { re: /manual|human[- ]judged|judg|by hand|spreadsheet|modules and platforms/i, topic: 'which decisions are made by the system and which wait for a person', q: 'Which decisions does each option make by itself and which wait for a person, and how long does each take?' },
@@ -4553,11 +4104,93 @@ const TRAP_TOPICS: { re: RegExp; topic: string; q: string }[] = [
   { re: /scale|volume|slow|performance|latency/i, topic: 'performance at your real volumes', q: 'How does each option perform at your real volumes, and can it show that on your data?' },
   { re: /adopt|use|app|interface|ux|training/i, topic: 'everyday use by the people who will rely on it', q: 'Who uses each option every day, and what do they need to learn before it works for them?' },
 ];
-const CRED_RE = /\b(?:named|leader|award|recogni\w+|analyst|quadrant|backed by|inner circle|launch partner|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|partners? with|partnerships?|trusted by|\d[\d,.+]*\s*(?:years|customers|companies|countries|engineers))\b/i;
+function trapIng(verb: string): string { let b = verb.toLowerCase(); if (/ies$/.test(b)) b = `${b.slice(0, -3)}y`; else if (/[^s]s$/.test(b)) b = b.slice(0, -1); return /[^e]e$/.test(b) ? `${b.slice(0, -1)}ing` : `${b}ing`; }
+const TRAP_CLAUSE_VERB = /\b(?:is|are|was|were|become|becomes|became|has|have|had|get|gets|got|stay|stays|remain|remains|accumulates?|falls?|leaves?|leave|lacks?|loses?|lose|breaks?|fails?|failed|misses?|slows?|drops?|struggles?|hides?|locks?|forces?|requires?|takes?|makes?|keeps?|stops?|cannot|can't|never|rely|relies|depends?|tends?|sits?|causes?|creates?|falter|faltered|use|uses|ignores?|skips?|sends?|waits?|differs?|differ|overload\w*|expires?|grows?|grow)\b/i;
+const trapPlural = (s: string): boolean => { const h = s.trim().split(/\s+(?:of|for|in|on|at|from|to|with|by)\s+/)[0].trim(); return /[a-z]s$/i.test(h) && !/(?:ss|us|is|ics)$/i.test(h); };
+const trapDo = (s: string): string => (trapPlural(s) ? 'do' : 'does');
+// A long note holds several claims: it is cut at its commas (a clause that opens with "which", "so" or "because", or is very short, stays with the one before it).
+function trapClauses(wRaw: string): string[] {
+  const w = wRaw.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  if (w.length < 90) return [w];
+  const merged: string[] = [];
+  for (const p of w.split(/,\s+(?:and\s+)?|\s+and\s+(?=to\s)/)) {
+    const t = p.trim();
+    if (!t) continue;
+    if (merged.length && (/^(?:which|so|meaning|leaving|that|while|as|because|but|thereby|making|causing|increasing|slowing|if|even|or|not|with|without|then|yet|although|though|unless|until|since|than|like|such|including|especially|for example)\b/i.test(t) || t.split(/\s+/).length < 3)) { merged[merged.length - 1] += `, ${t}`; continue; }
+    merged.push(t);
+  }
+  return merged.slice(0, 3);
+}
+// One weak point of the competitor, read by kind: returns the landmine question and the topic it is about. The note is never quoted.
+function trapQuestion(wRaw: string, comp: string): { q: string; topic: string } {
+  const esc = comp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let w = wRaw.trim().replace(new RegExp(`^${esc}(?:'s)?\\s+`, 'i'), '').replace(/[.]+$/, '').trim();
+  w = lowerFirstIfCommon(w.replace(/\s*\([^)]*\)/g, '')).replace(/^(?:it|they)\s+/i, '');
+  const cons = w.match(/^(.*?)\s*,?\s*\b(?:so|which means|which|meaning|because|leaving|forcing|while)\b\s+(.+)$/i);
+  const main = (cons ? cons[1] : w).trim();
+  const tail = cons ? cons[2].trim() : '';
+  const tailSubj = tail ? (tail.split(/\s+(?:are|is|can|cannot|get|have|has|do|does|will|wait|need|must|end|stay)\b/i)[0].trim()) : '';
+  const tailQ = tailSubj && tailSubj.split(/\s+/).length <= 4 ? `, and what does that mean for ${tailSubj}` : '';
+  const show = ' Ask the vendor to show it on your own data, not on a slide.';
+  let m: RegExpMatchArray | null;
+  if ((m = main.match(/^(?:breaks?|fails?|stalls?|stops?|slows? down|falls? over)\s+(?:down\s+)?(?:when|if|as)\s+(.+)$/i))) return { q: `What happens in each option when ${m[1]}?${tailQ ? ` And what does that mean for ${tailSubj}?` : ''} Ask the vendor to show it live.`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:makes?|made|is|are|was|were)?\s*(?:it\s+)?(?:difficult|hard|harder|impossible|a struggle|painful|slow)\s+to\s+(.+)$/i))) return { q: `How easily can you ${m[1].replace(/\s+and\s+to\s+/g, ', and ')} in each option, and how long did the last change take?${' Ask the vendor to show it on your own data.'}`, topic: m[1] };
+  if ((m = main.match(/^(?:mostly |only |just |largely )?(.+?)\s+instead of\s+(.+)$/i))) return { q: `Does each option give you ${m[2]}, or only ${m[1]}? Ask the vendor to show ${aAn(m[2].replace(/s$/, ''))} on your own data.`, topic: m[2] };
+  if ((m = main.match(/^(?:.*?\s)?(?:manual|static|fixed|hard-?coded|rule[- ]based)(?:\s+(?:or|and)\s+(?:manual|static|fixed|rule[- ]based|slow))*\s+(\w+(?:\s\w+){0,3})$/i)) && !/\bslow to\b/i.test(main) && !TRAP_CLAUSE_VERB.test(m[1])) return { q: `How does each option produce ${m[1]}, by the system or by a person, and how often is it refreshed?`, topic: m[1] };
+  if ((m = main.match(/\bslow to\s+(\w+(?:\s\w+){0,4})/i))) return { q: `How quickly does each option ${m[1]}, and how long did the last change take?`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:charges?|bills?|prices?)\s+(?:extra\s+|more\s+|additional\s+)?(?:for\s+)?(.+)$/i)) && !/^(?:.*\s)?(?:is|are)\s+/.test(main.split(m[1])[0] || '')) {
+    const x = m[1].trim();
+    return { q: `What does each option charge ${/^per\b/i.test(x) ? x : `for ${x}`}, what sits outside the quoted price${tailQ}?`, topic: x };
+  }
+  if ((m = main.match(/^(?:.*?\s)?(?:leaves?|leaving)\s+(?:you\s+with\s+)?no\s+(.+)$/i))) return { q: `Does each option give you ${m[1]}? Ask the vendor to show it on your own data.`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:creates?|causes?|produces?|forces?|brings?|adds?)\s+(.+)$/i)) && m[1].split(/\s+/).length <= 12) return { q: `Where does each option leave you with ${m[1]}, and what does it take to get past ${/\band\b|s$/.test(m[1]) ? 'them' : 'it'}?`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:limits?|restricts?|caps?)\s+(.+)$/i))) return { q: `What limits does each option put on ${m[1]}, and what does it cost to go past them?`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:relies on|rely on|depends on|depend on)\s+(.+)$/i))) return { q: `Which parts of each option rely on ${m[1]}, and what happens when that is missing?`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:needs?|requires?)\s+(.+)$/i))) return { q: `What does each option need from you before it works (${m[1]}), who provides it, and what does that add to the time and the cost?`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?struggles?\s+(?:with|to)\s+(.+)$/i))) return { q: `How does each option cope with ${m[1]}?${show}`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to|has failed to|have failed to|does not|do not|doesn't|don't|never)\s+(?:have\s+|offer\s+|include\s+|support\s+|provide\s+)?(.+)$/i))) {
+    const had = /(?:have|offer|include|support|provide)\s/.test(main) && !/^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to)\s/i.test(main);
+    return had ? { q: `How does each option cover ${m[1]}? Ask for it working today, not on a roadmap.`, topic: m[1] } : { q: `Can each option ${m[1]}?${show}`, topic: m[1] };
+  }
+  if ((m = main.match(/^(?:no|without|missing|lacks?|has no|have no)\s+(.+)$/i)) || (m = main.match(/^.+?\s+(?:lacks?|has no|have no|is missing|are missing)\s+(.+)$/i))) return { q: `How does each option cover ${m[1]}? Ask for it working today, not on a roadmap.`, topic: m[1] };
+  if ((m = main.match(/^(?:.*?\s)?(?:misses?|skips?|overlooks?|drops?)\s+(.+)$/i))) return { q: `How does each option catch ${m[1]}, and how soon would you know if one was missed?`, topic: m[1] };
+  if ((m = main.match(/^(.+?)\s+(?:takes?|needs? \w+ to)\s+(?:\w+\s+)?(?:weeks?|months?|days?|hours?|years?|long|ages|time)\b/i)) && !/\b(?:that|which|who)$/i.test(m[1].trim())) return { q: `How long ${trapDo(m[1])} ${m[1]} take in each option, and can the vendor show a recent one from the first step to the last?`, topic: m[1] };
+  if ((m = main.match(/^(.+?)\s+(?:arrives?|comes?|come|appears?|appear|shows? up|show up|lands?|reach(?:es)?)\s+(?:.*\b)?(?:late|slow|delayed|overnight|days?|hours?)\b/i))) return { q: `How soon does each option give you ${m[1]}, and what do you see in the meantime?`, topic: m[1] };
+  if ((m = main.match(/^(.+?)\s+(?:moves?|go|goes|are sent|is sent|travels?|runs?)\s+by\s+(email|phone|hand|spreadsheet|paper|post|fax|text|chat)\b/i))) return { q: `How ${trapDo(m[1])} ${m[1]} get from the person who raises ${trapPlural(m[1]) ? 'them' : 'it'} to the person who decides, in each option, and who waits on whom?`, topic: m[1] };
+  if ((m = main.match(/^(.+?)\s+(?:waits?|sits?)\s+(?:for|on|in)\s+(.+)$/i))) return { q: `How long ${trapDo(m[1])} ${m[1]} wait for ${m[2]} in each option, and who chases ${trapPlural(m[1]) ? 'them' : 'it'}?`, topic: m[1] };
+  if ((m = main.match(/^(?:nobody|no one|no-one|not everyone|few people)\s+(?:can\s+)?(sees?|knows?|gets?|finds?|trusts?|shares?|has)\s+(.+)$/i))) return { q: `Who can ${trapBase(m[1].toLowerCase())} ${m[2]} in each option, and is it one view for everyone who needs it?`, topic: m[2] };
+  if ((m = main.match(/^(.+?)\s+(?:is|are|was|were|gets?|got)\s+(found|caught|discovered|noticed|spotted|fixed|handled|reported|checked|updated|reviewed|approved|entered|recorded|logged|done|raised|flagged|priced|billed|paid|chased|fixed)\b/i))) return { q: `When ${trapPlural(m[1]) ? 'are' : 'is'} ${m[1]} ${m[2].toLowerCase()} in each option, and what has it cost by then?`, topic: m[1] };
+  if ((m = main.match(/^(.+?)\s+(?:is|are|stays?|remains?)\s+(?:very |too |often |still |mostly )?(slow|late|delayed|stale|periodic|batch\w*|manual|costly|expensive|opaque|rigid|limited|hard|difficult|complex|fragmented|isolated|disconnected)\b/i))) {
+    const [, s, adj] = m;
+    if (/slow|late|delayed|stale|periodic|batch/i.test(adj)) return { q: `How long ${trapDo(s)} ${s} take in each option, and what happens in between?`, topic: s };
+    if (/manual/i.test(adj)) return { q: `Which steps of ${s} wait for a person in each option, and how long does each wait?`, topic: s };
+    if (/costly|expensive/i.test(adj)) return { q: `What ${trapDo(s)} ${s} cost in each option over three years, and what sits outside the quoted price?`, topic: s };
+    if (/opaque/i.test(adj)) return { q: `How does each option explain ${s}, and can you check it yourself?`, topic: s };
+    if (/fragmented|isolated|disconnected/i.test(adj)) return { q: `Can each option show ${s} in one place, or does your team join the pieces by hand?`, topic: s };
+    return { q: `How much of ${s} can you change yourself in each option, and how long does a change take?`, topic: s };
+  }
+  if ((m = main.match(/^(.+?)\s+(re-?keys?|copy|copies|retypes?|retype|exports?|imports?|rebuilds?|chase|chases|merges?|reconciles?|reconcile|pastes?|enters?|enter|compiles?|compile|collects?|collect|assembles?|assemble|updates?|update|transfers?|transfer)\s+(.+)$/i))) return { q: `Who does the work of ${trapIng(m[2])} ${m[3]} in each option, the system or your own team, and how long does it take each week?`, topic: m[3] };
+  if ((m = main.match(/^(.+?)\s+(is|are|can|will|must|should)\s+(.+)$/i)) && m[1].split(/\s+/).length <= 3 && m[3].split(/\s+/).length <= 6) return { q: `${upperFirst(m[2].toLowerCase())} ${m[1]} ${m[3].replace(/^only\s+/i, '')} in each option?${show}`, topic: m[1] };
+  // a noun phrase: the leading adjective or count of time is taken off, the head is asked about
+  if (main.split(/\s+/).length >= 4) {
+    const t = TRAP_TOPICS.find((x) => x.re.test(main));
+    if (t) return { q: t.q, topic: t.topic };
+  }
+  if (main.split(/\s+/).length >= 3) {
+    // a clause with a verb of its own is put to the vendor as a situation
+    if (TRAP_CLAUSE_VERB.test(main.split(/\s+/).slice(1).join(' '))) return { q: `What happens in each option when ${main.replace(/\bwere\b/gi, 'are').replace(/\bwas\b/gi, 'is')}? Ask the vendor to show it live.`, topic: main };
+  }
+  if ((m = main.match(/^to\s+(.+)$/i))) return { q: `Can each option help you to ${m[1]}? Ask the vendor to show it on your own data.`, topic: m[1] };
+  let np = main.replace(/^(?:\d+\s+|several\s+|a few\s+|many\s+)?(?:months?|weeks?|days?|years?) of\s+/i, '').replace(/^(?:slow|manual|periodic|poor|weak|limited|high|long|late|heavy|complex|outdated|legacy|rigid|fragmented|isolated|opaque|expensive|costly|hidden|batch)\s+/i, '').trim();
+  if (!np) np = main;
+  if (/setup|set-up|implement|onboard|rollout|go-live|deploy|migration/i.test(np)) return { q: `How long ${trapDo(np)} ${np} take in each option, and can the vendor show a recent one from signing to the first real result?`, topic: np };
+  return { q: `How does each option handle ${np}?${show}`, topic: np };
+}
+const TRAP_WANT_VERBS = /^(?:keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|get|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|price|forecast|prioriti[sz]e|verify|secure|comply|catch|clear|ship|test|release|sell|serve|support|help|let|turn|take)\b/i;
 function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
-  const competitor = (args.competitor as string) || 'Competitor';
+  const competitor = ((args.competitor as string) || '').trim() || 'the competitor';
   const competitorWeaknesses = (args.competitor_weaknesses as string) || '';
-  const yourSolution = (args.your_solution as string) || 'our solution';
+  const yourSolution = (args.your_solution as string) || '';
   const yourStrengths = (args.your_strengths as string) || '';
   const evaluationStage = (args.evaluation_stage as string) || 'mid';
   const buyerPriorities = (args.buyer_priorities as string) || '';
@@ -4571,14 +4204,12 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const v = ctx.v;
   const investment = model === 'investment';
   const persona = args.buyer_persona ? roleFor(args.buyer_persona as string, investment) : null;
+  const personaName = ((args.buyer_persona as string) || '').trim();
   // A competitor that is a way of working (a manual process, an in-house build, disconnected tools, a legacy system) has no contract,
   // no reference customers and no support desk to ask about.
   const isWay = ALT_KINDS.some((k) => k.re.test(competitor)) || competitor.split(/\s+/).length > 6;
   const compLabel = isWay ? 'the current approach' : competitor;
   const compPoss = isWay ? 'the current approach\'s' : `${competitor}'s`;
-  // Run 19 D80 (problem 2): a weakness is the seller's own note. It is never read out to the buyer inside a question; the
-  // question asks the buyer to test the topic the weakness is about. The competitor's name is taken off the front of the note.
-  const strip = (w: string) => w.trim().replace(new RegExp('^' + competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i'), (m) => m.replace(competitor, '').trimStart() ? m.replace(new RegExp(competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trimStart() : '');
   const weaknesses = splitItems(competitorWeaknesses);
   const allStrengths = splitItems(yourStrengths);
   // A strength that opens with a credential ("named a Leader in ...", "certified ...") is a credential; one that merely ends with a backer or an award
@@ -4587,142 +4218,132 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const credentials = allStrengths.filter(isCred);
   const strengths = allStrengths.filter((x) => !isCred(x));
   const claimsHere = claimsIn(yourStrengths);
-  const topicOf = (w: string): { topic: string; q: string } => TRAP_TOPICS.find((t) => t.re.test(w)) || { topic: 'the scenario you care most about', q: 'How will you test the scenario you care most about in each option? Could each vendor show it live, with your own data?' };
+  // the buyer's priorities: the aims (clauses), and the figures with their own source label kept as given
+  const pItems = splitItems(buyerPriorities);
+  const figureItems = pItems.filter((x) => /\d/.test(x));
+  const aims = pItems.flatMap((x) => (/\d/.test(x) ? painClauses(x).filter((c) => !/\d/.test(c)).slice(0, 3) : [x])).flatMap((x) => (x.length <= 170 ? (painClauses(x).length ? painClauses(x) : [x.replace(/[.]+$/, '')]) : (painClauses(x).slice(0, 3).length ? painClauses(x).slice(0, 3) : [x.split(/[;,]/)[0].trim()])));
+  const aimRef = (a: string): string => { const lc = lowerFirstIfCommon(a); return TRAP_WANT_VERBS.test(lc) ? `their aim to ${lc}` : `what they said matters (${lc})`; };
+  const wantPhrase = (a: string): string => { const lc = lowerFirstIfCommon(a); return TRAP_WANT_VERBS.test(lc) ? `they said they want to ${lc}` : `they said this matters: ${lc}`; };
+  const aimAsk = (c: string, i: number): string => {
+    const lc = lowerFirstIfCommon(c);
+    const ends = ['How would you judge that each option delivers it?', 'Which option has shown you that on your own data, and what did it measure?', 'What would you need to see in the evaluation to believe it?'];
+    return TRAP_WANT_VERBS.test(lc) ? `You said you want to ${lc}. ${ends[i % 3]}` : `You told me this matters: ${lc}. ${ends[i % 3]}`;
+  };
+  const read = weaknesses.map((w) => { const qs = trapClauses(w).map((c) => trapQuestion(c, competitor)); return { w, qs, q: qs[0].q, topic: qs.map((x) => x.topic).join(' ') }; });
+  const strengthFor = (text: string): string => { let best = ''; let n = 0; for (const s of strengths) { const k = trapShares(text, s); if (k > n) { n = k; best = s; } } return best; };
+  const aimFor = (text: string): string => { let best = ''; let n = 0; for (const a of aims) { const k = trapShares(text, a); if (k > n) { n = k; best = a; } } return best; };
+  const forRef = (qq: string): string => qq.replace(/\s+in each option/g, ` with ${compLabel}`).replace(/\beach option\b/g, compLabel).replace(/\s*Ask (?:the vendor|for it)[^.?]*[.]/g, '').replace(/\s+/g, ' ').trim();
   const sectorQ = v ? v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
   const personaQ = persona ? persona.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
-  const implementationLabel = model === 'investment' ? 'Onboarding and Mandate Landmines' : model === 'services' ? 'Transition Landmines' : model === 'connectivity' ? 'Rollout Landmines' : 'Implementation Landmines';
+  const costWeak = read.filter((r) => /price|cost|fee|charge|seat|licen|overage|extra|bill/i.test(r.w));
+  const supportMention = /\b(?:support|sla|24\/7|uptime|response)\b/i.test(`${yourStrengths} ${competitorWeaknesses}`);
+
+  // ---- the line that names what is missing, once ----
+  const notGiven: string[] = [];
+  if (!args.your_solution) notGiven.push('the solution (`your_solution`; the draft says "our solution")');
+  if (!weaknesses.length) notGiven.push(`the weak points of ${compLabel} (\`competitor_weaknesses\`)`);
+  if (!allStrengths.length) notGiven.push('your strengths (`your_strengths`)');
+  if (!args.evaluation_stage) notGiven.push('the evaluation stage (`evaluation_stage`; the draft assumes mid)');
+  if (!personaName) notGiven.push('the buyer persona (`buyer_persona`)');
+  if (!buyerPriorities.trim()) notGiven.push('the buyer priorities (`buyer_priorities`)');
+  const notGivenLine = notGiven.length ? `Not given: ${joinList(notGiven)}. The draft still reads without ${notGiven.length === 1 ? 'it' : 'them'}; add ${notGiven.length === 1 ? 'it' : 'them'} to get the matching questions.\n\n` : '';
+
+  const weakBlocks = read.map((r) => {
+    const s = strengthFor(`${r.w} ${r.topic}`);
+    const a = aimFor(`${r.w} ${s}`);
+    return `**Their weak point (your note, not for the buyer):** ${cap(r.w)}\n${r.qs.map((x) => `**Landmine Question:** "${x.q}"`).join('\n')}${s ? `\n**Then show:** ${cap(s)}` : ''}${a ? `\n**Why it matters to this buyer:** ${wantPhrase(a)}.` : ''}`;
+  });
   const implementationQs = model === 'investment' ? [
-    '"How long from signing to the first allocation, and what do you need from us?"', '"What reporting will you receive each month, and who explains a bad month?"', '"What are the full fees, including performance fees and minimums?"',
+    `"How long from signing to the first allocation with ${compLabel}, and what do you need to provide?"`, `"What reporting do you receive each month from ${compLabel}, and who explains a bad month?"`, `"What are the full fees with ${compLabel}, including performance fees and minimums?"`,
   ] : model === 'services' ? [
-    '"How will the transition from the current provider run, stage by stage, and who signs off each stage?"', '"Who are the named people on the account, and what happens if they leave?"', '"What is in the rate card, and how are change requests priced?"',
+    `"How will the transition to ${compLabel} run, stage by stage, and who signs off each stage?"`, `"Who are the named people on the account at ${compLabel}, and what happens if they leave?"`, `"What is in the rate card of ${compLabel}, and how are change requests priced?"`,
   ] : model === 'connectivity' ? [
-    '"How many sites go live in each wave, and what is the fallback if a cut-over fails?"', '"What is the repair time in the contract, and how are service credits paid?"', '"What one-time charges apply per site (installation, equipment)?"',
+    `"How many sites does ${compLabel} bring live in each wave, and what is the fallback if a cut-over fails?"`, `"What is the repair time in the contract with ${compLabel}, and how are service credits paid?"`, `"What one-time charges apply per site with ${compLabel} (installation, equipment)?"`,
   ] : [
-    '"What is their typical implementation timeline? Have you talked to customers about actual versus promised?"', '"Who from their team will be involved in implementation?"', '"What is included in the price and what costs extra?"',
+    `"How long from signing to the first real result with ${compLabel}, and how did its customers find that against the promise?"`, `"Which of your own people does the set-up with ${compLabel} take, and for how long?"`, `"What does the price from ${compLabel} include, and what is billed separately?"`,
   ];
   const wayQs = [
-    '"Who keeps it running today, and what happens when they are away?"', '"What does it cost you in a year, in people\'s time and in fees?"', '"What breaks when your volumes or your plans change?"',
+    `"Who keeps ${compLabel} running today, and what happens when they are away?"`, `"What does ${compLabel} cost you in a year, in people's time and in fees?"`, `"What breaks in ${compLabel} when your volumes or your plans change?"`,
   ];
+  const implLabel = model === 'investment' ? 'Onboarding and Mandate Landmines' : model === 'services' ? 'Transition Landmines' : model === 'connectivity' ? 'Rollout Landmines' : 'Implementation Landmines';
   const sections: Record<string, string> = {
     discovery_questions: `## Discovery Questions (Landmines)
 
-These questions let the buyer find ${compPoss} gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.
+Ask these as open questions, so the buyer finds ${compPoss} gaps in their own evaluation. The weak points are your notes and are never read out.
 
-### General Competitive Discovery
-- "What other options are you evaluating, and what criteria are you using?"
-- "What's most important to you in making this decision?"
-- "Have you defined must-haves versus nice-to-haves?"
-${buyerPriorities ? `- "You told me what matters most: ${q(lowerFirstIfCommon(buyerPriorities.length <= 170 ? buyerPriorities.trim().replace(/[.]+$/, '') : (painClauses(buyerPriorities)[0] || buyerPriorities.trim().split(/[;,]/)[0])))}. How would you judge that each option delivers it?"\n` : ''}${sectorQ}
-${personaQ}
-
+### What the buyer told you matters
+${aims.length ? aims.map((a, i) => `- "${aimAsk(a, i)}"`).join('\n') : buyerPriorities.trim() ? '- The priorities you gave are figures only, so there is no aim to ask about yet. Ask the buyer what they want to achieve, then use the figures below with their source.' : '- No priorities were given, so there is no question here yet.'}
+${figureItems.length ? `\nFigures you gave, with their source: ${figureItems.map((f) => q(f)).join('; ')}. Ask for the buyer's own number first, and quote these only with that source.\n` : ''}${sectorQ || personaQ ? `\n### From the evaluator's role and the sector\n${[personaQ, sectorQ].filter(Boolean).join('\n')}\n` : ''}
 ### Capability Landmines
-${weaknesses.length ? weaknesses.map((w) => `
-**Their weak point (your note, not for the buyer):** ${cap(strip(w))}
-**Landmine Question:** "${topicOf(w).q}"
-**Why It Works:** The buyer tests ${topicOf(w).topic} themselves, so the gap shows up in their own evaluation.
-`).join('\n') : `
-No weak points were given (competitor_weaknesses). Add what you know about ${compLabel} and each one becomes a question here. Until then, ask: "How will you test the scenario you care most about in each option?"`}
+${weakBlocks.length ? weakBlocks.join('\n\n') : `No weak points were given (competitor_weaknesses), so there is no landmine yet. Add what you know about ${compLabel} and each note becomes a question here.`}
 
-### ${isWay ? 'Questions about the current approach' : implementationLabel}
+### ${isWay ? `Questions about ${compLabel}` : implLabel}
 ${(isWay ? wayQs : implementationQs).map((x) => `- ${x}`).join('\n')}
-${isWay ? '' : `
-### Support Landmines
-- "What level of support is included? What happens when you have an urgent issue?"
-- "Can you talk to customers who've been through their support process?"`}`,
+${!isWay && supportMention ? `\n### Support Landmines\n- "What does the support from ${competitor} cover outside office hours, and what does the contract promise when something urgent breaks?"` : ''}`,
 
     evaluation_criteria: `## Evaluation Criteria Positioning
 
 ### Criteria to Establish Early
 
-${strengths.length ? `Based on your strengths, suggest these as requirements (only where you can prove them):\n${strengths.map((s) => `- **${cap(s)}**: "Which of the options can show this on our own scenario? Is it on your evaluation list?"`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live, and each becomes a criterion here.`}
+${strengths.length ? strengths.map((s) => { const a = aimFor(s); return `- **${cap(s)}**: "${trapCriterion(s)}"${a ? ` It bears on ${aimRef(a)}.` : ''}`; }).join('\n') : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live, and each one becomes a criterion here.`}
 ${credentials.length ? `\n### Credentials (mention them, do not make them criteria)\n\nThese cannot be demonstrated in an evaluation. Say them in a sentence when they answer a concern:\n${credentials.map((s) => `- ${cap(s)}`).join('\n')}\n` : ''}${claimsHere.length ? `\n### Claims to source\n\nThe buyer will ask for the source of: ${joinList(claimsHere.map((c) => q(clip(c, 90))))}. Have it ready, or soften the wording.\n` : ''}
 ### How to Suggest Criteria
 
-"Before you evaluate anyone, it helps to agree the criteria. ${strengths.length ? `I'd suggest these: ${strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; ')}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared questions to ask every vendor?"`,
+"${aims.length ? `You said you want to ${lowerFirstIfCommon(aims[0])}${aims.length > 1 ? ` and ${lowerFirstIfCommon(aims[1])}` : ''}. Before you evaluate anyone, it helps to agree the criteria that decide that.` : 'Before you evaluate anyone, it helps to agree the criteria.'} ${strengths.length ? `I would suggest these: ${strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; ')}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared the questions to ask every vendor?"`,
 
     reference_questions: `## Reference Call Questions
 
 ${isWay ? `Suggest the buyer ask these of people who live with ${compLabel} today (their own team, or peers who work the same way):` : `Suggest the buyer ask these questions when speaking with ${compPoss} references:`}
 
-### General Questions
-- "${isWay ? 'How long have you worked this way?' : 'How long have you been using it?'}"
-- "How does the actual experience compare to what you expected?"
-- "What surprised you after you started?"
-
-### Capability Questions
-${weaknesses.length ? weaknesses.map((w) => `- "Tell me about ${topicOf(w).topic}. What did you see in practice?"`).join('\n') : `- "What limitations have you run into?"
-- "What workarounds have you had to build?"`}
-
-### The Killer Question
-- **"${isWay ? 'Knowing what you know now, would you keep working this way?' : 'Knowing what you know now, would you choose them again?'}"**`,
+${read.length || aims.length ? [
+      ...read.flatMap((r) => r.qs.map((x) => `- "${forRef(x.q)}"`)),
+      ...aims.slice(0, 2).map((a) => `- "Since you started with ${compLabel}, has it helped you ${lowerFirstIfCommon(a)}, and what did you measure?"`),
+    ].join('\n') : `- No weak points or priorities were given, so there is nothing specific to ask a reference yet. Add competitor_weaknesses or buyer_priorities.`}`,
 
     technical_requirements: `## ${software ? 'Technical Requirements' : 'Requirements'} (Traps)
 
 ### RFP or Requirements Document
 
-${strengths.length ? `Requirements built on your strengths (keep only what you can demonstrate):\n${strengths.map((s, i) => `${i + 1}. **${cap(s)}**: "The vendor must demonstrate this live, on our own data, during the evaluation."`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live and each becomes a requirement here.`}
+${strengths.length ? `Each requirement is accepted only if it is shown live and ${personaName ? `the ${personaName} signs off` : 'the evaluation team signs off'} the result.\n\n${strengths.map((s, i) => `${i + 1}. ${cap(s)}`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live and each one becomes a requirement here.`}
 
 ### Evaluation Scenarios
 
-${weaknesses.length ? weaknesses.map((w, i) => `**Scenario ${i + 1}:** ${cap(topicOf(w).topic)}, tested live on the buyer's own data
-- Your note (not for the buyer): ${strip(w)}
-- Success criteria: agree a measurable outcome with the buyer before the test`).join('\n\n') : `1. The scenario the buyer cares most about${buyerPriorities ? ` (${buyerPriorities})` : ''}: test the core capability on their own data
-2. A scale scenario: test performance at their real volumes`}`,
+${read.length ? read.map((r, i) => { const a = aimFor(`${r.w} ${strengthFor(r.w)}`); return `**Scenario ${i + 1}:** run this live in each option: ${r.qs.map((x) => `"${x.q}"`).join(' ')}\n- Your note (not for the buyer): ${r.w}\n- Pass mark: agree it with the buyer before the test${a ? `; the nearest thing they told you is ${aimRef(a)}` : ''}`; }).join('\n\n') : `No weak points were given, so there is no scenario yet. ${aims.length ? `The first one to build is the test of what they want: ${lowerFirstIfCommon(aims[0])}.` : ''}`}`,
 
     commercial_terms: `## Commercial Terms (Positioning)
 
 ### ${isWay ? 'Cost Comparison' : 'Pricing Comparisons'}
 
-${isWay ? `When they compare ${P} with ${compLabel}, make sure they compare:\n- What ${compLabel} costs a year in people's time, fees and the cost of its failures\n- What ${P} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare prices, make sure they compare:
+${isWay ? `When they compare ${P} with ${compLabel}, make sure they compare:\n- What ${compLabel} costs a year in people's time, fees and the cost of its failures\n- What ${P} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare ${P} with ${competitor}, make sure they compare:
 ${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}`}
-
-${isWay ? '' : `**Questions to Ask ${competitor}:**
-- "What is NOT included in the quoted price?"
-- "What do years 2 and 3 cost?"
-- "How are price increases decided?"
-
+${costWeak.length ? `\n### From your notes on ${compLabel}\n${costWeak.map((r) => `- Your note (not for the buyer): ${cap(r.w)}\n  Ask: ${r.qs.map((x) => `"${x.q}"`).join(' ')}`).join('\n')}\n` : ''}${isWay ? '' : `
 ### Contract Terms to Check
 
-Ask these about ${competitor}'s contract (nothing here says ${competitor} has these terms; check the actual contract):
-- Does it renew automatically, and can the price rise at renewal?
-- What are the termination rights and notice periods?
-- Are there fees outside the quoted price?
+Ask about ${competitor}'s contract (nothing here says ${competitor} has these terms; check the actual contract): does it renew automatically, can the price rise at renewal, and what are the termination rights and notice periods?
+`}
+### Your Own Terms
 
-`}### Your Own Terms
-
-Offer only the terms you actually have (payment options, contract length), in your own words. Promise nothing you cannot put in the contract.`,
+${(() => { const own = allStrengths.filter((s) => /\b(?:price|pricing|annual|monthly|fees?|free|included|contract|terms?|licen[cs]e|seats?|credits?|refund|trial|pilot|commitment)\b/i.test(s)); return own.length ? `Terms you gave among your strengths: ${own.map((s) => q(s)).join('; ')}. Put them in the contract in the same words.` : 'No terms of your own were given among your strengths (your_strengths). Add the ones you can put in the contract and they appear here.'; })()}`,
   };
 
-  let output = `# Competitive Positioning: vs ${isWay ? 'the current approach' : competitor}
+  let output = `# Competitive Positioning: vs ${compLabel}
 
-## Situation
-- **Competitor:** ${competitor}${isWay ? ' (a way of working, not a vendor: no contract or references are assumed)' : ''}
-- **Your Solution:** ${(args.your_solution as string) || NOT_SUPPLIED}
-- **Evaluation Stage:** ${evaluationStage}${args.evaluation_stage ? '' : ' (default)'}
-- **Buyer Persona:** ${(args.buyer_persona as string) || NOT_SUPPLIED}
-${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
+${notGivenLine}## The set-up
+
+${P} is in ${aAn(`${evaluationStage} stage`)} evaluation against ${isWay ? `${competitor} (a way of working, not a vendor: no contract or references are assumed)` : competitor}.${args.your_solution && yourSolution.trim().length > P.length + 3 ? ` What is being sold: ${yourSolution.trim().replace(/[.]+$/, '')}.` : ''}${buyerPriorities.trim() ? ` What the buyer cares most about, as you gave it: ${buyerPriorities.trim().replace(/[.]+$/, '')}.` : ''}
 
 ${ctx.line}
 
-${persona ? `**Who is evaluating:** ${aAn(persona.label)}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : ''}
----
+${persona ? `**Who is evaluating:** ${aAn(persona.label)}${personaName && personaName.toLowerCase() !== persona.label.toLowerCase() ? ` (${personaName})` : ''}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : (personaName ? `**Who is evaluating:** ${personaName}.\n` : '')}
+## Your notes (not for the buyer)
 
-## Competitive Intelligence
+**Strengths**
+${allStrengths.length ? allStrengths.map((s) => `- ${s}`).join('\n') : '- None given.'}
 
-### Your Strengths
-${allStrengths.length ? allStrengths.map((s) => `- ${s}`).join('\n') : '- None given (your_strengths). Add your differentiators.'}
-
-### ${isWay ? 'The current approach' : competitor}: Weak Points (your notes, never read out to the buyer)
-${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- None given (competitor_weaknesses).'}
+**${isWay ? 'The current approach' : competitor}: weak points**
+${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- None given.'}
 
 ${sectorNotes(ctx.v, 'committee')}
-
----
-
-## Positioning Strategy
-
-### Golden Rule
-**Never go negative.** Let the buyer discover ${compPoss} weaknesses through their own evaluation.
 
 ---
 
@@ -4734,6 +4355,13 @@ ${sectorNotes(ctx.v, 'committee')}
     output += sections[trapType] || sections['discovery_questions'];
   }
 
+  const s0 = strengths[0] ? cap(strengths[0]) : '';
+  const stageLine: Record<string, string> = {
+    early: strengths.length ? `Put ${joinList(strengths.slice(0, 2).map((s) => lowerFirstIfCommon(s)))} on the buyer's criteria list before the vendors are shortlisted, and offer to help ${personaName ? `the ${personaName}` : 'the buyer'} structure the evaluation.` : `No strengths were given, so there is nothing to put on the criteria list yet.`,
+    mid: strengths.length ? `Make sure ${lowerFirstIfCommon(s0)} is one of the live tests${v ? `, and bring the proof that lands in this sector: ${proofOf(v)}` : ''}. Let the buyer meet ${compPoss} limits in their own tests.` : `No strengths were given, so there is no live test to protect yet.`,
+    late: strengths.length ? `Ask ${personaName ? `the ${personaName}` : 'the buyer'} what is still open and close it with ${lowerFirstIfCommon(s0)}${credentials.length ? `; say ${lowerFirstIfCommon(credentials[0])} in one sentence if it answers a concern` : ''}. Check that the decision criteria are the ones agreed.` : `Ask ${personaName ? `the ${personaName}` : 'the buyer'} what is still open and check that the decision criteria are the ones agreed.`,
+    finalist: `Reduce the buyer's risk${strengths.length ? ` by showing ${lowerFirstIfCommon(s0)} on their own case` : ''}, give ${personaName ? `the ${personaName}` : 'the buyer'} access to your own executives, and close with the terms you can put in the contract.`,
+  };
   output += `
 
 ---
@@ -4741,23 +4369,9 @@ ${sectorNotes(ctx.v, 'committee')}
 ## Stage-Specific Tactics
 
 ### ${cap(evaluationStage)} Stage Recommendations
-${evaluationStage === 'early' ? `
-- Establish evaluation criteria now
-- Position your strengths as requirements
-- Offer to help them structure the evaluation` : ''}${evaluationStage === 'mid' ? `
-- Make sure your differentiators are being tested
-- Provide proof points and references
-- Surface ${compPoss} limitations through the buyer's own tests` : ''}${evaluationStage === 'late' ? `
-- Address any lingering concerns
-- Make sure the decision criteria are the ones agreed
-- Help your champion make the case internally` : ''}${evaluationStage === 'finalist' ? `
-- Focus on risk reduction for the buyer
-- Provide executive access
-- Close with the terms you can actually offer` : ''}
 
----
-
-*Use these tactics professionally and honestly: claim nothing you cannot prove.*`;
+${stageLine[evaluationStage] || stageLine.mid}
+`;
 
   return output;
 }
@@ -5268,472 +4882,361 @@ function pluralOf(persona: string): string {
   if (m) return /s$/i.test(m[1]) ? p : `${m[1]}s${m[2]}`;
   return /s$/i.test(p) ? p : `${p}s`;
 }
+// Run 21c: the kind and the parts of a product description. solutionBrief reads a list after a colon; a description written as "X, a platform for Y,
+// covering a, b, c and d" has no colon, so its list after "covering", "including" or "spanning" is read here (only a clean list of short items:
+// it stops at the first item that turns into a clause).
+// A short noun phrase for what the product is, from its description: the name is dropped, the phrase is cut at "that", "which", "for", "with" or "covering",
+// and a long one keeps its last four words ("a single API led intelligent platform of platforms" gives "API led intelligent platform of platforms" cut to its end).
+function shortKind(kind: string, name: string): string {
+  let k = kind.trim().replace(/^(?:a|an|the)\s+/i, '');
+  if (name && k.toLowerCase().startsWith(name.toLowerCase())) k = k.slice(name.length).replace(/^[,:\s]+/, '').replace(/^(?:a|an|the)\s+/i, '');
+  k = k.split(/\s+(?:that|which|for|with|covering|including|made)\s+|[,;:]\s*/i)[0].trim();
+  const w = k.split(/\s+/);
+  return w.length > 5 ? w.slice(-4).join(' ') : k;
+}
+// The separate pains in a typed pain statement, up to 16 words each (painClauses stops at 9): split at semicolons and commas outside brackets.
+function painClausesWide(text: string): string[] {
+  if (!text.trim()) return [];
+  const raw = text.split(/\n|;/).flatMap((x) => splitTopLevel(x));
+  const out = raw.map((x) => x.replace(/^(?:and|with|plus|while|but|also)\s+/i, '').replace(/[.]+$/, '').trim())
+    .filter((x) => { const n = x.split(/\s+/).length; return n >= 2 && n <= 16 && x.length > 4 && !/^(?:so|most|which|that|this|it|they|these|those)\b/i.test(x) && !/\b(?:that|this|it|them)$/i.test(x); });
+  const uniq: string[] = [];
+  for (const o of out) if (!uniq.includes(o)) uniq.push(o);
+  return uniq.slice(0, 6);
+}
+// A role in the plural ("developers who integrate the API", "technology leaders") is spoken to as "you".
+function isPluralRole(role: string): boolean {
+  const head = role.trim().split(/\s+(?:who|that|responsible|in|at|of|for)\s+/i)[0];
+  const last = head.split(/\s+/).pop() || '';
+  return /s$/i.test(last) && !/(?:ss|us|is|sales|operations|analytics|business|logistics|success|services|news)$/i.test(last);
+}
+function productKindAndParts(b: SolutionBrief): { kind: string; parts: string[] } {
+  if (b.parts.length) return { kind: b.kind, parts: b.parts.map(partLabel).filter(Boolean) };
+  const m = b.full.match(/,?\s+(?:covering|including|spanning)\s+(.+)$/i);
+  const kind = (b.kind || '').replace(/,?\s+(?:covering|including|spanning)\b.*$/i, '').trim();
+  if (!m) return { kind, parts: [] };
+  const items: string[] = [];
+  for (const raw of splitTopLevel(m[1].replace(/[.]+$/, ''))) {
+    const t = raw.replace(/^and\s+/i, '').trim();
+    if (!t || /\b(?:that|which|who|read|reads)\b/i.test(t) || t.split(/\s+/).length > 6) break;
+    items.push(partLabel(t));
+  }
+  return { kind, parts: items.length >= 3 ? items.slice(0, 12) : [] };
+}
 function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const sequenceType = (args.sequence_type as string) || 'cold_outreach';
-  const targetPersona = (args.target_persona as string) || 'Decision Maker';
-  const targetIndustry = (args.target_industry as string) || '';
-  const yourSolution = (args.your_solution as string) || 'our solution';
-  const keyValueProp = (args.key_value_prop as string) || '';
-  const specificPainPoint = (args.specific_pain_point as string) || '';
-  const socialProof = (args.social_proof as string) || '';
-  const callToAction = (args.call_to_action as string) || 'meeting';
-  const numEmails = (args.num_emails as number) || 5;
+  const targetPersona = ((args.target_persona as string) || '').trim() || 'Decision Maker';
+  const targetIndustry = ((args.target_industry as string) || '').trim();
+  const yourSolution = (args.your_solution as string) || '';
+  const keyValueProp = ((args.key_value_prop as string) || '').trim();
+  const specificPainPoint = ((args.specific_pain_point as string) || '').trim();
+  const socialProof = ((args.social_proof as string) || '').trim();
+  const callToAction = ((args.call_to_action as string) || '').trim();
   const tone = (args.tone as string) || 'professional';
-  const senderContext = (args.sender_context as string) || '';
+  const senderContext = ((args.sender_context as string) || '').trim();
   // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
   const ctx = readContext(undefined, { seller: [yourSolution], context: [keyValueProp, specificPainPoint], role: [targetPersona], buyer: [targetIndustry] });
-  // Run 20 round 1b (D92): the product description is not pasted into an email (the short name is); the proof is split into items and
-  // each email uses one, with its label left for the check list; emails 4 and 5 are written, not frames; the persona's own concern
-  // and the sector's questions give the emails something to say beyond the user's sentences.
-  const brief = solutionBrief(args.your_solution ? yourSolution : '');
-  const P = brief.short || 'our solution';
+  // Run 21c (draft rewrite): every email is written out from the inputs (subject and a full body), for all eight sequence types. The product
+  // is named by its short name, the pain is quoted in the user's words, each proof item and each labelled figure is used in one email with its
+  // label listed under "Before you send", and the sector's questions and objections fill the rest. Nothing is invented (B82).
+  const brief = solutionBrief(yourSolution);
+  const P = brief.short || clip(lowerFirstIfCommon(yourSolution), 70) || 'the product';
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const rk = roleFor(targetPersona, investment);
-  const plural = pluralOf(targetPersona);
-  // The pain without the labels the user put on it, and its first clause that can be quoted on its own.
-  const painPlain = specificPainPoint.replace(/\s*\((?:page claim|customer words|customer quote|a seller's words|implied by[^)]*)\)/gi, '').trim();
-  const pains = painClauses(painPlain);
-  const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
-  const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 175 ? q(lowerFirstIfCommon(painPlain.replace(/[.]+$/, ''))) : '';
-  // the topic of a subject line: a short part of the product, else what the product is, else a measure of the sector
-  const kindTopic = brief.kind.replace(/^(?:a|an|the)\s+/i, '').replace(/\s+(?:platform|system|software|tool|solution|product|service|services)$/i, '').trim();
-  const partTopics = brief.parts.map((x) => partLabel(x)).filter((x) => x.length <= 28).sort((x, y) => x.length - y.length);
-  const areaNoun = partTopics[0] || (kindTopic && kindTopic.length <= 28 ? kindTopic : '') || (v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem');
-  const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
-  const valueMain = (valueItems.find((x) => !x.label) || valueItems[0])?.text || '';
-  const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);
-  const proofAll = parseProof(socialProof);
-  const pool = pickProof(proofAll, 6, ['result', 'quote', 'story', 'scale']);
-  const recog = proofAll.filter((p) => p.kind === 'recognition');
-  const e2 = pool[0];
-  const e3 = pool[1] || pool[0];
-  const industryPhrase = targetIndustry ? ` in ${lowerFirstIfCommon(targetIndustry)}` : '';
-  const cta = callToAction.trim().replace(/[.?!]$/, '');
-  const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
-    : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
-    : /^(a|an|the|one|our)\b/i.test(cta) ? `Would ${lowerFirstIfCommon(cta)} next week make sense?` : `Would a ${lowerFirstIfCommon(cta)} next week make sense?`;
-  const valueLine = valueMain ? `${P} helps with exactly this: ${lowerFirstIfCommon(valueMain.replace(/[.]$/, ''))}.` : (brief.kind ? `${P} ${describeWith(brief)}.` : '');
-  const signature = `[Your name]${senderContext ? `\n${senderContext.trim()}` : ''}`;
-  const area = areaNoun;
-  const otherRoles = v ? v.buyerRoles.filter((r) => familyOf(r, investment) !== familyOf(targetPersona, investment)).slice(0, 2) : [];
-  const usedProof = [e2, e3].filter((x, i, a): x is ProofItem => !!x && a.indexOf(x) === i);
-  const checkList = [...usedProof, ...recog.slice(0, 1), ...valueClaims].filter((x, i, a) => a.indexOf(x) === i);
-  const checks = checkList.length ? `\n\n---\n\n## Before you send\n\nCheck that each point below is current and that you may name it. The first ones are used in the emails above; a claim you gave in key_value_prop is listed here and is not stated as a fact in any email:\n${checkList.map((p) => `- ${q(clip(proofPhrase(p), 140))}: ${proofSource(p)}`).join('\n')}\n` : '';
-
-  // Display text (output only): every template has a fixed number of emails, whatever num_emails says
-  const emailsText = hasValue(args.num_emails) ? (args.num_emails as number).toLocaleString('en-US') : `${numEmails} (default)`;  // run 15: a given 0 is shown as 0, not replaced by 5
-  const fixedLengthNote = '*The template below has a fixed number of emails: add or remove emails to match the number you need.*';
-
-  const toneInstructions: Record<string, string> = {
-    professional: 'Formal, polished, business-appropriate',
-    casual: 'Friendly, conversational, approachable',
-    urgent: 'Time-sensitive, action-oriented, compelling',
-    consultative: 'Helpful, advisory, value-first',
-    provocative: 'Challenging, thought-provoking, pattern-interrupt'
-  };
-
-  const sequenceTemplates: Record<string, () => string> = {
-    cold_outreach: () => `# Cold Outreach Sequence
-
-## Target: ${targetPersona}${targetIndustry ? ` in ${lowerFirstIfCommon(targetIndustry)}` : ''}
-## Solution: ${yourSolution}
-## Tone: ${toneInstructions[tone] || toneInstructions['professional']}
-## Emails: ${emailsText}
-${fixedLengthNote}
-
-**Who you are writing to:** ${aAn(rk.label)}. They care about ${rk.cares}, and they worry about ${rk.worry}. Each email below is written for that concern.
-
----
-
-### Email 1: The Opening (Day 1)
-
-**Subject Options:**
-- Quick question about ${areaNoun}
-- ${P} for ${plural}
-- ${painLead ? 'Does this sound familiar?' : 'A question for you'}
-
-**Body:**
-
-Hi [First Name],
-
-I'm writing to ${plural}${industryPhrase} about one problem. ${painQuoted ? `Does this sound familiar: ${painQuoted}?` : `Is ${area} something your team is working on this year?`}
-
-${valueLine}
-
-${ctaQuestion}
-
-Best,
-${signature}
-
----
-
-### Email 2: The Value Add (Day 3)
-
-**Subject:** Following up: ${v ? areaNoun : 'my note'}
-
-**Body:**
-
-Hi [First Name],
-
-Following up on my note from earlier this week.
-
-${e2 ? `One result we can point to: ${lowerFirstIfCommon(proofPhrase(e2))}.` : `I do not have a result to quote in this note, so here is a question instead.`}
-
-For ${plural}, the question that usually decides whether a change like this matters is: ${q(rk.questions[0])}
-
-Worth a conversation?
-
-${signature}
-
----
-
-### Email 3: The Social Proof (Day 7)
-
-**Subject:** How one organisation handled ${areaNoun}
-
-**Body:**
-
-Hi [First Name],
-
-${e3 ? `Wanted to share a quick story. The challenge was the one you may know: ${painQuoted || area}. With ${P}, the result was this: ${lowerFirstIfCommon(proofPhrase(e3))}.` : `I have no customer story to quote in this note. What I can offer is how ${plural}${industryPhrase} usually measure this before a change: ${v ? joinList(v.metrics.slice(0, 3)) : 'with a number they already track'}.`}
-
-${tone === 'provocative' ? "I'm curious: is this something you've been thinking about, or is everything running smoothly?" : `I thought this might be relevant to ${aAn(rk.label)} who has to answer for ${rk.cares.split(',')[0]}.`}
-
-${ctaQuestion}
-
-${signature}
-
----
-
-### Email 4: The Breakup Tease (Day 12)
-
-**Subject:** Should I close your file?
-
-**Body:**
-
-Hi [First Name],
-
-I've reached out a few times but haven't heard back. I get it: you're busy.
-
-Just checking: is the problem I described${painQuoted ? ` (${painQuoted})` : ''} not a priority right now, or is someone else the right person to talk to${otherRoles.length ? `, for example ${joinList(otherRoles.map((r) => `your ${r}`), 'or')}` : ''}?
-
-Either way, no hard feelings.
-
-P.S. If timing is the only issue, tell me which quarter suits you and I will come back then.
-
-${signature}
-
----
-
-### Email 5: The Final Value (Day 17)
-
-**Subject:** One last thing
-
-**Body:**
-
-Hi [First Name],
-
-Last note from me for now.
-
-Before I go, here are the questions that ${plural}${industryPhrase} usually ask before they change how they manage ${areaNoun}, useful even if we never speak:
-${(v ? v.discovery.slice(0, 3) : rk.questions).map((x, i) => `${i + 1}. ${x}`).join('\n')}
-${recog[0] ? `\nIf credibility helps: ${proofPhrase(recog[0])}.\n` : ''}
-If you ever want to talk it through, reply to this email and I will make the time.
-
-All the best,
-${signature}
-
----
-
-## Sequence Tips
-
-**Timing:**
-- Day 1 → 3 → 7 → 12 → 17
-- Adjust based on response patterns
-
-**Subject Lines:**
-- Keep under 50 characters
-- No spam trigger words
-- Personalization when possible
-
-**Best Practices:**
-- Research before sending
-- Personalize at least one element per email
-- Track open and reply rates
-- A/B test subject lines${checks}`,
-
-    warm_follow_up: () => `# Warm Follow-Up Sequence
-
-## Context: Post-meeting/referral/event
-## Target: ${targetPersona}
-## Emails: ${emailsText}
-${fixedLengthNote}
-
----
-
-### Email 1: Immediate Follow-Up (Same day/next morning)
-
-**Subject:** Great connecting: next steps on ${area}
-
-**Body:**
-
-Hi [First Name],
-
-Great speaking with you. As discussed, I'm sending the resources we talked about (add them here).
-
-Key takeaways from our conversation, as I heard them:
-1. Your challenge: ${painQuoted || 'write it in their words'}
-2. How ${P} can help: ${valueMain ? lowerFirstIfCommon(valueMain.replace(/[.]$/, '')) : 'add the one benefit you agreed'}
-3. The agreed next step: add it here
-
-${callToAction === 'meeting' ? 'Which day this week suits you for our follow-up call?' : `Let me know if you'd like to ${lowerFirstIfCommon(cta)}.`}
-
-Looking forward to continuing the conversation.
-
-${signature}
-
----
-
-### Email 2: Value Delivery (Day 3)
-
-**Subject:** ${rk.label === 'stakeholder' ? 'Something useful for your situation' : `For ${aAn(rk.label)}: ${v ? v.metrics[0] : area}`}
-
-**Body:**
-
-Hi [First Name],
-
-I was thinking about our conversation. For ${aAn(rk.label)}, the question that usually matters is: ${q(rk.questions[0])}
-
-${e2 ? `One result we can point to: ${proofPhrase(e2)}.` : 'Happy to share how others measure this if it helps.'}
-
-Any questions, let me know.
-
-${signature}
-
----
-
-### Email 3: Check-In (Day 7)
-
-**Subject:** Checking in: ${area}
-
-**Body:**
-
-Hi [First Name],
-
-Wanted to check in and see if you had a chance to review what I sent.
-
-${e3 ? `Also, in case it helps: ${proofPhrase(e3)}.` : ''}
-
-Any questions I can answer? Happy to hop on a quick call.
-
-${signature}
-
----
-
-## Warm Follow-Up Tips
-
-- **Be specific**: Reference actual conversation points
-- **Deliver value**: Every email should help them
-- **Keep momentum**: Follow up within committed timeframes
-- **Stay relevant**: Connect to their goals, not yours${checks}`,
-
-    post_demo: () => `# Post-Demo Sequence
-
-## Following up after product demonstration
-## Target: ${targetPersona}
-## Emails: ${emailsText}
-${fixedLengthNote}
-
----
-
-### Email 1: Same Day Thank You
-
-**Subject:** Thanks for your time today
-
-**Body:**
-
-Hi [First Name],
-
-Thank you for taking the time to see ${P} in action today.
-
-As promised, here is what I am sending: the demo recording if you have one, the resources we mentioned, and any pricing or proposal we discussed.
-
-What stood out to me from our conversation:
-- ${painQuoted ? `You mentioned ${painQuoted}` : 'The problem you described'}
-- The part of ${P} that seemed most relevant to your case (add it here)
-- The agreed next step (add it here)
-
-Questions from your side?
-
-${signature}
-
----
-
-### Email 2: Address Unstated Objections (Day 2)
-
-**Subject:** Thinking about the likely concerns
-
-**Body:**
-
-Hi [First Name],
-
-Following up on yesterday's demo.
-
-You may be wondering about ${v ? joinList(v.objections.slice(0, 2).map((o) => o.objection.toLowerCase())) : 'implementation and adoption'}. ${v ? v.objections[0].response : 'Here is how we would handle each.'}
-
-${e2 ? proofPhrase(e2) : 'Happy to connect you with a customer who had similar concerns, if one has agreed.'}
-
-Does this help? What other questions are on your mind?
-
-${signature}
-
----
-
-### Email 3: Internal Champion Enable (Day 5)
-
-**Subject:** Materials for your team
-
-**Body:**
-
-Hi [First Name],
-
-As you discuss ${P} internally, I wanted to share some materials that might help: a one-pager for executives, the ROI calculation, and a customer case study if I have one you may share.
-
-${otherRoles.length ? `Happy to be a resource as you talk to your ${joinList(otherRoles, 'and')}.` : 'Happy to be a resource as you talk to the other stakeholders.'}
-
-Anything specific I can provide to help?
-
-${signature}
-
----
-
-### Email 4: Create Urgency (Day 10)
-
-**Subject:** Quick update and timeline
-
-**Body:**
-
-Hi [First Name],
-
-Wanted to share a quick update that might affect your timeline (add the real reason here: pricing, availability or a date that matters to you).
-
-Can we find time this week to discuss next steps?
-
-${signature}${checks}`,
-
-    re_engagement: () => `# Re-Engagement Sequence
-
-## Reconnecting with cold/stalled opportunities
-## Target: ${targetPersona}
-## Emails: ${emailsText}
-${fixedLengthNote}
-
----
-
-### Email 1: The Trigger Event
-
-**Subject:** Something I thought of after our conversation
-
-**Body:**
-
-Hi [First Name],
-
-I noticed a change at your company (add the real trigger here: news, a role change or a milestone).
-
-It made me think of our conversation about ${painQuoted || area}. I wondered whether it has become more of a priority.
-
-Worth reconnecting?
-
-${signature}
-
----
-
-### Email 2: The New Value
-
-**Subject:** Something new I thought you'd want to see
-
-**Body:**
-
-Hi [First Name],
-
-It's been a while since we last connected.
-
-${e2 ? `Since then: ${proofPhrase(e2)}.` : 'If something has changed on our side that matters to you, I will tell you what it is (add it here only if true).'}
-
-Would it make sense to reconnect and catch up?
-
-${signature}
-
----
-
-### Email 3: The Direct Ask
-
-**Subject:** Still relevant?
-
-**Body:**
-
-Hi [First Name],
-
-I don't want to keep reaching out if this problem${painQuoted ? ` (${painQuoted})` : ''} isn't on your radar anymore.
-
-Quick question: is this still something you're thinking about, or should I check back at a different time?
-
-Either way is fine. I just want to respect your time.
-
-${signature}${checks}`,
-  };
-
-  const generator = sequenceTemplates[sequenceType];
-  if (generator) {
-    const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}` : '';
-    return `${generator()}${notes}\n\n${SUGGESTIONS_FOOTER}`;
+  const plural = pluralOf(targetPersona.replace(/\s*\([^)]*\)\s*/g, ' ').trim() || targetPersona);
+  const indLow = targetIndustry ? lowerFirstIfCommon(targetIndustry) : '';
+  const inInd = indLow ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
+  const anOf = (w: string) => `${/^(?:[aeiou]|8\b|8\d|11|18)/i.test(w.trim()) ? 'an' : 'a'} ${w.trim()}`;
+
+  // the pain, in the user's words and without the labels put on it; split into chunks so later emails can use the other part
+  const painPlain = specificPainPoint.replace(/\s*\((?:page claim|customer words|customer quote|a seller's words|implied by[^)]*)\)/gi, '').replace(/[.]+$/, '').trim();
+  const painChunks: string[] = [];
+  for (const piece of painPlain.split(/;|\s+while\s+|\.\s+(?=[A-Z])/).map((x) => x.trim().replace(/^,\s*/, '')).filter(Boolean)) {
+    const last = painChunks[painChunks.length - 1];
+    if (last && (last.length + piece.length < 150 || piece.split(/\s+/).length < 4)) painChunks[painChunks.length - 1] = `${last}, ${piece}`; else painChunks.push(piece);
   }
+  const painS = painChunks[0] || '';
+  const painT = painChunks[1] || '';
+  const painList = painClausesWide(painPlain);
+  const painLead = (painList[0] || '').trim();
+  const painHead = painLead && painLead.length <= 60 ? painLead : '';
+  const painRef = painLead ? lowerFirstIfCommon(painLead) : '';
 
-  // Default for other sequence types
-  return `# ${sequenceType.replace(/_/g, ' ')} Sequence
+  // what the product is and what it covers
+  const kp = productKindAndParts(brief);
+  const partNames = kp.parts;
+  const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
+  const valueMain = ((valueItems.find((x) => !x.label) || valueItems[0])?.text || '').replace(/[.]+$/, '');
+  const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);
+  const rankedParts = rankMeasures(partNames, painPlain, valueMain);
+  const kindTopic = shortKind(kp.kind, brief.name);
+  const topic = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 24 ? kindTopic : '') || (v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem');
+  const stripLead = (t: string, n: string) => (n && t.toLowerCase().startsWith(n.toLowerCase()) ? t.slice(n.length).replace(/^[,:\s]+/, '') : t);
+  const kindClean = stripLead(stripLead(kp.kind, brief.name), P).trim();
+  const subjT = rankedParts.find((x) => x.length <= 28) || (kindTopic && kindTopic.length <= 24 ? kindTopic : '') || P; // the topic in a subject that must read well on its own
+  const whatIs = kindClean ? (/^(?:a|an|the)\s/i.test(kindClean) ? `${P} is ${lowerFirstIfCommon(kindClean)}.` : `${P} offers ${lowerFirstIfCommon(kindClean)}.`) : '';
+  const covers = partNames.length ? `${whatIs ? 'It' : P} covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}.` : '';
+  const valueLine = valueMain ? `${P} is aimed at this: ${valueMain}.` : '';
+  const valueIt = valueMain ? `${whatIs || covers ? 'It' : P} is aimed at this: ${valueMain}.` : '';
+  const ownVoice = (t: string) => t.replace(/^the (?:[a-z]+ )?(?:page|site|website|home page)\s+(cites|claims|says|shows|reports)\b/i, `${P} $1`).replace(/[.]+$/, '');
 
-## Configuration
-- Target: ${targetPersona}
-- Industry: ${targetIndustry || 'General'}
-- Tone: ${tone}
-- Emails: ${emailsText}
+  // proof: each item is used once, in the email that suits its kind; what no email took is added to the last one
+  const proofAll = parseProof(socialProof);
+  const bag = [...proofAll];
+  const take = (kinds: ProofItem['kind'][], n = 1): ProofItem[] => {
+    const out: ProofItem[] = [];
+    for (const k of kinds) for (const p of [...bag]) if (out.length < n && p.kind === k) { out.push(p); bag.splice(bag.indexOf(p), 1); }
+    return out;
+  };
+  const quoteOf = (p: ProofItem): string => {
+    const m = p.text.match(/^(?:customer\s+)?(?:quote|words)\s+(?:from|by)\s+([^:]+):\s*(.+)$/i);
+    if (m) { const [who, about] = m[1].split(/,\s+on\s+/); return `As ${who.trim()} put it${about ? ` on ${about.trim()}` : ''}: ${m[2].trim()}`; }
+    return `In a customer's own words: ${proofPhrase(p)}`;
+  };
+  // facts are kept exactly as typed (including the first letter) after a lead-in; a quote keeps its speaker; recognition names the product
+  const proofParas = (items: ProofItem[]): string => {
+    const out: string[] = [];
+    const facts = (k: ProofItem['kind']) => items.filter((x) => x.kind === k).map((x) => proofPhrase(x).replace(/[.]+$/, ''));
+    const res = facts('result'), sto = facts('story'), sca = facts('scale');
+    if (res.length) out.push(`${res.length === 1 ? 'One result' : 'Results'}: ${res.join('; ')}.`);
+    if (sto.length) out.push(`${sto.length === 1 ? 'An example' : 'Examples'}: ${sto.join('; ')}.`);
+    if (sca.length) out.push(`On scale: ${sca.join('; ')}.`);
+    for (const x of items.filter((y) => y.kind === 'quote')) { const t = quoteOf(x); out.push(/["\u201d]$/.test(t) ? t : `${t}.`); }
+    for (const x of items.filter((y) => y.kind === 'recognition')) { const t = proofPhrase(x).replace(/[.]+$/, ''); out.push(/^named\b/i.test(t) ? `${P} was ${lowerFirstIfCommon(t)}.` : `Recognition: ${t}.`); }
+    return out.join(' ');
+  };
+  const used: ProofItem[] = [];
+  const mark = (items: ProofItem[]) => { for (const i of items) if (!used.includes(i)) used.push(i); return items; };
+  const claimsPara = (): string => { const c = valueClaims.splice(0); for (const x of c) used.push(x); return c.length ? `${c.map((x) => { const t = ownVoice(x.text); return t.startsWith(P) ? t : `Also on record: ${t}`; }).join('. ')}.` : ''; };
 
-${fixedLengthNote}
+  // the people around the persona and the questions of the sector
+  const otherRoles = v ? v.buyerRoles.filter((r) => familyOf(r, investment) !== familyOf(targetPersona, investment)).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
+  const sectorQs = v ? v.discovery : rk.questions.filter((x) => !/\bthat\b/i.test(x));
+  const measures = v ? rankMeasures(v.metrics, painPlain, valueMain) : [];
 
-## General Structure
+  // tone: the greeting, the closing and the way the ask is worded
+  const hello = tone === 'casual' ? 'Hi,' : 'Hello,';
+  const closing = ({ professional: 'Regards,', casual: 'Thanks,', urgent: 'Regards,', consultative: 'Best regards,', provocative: 'Regards,' } as Record<string, string>)[tone] || 'Regards,';
+  const sig = `${closing}\n${senderContext || P}`;
+  const ctaRaw = (callToAction || 'short call').replace(/[.?!]+$/, '');
+  const ctaVerb = /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(ctaRaw);
+  const ctaText = ctaVerb ? lowerFirstIfCommon(ctaRaw) : (/^(a|an|the|one|our|my)\b/i.test(ctaRaw) ? lowerFirstIfCommon(ctaRaw) : anOf(lowerFirstIfCommon(ctaRaw)));
+  const WHEN = ['next week', 'later this week', 'in the next two weeks', 'this month'];
+  const ask = (i: number): string => {
+    const when = tone === 'urgent' ? 'this week' : WHEN[Math.min(i, WHEN.length - 1)];
+    if (ctaVerb) {
+      if (tone === 'casual') return `Want to ${ctaText} ${when}?`;
+      if (tone === 'urgent') return `Can we ${ctaText} ${when}?`;
+      if (tone === 'provocative') return `If I am wrong, it costs little to ${ctaText} and find out. ${upperFirst(when)}?`;
+      if (tone === 'professional') return `I would welcome the chance to ${ctaText} ${when}.`;
+      return `Would you like to ${ctaText} ${when}?`;
+    }
+    if (tone === 'casual') return `Up for ${ctaText} ${when}?`;
+    if (tone === 'urgent') return `Can we fit in ${ctaText} ${when}?`;
+    if (tone === 'provocative') return `If I am wrong about this, ${ctaText} will show it quickly. ${upperFirst(when)}?`;
+    if (tone === 'professional') return `I would welcome ${ctaText} ${when}.`;
+    return `Would ${ctaText} ${when} be a useful way to look at this?`;
+  };
 
-### Email 1: Open
-- Establish context/relevance${painQuoted ? ` (${painQuoted})` : ''}
-- State purpose
-- Light CTA
+  const emails: string[] = [];
+  const mail = (day: string, title: string, subject: string, paras: string[]) => {
+    const n = emails.length + 1;
+    // a question already asked in this email is not asked twice
+    const seen = new Set<string>();
+    const kept = paras.filter(Boolean).filter((x) => { const k = x.split(': ').pop() || x; if (/\?$/.test(k)) { if (seen.has(k)) return false; seen.add(k); } return true; });
+    emails.push(`### Email ${n}: ${title}${day ? ` (${day})` : ''}\n\n**Subject:** ${clip(subject, 70)}\n\n**Body:**\n\n${hello}\n\n${kept.join('\n\n')}\n\n${sig}`);
+  };
+  const tail = () => { const rest = bag.splice(0); for (const r of rest) used.push(r); return rest.length ? `More that I can stand behind: ${proofParas(rest)}` : ''; };
+  const roleQ = (i: number) => (i === 0 ? rk.questions[0] : sectorQs[i - 1] || rk.questions[0]);
+  const painOpen = painS ? (tone === 'provocative' ? `A direct question: ${painS}. Is that true on your side?` : `I am writing to ${plural}${inInd} because of one problem: ${painS}.`) : `I am writing to ${plural}${inInd} about ${topic}. ${roleQ(0)}`;
+  const topicSubj = (pre: string) => `${pre} ${topic}`;
+  const objs = v ? v.objections.slice(0, 2) : [];
+  const toYou = (t: string) => t.replace(/on the buyer side/gi, 'on your side').replace(/the buyer's/gi, 'your').replace(/the buyer/gi, 'your team');
+  const objPara = (o: { objection: string; response: string }, i = 0) => `${i === 0 ? 'A concern worth naming before you raise it' : 'Another'}: ${lowerFirstIfCommon(o.objection).replace(/[.]+$/, '')}. We would ${toYou(lowerFirstIfCommon(o.response)).replace(/[.]+$/, '')}.`;
+  const measuresLine = measures.length ? `The measures ${plural}${inInd} tend to watch here are ${joinList(measures.slice(0, 3))}.` : '';
 
-### Email 2: Value
-- Deliver something useful${rk.questions[0] ? `, for example: ${q(rk.questions[0])}` : ''}
-- Build credibility
-- Soft CTA
+  const builders: Record<string, () => void> = {
+    cold_outreach: () => {
+      mail('Day 1', 'Opening', painHead ? cap(painHead) : topicSubj('A question about'), [painOpen, [whatIs, covers, valueIt].filter(Boolean).join(' '), ask(0)]);
+      const r2 = mark(take(['result', 'scale'], 2));
+      mail('Day 3', 'Result and question', r2.length ? `A result on ${subjT}` : topicSubj('One question on'), [
+        r2.length ? `${proofParas(r2)}` : `I have no result to quote in this note, so here is a question instead.`,
+        claimsPara(),
+        `The question that usually decides whether a change like this matters to ${aAn(rk.label)} is this: ${roleQ(0)}`,
+        ask(1)]);
+      const r3 = mark(take(['quote', 'story'], 2));
+      mail('Day 7', 'In a customer\'s words', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${subjT}` : r3.length ? `An example on ${subjT}` : `${cap(topic)} on the ground`, [
+        r3.length ? proofParas(r3) : `I have no customer story to quote in this note. What I can offer is how ${plural}${inInd} measure this before a change: ${measures.length ? joinList(measures.slice(0, 3)) : 'with a number they already track'}.`,
+        painT ? `The second part of the problem: ${painT}.` : sectorQs[0] ? `A question from the same place: ${sectorQs[0]}` : '',
+        rankedParts[0] ? `The part of ${P} that speaks to this is ${rankedParts[0]}.` : valueLine,
+        ask(1)]);
+      mail('Day 12', 'Right person?', `Who owns ${topic}${inInd}?`, [
+        `I have written a few times about ${painS && painS.length <= 120 ? q(painS) : painRef ? q(painRef) : topic} and have not heard back, so I will ask plainly: is this yours, or does it sit with someone else${otherRoles.length ? `, for example your ${joinList(otherRoles, 'or')}` : ''}?`,
+        `If the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.`]);
+      const r5 = mark(take(['recognition', 'result', 'scale', 'quote', 'story'], 1));
+      mail('Day 17', 'Questions to keep', `Questions on ${topic}${inInd}`, [
+        `This is my last note. Here are the questions ${plural}${inInd} can ask themselves before changing how they handle ${topic}, useful even if we never speak:\n${sectorQs.slice(0, 3).map((x, i) => `${i + 1}. ${x}`).join('\n')}`,
+        r5.length ? proofParas(r5) : '', tail(),
+        `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`]);
+    },
+    warm_follow_up: () => {
+      mail('same day or next morning', 'After the call', `Next step on ${topic}`, [
+        painS ? `Thank you for the conversation. What I took from it: ${painS}.` : `Thank you for the conversation about ${topic}.`,
+        [whatIs, valueIt].filter(Boolean).join(' '),
+        `The next step I would suggest is ${ctaText}. ${ask(0)}`]);
+      const r2 = mark(take(['result', 'scale'], 2));
+      mail('Day 3', 'Something useful', `For ${aAn(rk.label)}: ${measures[0] || topic}`, [
+        `One question I have been thinking about since we spoke: ${roleQ(0)}`,
+        measuresLine, r2.length ? proofParas(r2) : '', claimsPara()]);
+      const r3 = mark(take(['quote', 'story', 'recognition'], 2));
+      mail('Day 7', 'Checking in', `Checking in on ${topic}`, [
+        painT ? `We also touched on this: ${painT}.` : painRef ? `I wanted to come back to ${q(painRef)}.` : '',
+        r3.length ? proofParas(r3) : '', tail(),
+        ask(1)]);
+    },
+    post_demo: () => {
+      mail('same day', 'Thank you', `Thank you for the demo of ${P}`, [
+        `Thank you for the time today. You saw ${P}${partNames.length ? `, which covers ${rankedParts.length > 3 ? `${rankedParts.slice(0, 2).join(rankedParts.slice(0, 2).some((x) => / and /.test(x)) ? '; ' : ' and ')}, among other parts` : joinList(rankedParts)}` : brief.kind ? `, ${lowerFirstIfCommon(brief.kind)}` : ''}.`,
+        painS ? `The problem we set out to address: ${painS}.` : '', valueLine,
+        `If anything about ${topic} was unclear after the demo, send me the question and I will answer it in writing.`]);
+      mail('Day 2', 'Likely concerns', objs[0] ? `Before you decide: ${lowerFirstIfCommon(objs[0].objection).replace(/[.]+$/, '')}` : `Questions after the demo of ${P}`, [
+        objs.length ? objs.map((o, i) => objPara(o, i)).join('\n\n') : `A question to settle before you decide: ${roleQ(0)}`,
+        ask(1)]);
+      const r3 = mark(take(['quote', 'story', 'result'], 2));
+      mail('Day 5', 'Team material', otherRoles[0] ? `For your ${otherRoles[0]}: ${topic}` : `Material for your team on ${topic}`, [
+        `As you take ${P} to the people on your side${otherRoles.length ? `, such as your ${joinList(otherRoles)}` : ''}, I can prepare what each one will ask about. ${v ? `${cap(measures[0] || topic)} is usually where ${plural} start.` : ''}`,
+        r3.length ? proofParas(r3) : '', claimsPara()]);
+      const r4 = mark(take(['recognition', 'scale', 'result'], 1));
+      mail('Day 10', 'Next step', `Next step on ${P}`, [
+        `I would like to agree the next step with you. ${ask(1)}`,
+        valueMain ? `The aim, as we described it: ${valueMain}.` : '', r4.length ? proofParas(r4) : '', tail(),
+        `If budget or timing holds ${P} back, tell me which and I will plan around it.`]);
+    },
+    re_engagement: () => {
+      mail('', 'Still a problem?', painHead ? `Is ${lowerFirstIfCommon(painHead)} still true?` : topicSubj('Is this still on your list:'), [
+        painS ? `When we last spoke, the problem was this: ${painS}.` : `When we last spoke, ${topic} was on the table.`,
+        `I do not know what has changed on your side since, so I will ask: has it become more of a priority, less, or has someone else taken it on${otherRoles.length ? ` (for example your ${joinList(otherRoles, 'or')})` : ''}?`,
+        ask(0)]);
+      const r2 = mark(take(['result', 'scale', 'quote', 'story'], 2));
+      mail('', 'What is new', `What ${P} has to show on ${topic}`, [
+        r2.length ? `${proofParas(r2)}` : `I have nothing new to report in this note, so here is a question: ${roleQ(0)}`,
+        claimsPara(), valueLine]);
+      const r3 = mark(take(['recognition'], 1));
+      mail('', 'A direct question', `Close the loop on ${topic}?`, [
+        `I do not want to keep writing if ${painRef ? q(painRef) : topic} is off your list. Is it still something you are working on, or should I check back at a different time?`,
+        r3.length ? proofParas(r3) : '', tail(), ask(2)]);
+    },
+    proposal_follow_up: () => {
+      mail('Day 1', 'The proposal', `Your proposal for ${topic}`, [
+        `I have sent the proposal for ${P}${inInd ? `, written for ${plural}${inInd}` : ''}. It starts from the problem you described: ${painS || topic}.`,
+        [whatIs, covers].filter(Boolean).join(' '), valueLine,
+        `${ask(0)} I would walk through it section by section and take your questions as we go.`]);
+      mail('Day 3', 'Questions', objs[0] ? `On the proposal: ${lowerFirstIfCommon(objs[0].objection).replace(/[.]+$/, '')}` : `Questions on the proposal for ${topic}`, [
+        objs.length ? objs.map((o, i) => objPara(o, i)).join('\n\n') : '', `One question for whoever reviews it: ${roleQ(1)}`, measuresLine]);
+      const r3 = mark(take(['result', 'quote', 'story', 'scale'], 2));
+      mail('Day 7', 'Reviewers', otherRoles[0] ? `Who else reviews the proposal: your ${otherRoles[0]}?` : `Evidence for the proposal on ${topic}`, [
+        r3.length ? `${proofParas(r3)}` : `I have no customer evidence to add in this note.`,
+        claimsPara(),
+        otherRoles.length ? `Who on your side besides you reviews it: your ${joinList(otherRoles, 'or')}? I can prepare a short version for each.` : `Who on your side besides you reviews it? I can prepare a short version for each.`]);
+      const r4 = mark(take(['recognition'], 1));
+      mail('Day 12', 'Decision', `Where the proposal for ${P} stands`, [
+        `I would like to know where the proposal stands. What has to happen on your side before a decision on ${P}, and by when?`,
+        `A question to settle before a decision: ${roleQ(2)}`, r4.length ? proofParas(r4) : '', tail(), ask(1)]);
+    },
+    nurture: () => {
+      mail('Week 1', 'The problem', topicSubj('How to look at'), [
+        painS ? `This note is about one problem: ${painS}.` : topic !== 'this problem' ? `This note is about ${topic}.` : '',
+        measuresLine || `The question to start with: ${roleQ(0)}`,
+        sectorQs[0] ? `A question to start with: ${sectorQs[0]}` : '']);
+      mail('Week 2', 'One part', rankedParts[0] ? `${cap(rankedParts[0])}: what it does` : `What ${P} does`, [
+        [whatIs, covers].filter(Boolean).join(' '),
+        rankedParts[0] ? `For the problem above, ${rankedParts[0]} is the part to look at first.` : valueLine,
+        valueLine && rankedParts[0] ? valueLine : '', claimsPara(), `A question for you: ${roleQ(0)}`]);
+      const r3 = mark(take(['result', 'quote', 'story', 'scale'], 2));
+      mail('Week 4', 'A customer', r3.length ? `What a customer saw on ${subjT}` : `${cap(subjT)} for ${plural}`, [
+        r3.length ? proofParas(r3) : `I have no customer story to quote in this note. A question from ${v ? 'the sector' : 'the role'} instead: ${sectorQs[1] || roleQ(1)}`,
+        painT ? `The other half of the problem: ${painT}.` : '', `A question for you: ${sectorQs[1] || roleQ(1)}`]);
+      const r4 = mark(take(['recognition'], 1));
+      mail('Week 6', 'An open door', `If ${topic} is on your list`, [
+        `${painRef ? `If ${q(painRef)} is on your list` : `If ${topic} is on your list`}, ${ctaVerb ? `you can ${ctaText}` : `I am happy to set up ${ctaText}`} at a time that suits you.`,
+        r4.length ? proofParas(r4) : '', tail(), `A last question: ${sectorQs[2] || roleQ(2)}`]);
+    },
+    event_follow_up: () => {
+      mail('next day', 'After the event', `Good to meet you at the event: ${topic}`, [
+        painS ? `It was good to meet you at the event. The problem I wanted to follow up on: ${painS}.` : `It was good to meet you at the event. I wanted to follow up on ${topic}.`,
+        [whatIs, valueIt].filter(Boolean).join(' '), ask(0)]);
+      const r2 = mark(take(['result', 'scale', 'quote', 'story'], 2));
+      mail('Day 4', 'Follow-up', `Following the event: ${topic}`, [
+        r2.length ? `${proofParas(r2)}` : `I have no customer result to quote in this note. A question instead: ${roleQ(0)}`,
+        claimsPara(), covers]);
+      const r3 = mark(take(['recognition'], 1));
+      mail('Day 9', 'A direct ask', `Still worth ${ctaVerb ? 'a conversation' : ctaText}?`, [
+        `I met a lot of people at the event and I would rather ask than guess: is ${painRef ? q(painRef) : topic} something you are working on?`,
+        r3.length ? proofParas(r3) : '', tail(), ask(1)]);
+    },
+    referral_request: () => {
+      mail('Day 1', 'Introduction', `An introduction on ${topic}?`, [
+        `I am looking to speak with ${plural}${inInd} about ${painS ? q(painS) : topic}.`,
+        `Is that you, or is there someone you would point me to${otherRoles.length ? `, perhaps your ${joinList(otherRoles, 'or')}` : ''}?`,
+        `I would ask them for ${ctaText}, nothing more.`]);
+      const r2 = mark(take(['result', 'scale', 'quote', 'story'], 1));
+      mail('Day 4', 'A note to forward', `A note to forward on ${topic}`, [
+        `Here are three lines about ${P} that you can forward as they are.`,
+        `${[whatIs, valueIt].filter(Boolean).join(' ')} ${painS ? `The problem it starts from: ${painS}.` : ''} ${r2.length ? proofParas(r2) : ''}`.replace(/\s+/g, ' ').trim(),
+        `They can reply to me directly for ${ctaText}.`]);
+      const r3 = mark(take(['recognition', 'quote', 'story', 'result', 'scale'], 1));
+      mail('Day 9', 'Last ask', `Thank you, and one last ask on ${topic}`, [
+        `If nobody comes to mind for ${topic}, a one-line reply saying so helps me too.`,
+        r3.length ? proofParas(r3) : '', tail(), claimsPara(),
+        `And if you are the right person after all: ${ask(2)}`]);
+    },
+  };
 
-### Email 3: Proof
-- Social proof/case study${e2 ? `: ${proofPhrase(e2)}` : ''}
-- Address objections${v ? ` (${v.objections.slice(0, 2).map((o) => o.objection.toLowerCase()).join('; ')})` : ''}
-- Stronger CTA
+  const build = builders[sequenceType];
+  if (!build) {
+    return `Sequence type '${sequenceType}' not recognized. Available sequence types: ${Object.keys(builders).join(', ')}`;
+  }
+  build();
 
-### Email 4: Urgency
-- Time-based reason to act
-- Overcome inertia
-- Direct CTA
+  // what was not given, said once
+  const notGiven: string[] = [];
+  if (!specificPainPoint) notGiven.push('specific_pain_point (the emails ask a question about the topic instead of naming a problem)');
+  if (!keyValueProp) notGiven.push('key_value_prop (the emails describe the product by what it is)');
+  if (!socialProof) notGiven.push('social_proof (no result or quote is cited)');
+  if (!callToAction) notGiven.push('call_to_action (the ask is a short call)');
+  if (!senderContext) notGiven.push('sender_context (the emails are signed with the product name)');
+  if (!targetIndustry) notGiven.push('target_industry (the emails speak of the persona without a sector)');
+  const notGivenLine = notGiven.length ? `**Not given:** ${notGiven.join('; ')}. Add them to use them in the draft.\n\n` : '';
 
-### Email 5: Close
-- Final attempt
-- Leave door open
-- Clear next step
+  // the proof and figures used, with the label each came with, to check before sending
+  const checkItems = [...used].filter((x, i, a) => a.indexOf(x) === i);
+  const checks: string[] = [`Add the recipient's name.`];
+  if (sequenceType === 'event_follow_up') checks.push(`Name the event in email 1.`);
+  checks.push(...(checkItems.length ? [`Check these before sending (each is used as you gave it):\n${checkItems.map((p) => `- ${proofPhrase(p)} (${p.label || 'as you gave it'})`).join('\n')}`] : []));
+  const fixed = EMAIL_COUNTS[sequenceType] || emails.length;
+  const emailsText = hasValue(args.num_emails) ? (args.num_emails as number).toLocaleString('en-US') : `${fixed}`;
+  const fixedNote = hasValue(args.num_emails) ? `\n*This sequence type has ${fixed} emails and num_emails is not used yet: add or remove emails to match the number you need.*` : '';
+  const title = sequenceType.split('_').map((w, i) => (i === 0 ? upperFirst(w) : w)).join(' ');
+  const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}` : '';
+  return `# ${title === 'Cold outreach' ? 'Cold Outreach' : title === 'Warm follow up' ? 'Warm Follow-Up' : title === 'Post demo' ? 'Post-Demo' : title === 'Re engagement' ? 'Re-Engagement' : title} Sequence
+
+## Target: ${targetPersona}${indLow ? ` in ${indLow}` : ''}
+## Solution: ${yourSolution}
+## Tone: ${tone}
+## Emails: ${emailsText}${fixedNote}
+
+${notGivenLine}${emails.join('\n\n---\n\n')}
 
 ---
 
-*Customize based on your specific situation and ${lowerFirstIfCommon(targetPersona)} preferences*
+## Before you send
+
+${checks.join('\n\n')}${notes}
 
 ${SUGGESTIONS_FOOTER}`;
 }
+const EMAIL_COUNTS: Record<string, number> = { cold_outreach: 5, warm_follow_up: 3, post_demo: 4, re_engagement: 3, proposal_follow_up: 4, nurture: 4, event_follow_up: 3, referral_request: 3 };
 
 
 // Tool 9: Demo Script Builder

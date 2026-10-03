@@ -57,10 +57,13 @@ test("win_loss_analyzer: a deal value of 0 is shown as given, 1 day is singular,
   assert.match(big.text, /\| \*\*Sales Cycle\*\* \| 1,000,000,000,000 days \|/);
 });
 
-test("win_loss_analyzer: a loss with no stated reason still has something under 'Common Root Causes to Investigate'", async () => {
+// run 21c: draft rewrite. The old check read the text under the heading "Common Root Causes to Investigate"; the write-up has no such outline
+// section. Its intent is kept: a loss with no stated reason must say so plainly and ask for the reason, not print an empty section.
+test("win_loss_analyzer: a loss with no stated reason says what the reason would add, and prints no empty section", async () => {
   const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost" });
-  const after = r.text.split("**Common Root Causes to Investigate:**")[1].trim();
-  assert.doesNotMatch(after, /^### Loss Categories/);
+  assert.match(r.text, /Not given:[^\n]*`loss_reason`/);
+  assert.match(r.text, /## What the stated reason would add\n\n\S/);
+  assert.doesNotMatch(r.text, /##[^\n]*\n\n(?:##|$)/);
 });
 
 // Run 19 (D80, problem 2): a weakness is the seller's own note and is never read out inside a question to the buyer, so this
@@ -70,6 +73,8 @@ test("competitive_trap_setter: each weakness gets its own landmine question", as
   const qs = [...r.text.matchAll(/\*\*Landmine Question:\*\* "([^"]+)"/g)].map((m) => m[1]);
   assert.equal(qs.length, 2);
   assert.notEqual(qs[0], qs[1]);
-  assert.doesNotMatch(qs[0], /text reminders/);
+  // run 21c: draft rewrite. The question now names the topic of its note ("text reminders") as the buyer would, so the check is that it
+  // never reads the whole note out; the intent (the weakness is a note for the seller, shown as given) is kept.
+  assert.doesNotMatch(qs[0], /Charges extra for text reminders/i);
   assert.match(r.text, /Charges extra for text reminders/);
 });

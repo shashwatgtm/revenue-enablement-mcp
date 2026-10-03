@@ -74,7 +74,7 @@ test("email_sequence_generator: no pasted clause in a fixed sentence; proof used
     social_proof: "first-attempt deliveries up at Example Logistics Co", call_to_action: "20-minute call", sender_context: "Account Executive at Lanehop" });
   assert.doesNotMatch(r.text, /Quick thought on dispatchers/);
   assert.doesNotMatch(r.text, /conversation about 20-minute call/);
-  assert.match(r.text, /\[Your name\]\nAccount Executive at Lanehop/); // in the signature, not a bare line in the body
+  assert.match(r.text, /Regards,\nAccount Executive at Lanehop/); // in the signature, not a bare line in the body (run 21c: draft rewrite: no [Your name] merge field, the sender line is the signature)
   assert.doesNotMatch(r.text, /\n\nAccount Executive at Lanehop\n\n/);
   assert.doesNotMatch(r.text, /struggling with dispatchers/);
   const e3 = r.text.split("### Email 3")[1].split("### Email 4")[0];

@@ -194,7 +194,7 @@ test("discovery_question_bank: no placeholder, the pains are split, role and par
   assert.match(r.text, /On "manual expense capture and bill checking"/);
   assert.match(r.text, /On "a 60 day reimbursement cycle"/);
   assert.match(r.text, /Questions on what Spendrill covers/);
-  assert.match(r.text, /Receipt capture: "How do you handle this today/);
+  assert.match(r.text, /Receipt capture: .*\?/); // run 21c: draft rewrite: each part has its own question built from the pain, not the old stock wording
   // the long pain is quoted whole only once (the context line)
   assert.equal((r.text.match(/manual expense capture and bill checking, a 60 day reimbursement cycle/g) || []).length, 1);
 });
@@ -202,7 +202,7 @@ test("discovery_question_bank: a finance buyer of a SaaS-sector product is not a
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_industry: "B2B SaaS and software", prospect_role: "CFO", your_solution: "Billwise, a billing platform for subscription companies: invoicing, subscription management, revenue recognition and collections",
     known_pain_points: "proration logic breaks and finance spends cycles reconciling" });
   assert.doesNotMatch(r.text, /Where do customers drop off/);
-  assert.match(r.text, /Invoicing: "How do you handle this today/);
+  assert.match(r.text, /Invoicing: .*\?/); // run 21c: draft rewrite: each part has its own question built from the pain, not the old stock wording
   assert.match(r.text, /Which finance numbers are late or reworked/);
 });
 test("discovery_question_bank: an investment seller is asked in investment words", async () => {
@@ -322,7 +322,7 @@ test("email_sequence_generator cold_outreach: one proof item per email, emails 4
   assert.equal(r.isError, false);
   assert.doesNotMatch(r.text.replace(FIRST_NAME_OK, ""), BRACKET);
   assert.doesNotMatch(r.text, /\[(?:resource|insight|challenge|Company|relevant|Result|Describe|describe|link)[^\]]*\]/);
-  const body = (n) => r.text.split(`### Email ${n}`)[1].split(/\n### Email \d|\n## Sequence Tips/)[0];
+  const body = (n) => r.text.split(`### Email ${n}`)[1].split(/\n### Email \d|\n## Sequence Tips|\n## Before you send/)[0]; // run 21c: draft rewrite: the emails end where "Before you send" starts
   // the whole proof block is not pasted: no email holds all three items
   for (const n of [1, 2, 3, 4, 5]) assert.ok(!(/Hollybrook/.test(body(n)) && /500 to 4,000/.test(body(n))), `email ${n} pastes the whole proof block`);
   assert.match(body(2) + body(3), /66%/);
@@ -490,7 +490,8 @@ test("competitive_trap_setter: a status quo competitor is not asked about a cont
   assert.doesNotMatch(r.text, /customers who've been through their support|contract of|renew automatically|termination rights/i);
   assert.doesNotMatch(r.text, /Ask these about manual spreadsheet routing/i);
   assert.match(r.text, /current approach|current way/i);
-  assert.match(r.text, /Who keeps it running/i);
+  // run 21c: draft rewrite: the question names the current approach instead of "it"
+  assert.match(r.text, /Who keeps the current approach running/i);
   assert.match(r.text, /live re-planning when an order changes/);
   assert.match(r.text, /manual spreadsheet routing that only handles a few variables/);
 });

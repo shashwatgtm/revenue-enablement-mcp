@@ -320,7 +320,7 @@ const tools = {
     // Tool 3: Discovery Question Bank
     discovery_question_bank: {
         name: 'discovery_question_bank',
-        description: 'Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect.',
+        description: 'Writes a discovery question list from the framework you choose (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. Returns an opening for the conversation, questions in the language of the prospect\'s sector and on what your solution covers, the questions for each part of the framework, a closing for the call and what to say to an objection. It uses only the inputs you give and says which it did not get.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -497,7 +497,7 @@ const tools = {
     // Tool 6: Win/Loss Analyzer
     win_loss_analyzer: {
         name: 'win_loss_analyzer',
-        description: 'Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate.',
+        description: 'Writes a short win/loss review of one deal, a competitor pattern or a set of deals from the details you give. Returns a write-up in plain sentences that names the outcome, the stated reason in the buyer\'s words, what the reason points to and what the buyer weighed, then the questions for the review call and sector notes. It adds no figure or reason you did not give, and says plainly what the outcome or reason would add when it is missing.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -552,7 +552,7 @@ const tools = {
     // Tool 7: Proposal Section Writer
     proposal_section_writer: {
         name: 'proposal_section_writer',
-        description: 'Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more.',
+        description: 'Writes the proposal section you choose, such as an executive summary, solution overview or pricing justification, for a named buyer. Returns the section as sentences built from your solution, the buyer\'s challenges, your differentiators, pricing and success measures, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -610,7 +610,7 @@ const tools = {
     // Tool 8: Email Sequence Generator
     email_sequence_generator: {
         name: 'email_sequence_generator',
-        description: 'Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences.',
+        description: 'Writes a multi-email sequence by persona, stage and objective, such as prospecting, nurture, follow-up or re-engagement. Returns each email with its subject, send day and body, built from your solution, the pain point, the value proposition, your proof and the ask, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -668,7 +668,7 @@ const tools = {
     // Tool 9: Demo Script Builder
     demo_script_builder: {
         name: 'demo_script_builder',
-        description: 'Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling.',
+        description: 'Writes a demo script for the demo type, persona and use case you choose. Returns a timed run from opening to close, with spoken lines and a step for each feature you must show, tied to the pains you name, then discussion, close and follow-up lines and sector notes. The steps come from the parts of your solution and your pains, and the answer says where they came from and what it did not get.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -784,7 +784,7 @@ const tools = {
     // Tool 11: Champion Enablement Kit
     champion_enablement_kit: {
         name: 'champion_enablement_kit',
-        description: 'Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points.',
+        description: 'Writes an internal selling asset for your champion, such as an executive brief, an internal business case, objection responses or presentation talking points, built from your solution, the customer\'s situation and the objections you expect. Returns the asset in the champion\'s voice with the recommendation, the answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -840,7 +840,7 @@ const tools = {
     // Tool 12: Competitive Trap Setter
     competitive_trap_setter: {
         name: 'competitive_trap_setter',
-        description: 'Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative.',
+        description: 'Writes landmine questions and positioning tactics against a named competitor, so the buyer\'s own criteria expose its weak points without negative selling. Returns the set-up, your strengths and the competitor\'s weak points as you gave them, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and stage-specific tactics, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.',
         inputSchema: {
             type: 'object',
             properties: {

@@ -1016,6 +1016,7 @@ function sectorNotes(v: Vertical | null, what: 'committee' | 'metrics' | 'object
   if (what === 'committee' || what === 'all') out.push(`- **Who usually decides:** ${v.committee}`);
   if (what === 'metrics' || what === 'all') out.push(`- **What this sector measures:** ${v.metrics.join(', ')}.`);
   if (what === 'objections' || what === 'all') out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => o.objection.toLowerCase()).join('; ')}.`);
+  if (what !== 'objections') out.push(`- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.`);
   out.push(`- **A proof point that lands:** ${v.proofShape}`);
   return out.join('\n');
 }
@@ -1338,6 +1339,7 @@ ${meet.length + 2}. Identify the business trigger behind this account's prioriti
 ## Account Intelligence
 
 ${notesShown ? `### Additional Context\n${notesShown}\n\n` : ''}### What to Research
+- The words this sector's buyers use${v ? `: ${v.vocabulary.join(', ')}` : ''}; listen for them in what the account publishes
 - Recent news and press releases${v ? ` that touch ${v.metrics.slice(0, 2).join(' or ')}` : ''}
 - Earnings calls and investor presentations (if the company is public)
 - Hiring and org changes for the roles above
@@ -4040,7 +4042,7 @@ Enterprise deals often have multiple vendors. Position on value, not price:
   };
 
   const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
-  const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}` : '';
+  const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
   const text = generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${P}`);
   // every scenario but the discount request (which has its own situation table) opens with the deal, the leverage and the approver
   const withDeal = scenario === 'discount_request' || !scenarioGuides[scenario]
@@ -5668,7 +5670,7 @@ ${signature}${checks}`,
 
   const generator = sequenceTemplates[sequenceType];
   if (generator) {
-    const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}\n- **Words this buyer uses:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
+    const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}` : '';
     return `${generator()}${notes}\n\n${SUGGESTIONS_FOOTER}`;
   }
 
@@ -5874,7 +5876,7 @@ ${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${aAn(a
 - Review previous conversations and notes
 - Research company news and priorities
 - Understand attendee roles and concerns
-- Prepare relevant customer examples${v ? `: ${proofOf(v)}` : ''}
+- Prepare relevant customer examples${v ? `: ${proofOf(v)}` : ''}${v ? `\n- Use the words this sector's buyers use, where they are true for the prospect: ${v.vocabulary.join(', ')}` : ''}
 - Test the demo environment
 
 ### Technical Setup

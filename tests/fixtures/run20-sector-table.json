@@ -482,6 +482,78 @@
       "sector": "saas",
       "model": "saas",
       "note": "run 20 round 2 (fresh judges, set T): item 4"
+    },
+    {
+      "id": "r2b-bill-1",
+      "round": 2,
+      "text": "Subscription billing and invoicing platform for SaaS companies",
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): invoicing no longer pulls a billing seller into fintech"
+    },
+    {
+      "id": "r2b-bill-2",
+      "round": 2,
+      "text": "Billing, invoicing and revenue recognition software for finance teams",
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): billing and revenue operations sold to finance"
+    },
+    {
+      "id": "r2b-bill-3",
+      "round": 2,
+      "text": "Usage-based pricing and monetization platform for software companies",
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): pricing and monetization words name SaaS"
+    },
+    {
+      "id": "r2b-bill-4",
+      "round": 2,
+      "text": "Dunning and invoicing for subscription businesses",
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): dunning and invoicing"
+    },
+    {
+      "id": "r2b-spend-1",
+      "round": 2,
+      "text": "Spend management platform with corporate cards, expense claims and invoice approvals for finance teams",
+      "sector": "fintech",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): a spend management seller keeps the finance reading"
+    },
+    {
+      "id": "r2b-spend-2",
+      "round": 2,
+      "text": "Accounts payable automation and invoice processing for mid-size companies",
+      "sector": "fintech",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): accounts payable is the finance block"
+    },
+    {
+      "id": "r2b-spend-3",
+      "round": 2,
+      "text": "Reimbursements and travel expense app for companies",
+      "sector": "fintech",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): expense and reimbursements stay fintech"
+    },
+    {
+      "id": "r2b-it-1",
+      "round": 2,
+      "text": "SaaS management platform that tracks licences and renewals for IT leaders",
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): a SaaS product bought by IT leaders is plain SaaS"
+    },
+    {
+      "id": "r2b-it-2",
+      "round": 2,
+      "text": "IT asset management software for IT leaders",
+      "sector": null,
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): IT asset management is not asset management in the money sense: the sector must not be fintech and the model must not be investment (the word software alone names no sector)"
     }
   ],
   "toolcalls": [
@@ -971,6 +1043,105 @@
       "sector": "saas",
       "model": "saas",
       "note": "run 20 round 2 (fresh judges, set T): item 4: the seller's billing words decide, not the buyer's payments industry"
+    },
+    {
+      "id": "r2b-tc-1",
+      "round": 2,
+      "seller": [
+        "Subscription billing and invoicing platform"
+      ],
+      "buyer": [
+        "SaaS companies"
+      ],
+      "role": [
+        "CFO",
+        "Revenue Operations Lead"
+      ],
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): billing seller bought by finance"
+    },
+    {
+      "id": "r2b-tc-2",
+      "round": 2,
+      "seller": [
+        "Usage-based pricing and monetization platform"
+      ],
+      "buyer": [
+        "Software companies"
+      ],
+      "role": [
+        "VP Finance"
+      ],
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): pricing and monetization"
+    },
+    {
+      "id": "r2b-tc-3",
+      "round": 2,
+      "seller": [
+        "Spend management platform with corporate cards and expense claims"
+      ],
+      "buyer": [
+        "Mid-size companies"
+      ],
+      "role": [
+        "CFO"
+      ],
+      "sector": "fintech",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): spend management keeps the finance block"
+    },
+    {
+      "id": "r2b-tc-4",
+      "round": 2,
+      "seller": [
+        "IT asset management software"
+      ],
+      "buyer": [
+        "Enterprises"
+      ],
+      "role": [
+        "GM IT",
+        "CIO"
+      ],
+      "sector": null,
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): bought by IT leaders, no fintech"
+    },
+    {
+      "id": "r2b-tc-5",
+      "round": 2,
+      "seller": [
+        "SaaS management platform that tracks licences and renewals"
+      ],
+      "buyer": [
+        "IT leaders"
+      ],
+      "role": [
+        "GM IT",
+        "CIO"
+      ],
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): bought by IT leaders"
+    },
+    {
+      "id": "r2b-tc-6",
+      "round": 2,
+      "seller": [
+        "Billing platform"
+      ],
+      "buyer": [
+        "Companies"
+      ],
+      "role": [
+        "CTO"
+      ],
+      "sector": "saas",
+      "model": "saas",
+      "note": "run 20 round 2b (fresh judges, rounds 1 and 2): billing seller, engineering persona"
     }
   ]
 }

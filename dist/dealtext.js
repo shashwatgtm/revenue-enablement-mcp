@@ -305,6 +305,9 @@ function parseProof(text) {
             kind = 'recognition';
         else if (quoteLike)
             kind = 'quote';
+        // "500,000 companies use X, including 98% of the Fortune 500" is scale, not a result: no change is reported
+        else if (SCALE.test(body) && !/\b(?:cut|cuts|reduc\w+|increas\w+|improv\w+|faster|fewer|lower|higher|saved?|saves|grew|grow\w*|jumped|boost\w+|achiev\w+|doubl\w+|half)\b/i.test(body))
+            kind = 'scale';
         else if (RESULT.test(body))
             kind = 'result';
         else if (SCALE.test(body))

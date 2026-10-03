@@ -1131,7 +1131,7 @@ Each contact you gave is one row, with the role you stated for them. Where you s
 |---|---|---|
 ${contacts.map((c) => `| ${c.raw} | ${roleInDecision(c)} | ${nextStepFor(c)} |`).join('\n')}
 
-${hasChampion ? '' : `**No champion named.** Look for the person who feels the problem and is measured on it${v ? ` (in ${v.name}, the usual champion is described as: ${v.committee.split(';').find((x) => /champion/i.test(x))?.trim() || 'the team lead who feels the problem'})` : ''}.
+${hasChampion ? '' : `**No champion named.** Look for the person who feels the problem and is measured on it${v ? ` (in ${v.name}, the usual champion is described as: ${v.committee.split(';').find((x) => /champion/i.test(x))?.trim().replace(/[.]+$/, '') || 'the team lead who feels the problem'})` : ''}.
 `}${hasEconomicBuyer ? '' : `**No buyer named.** Ask who signs this off and who controls the budget.
 `}${v ? `
 **Usual buying committee in ${v.name}:** ${v.committee}
@@ -1142,8 +1142,8 @@ ${uncovered.length ? `\n**Roles this sector usually involves that none of your c
 
 You gave no contacts. Start with these questions${v ? ` (written for ${v.name})` : ''}:
 
-1. Who owns the problem ${P} solves?${v ? ` In ${v.name} this is usually: ${v.committee.split(';')[1]?.trim() || v.committee}` : ''}
-2. Who controls the budget?${v ? ` ${v.committee.split(';')[0]}.` : ''}
+1. Who owns the problem ${P} solves?${v ? ` In ${v.name} this is usually: ${(v.committee.split(';')[1]?.trim() || v.committee).replace(/[.]+$/, '')}` : ''}
+2. Who controls the budget?${v ? ` ${v.committee.split(';')[0].replace(/[.]+$/, '')}.` : ''}
 3. Who will use the solution daily?
 4. Who must approve the purchase, and what do they check?
 
@@ -1653,7 +1653,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
 
 Without a champion nobody sells for you when you are not in the room. Immediate action required:
 
-1. **Identify potential champions**: Who has the pain and influence?${dealCtx.v ? ` In ${dealCtx.v.name} the usual champion is: ${dealCtx.v.committee.split(';').find((x) => /champion/i.test(x))?.trim() || 'the team lead who feels the problem'}.` : ''}
+1. **Identify potential champions**: Who has the pain and influence?${dealCtx.v ? ` In ${dealCtx.v.name} the usual champion is: ${dealCtx.v.committee.split(';').find((x) => /champion/i.test(x))?.trim().replace(/[.]+$/, '') || 'the team lead who feels the problem'}.` : ''}
 2. **Test for championship**: Will they:
    - Advocate internally when you're not there?
    - Share information about competition and process?
@@ -1942,7 +1942,7 @@ ${metricsFollowUp}
 - "If you do nothing, what happens?"
 
 **Deepening:**
-${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "You mentioned ${q(painLead)}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
+${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "${painLead ? `You mentioned ${q(painLead)}` : 'You described the pain in the context above'}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
 - "Who else in the organization feels this pain?"
 
 ---
@@ -2065,7 +2065,7 @@ ${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the
 - "Where do things break down?"
 
 **Impact:**
-${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "You mentioned ${q(painLead)}. How does that affect your team's performance?"` : '- "How is this problem affecting your team?"'}
+${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "${painLead ? `You mentioned ${q(painLead)}` : 'You described the pain in the context above'}. How does that affect your team's performance?"` : '- "How is this problem affecting your team?"'}
 - "What's the ripple effect of this issue?"
 - "How much time/money does this cost?"
 
@@ -3716,7 +3716,7 @@ ${options.map((o) => `- ${o}`).join('\n')}
 
 ### Strategy 4: Different Budget Source
 
-"Sometimes this comes from a different budget than you'd expect. Who else benefits from this outcome?"${v ? ` In ${v.name}: ${lowerFirstIfCommon(v.committee.split(';').slice(0, 1)[0])}, and ${lowerFirstIfCommon(v.committee.split(';').find((x) => /finance|checks|review/i.test(x))?.trim() || 'other functions review the cost')}.` : ''}
+"Sometimes this comes from a different budget than you'd expect. Who else benefits from this outcome?"${v ? ` In ${v.name}: ${lowerFirstIfCommon(v.committee.split(';').slice(0, 1)[0])}, and ${lowerFirstIfCommon(v.committee.split(';').find((x) => /finance|checks|review/i.test(x))?.trim().replace(/[.]+$/, '') || 'other functions review the cost')}.` : ''}
 
 ---
 
@@ -5329,7 +5329,7 @@ ${fixedLengthNote}
 ### Email 1: The Opening (Day 1)
 
 **Subject Options:**
-- Quick question on ${areaNoun}
+- Quick question about ${areaNoun}
 - ${P} for ${plural}
 - ${painLead ? 'Does this sound familiar?' : 'A question for you'}
 

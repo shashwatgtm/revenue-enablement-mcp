@@ -503,3 +503,43 @@ test("competitive_trap_setter: every trap type has no bracket", async () => {
     }
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// the sector read, tool by tool: an AI-native investment manager never gets corporate finance notes; a TMS is software, not a people
+// service; a services firm whose name holds "software" is a services firm
+// ---------------------------------------------------------------------------------------------------------------------------
+const MIN_ARGS = {
+  account_plan_builder: { account_name: "Pension allocator", industry: "Asset allocators", your_solution: EDGEFUND, known_contacts: "portfolio manager (champion), CIO (buyer)" },
+  deal_strategy_coach: { deal_name: "Pension deal", deal_stage: "proposal", your_solution: EDGEFUND, blockers: "How is the model explained to our committee?" },
+  discovery_question_bank: { framework: "meddpicc", prospect_role: "CIO", your_solution: EDGEFUND },
+  roi_business_case_builder: { your_solution: EDGEFUND, primary_value_driver: "multiple" },
+  mutual_action_plan_generator: { deal_name: "Pension deal", target_close_date: futureDate(70), your_solution: EDGEFUND },
+  win_loss_analyzer: { analysis_type: "competitor_analysis", your_solution: EDGEFUND },
+  proposal_section_writer: { section_type: "executive_summary", your_solution: EDGEFUND },
+  email_sequence_generator: { sequence_type: "cold_outreach", target_persona: "CIO", your_solution: EDGEFUND },
+  demo_script_builder: { demo_type: "first_look", your_solution: EDGEFUND, primary_audience: "CIO" },
+  pricing_negotiation_guide: { scenario: "budget_objection", deal_value: 250000, your_solution: EDGEFUND },
+  champion_enablement_kit: { asset_type: "internal_business_case", your_solution: EDGEFUND, target_stakeholder: "CIO" },
+  competitive_trap_setter: { competitor: "Routeline Capital", your_solution: EDGEFUND },
+};
+test("an investment seller (AI native) gets no corporate finance or support-desk notes in any of the 12 tools", async () => {
+  for (const [name, args] of Object.entries(MIN_ARGS)) {
+    const r = await call(name, args);
+    assert.equal(r.isError, false, name);
+    assert.doesNotMatch(r.text, /The CFO signs|close the books|ERP posting|Finance Controller|month-end|resolution rate|help ?desk|support ticket/i, name);
+    assert.match(r.text, /investment management/i, `${name} should say the model is investment management`);
+  }
+});
+test("a TMS is software (not a people-delivered service) in the tools that state the model", async () => {
+  const tms = "Locus, an agentic transportation management system (TMS) and last mile delivery platform: dispatch planning, route planning, control tower and analytics, for captive, contracted, outsourced and hybrid fleets";
+  for (const [name, args] of [["discovery_question_bank", { framework: "meddpicc", your_solution: tms }], ["competitive_trap_setter", { competitor: "Routeline", your_solution: tms }], ["pricing_negotiation_guide", { scenario: "budget_objection", your_solution: tms }]]) {
+    const r = await call(name, args);
+    assert.match(r.text, /Business model: software subscription/, name);
+    assert.doesNotMatch(r.text, /per FTE|per ticket|people-delivered/, name);
+  }
+});
+test("a services firm whose name holds the word software is a services firm", async () => {
+  const sonata = "Northgate Software Services, modernization engineering services: cloud, data, business automation and managed services, delivered through its own playbook";
+  const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_role: "CIO", your_solution: sonata });
+  assert.match(r.text, /Business model: services/);
+});

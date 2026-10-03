@@ -968,35 +968,8 @@ function q(s) {
 function readContext(explicitModel, input) {
     const read = (0, verticals_ts_1.explainSector)(input);
     let v = read.vertical;
-    let source = read.source;
-    const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' \n ');
-    // Run 20 round 1b: "AI-native" is how a product is built, not what it sells. When the seller's whole description (not only the part
-    // before "for ...") names a trade with a strong word of its own, and the AI words are only that kind of marketing label, the trade decides
-    // (an "AI-native CNAPP" is cybersecurity, "AI-native business operations" with a back office is ITeS).
-    if (v && v.id === 'ai-native' && sellerText) {
-        const MARKETING = /^(?:ai|ai[- ]native|ai[- ]first|ai agents?|agents? that|agentic|copilots?|genai|gen ai|generative ai|ai assistants?)$/;
-        if (read.strong.every((w) => MARKETING.test(w))) {
-            let best = null;
-            for (const cand of verticals_ts_1.VERTICALS) {
-                if (cand.id === 'ai-native' || cand.id === 'saas')
-                    continue;
-                const n = new Set((sellerText.match(new RegExp(cand.match.source, 'gi')) || []).map((x) => x.toLowerCase())).size;
-                if (n > 0 && (!best || n > best.n))
-                    best = { v: cand, n };
-            }
-            if (best) {
-                v = best.v;
-                source = 'seller';
-            }
-        }
-    }
+    const source = read.source;
     let m = (0, verticals_ts_1.detectModel)(explicitModel, input);
-    // the usual model of the sector that was finally chosen (the reader's assumption was made for the sector it first read)
-    if (v && v !== read.vertical && m.how === 'sector')
-        m = { model: verticals_ts_1.SECTOR_MODEL[v.id], how: 'sector' };
-    // A services firm whose name holds the word "software" (Sonata Software) sells services, not a subscription, unless its own words say so.
-    if (v && v.id === 'ites' && m.model === 'saas' && m.how === 'read' && !/\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i.test(sellerText))
-        m = { model: 'services', how: 'sector' };
     const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     // A seller that manages money gets the investment notes (and an AI native seller of support automation the support notes): src/verticals.ts profileFor.
     v = (0, verticals_ts_1.profileFor)(v, m.model, input);

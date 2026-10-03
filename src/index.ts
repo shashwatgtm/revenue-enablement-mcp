@@ -1043,6 +1043,8 @@ function answerFor(text: string, v: Vertical | null): string {
 // the user typed, turns each competitive threat into a question to ask, and builds the 90 days from the contacts, the sector notes
 // and the parts of the solution. The tier and expansion rules are unchanged (D80).
 const THREAT_HELP: { re: RegExp; ask: string; confirm: string }[] = [
+  { re: /\b(?:black box|opaque|unexplain\w*|cannot explain|not explain\w*)\b/i, ask: 'Which results from it can your team not explain today, and what happens when a committee or a regulator asks?', confirm: 'how the product explains each result, shown on the buyer\'s own history' },
+  { re: /\b(?:static|fixed|factor|numeric only|rule[- ]based|hard-?coded)\b/i, ask: 'How often is it re-fitted or re-tuned, and what happens to its results when conditions change?', confirm: 'how the product adapts and what evidence you can show, on the buyer\'s own data' },
   { re: /\b(?:built for (?:a |one )?(?:single|one)|single (?:model|motion|type)|one model|cannot change|rigid|fixed)\b/i, ask: 'What do you have to change in this system when your pricing or process changes, and how long does that take?', confirm: 'which of those changes the product handles without custom work, shown on one real example' },
   { re: /\b(?:manual\w*|spreadsheets?|excel|diar(?:y|ies)|paper|by hand)\b/i, ask: 'What does the manual way cost your team each week in hours, errors and delays?', confirm: 'which of those steps the product takes over, from your own documentation' },
   { re: /\b(?:legacy|on-?prem\w*|old |existing|incumbent|traditional|conventional)\b/i, ask: 'What does the current system still do well, and what does it not do today?', confirm: 'what the product covers that the current system does not, and what the current system covers that the product does not' },
@@ -1113,7 +1115,7 @@ function executeAccountPlanBuilder(args: Record<string, unknown>): string {
     if (k === 'blocker') return `Find out what they fear (${rk.worry}) and answer that before the proposal`;
     return `${rk.nextStep}`;
   };
-  const sig = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ({ cfo: 'financial', coo: 'operating', cio: 'information', cto: 'technology', ciso: 'security' } as Record<string, string>)[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director', 'team', 'teams'].includes(w));
+  const sig = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ({ cfo: 'financial', coo: 'operating', cio: investment ? 'investment' : 'information', cto: 'technology', ciso: 'security' } as Record<string, string>)[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director', 'team', 'teams'].includes(w));
   const covered = new Set(contacts.flatMap((c) => sig(c.title)));
   const uncovered = v ? v.buyerRoles.filter((role) => !sig(role).some((w) => covered.has(w))) : [];
   let powerMap = '';
@@ -1160,10 +1162,10 @@ ${used}
 ### Whitespace Opportunities
 ${partsHere.length ? `Your description of ${P} lists these parts: ${joinList(partsHere.map(partLabel))}. Confirm which of them this account uses today; the ones it does not use are the first whitespace to look at.` : `Confirm what exactly the account uses of ${P} today and what it still does by other means.`}
 
-1. **Adjacent use cases:** ${v ? `which other teams feel the same problem (${v.committee.split(';').slice(2, 4).map((x) => x.trim()).filter(Boolean).join('; ') || 'ask who else is affected'})` : 'which other teams feel the same problem'}
+1. **Adjacent use cases:** which other teams or units feel the same problem (ask your contacts above who else is affected)
 2. **Deeper use:** where the teams you already serve still work around ${P}
 3. **Cross-sell:** ${partsHere.length ? 'the listed parts not yet in use' : 'complementary parts of your offer they do not have'}
-4. **Proof first:** show the result in the footprint you have (${v ? proofOf(v) : 'a before-and-after on one team'}) before asking for more`;
+4. **Proof first:** show the result in the footprint you have before asking for more${v ? `; in ${v.name} buyers trust this form of proof: ${proofOf(v)}` : ', as a before-and-after on one team'}`;
   } else {
     whitespaceAnalysis = `
 ### Whitespace Analysis
@@ -1171,7 +1173,7 @@ ${partsHere.length ? `Your description of ${P} lists these parts: ${joinList(par
 
 **Land Strategy Recommendations:**
 1. Start with one specific pain and one team${v ? ` (in ${v.name}: ${joinList(v.metrics.slice(0, 3))} are what they will judge it on)` : ''}
-2. Agree a short proof with a measure fixed beforehand ${v ? `(${proofOf(v)})` : ''}
+2. Agree a short proof with a measure fixed beforehand${v ? `: ${proofOf(v)}` : ''}
 3. Build internal champions from the team that sees the result
 4. Expand from that result`;
   }
@@ -1845,9 +1847,9 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const gapSection = gaps.length ? `## Gaps to fill first\n\nYou said these are still open, so ask about them before anything else:\n${gapRows.join('\n')}\n\n---\n\n` : '';
   // A SaaS company's own activation and expansion questions do not suit a finance, security or IT leader who is buying from it.
   const sectorFits = !(ctx.v && ctx.v.id === 'saas' && ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam));
-  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\nA ${roleKnow.label} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}. Open with their concern, not with your product.\n\n${roleKnow.questions.map((x) => `- "${x}"`).join('\n')}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
+  const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\n${upperFirst(aAn(roleKnow.label))} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}. Open with their concern, not with your product.\n\n${roleKnow.questions.map((x) => `- "${x}"`).join('\n')}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
   const sectorSection = ctx.v ? `## Questions in the language of ${ctx.v.name}\n\n${sectorFits ? ctx.v.discovery.map((x) => `- "${x}"`).join('\n') : `The usual ${ctx.v.name} questions are about the prospect's own customers (activation, expansion). They do not fit a ${roleKnow ? roleKnow.label : 'buyer in this role'}, so use the questions above and below.`}\n\n${sectorNotes(ctx.v, 'committee')}\n\n---\n\n` : '';
-  const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${pains.map((p) => `- On ${q(lowerFirstIfCommon(p))}: how often does it happen, who deals with it, and what does it cost in time, money or risk?`).join('\n')}${pains.length ? '\n' : ''}- Of the pains in the context line above, which hurts most, and which one would the people who sign this off pick?\n- What have you already tried for it, and why did it not hold?\n\n---\n\n` : '';
+  const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${pains.map((p) => `- On ${q(lowerFirstIfCommon(p))}: where does it show up in your work, who deals with it, and what does it cost in time, money or risk?`).join('\n')}${pains.length ? '\n' : ''}- Of the pains in the context line above, which hurts most, and which one would the people who sign this off pick?\n- What have you already tried for it, and why did it not hold?\n\n---\n\n` : '';
   const partSection = partNames.length ? `## Questions on what ${P} covers\n\nOne question for each part you listed. Use only the ones that touch the pain above.\n\n${partNames.slice(0, 6).map((n) => `- ${cap(n)}: "How do you handle this today, who owns it, and what breaks?"`).join('\n')}\n\n---\n\n` : '';
 
   // MEDDPICC Questions
@@ -2826,6 +2828,7 @@ function measureOf(text: string): string {
   if (/dispatch|planning time|planning/.test(t)) return 'the time spent planning, and what that time costs';
   if (/reimburse|cycle|turnaround|lead time|time to|faster|days?\b|weeks?\b|hours?\b|minutes?\b/.test(t)) return 'the time the process takes today, and what each day or hour costs';
   if (/cost|sav|spend|expense/.test(t)) return 'the yearly cost of the current way of working';
+  if (/forecast|confidence|explain|defend|decision|signal|strateg/.test(t)) return 'whether the results and their explanations hold up against the buyer\'s own history and the questions their committee asks';
   if (/uptime|outage|downtime|availability/.test(t)) return 'the cost of an outage to the buyer, and how often it happens';
   if (/coverage|calls|orders|conversion|revenue|growth|top line|market share|sales/.test(t)) return 'the revenue or volume the buyer gains or keeps from the change';
   if (/return|rto|cancel|complaint|unpaid|churn|fraud|breach|incident|risk/.test(t)) return 'the cost of one incident, and how often one happens';
@@ -2897,6 +2900,7 @@ const MAP_EVAL: Record<string, Step[]> = {
     { m: 'Send the due diligence pack: strategy description, process, risk limits and how results are explained', who: 'seller' },
     { m: 'Present to the investment committee and answer its questions', who: 'both' },
     { m: 'Agree the reporting: the monthly pack and how a bad month is explained', who: 'both' },
+    { m: 'Risk and compliance review of the strategy against the buyer\'s limits and reporting needs', who: 'risk' },
     { m: 'Agree the first allocation: its size, its phasing and the date it is reviewed', who: 'eb' },
   ],
 };
@@ -3268,7 +3272,7 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
     if (!support.length) note.push('No champion is recorded. If there was none, that is a finding in itself; if there was one, name them.');
     if (against.length) note.push(`Against you: ${against.map((p) => p.title).join(', ')}. Their view is the first thing to learn in the loss review.`);
     if (wlCtx.v) {
-      const ACR: Record<string, string> = { cfo: 'financial', coo: 'operating', cio: 'information', cto: 'technology', ciso: 'security', cmo: 'marketing', cro: 'revenue' };
+      const ACR: Record<string, string> = { cfo: 'financial', coo: 'operating', cio: investment ? 'investment' : 'information', cto: 'technology', ciso: 'security', cmo: 'marketing', cro: 'revenue' };
       const sig = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ACR[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director'].includes(w));
       const given = new Set(contacts.flatMap((c) => sig(c.title)));
       const notNamed = wlCtx.v.buyerRoles.filter((role) => !sig(role).some((w) => given.has(w)));
@@ -3519,7 +3523,11 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const dealValueText = hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED;
   const bothPricingInputs = hasValue(args.deal_value) && hasValue(args.discount_requested);
   const pricingNotComputed = 'not computed: needs deal value and discount';
-  const valueQuoted = valueDelivered ? valueDelivered.trim().replace(/[.]$/, '') : '';
+  // The value the user gave: items with their labels; the reframe quotes the strongest one, the budget scenario lists them all.
+  const vItems = parseProof(valueDelivered);
+  const vFirst = pickProof(vItems, 1, ['result', 'quote', 'story', 'scale', 'recognition'])[0] || vItems[0];
+  const valueQuoted = vFirst ? proofPhrase(vFirst).replace(/[.]$/, '') : valueDelivered.trim().replace(/[.]$/, '');
+  const valueListText = vItems.length > 1 ? `${vItems.map((x) => `- ${proofPhrase(x)}${x.label ? ` (${proofSource(x)})` : ''}`).join('\n')}\nThese are claims you gave; check each is current before you quote it.` : '';
   const valueReframe = !valueDelivered
     ? `
 "Before we discuss price, let's revisit the value we identified together.${v ? ` What does ${v.metrics[0]} cost you today, and what would it be worth to move it?` : ' What does this problem cost you today, and what would it be worth to fix it?'}${hasValue(args.deal_value) ? ` At ${dealValueText}, how does that compare?` : ''}"
@@ -3699,11 +3707,11 @@ ${ctx.line}
 
 "Let's build a business case that makes the return so clear that budget gets reallocated. What would leadership need to see?"
 
-${valueQuoted ? `Build the case on the value you supplied: ${valueQuoted}.` : `${v ? `Build the case on ${v.metrics[0]} and ${v.metrics[1]}: ask the buyer what each costs them today.` : 'Ask the buyer what the problem costs them today.'}`}${haveValue ? ` At ${dealValueText}, the value the buyer sees has to be higher than that every year.` : ''}
+${valueQuoted ? `Build the case on the value you supplied: ${valueListText ? `\n${valueListText}` : `${valueQuoted}.`}` : `${v ? `Build the case on ${v.metrics[0]} and ${v.metrics[1]}: ask the buyer what each costs them today.` : 'Ask the buyer what the problem costs them today.'}`}${haveValue ? ` At ${dealValueText}, the value the buyer sees has to be higher than that every year.` : ''}
 
 ### Strategy 3: Restructure the Deal
 
-**Options${haveValue ? ` (the amounts are your deal value ${dealValueText}, split or divided)` : ''}:**
+**Options${haveValue && options.some((o) => o.includes('$')) ? ` (the amounts are your deal value ${dealValueText}, split or divided)` : ''}:**
 ${options.map((o) => `- ${o}`).join('\n')}
 
 ### Strategy 4: Different Budget Source
@@ -4112,7 +4120,7 @@ ${valueBullets}
 
 **What it costs:** put it in the buyer's own numbers${v ? `; ${metricsLine}` : ''} The roi_business_case_builder tool turns their cost figures into a return.
 
-**Solution:** ${P} for this case: ${valueFirst ? lowerFirstIfCommon(valueFirst) : 'add the result it delivers (key_value_points)'}.
+**Solution:** ${P}. ${valueFirst ? `The outcome sought: ${lowerFirstIfCommon(valueFirst)}.` : 'Add the result it delivers (key_value_points).'}
 
 **What ${target.label}s look for:** ${target.needs}.
 
@@ -4122,7 +4130,7 @@ ${budgetLine}
 
 ### Recommendation
 
-Proceed with ${P}${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}.
+Proceed with ${P}.${valueFirst ? ` The outcome sought: ${lowerFirstIfCommon(valueFirst)}.` : ''}
 
 ${whyNow}
 
@@ -4142,7 +4150,7 @@ ${sameNote}---
 
 ## Executive Summary
 
-This document presents the business case for investing in ${P}${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}. ${needsLine}
+This document presents the business case for investing in ${P}.${valueFirst ? ` The outcome sought: ${lowerFirstIfCommon(valueFirst)}.` : ''} ${needsLine}
 
 ${valueText.length ? `**Value Summary:**\n${valueText.map((x) => `- ${x}`).join('\n')}\n` : ''}
 ---
@@ -4259,7 +4267,7 @@ ${sameNote}---
 ## Opening (2 minutes)
 
 **Hook:**
-"${valueFirst ? `What if we could ${lowerFirstIfCommon(valueFirst)}?` : 'Here is a problem that costs us every week, and a way to fix it.'}"
+"${valueFirst ? `Here is the outcome I want us to reach: ${lowerFirstIfCommon(valueFirst)}.` : 'Here is a problem that costs us every week, and a way to fix it.'}"
 
 **Agenda Preview:**
 "In the next 15 minutes, I'll cover: the problem, the solution, the business case, and my recommendation."
@@ -4333,7 +4341,7 @@ ${championWins ? `## Personal Note\n\nRemember: ${championWins}\n\n` : ''}${SUGG
 
 ## From: ${championName}
 ## Subject Options:
-- Recommendation: ${P}${valueFirst ? ` to ${lowerFirstIfCommon(clip(valueFirst, 70))}` : ''}
+- Recommendation: ${P}
 - A proposal for your review: ${P}
 - A 15-minute decision on ${P}
 
@@ -4370,7 +4378,7 @@ ${championName}
 
 Hi,
 
-Would you be open to a 15-minute discussion about ${P}? I believe it can ${valueFirst ? lowerFirstIfCommon(valueFirst) : 'help us with a problem we both know'}, and I would like your input before we proceed.
+Would you be open to a 15-minute discussion about ${P}? ${valueFirst ? `The outcome I am after: ${lowerFirstIfCommon(valueFirst)}.` : 'It could help us with a problem we both know.'} I would like your input before we proceed.
 
 Let me know what works for your schedule.
 
@@ -4467,7 +4475,7 @@ ${alts.length ? alts.map((a) => `- ${cap(a)}: what does it leave undone, and wha
 
 ## Recommendation
 
-Based on our evaluation, ${P} is the best choice${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}.
+Based on our evaluation, ${P} is the best choice.${valueFirst ? ` The outcome sought: ${lowerFirstIfCommon(valueFirst)}.` : ''}
 
 ---
 
@@ -5267,7 +5275,7 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const pains = painClauses(painPlain);
   const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
   const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 140 ? q(lowerFirstIfCommon(painPlain)) : '';
-  const areaNoun = v ? v.metrics[0] : 'this problem';
+  const areaNoun = v ? [...v.metrics.slice(0, 4)].sort((x, y) => x.length - y.length)[0] : 'this problem';
   const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
   const valueMain = (valueItems.find((x) => !x.label) || valueItems[0])?.text || '';
   const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);
@@ -5317,7 +5325,7 @@ ${fixedLengthNote}
 ### Email 1: The Opening (Day 1)
 
 **Subject Options:**
-- Quick question on ${v ? v.metrics[0] : 'this'}
+- Quick question on ${areaNoun}
 - ${P} for ${plural}
 - ${painLead ? 'Does this sound familiar?' : 'A question for you'}
 
@@ -5338,7 +5346,7 @@ ${signature}
 
 ### Email 2: The Value Add (Day 3)
 
-**Subject:** Following up: ${v ? v.metrics[0] : 'my note'}
+**Subject:** Following up: ${v ? areaNoun : 'my note'}
 
 **Body:**
 
@@ -5346,7 +5354,7 @@ Hi [First Name],
 
 Following up on my note from earlier this week.
 
-${e2 ? `One result we can point to: ${proofPhrase(e2)}.` : `I do not have a result to quote in this note, so here is a question instead.`}
+${e2 ? `One result we can point to: ${lowerFirstIfCommon(proofPhrase(e2))}.` : `I do not have a result to quote in this note, so here is a question instead.`}
 
 For ${plural}, the question that usually decides whether a change like this matters is: ${q(rk.questions[0])}
 
@@ -5364,7 +5372,7 @@ ${signature}
 
 Hi [First Name],
 
-${e3 ? `Wanted to share a quick story. The challenge was the one you may know: ${painQuoted || area}. With ${P}, the result was this: ${proofPhrase(e3)}.` : `I have no customer story to quote in this note. What I can offer is how ${plural}${industryPhrase} usually measure this before a change: ${v ? joinList(v.metrics.slice(0, 3)) : 'with a number they already track'}.`}
+${e3 ? `Wanted to share a quick story. The challenge was the one you may know: ${painQuoted || area}. With ${P}, the result was this: ${lowerFirstIfCommon(proofPhrase(e3))}.` : `I have no customer story to quote in this note. What I can offer is how ${plural}${industryPhrase} usually measure this before a change: ${v ? joinList(v.metrics.slice(0, 3)) : 'with a number they already track'}.`}
 
 ${tone === 'provocative' ? "I'm curious: is this something you've been thinking about, or is everything running smoothly?" : `I thought this might be relevant to ${aAn(rk.label)} who has to answer for ${rk.cares.split(',')[0]}.`}
 
@@ -5782,17 +5790,19 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const claimed = allFeats.filter((f) => f.label);
   const flow = feats.length ? feats.slice(0, 7).map((f, i) => {
     const pain = pains[i] || pains[0];
-    const metric = v ? v.metrics[i % v.metrics.length] : '';
+    const fw = new Set(f.text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 5));
+    const metric = v ? (v.metrics.find((m) => m.toLowerCase().split(/[^a-z0-9]+/).some((w) => w.length >= 5 && fw.has(w))) || '') : '';
+    const showPhrase = /^(?:supports?|works?|integrates?|includes?|offers?|provides?|connects?|handles?|has|runs?|lets?|allows?|gives?|covers?|uses?|syncs?|captures?|plans?|re-plans?|detects?|ranks?|maps?)\b/i.test(f.text) ? `that it ${lowerFirstIfCommon(clip(f.text, 90))}` : lowerFirstIfCommon(clip(f.text, 90));
     return `**Step ${i + 1}: ${cap(clip(f.text, 90))}**
 
 *Setup:*
-"${pain ? `You told me about ${q(lowerFirstIfCommon(pain))}. ` : ''}Let me show you ${lowerFirstIfCommon(clip(f.text, 90))}."
+"${pain ? `You told me about ${q(lowerFirstIfCommon(pain))}. ` : ''}Let me show you ${showPhrase}."
 
 *Action:*
 Show it live, with the prospect's own example if you have one.${f.label ? ' Show only what you can run in front of them; this item is a claim from the company\'s own pages.' : ''}
 
 *Value check:*
-"${metric ? `How would this change ${metric} for you?` : 'What would this change for you?'}"
+"${metric ? `How would this change ${metric} for you?` : 'Which of your own numbers would this change, and by how much?'}"
 
 *Check-in:*
 "How does this compare to how you're doing it today?"
@@ -5858,7 +5868,7 @@ ${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${aAn(a
 - Review previous conversations and notes
 - Research company news and priorities
 - Understand attendee roles and concerns
-- Prepare relevant customer examples${v ? ` (${proofOf(v)})` : ''}
+- Prepare relevant customer examples${v ? `: ${proofOf(v)}` : ''}
 - Test the demo environment
 
 ### Technical Setup

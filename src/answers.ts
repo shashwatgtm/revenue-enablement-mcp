@@ -156,7 +156,7 @@ const KINDS: Kind[] = [
   {
     id: 'coverage', test: /\b(suitable|fit for|work(?:s)? for|all types?|every type|any type|enterprise|large (?:companies|enterprises|teams)|small (?:companies|business)|mid-?size|at scale|scale|supports? (?:all|every|multiple|different))\b/i,
     build: (t, _c, p) => ({
-      how: `Answer with the specific cases the buyer cares about, by name, not with a plain yes. For each one (${clip(t.replace(/[?]+$/, ''), 80)}), say whether it is supported today, supported with set-up, or not supported, and then offer a pilot on the case that matters most to them.`,
+      how: `Answer with the specific cases behind the question ("${clip(t.replace(/[?]+$/, ''), 90).replace(/"/g, "'")}?"), by name, not with a plain yes. For each case, say whether it is supported today, supported with set-up, or not supported; then offer a pilot on the case that matters most to them.`,
       confirm: `which of those cases ${p} supports today, which need configuration, and which it does not support`,
       ask: 'Which cases matter most to you, and which ones have caused trouble before?',
     }),

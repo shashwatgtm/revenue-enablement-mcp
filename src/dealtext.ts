@@ -114,8 +114,8 @@ export function solutionBrief(input: string): SolutionBrief {
     name = full.slice(0, colon);
     rest = full.slice(colon + 2);
   } else if (full.split(/\s+/).length > 8) {
-    name = leadingCapitals(full);
-    rest = full.slice(name.length).trim();
+    // a long text with no name before a comma or colon: there is no short name to use (callers say "the solution")
+    return { name: '', short: '', kind: '', parts: [], full };
   }
   let short = name.split(/\s+from\s+/i)[0];
   if (short.split(/\s+/).length > 4) short = leadingCapitals(short);
@@ -347,4 +347,12 @@ export function painClauses(text: string): string[] {
   const uniq: string[] = [];
   for (const o of out) if (!uniq.includes(o)) uniq.push(o);
   return uniq.slice(0, 6);
+}
+
+/** The verb phrase that joins a product to its kind: "is a billing platform for SaaS companies", or, when the kind has no article, "is described in your input as business connectivity for banks". */
+export function describeWith(b: SolutionBrief): string {
+  const kind = b.kind.trim();
+  if (!kind) return '';
+  if (/^(?:a|an|the)\s/i.test(kind)) return `is ${lowerFirstWord(kind)}`;
+  return `is described in your input as ${kind}`;
 }

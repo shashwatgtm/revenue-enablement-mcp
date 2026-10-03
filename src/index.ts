@@ -27,7 +27,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep } from './echo-safe.ts';
-import { painClauses, solutionBrief, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
+import { describeWith, painClauses, solutionBrief, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, INVESTMENT_OVERLAY, type BlockerContext } from './answers.ts';
 import { explainSector, detectModel, VERTICALS, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
@@ -575,7 +575,7 @@ const tools: Record<string, Tool> = {
         primary_audience: {
           type: 'string',
           enum: ['c_suite', 'vp_level', 'director', 'manager', 'technical', 'procurement'],
-          description: 'Accepted but not used yet: the text is the same for every audience'
+          description: 'Adds a one-line note at the top of the executive summary on what this audience looks for'
         },
         customer_challenges: {
           type: 'string',
@@ -2619,7 +2619,7 @@ ${EXAMPLES}
 ${currentProcess ? `Today ${customerName} handles it this way: ${currentProcess.trim().replace(/[.]$/, '')}.` : `No current process was given. Add current_process to put ${customerName}'s problem here in their words.`}
 
 **The Solution:**
-${(() => { const b = solutionBrief(yourSolution); return b.kind ? `${b.short} is ${lowerFirstIfCommon(b.kind)}${b.parts.length ? `, with ${joinList(b.parts.slice(0, 4).map(partLabel))}` : ''}.` : `${yourSolution}. Add a description to your_solution (what it is and what it does) to complete this line.`; })()}
+${(() => { const b = solutionBrief(yourSolution); return b.kind ? `${b.short} ${describeWith(b)}${b.parts.length ? `, with ${joinList(b.parts.slice(0, 4).map(partLabel))}` : ''}.` : `${yourSolution}. Add a description to your_solution (what it is and what it does) to complete this line.`; })()}
 
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
@@ -4795,11 +4795,38 @@ ${evaluationStage === 'early' ? `
 }
 
 // Tool 7: Proposal Section Writer
+// Run 20 round 1b (D92): the product description is used once and then the short name; a statement the user made that needs a source
+// ("first and only", "world's first") is listed to be sourced before the proposal goes out; customer-quote wording is cleaned; nothing
+// is left as a bracket or as a made-up figure; the rollout comes from the user's approach or from how the sector buys; the audience
+// input adds a note on what that audience looks for.
+const CLAIM_WORDS = /\b(?:first and only|the only|only|world'?s (?:first|largest|leading|most)|first|largest|leading|best|most extensive|#1|number one|unique|fastest|cheapest)\b/i;
+function claimsIn(...texts: string[]): string[] {
+  const out: string[] = [];
+  for (const t of texts) for (const item of splitItems(t)) if (CLAIM_WORDS.test(item) && !out.includes(item)) out.push(item);
+  return out;
+}
+// A customer's reported result, in words a client can read: "customers on the home page say they cut X (customer words)" becomes
+// "Customers report that they cut X (a customer's own words)".
+function cleanClaim(item: string): string {
+  const pi = parseProof(item)[0];
+  let text = pi ? pi.text : item.trim();
+  text = text.replace(/^customers?\s+(?:on the home page\s+)?say(?:s)?\s+(?:that\s+)?(?:they\s+)?/i, 'Customers report that they ').replace(/\s+on the home page\b/gi, '');
+  const src = pi && pi.label ? ` (${proofSource(pi)})` : '';
+  return `${upperFirst(text.replace(/[.]+$/, ''))}${src}`;
+}
+const AUDIENCE_NOTE: Record<string, string> = {
+  c_suite: 'senior executives: lead with the outcome, the risk and the time to a result, and keep technical detail for an appendix',
+  vp_level: 'a vice president: lead with the result for their function, the owner on their side and the first milestone',
+  director: 'a director: show the plan, the milestones and what their team must do',
+  manager: 'a manager: show how the work changes day to day and what support their team gets',
+  technical: 'technical reviewers: lead with how it connects to their systems, how data is handled, and how it was validated',
+  procurement: 'procurement: lead with scope, terms, price and the documents their process needs',
+};
 function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const sectionType = (args.section_type as string) || 'executive_summary';
-  const customerName = (args.customer_name as string) || '[Customer name]';
-  const customerIndustry = (args.customer_industry as string) || 'Technology';
-  const primaryAudience = (args.primary_audience as string) || 'vp_level';
+  const customerName = (args.customer_name as string) || 'the customer';
+  const customerIndustry = (args.customer_industry as string) || '';
+  const primaryAudience = (args.primary_audience as string) || '';
   const customerChallenges = (args.customer_challenges as string) || '';
   const yourSolution = (args.your_solution as string) || 'our solution';
   const keyDifferentiators = (args.key_differentiators as string) || '';
@@ -4809,29 +4836,31 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const tone = (args.tone as string) || 'consultative';
   // Run 19 D80 (problems 2, 3 and 8): lists are split by line or semicolon only, so a phrase is never cut at a comma into a
   // fragment; the implementation approach is used; sector notes say what evidence lands in this buyer's sector.
-  const propCtx = readContext(undefined, { seller: [yourSolution, keyDifferentiators], context: [customerChallenges], buyer: [customerIndustry] });
+  const propCtx = readContext(undefined, { seller: [yourSolution], context: [keyDifferentiators, customerChallenges, successMetrics], buyer: [customerIndustry] });
+  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const P = brief.short || 'our solution';
+  const v = propCtx.v;
+  const modelKey = propCtx.model === 'investment' ? 'investment' : v ? v.id : '';
+  const challenges = splitItems(customerChallenges);
+  const diffs = splitItems(keyDifferentiators);
+  const outcomes = splitItems(successMetrics);
+  const claims = claimsIn(keyDifferentiators, yourSolution.length < 200 ? yourSolution : '');
+  const rollout = implementationApproach
+    ? `${cap(implementationApproach.trim().replace(/[.]$/, ''))}.`
+    : (MAP_EVAL[modelKey] || []).length ? `No rollout plan was given (implementation_approach). In ${v ? v.name : 'this sector'} a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [])[0].m)}; (2) ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [])[(MAP_EVAL[modelKey] || []).length > 2 ? 2 : 1].m)}.` : `No rollout plan was given (implementation_approach). Describe the phases, who is involved on both sides and when value starts.`;
+  const audienceLine = primaryAudience && AUDIENCE_NOTE[primaryAudience] ? `*Audience: written for ${AUDIENCE_NOTE[primaryAudience]}.*\n\n` : '';
+  const claimsBlock = claims.length ? `\n### Claims to source before you send\n\nThese statements are yours. A buyer will ask for the source of each, so add it or soften the wording:\n${claims.map((c) => `- ${q(c)}`).join('\n')}\n` : '';
+  const sectorProof = v ? `In ${v.name}, the evidence that lands is this: ${proofOf(v)}.` : '';
 
   // Tone adjustments
   const toneStyles: Record<string, { opening: string; language: string }> = {
-    formal: {
-      opening: 'We are pleased to present this proposal. It outlines',
-      language: 'professional and structured'
-    },
-    consultative: {
-      opening: 'This proposal outlines',
-      language: 'partnership-oriented'
-    },
-    bold: {
-      opening: 'The opportunity before you is set out below. This proposal outlines',
-      language: 'confident and direct'
-    },
-    conservative: {
-      opening: 'We respectfully submit this proposal. It outlines',
-      language: 'measured and thorough'
-    }
+    formal: { opening: 'We are pleased to present this proposal. It outlines', language: 'professional and structured' },
+    consultative: { opening: 'This proposal outlines', language: 'partnership-oriented' },
+    bold: { opening: 'The opportunity before you is set out below. This proposal outlines', language: 'confident and direct' },
+    conservative: { opening: 'We respectfully submit this proposal. It outlines', language: 'measured and thorough' },
   };
-
   const toneStyle = toneStyles[tone] || toneStyles['consultative'];
+  const bullets = (items: string[], fallback: string) => (items.length ? items.map((c) => `- ${c.trim()}`).join('\n') : fallback);
 
   // Section generators
   const sections: Record<string, () => string> = {
@@ -4839,34 +4868,38 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
 
 ## Proposal for ${customerName}
 
-${toneStyle.opening} how ${yourSolution} can help ${customerName} with ${customerChallenges ? 'the challenges below' : '[the challenges they named]'}.
+${audienceLine}${toneStyle.opening} how ${P} can help ${customerName} with ${customerChallenges ? 'the challenges below' : 'the challenges they named (none were given to this tool: add customer_challenges)'}.
+
+### The Solution
+
+${args.your_solution ? yourSolution.trim() : `${P}`}
 
 ### The Opportunity
 
-${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map(c => `- ${c.trim()}`).join('\n')}` : `[The challenges ${customerName} named, in their words]`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${bullets(challenges, '')}${v ? `\n\nIn ${v.name}, buyers usually judge a change like this by ${joinList(v.metrics.slice(0, 3))}.` : ''}` : `No challenges were given. Add customer_challenges, in ${customerName}'s own words, to complete this section.`}
 
 ### Our Recommendation
 
-What ${yourSolution} offers ${customerName}:
+What ${P} offers ${customerName}:
 
-${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- **${d.trim()}**`).join('\n') : `- [Outcome you can prove]\n- [How it fits their current systems: only if true]\n- [What changes for their team]`}
+${bullets(diffs.map((d) => `**${d.trim()}**`), `- No differentiators were given. Add key_differentiators: the two or three reasons ${customerName} should choose ${P}, each with its evidence.`)}
 
 ### Expected Outcomes
 
-${successMetrics ? successMetrics : `Within 12 months of implementation ${EXAMPLE}, ${customerName} can expect:\n\n- [Outcome you can prove]\n- [Second outcome you can prove]\n- [How you will measure them]`}
+${outcomes.length ? outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n') : `No success metrics were given. Add success_metrics.${v ? ` In ${v.name} the usual ones are ${joinList(v.metrics.slice(0, 4))}; agree the measure and the baseline with ${customerName}.` : ''}`}
 
 ### How We Will Get There
 
-${implementationApproach ? `${cap(implementationApproach.trim().replace(/[.]$/, ''))}.` : '[Your rollout plan: phases, who is involved on both sides and when value starts]'}
+${rollout}
 
 ### Investment Overview
 
-${pricing ? `Investment: ${pricing}` : '[Pricing: add yours or point to your pricing section]'}
+${pricing ? `Investment: ${pricing}` : 'No pricing was given. Add pricing here, or point to your pricing section.'}
 
-### Why ${yourSolution}
+### Why ${P}
 
-${keyDifferentiators ? `The recommendation above lists what sets ${yourSolution} apart. Add one piece of evidence for each point before you send this${propCtx.v ? `; in ${propCtx.v.name}, the evidence that lands is this: ${lowerFirstIfCommon(propCtx.v.proofShape)}` : ''}.` : `We bring [your relevant expertise], [your track record, with evidence] and [your commitment to their success].`}
-
+${diffs.length ? `The recommendation above lists what sets ${P} apart. Add one piece of evidence for each point before you send this. ${sectorProof}` : `Say why ${customerName} should choose ${P}, with evidence for each reason. ${sectorProof}`}
+${claimsBlock}
 ### Next Steps
 
 We recommend the following path forward:
@@ -4883,26 +4916,24 @@ We recommend the following path forward:
 
 ## Current State at ${customerName}
 
-${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** [How this affects their team and results, in their words]\n\n**Root Cause:** [process gaps, technology limits or resource constraints: what they told you]\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `*Example challenges (not from your input): keep only the ones ${customerName} named, in their words.*\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
+This section sets out the problems that ${P} is proposed to solve.
+
+${challenges.length ? `Key challenges for ${customerName}:\n\n${challenges.map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** Ask ${customerName} how this affects their team and their results, and write it here in their words.${v ? ` In ${v.name} this usually shows up in ${joinList(v.metrics.slice(i % 3, (i % 3) + 2).length ? v.metrics.slice(i % 3, (i % 3) + 2) : v.metrics.slice(0, 2))}.` : ''}\n\n**Root Cause:** What ${customerName} told you: process gaps, technology limits or resource constraints.\n\n**Cost of Inaction:** What ${customerName} said happens if nothing changes.\n`).join('\n')}` : `No challenges were given. Add customer_challenges, in ${customerName}'s own words, and this section writes one block for each.`}
 
 ## The Cost of the Current State
 
-| Impact Area | Current Cost | Opportunity |
-|-------------|--------------|-------------|
-| Time | [Hours spent on manual tasks] | [Hours saved] |
-| Money | [Cost of inefficiency] | [Potential savings] |
-| Risk | [Risk exposure] | [Risk reduction] |
-| Growth | [Missed opportunities] | [Growth enablement] |
+Put a number from ${customerName} against each row. Do not enter a figure they did not give you.
 
+| Impact area | What to find out |
+|-------------|------------------|
+| Time | The hours spent each week on the manual work or the workarounds |
+| Money | What the problem costs in a year (the roi_business_case_builder tool needs this) |
+| Risk | What one incident or failure costs, and how often it happens |
+| Growth | What the problem stops ${customerName} from doing |
+${v ? `\n${sectorNotes(v, 'metrics')}\n` : ''}
 ## What Success Looks Like
 
-*Example picture of success (not from your input): replace it with what ${customerName} told you.*
-
-${customerName} envisions a future where:
-- Teams spend time on high-value work, not manual processes
-- Data-driven decisions are made in real-time
-- Systems scale seamlessly with business growth
-- Competitive advantage is maintained and extended
+${outcomes.length ? `What ${customerName} wants, as you gave it:\n${outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n')}` : `No success picture was given. Ask ${customerName} what would make this a success a year from now, and write it here in their words.`}
 
 ---
 
@@ -4910,51 +4941,23 @@ ${customerName} envisions a future where:
 
     solution_overview: () => `# Solution Overview
 
-## How ${yourSolution} Addresses Your Needs
+## How ${P} Addresses Your Needs
 
-### Solution Architecture
+${brief.kind ? `${P} ${describeWith(brief)}.` : `${P} is the solution this proposal recommends.`}
 
-[How ${yourSolution} addresses each challenge ${customerName} named]
+### Core Capabilities
 
-#### Core Capabilities${keyDifferentiators ? '' : ' (example capabilities: replace them with your own)'}
-
-${keyDifferentiators ? splitItems(keyDifferentiators).map((d, i) => `**${i + 1}. ${d.trim()}**\n[How this capability solves one of their challenges]\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
-
-### How It Works
-
-*Example process (not from your input): replace it with your own steps.*
-
-1. **Discovery & Configuration**
-   - We work with your team to understand specific requirements
-   - System is configured to match your processes
-
-2. **Integration**
-   - Connect with existing systems and data sources
-   - Establish data flows and workflows
-
-3. **Deployment**
-   - Roll out to users with training and support
-   - Monitor adoption and optimize
-
-4. **Continuous Improvement**
-   - Regular reviews and optimization
-   - Ongoing support and updates
+${diffs.length ? diffs.map((d, i) => `**${i + 1}. ${d.trim()}**\nSay which of ${customerName}'s challenges this answers, and show it on ${customerName}'s own case.\n`).join('\n') : brief.parts.length ? `${P} includes:\n\n${brief.parts.map((p, i) => `**${i + 1}. ${cap(p)}**\n`).join('\n')}` : `No differentiators or parts were given. Add key_differentiators or describe the parts in your_solution, after a colon.`}
 
 ### Feature-to-Value Mapping
 
 | Your Challenge | Our Capability | Business Value |
 |----------------|----------------|----------------|
-| ${splitItems(customerChallenges)[0]?.trim() || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
-| ${splitItems(customerChallenges)[1]?.trim() || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
-| ${splitItems(customerChallenges)[2]?.trim() || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
+${(challenges.length ? challenges : ['(add customer_challenges)']).slice(0, 4).map((c, i) => `| ${c.trim()} | ${brief.parts[i] ? cap(partLabel(brief.parts[i])) : 'Choose the part of ' + P + ' that answers it'} | ${v ? `A change in ${v.metrics[i % v.metrics.length]} that you can show` : 'A result you can show'} |`).join('\n')}
 
 ### Security & Compliance
 
-[List only the security facts that are true for ${yourSolution}, for example:]
-- [SOC 2 Type II certified, if you hold this report]
-- [GDPR compliant, if it applies to you]
-- [Data encryption at rest and in transit, if true]
-- [Role-based access controls, if true]
+State only what is true for ${P}. ${v ? `Buyers in ${v.name} usually ask: ${v.objections.filter((o) => /secur|complian|regul/i.test(o.objection)).map((o) => o.objection.toLowerCase()).join('; ') || 'how data is handled and who can access it'}. ` : ''}List the certificates you hold, where data is stored, how it is protected and how access is controlled, each only if it is true.
 
 ---
 
@@ -4964,9 +4967,9 @@ ${keyDifferentiators ? splitItems(keyDifferentiators).map((d, i) => `**${i + 1}.
 
 ## Approach for ${customerName}
 
-${implementationApproach ? implementationApproach : `### Our Methodology
+This plan covers the rollout of ${P}.
 
-[Describe your implementation methodology and how it limits disruption to the customer's operations.]`}
+${implementationApproach ? implementationApproach : rollout}
 
 ### Timeline Overview
 
@@ -5033,7 +5036,7 @@ The week ranges below follow the example timeline above: replace them with your 
 
 ### Success Criteria
 
-${successMetrics ? successMetrics : `- System fully operational within 12 weeks ${EXAMPLE}\n- 80% user adoption within 30 days of launch ${EXAMPLE}\n- Key integrations functional\n- Performance benchmarks met`}
+${outcomes.length ? outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n') : `No success metrics were given. Agree with ${customerName} the measure and the pass mark for each phase.`}
 
 ### Risk Mitigation
 
@@ -5054,49 +5057,29 @@ ${successMetrics ? successMetrics : `- System fully operational within 12 weeks 
 
 ## Pricing for ${customerName}
 
-${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\n| Component | Investment |\n|-----------|------------|\n| Platform License | $XX,XXX/year |\n| Implementation | $XX,XXX |\n| Training | [Included, or its cost] |\n| Support | [Included, or its cost] |`}
+${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\nNo pricing was given. Add pricing (the components and the amounts) and this section shows it.`}
 
 ### Value Justification
 
-#### Return on Investment
+The value is ${customerName}'s own figure. Use the roi_business_case_builder tool with their cost or value figures to produce the return, payback and three-year value; none is made up here.
 
-| Value Category | Annual Value | Calculation Basis |
-|----------------|--------------|-------------------|
-| **Efficiency Gains** | $XXX,XXX | Time saved × labor cost |
-| **Cost Reduction** | $XXX,XXX | Eliminated spend |
-| **Revenue Impact** | $XXX,XXX | Improved outcomes |
-| **Risk Mitigation** | $XXX,XXX | Avoided costs |
-| **Total Value** | **$X,XXX,XXX** | - |
-
-**ROI: XXX% | Payback: X months**
-
-### Price-to-Value Ratio
-
-For every dollar invested in ${yourSolution}, ${customerName} can expect to receive $X in value [only if your ROI figures show it].
-
-### Competitive Comparison
-
-*Example ratings (not from your input): replace every rating with your own comparison.*
-
-| Factor | ${yourSolution} | Alternative A | Alternative B |
-|--------|-----------------|---------------|---------------|
-| Total Cost | $$ | $$$ | $ |
-| Implementation Time | Fast | Medium | Slow |
-| Feature Set | Complete | Partial | Basic |
-| Support | Premium | Standard | Limited |
-| **Value/Cost** | **Excellent** | Good | Fair |
+| Value category | What to measure with ${customerName} |
+|----------------|--------------------------------------|
+| Efficiency | Hours saved each week on the work ${P} changes |
+| Cost reduction | Spend that stops${v ? ` (${v.metrics[0]})` : ''} |
+| Revenue | Revenue gained or kept |
+| Risk | The cost of one incident, and how often one happens |
 
 ### Investment Protection
 
-*Include only the protections you actually offer:*
-- **Satisfaction commitment:** [only if you offer one, in your contract's words]
-- **Flexible Terms:** Options for payment structure
-- **Price for the term:** [only if you fix the price for the term, and for how long]
-- **Success Commitment:** We succeed when you succeed
-
+*Include only the protections you actually offer, in your contract's words:*
+- Satisfaction commitment, if you offer one
+- Payment terms and options
+- Price for the term, and for how long
+${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}
 ---
 
-*Investment assumes standard scope. [Custom pricing for specific requirements, only if you offer it.]*`,
+*Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`,
 
     risk_mitigation: () => `# Risk Assessment & Mitigation
 
@@ -5123,56 +5106,32 @@ For every dollar invested in ${yourSolution}, ${customerName} can expect to rece
 | System performance | Low | High | Performance testing, SLAs |
 | Data quality | Medium | Medium | Data validation protocols |
 | Business continuity | Low | Critical | Disaster recovery plan |
-
-### Our Approach to Risk Management
-
-*Example approach (not from your input): keep only what your team does.*
-
-**1. Proactive Identification**
-We identify and assess risks before they become issues through:
-- Regular risk assessments
-- Stakeholder feedback loops
-- Technical monitoring
-
-**2. Early Mitigation**
-We address risks early through:
-- Proof of concept for technical risks
-- Change management for adoption risks
-- Clear communication for alignment risks
-
-**3. Contingency Planning**
-We prepare for scenarios through:
-- Rollback plans
-- Alternative approaches
-- Escalation procedures
-
+${v ? `\n### Risks ${v.name} buyers raise\n\n${v.objections.map((o) => `- **${o.objection}:** ${o.response}`).join('\n')}\n` : ''}
 ### Commitments
 
 *Include only the commitments you actually offer:*
-- **SLA:** [the service level in your contract, for example the uptime you commit to and the credit if you miss it]
-- **Support:** [your support hours, for example 24/7 critical issue response]
-- **Security:** [your security practices, for example regular audits and updates]
-- **Success:** [your success model, for example a dedicated success manager]
+- **SLA:** the service level in your contract, and the credit if you miss it
+- **Support:** your support hours
+- **Security:** your security practices
+- **Success:** your success model
 
 ---
 
-*[Only if true: We take risk seriously and invest in ensuring your success.]*`,
+*Add a closing line only if it is true for ${P}.*`,
 
     success_metrics: () => `# Success Metrics & Measurement
 
 ## How We'll Measure Success
 
-${successMetrics ? `### Agreed Success Metrics\n\n${successMetrics}` : '### Proposed Success Metrics'}
+These are the measures by which ${customerName} will judge ${P}.
+
+${outcomes.length ? `### Agreed Success Metrics\n\n${outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n')}` : '### Proposed Success Metrics'}
 
 ### Key Performance Indicators
 
-${EXAMPLES}
 | KPI | Baseline | Target | Timeline |
 |-----|----------|--------|----------|
-| **Operational Efficiency** | Current state | +30% improvement | 6 months |
-| **Cost Savings** | $X current | $Y reduction | 12 months |
-| **User Adoption** | 0% | 80%+ active | 90 days |
-| **Process Cycle Time** | X days | Y days | 6 months |
+${(v ? v.metrics.slice(0, 4) : ['The measure the customer names']).map((m) => `| ${cap(m)} | Measure first, with ${customerName} | Agree with ${customerName} | Agree with ${customerName} |`).join('\n')}
 
 ### Measurement Framework
 
@@ -5181,21 +5140,22 @@ ${EXAMPLES}
 - Establish measurement methodology
 - Set realistic targets
 
-#### Phase 2: Early Indicators (30-60 days) ${EXAMPLE}
+#### Phase 2: Early Indicators
 - System usage and adoption
 - Initial process improvements
 - User satisfaction
 
-#### Phase 3: Business Outcomes (90-180 days) ${EXAMPLE}
+#### Phase 3: Business Outcomes
 - Efficiency gains
 - Cost reductions
 - Quality improvements
 
-#### Phase 4: Strategic Impact (12+ months) ${EXAMPLE}
+#### Phase 4: Strategic Impact
 - Revenue impact
 - Competitive advantage
 - Scalability achieved
 
+${EXAMPLES}
 ### Reporting Cadence
 
 | Report | Frequency | Audience |
@@ -5204,10 +5164,6 @@ ${EXAMPLES}
 | Weekly Summary | Weekly | Project team |
 | Monthly Review | Monthly | Sponsors |
 | Executive Report | Quarterly | Leadership |
-
-### Success Commitment
-
-[Your success commitment, for example: We are committed to helping ${customerName} achieve these outcomes.]
 
 ---
 
@@ -5219,46 +5175,23 @@ ${EXAMPLES}
 
 ### Who We Are
 
-${yourSolution} is a provider of [solution category] that helps [who] [core value proposition]. [Only if true and provable: Trusted by [X+] companies.]
-
-### Our Mission
-
-To help organizations like ${customerName} achieve [mission statement].
+${brief.kind ? `${P} ${describeWith(brief)}.` : `${P} is the solution this proposal recommends.`} Add who it helps and what it does for them in your_solution.
 
 ### Why Companies Choose Us
 
-**Experience:** XX years helping companies solve these challenges
-**Expertise:** [Your experience in ${args.customer_industry ? `the ${customerIndustry} industry` : "the customer's industry"}]
-**Results:** [Your results, with evidence]
-**Support:** [Your support commitment]
-
+${diffs.length ? diffs.map((d) => `- ${d.trim()}`).join('\n') : '- No differentiators were given. Add key_differentiators.'}
+${claimsBlock}
 ### By the Numbers
 
-| Metric | Value |
-|--------|-------|
-| Customers | XXX+ |
-| Industries Served | XX+ |
-| Years in Business | XX |
-| Customer Satisfaction | XX% |
-| Implementation Success | XX% |
-
-### Our Differentiators
-
-${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- ${d.trim()}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
+No figures are written here: add your own, each only if you can show it (customers, industries served, years in business, customer satisfaction).
 
 ### Industry Recognition
 
-- [Award or recognition 1]
-- [Award or recognition 2]
-- [Award or recognition 3]
+Add the awards and analyst recognition you hold, each with its source.
 
-### Our Team
+### Your Team
 
-Your ${customerName} team includes:
-- **Account Executive:** [Name]
-- **Solutions Engineer:** [Name]
-- **Customer Success Manager:** [Name, if you assign one]
-- **Support Team:** [your support availability]
+Your ${customerName} team: account executive, solutions engineer, customer success manager and support. Add names and availability.
 
 ---
 
@@ -5268,69 +5201,27 @@ Your ${customerName} team includes:
 
 ## Companies Like ${customerName} Achieving Results
 
-*Example case studies (not real customers): replace each one with a real customer story you have permission to share.*
+This tool has no customer stories of its own and does not make any up. For each story you may share, give the customer, the challenge, what was done and the result with its source.
 
-### Example 1: [Similar Company in ${args.customer_industry ? customerIndustry : "the customer's industry"}]
+${(challenges.length ? challenges : ['the challenge ' + customerName + ' named']).slice(0, 3).map((c, i) => `### Story ${i + 1}: a customer with this challenge
 
-**Challenge:**
-Faced similar challenges to ${customerName} including ${splitItems(customerChallenges)[0] || 'operational inefficiency'}.
+**Challenge:** ${c.trim()}
 
-**Solution:**
-Implemented ${yourSolution} to address core challenges.
+**Solution:** how ${P} was used
 
-**Results:**
-${EXAMPLES}
-- 40% improvement in efficiency
-- $X million in cost savings
-- 95% user adoption
-- ROI achieved in X months
+**Result:** the customer's own result, with its source and period
 
-> "Quote from customer about their experience."
-> ([Name, Title, Company])
-
----
-
-### Example 2: [Another Similar Company]
-
-**Challenge:**
-Needed to address ${splitItems(customerChallenges)[1] || 'scaling challenges'}.
-
-**Solution:**
-Deployed ${yourSolution} across their organization.
-
-**Results:**
-${EXAMPLES}
-- 50% reduction in processing time
-- Improved visibility and control
-- Enabled growth without adding headcount
-
-> "Quote from customer."
-> ([Name, Title, Company])
-
----
-
-### Example 3: [Third Similar Company]
-
-**Challenge:**
-${splitItems(customerChallenges)[2] || 'Integration and visibility challenges'}.
-
-**Solution:**
-Full implementation of ${yourSolution} with integrations.
-
-**Results:**
-- Unified data across systems
-- Real-time insights for decision making
-- Competitive advantage achieved
-
----
-
+**Quote:** only a quote the customer has approved
+`).join('\n')}
 ### References Available
 
-[Only if you have references who agreed to talk:] We're happy to connect ${customerName} with customers who have faced similar challenges and achieved success with ${yourSolution}.`,
+Add references only if the customers have agreed to talk to ${customerName}.`,
 
     next_steps: () => `# Recommended Next Steps
 
 ## Path Forward for ${customerName}
+
+The steps from this proposal to a live ${P}.
 
 ### Immediate Actions
 
@@ -5357,34 +5248,31 @@ Before moving forward, let's align on:
 Let's schedule a call to finalize terms and begin implementation planning.
 
 **Option 2: Need More Information**
-We're happy to provide additional details, demos, or [references, only if you have them].
+We're happy to provide additional details, demos, or references if you have them.
 
 **Option 3: Not Right Now**
 We understand timing is important. Let's discuss what would make this the right time.
 
 ### Contact
 
-**Your Account Team:**
-- [Account Executive Name]: [email]
-- [Solutions Engineer Name]: [email]
-
-**To schedule a call:** [Calendar link]
+Add your account executive and solutions engineer, with their email, and a link for booking a call.
 
 ---
 
 *We're excited about the opportunity to partner with ${customerName} and look forward to helping you achieve your goals.*
 
-${SUGGESTIONS_FOOTER}`
+${SUGGESTIONS_FOOTER}`,
   };
 
   // Generate the requested section
   const generator = sections[sectionType];
   if (generator) {
-    return `${generator()}${propCtx.v ? `\n\n---\n\n${sectorNotes(propCtx.v, 'committee')}` : ''}`;
+    return `${generator()}${v ? `\n\n---\n\n${sectorNotes(v, 'committee')}` : ''}`;
   }
 
   return `Section type '${sectionType}' not recognized. Available sections: ${Object.keys(sections).join(', ')}`;
 }
+
 
 // Tool 8: Email Sequence Generator
 // Text only: the plural of a persona in a sentence. A persona that already ends in s ("operations directors")

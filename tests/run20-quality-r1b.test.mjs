@@ -269,3 +269,43 @@ test("mutual_action_plan_generator: each blocker is answered by its kind with an
   assert.match(rows[1], /exact rule/i);
   assert.match(rows[2], /dated plan/i);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// proposal_section_writer: the product description pasted again and again, a bracket for the rollout, unsourced "first and only",
+// raw customer-quote wording, placeholders in every other section
+// ---------------------------------------------------------------------------------------------------------------------------
+test("proposal_section_writer executive_summary: uses every input once, no bracket, claims flagged, quotes cleaned", async () => {
+  const r = await call("proposal_section_writer", { section_type: "executive_summary", your_solution: LANEHOP, customer_name: "Hollybrook retail account", customer_industry: "Retail",
+    customer_challenges: "manual or outdated route planning, failed deliveries and no real time visibility",
+    key_differentiators: "the world's first agentic routing platform where humans govern and agents act, with forward deployed engineers who train themselves out",
+    pricing: "$150,000 a year (hypothetical)", success_metrics: "plan routes faster; customers on the home page say they cut planning time by half (customer words)", tone: "consultative" });
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1, "the product description is pasted more than once");
+  assert.match(r.text, /Hollybrook retail account/);
+  assert.match(r.text, /manual or outdated route planning/);
+  assert.match(r.text, /the world's first agentic routing platform where humans govern and agents act, with forward deployed engineers who train themselves out/);
+  assert.match(r.text, /\$150,000 a year \(hypothetical\)/);
+  assert.match(r.text, /Claims to source/i);
+  assert.match(r.text, /world's first/);
+  assert.doesNotMatch(r.text, /on the home page say/);
+  assert.match(r.text, /Customers report/);
+  assert.match(r.text, /pilot at one hub/i, "the rollout comes from the sector when none is given");
+});
+test("proposal_section_writer: every section type is free of placeholders and made-up figures", async () => {
+  const tools = (await rpc("tools/list", {})).result.tools;
+  const types = tools.find((t) => t.name === "proposal_section_writer").inputSchema.properties.section_type.enum;
+  assert.equal(types.length, 10);
+  for (const t of types) {
+    const r = await call("proposal_section_writer", { section_type: t, your_solution: BRANCHWIRE, customer_name: "Northmill Bank", customer_industry: "Banking", customer_challenges: "outages at branch sites; several network providers" });
+    assert.equal(r.isError, false, t);
+    assert.doesNotMatch(r.text, BRACKET, t);
+    assert.doesNotMatch(r.text, /X{2,},X{3}|\bXX%|\$X\b|XXX\+|\bX months\b/, `${t}: made-up figure placeholder`);
+    assert.match(r.text, /Branchwire/, t);
+  }
+});
+test("proposal_section_writer: the audience changes the note at the top", async () => {
+  const a = (await call("proposal_section_writer", { section_type: "executive_summary", your_solution: LANEHOP, customer_name: "Hollybrook", primary_audience: "c_suite" })).text;
+  const b = (await call("proposal_section_writer", { section_type: "executive_summary", your_solution: LANEHOP, customer_name: "Hollybrook", primary_audience: "technical" })).text;
+  assert.notEqual(a, b);
+  assert.match(a, /Audience/);
+});

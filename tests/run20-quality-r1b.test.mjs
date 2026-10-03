@@ -432,7 +432,8 @@ test("champion_enablement_kit internal_business_case: no placeholder, objections
   assert.doesNotMatch(r.text, /\$XX|X,XXX|\bXX%/);
   assert.doesNotMatch(r.text, NO_ANSWER);
   assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1);
-  assert.match(r.text, /plan routes faster/); assert.match(r.text, /keep every delivery promise/);
+  // run 21c: draft rewrite: the value points open a bullet, so the first letter is a capital
+  assert.match(r.text, /plan routes faster/i); assert.match(r.text, /keep every delivery promise/i);
   assert.match(r.text, /manual spreadsheet routing/); assert.match(r.text, /a legacy TMS that plans once a day/);
   assert.match(r.text, /\$150,000 a year \(hypothetical\)/);
   assert.match(r.text, /the peak season starts in November/);

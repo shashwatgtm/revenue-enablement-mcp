@@ -309,3 +309,75 @@ test("proposal_section_writer: the audience changes the note at the top", async 
   assert.notEqual(a, b);
   assert.match(a, /Audience/);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// email_sequence_generator: the whole proof block pasted into three emails, emails 4 and 5 blank frames, the product description pasted
+// ---------------------------------------------------------------------------------------------------------------------------
+const FIRST_NAME_OK = /\[(?:First Name|Your name)\]/g;
+test("email_sequence_generator cold_outreach: one proof item per email, emails 4 and 5 are written, no placeholders", async () => {
+  const proof = "Hollybrook Foods cut dispatch planning time by 66% with Lanehop (case study title); Customer quote: expanded from 500 to 4,000 trucks while improving fleet efficiency by 24% in under six months; Named a Leader in the 2026 Analyst Quadrant for Last Mile Delivery (home page)";
+  const r = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "Chief Operating Officer", target_industry: "Retail", your_solution: LANEHOP,
+    key_value_prop: "plan routes faster and keep every delivery promise; the page claims 99.5% on time deliveries (page claim)", specific_pain_point: "last mile is the costliest phase of the supply chain, with fragmented routes and manual route planning",
+    social_proof: proof, call_to_action: "20-minute call", sender_context: "Account Executive at Lanehop" });
+  assert.equal(r.isError, false);
+  assert.doesNotMatch(r.text.replace(FIRST_NAME_OK, ""), BRACKET);
+  assert.doesNotMatch(r.text, /\[(?:resource|insight|challenge|Company|relevant|Result|Describe|describe|link)[^\]]*\]/);
+  const body = (n) => r.text.split(`### Email ${n}`)[1].split(/\n### Email \d|\n## Sequence Tips/)[0];
+  // the whole proof block is not pasted: no email holds all three items
+  for (const n of [1, 2, 3, 4, 5]) assert.ok(!(/Hollybrook/.test(body(n)) && /500 to 4,000/.test(body(n))), `email ${n} pastes the whole proof block`);
+  assert.match(body(2) + body(3), /66%/);
+  assert.match(body(3), /500 to 4,000|66%/);
+  // the label words of the inputs are not in an email a buyer reads
+  for (const n of [1, 2, 3, 4, 5]) assert.doesNotMatch(body(n), /\(page claim\)|\(case study title\)|\(customer quote\)|\(home page\)/, `email ${n}`);
+  // emails 4 and 5 say something
+  assert.match(body(4), /last mile is the costliest phase|Chief Operating Officer|your Head of/);
+  assert.ok(body(4).length > 350 && body(5).length > 350);
+  assert.match(body(5), /1\. /);
+  // the product description is not pasted into the emails
+  assert.ok(!r.text.split("## Before you send")[0].split("## Solution:")[1].replace(/^[^\n]*\n/, "").includes("route planning, live re-planning, driver app"), "the description is pasted into an email");
+  // the proof used is listed with its source for a check before sending
+  assert.match(r.text, /## Before you send/);
+  assert.match(r.text, /case study title/);
+});
+test("email_sequence_generator: other sequence types have no unfilled bracket phrases", async () => {
+  for (const sequence_type of ["warm_follow_up", "post_demo", "re_engagement"]) {
+    const r = await call("email_sequence_generator", { sequence_type, target_persona: "CIO", your_solution: BRANCHWIRE, specific_pain_point: "outages at branch sites" });
+    assert.doesNotMatch(r.text.replace(FIRST_NAME_OK, ""), /\[[A-Za-z][^\]\n]{3,}\]/, sequence_type);
+  }
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// demo_script_builder: the description pasted six times, objections with no answer, bracket value statements, feature strings as step titles
+// ---------------------------------------------------------------------------------------------------------------------------
+test("demo_script_builder: short name, split features, every objection answered by its kind, no placeholder", async () => {
+  const r = await call("demo_script_builder", { demo_type: "first_look", primary_audience: "Chief Operating Officer", attendees: "Head of Last-mile, IT Director", customer_industry: "Retail", your_solution: LANEHOP,
+    key_pain_points: "manual or outdated route planning, failed deliveries, no real time visibility", competitor_context: "manual spreadsheet routing", demo_duration: 30,
+    must_show_features: "live re-planning, driver app that works offline, integration with an existing TMS or ERP in weeks (page claims)",
+    known_objections: "Does it work offline?; Does Lanehop integrate with our ERP and TMS?; How long does set up take?" });
+  assert.equal(r.isError, false);
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.doesNotMatch(r.text, /\[Your name\]/);
+  assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1, "description pasted more than once");
+  assert.doesNotMatch(r.text, NO_ANSWER);
+  const obj = r.text.split("**Anticipated Objections:**")[1].split("### Part 5")[0];
+  assert.equal((obj.match(/Confirm before you say it/g) || []).length, 3);
+  assert.match(obj, /with no signal|low-signal/i);          // offline
+  assert.match(obj, /system by system/i);                    // integration
+  assert.match(obj, /dated plan/i);                          // set up
+  // features: one step each, the claim label kept out of the script and listed to prove
+  assert.match(r.text, /\*\*Step 1: Live re-planning\*\*/);
+  assert.match(r.text, /\*\*Step 2: Driver app that works offline\*\*/);
+  assert.match(r.text, /\*\*Step 3: Integration with an existing TMS or ERP in weeks\*\*/);
+  assert.match(r.text, /Claims to prove before you say them/);
+  // the pains are separate, the audience and the room are used
+  assert.match(r.text, /1\. Manual or outdated route planning/);
+  assert.match(r.text, /Head of Last-mile/);
+  assert.match(r.text, /operations leader/);
+  assert.match(r.text, /A live re-plan when an order changes/);
+});
+test("demo_script_builder: a services seller is shown what a services buyer wants to see, and no objection frame has blanks", async () => {
+  const r = await call("demo_script_builder", { demo_type: "first_look", your_solution: ITSERV, primary_audience: "CIO", customer_industry: "Banking" });
+  assert.match(r.text, /sample monthly service report/i);
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.doesNotMatch(r.text, /Typically \[timeframe\]|\[your implementation steps\]|\[system\]/);
+});

@@ -212,7 +212,7 @@ export function parseContacts(text: string, investmentBuyer = false): Contact[] 
   if (typeof text !== 'string' || !text.trim()) return [];
   const chunks: string[] = [];
   for (const line of text.split(/\n|;/)) {
-    const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '');
+    const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '');
     if (!l) continue;
     const pieces = splitTopLevel(l);
     for (const p of pieces) {
@@ -265,7 +265,7 @@ const SCALE = /\b(?:\d[\d,.+]*\s?(?:\+|k\b|m\b|million|billion|lakhs?|crore)?\s*
 
 export function parseProof(text: string): ProofItem[] {
   if (typeof text !== 'string' || !text.trim()) return [];
-  const raw = text.split(/\n|;/).map((x) => x.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '')).filter(Boolean);
+  const raw = text.split(/\n|;/).map((x) => x.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '')).filter(Boolean);
   return raw.map((r) => {
     let label = '';
     let body = r.replace(/[.]+$/, '');
@@ -355,4 +355,43 @@ export function describeWith(b: SolutionBrief): string {
   if (!kind) return '';
   if (/^(?:a|an|the)\s/i.test(kind)) return `is ${lowerFirstWord(kind)}`;
   return `is described in your input as ${kind}`;
+}
+
+/** "a finance leader", "an operations leader". */
+export function aAn(phrase: string): string { return `${/^[aeiou]/i.test(phrase.trim()) ? 'an' : 'a'} ${phrase.trim()}`; }
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// A list typed as one sentence ("a, b, c and d (page claims)")
+// ---------------------------------------------------------------------------------------------------------------------------
+export interface ListItem { text: string; label: string }
+/** The items of a typed list. Semicolons and new lines split first; otherwise commas outside brackets do, and a short fragment such as "OMS" or "FMS or TMS in
+ *  weeks" stays with the item before it. A closing label such as "(page claims)" belongs to every item. */
+export function splitFeatureList(text: string): ListItem[] {
+  if (typeof text !== 'string' || !text.trim()) return [];
+  let label = '';
+  let body = text.trim();
+  const lm = body.match(/\s*\(((?:[^()]*\b(?:claims?|words|quote|figures?|title|headline)\b[^()]*))\)\s*[.]?$/i);
+  if (lm) { label = lm[1].trim(); body = body.slice(0, lm.index).trim(); }
+  let pieces: string[];
+  if (/[\n;]/.test(body)) pieces = body.split(/\n|;/);
+  else {
+    const raw = splitTopLevel(body);
+    pieces = [];
+    // a clean list of short items stays a list; the merging below is for a sentence that mixes long and short fragments
+    const allShort = raw.length > 1 && raw.every((r) => r.replace(/^and\s+/i, '').trim().split(/\s+/).length <= 4);
+    const VERBISH = /^(?:supports?|works?|integrates?|includes?|offers?|provides?|connects?|handles?|has|runs?|lets?|allows?|gives?|covers?|uses?)\b/i;
+    for (const r of raw) {
+      const t = r.replace(/^and\s+/i, '').trim();
+      const words = t.split(/\s+/);
+      const prev = pieces.length ? pieces[pieces.length - 1] : '';
+      const prevWords = prev ? prev.split(/\s+/).length : 0;
+      const acr = /^[A-Z]{2,6}\b/.test(t) && words.length <= 5;
+      // a short fragment is part of the list before it ("Modern Trade", "99.97% uptime"); a very short first fragment ("AI") joins the next one
+      if (prev && acr) pieces[pieces.length - 1] += `, ${t}`;
+      else if (prev && !allShort && words.length <= 3 && prevWords >= 3 && !VERBISH.test(t)) pieces[pieces.length - 1] += `, ${t}`;
+      else if (prev && !allShort && prevWords <= 1 && !/,/.test(prev)) pieces[pieces.length - 1] += `, ${t}`;
+      else pieces.push(t);
+    }
+  }
+  return pieces.map((p) => p.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '').replace(/^and\s+/i, '').replace(/[.]+$/, '')).filter(Boolean).map((t) => ({ text: t, label }));
 }

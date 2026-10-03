@@ -26,6 +26,9 @@ exports.onOrAfterWorkday = onOrAfterWorkday;
 exports.addWorkdays = addWorkdays;
 exports.workdaysBetween = workdaysBetween;
 exports.painClauses = painClauses;
+exports.describeWith = describeWith;
+exports.aAn = aAn;
+exports.splitFeatureList = splitFeatureList;
 // ---------------------------------------------------------------------------------------------------------------------------
 // Splitting
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -129,8 +132,8 @@ function solutionBrief(input) {
         rest = full.slice(colon + 2);
     }
     else if (full.split(/\s+/).length > 8) {
-        name = leadingCapitals(full);
-        rest = full.slice(name.length).trim();
+        // a long text with no name before a comma or colon: there is no short name to use (callers say "the solution")
+        return { name: '', short: '', kind: '', parts: [], full };
     }
     let short = name.split(/\s+from\s+/i)[0];
     if (short.split(/\s+/).length > 4)
@@ -233,7 +236,7 @@ function parseContacts(text, investmentBuyer = false) {
         return [];
     const chunks = [];
     for (const line of text.split(/\n|;/)) {
-        const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '');
+        const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '');
         if (!l)
             continue;
         const pieces = splitTopLevel(l);
@@ -284,7 +287,7 @@ const SCALE = /\b(?:\d[\d,.+]*\s?(?:\+|k\b|m\b|million|billion|lakhs?|crore)?\s*
 function parseProof(text) {
     if (typeof text !== 'string' || !text.trim())
         return [];
-    const raw = text.split(/\n|;/).map((x) => x.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '')).filter(Boolean);
+    const raw = text.split(/\n|;/).map((x) => x.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '')).filter(Boolean);
     return raw.map((r) => {
         let label = '';
         let body = r.replace(/[.]+$/, '');
@@ -316,10 +319,6 @@ function proofSource(p) {
         return 'a customer\'s own words';
     if (/claim/.test(l))
         return 'a claim from the company\'s own pages';
-    if (/title|headline/.test(l))
-        return 'a published customer story headline';
-    if (/analyst|recognition/.test(l))
-        return 'analyst or award recognition';
     return p.label;
 }
 /** Picks up to `n` proof items of the preferred kinds, in order, without repeating one; recognition last. */
@@ -336,7 +335,7 @@ function pickProof(items, n, prefer = ['result', 'quote', 'story', 'scale', 'rec
 }
 /** A proof item as a sentence-ready phrase: a customer quote keeps its speaker; the label is left out (it is listed in the checks). */
 function proofPhrase(p) {
-    return p.text.replace(/^(?:Customer (?:quote|words)):\s*/i, '').replace(/\s+on the home page\b/i, '').trim();
+    return p.text.replace(/^(?:Customer (?:quote|words)|Recognition listed on the home page|Success story):\s*/i, '').replace(/\s+on the home page\b/i, '').trim();
 }
 // ---------------------------------------------------------------------------------------------------------------------------
 // Dates (working days)
@@ -394,5 +393,56 @@ function painClauses(text) {
         if (!uniq.includes(o))
             uniq.push(o);
     return uniq.slice(0, 6);
+}
+/** The verb phrase that joins a product to its kind: "is a billing platform for SaaS companies", or, when the kind has no article, "is described in your input as business connectivity for banks". */
+function describeWith(b) {
+    const kind = b.kind.trim();
+    if (!kind)
+        return '';
+    if (/^(?:a|an|the)\s/i.test(kind))
+        return `is ${(0, exports.lowerFirstWord)(kind)}`;
+    return `is described in your input as ${kind}`;
+}
+/** "a finance leader", "an operations leader". */
+function aAn(phrase) { return `${/^[aeiou]/i.test(phrase.trim()) ? 'an' : 'a'} ${phrase.trim()}`; }
+/** The items of a typed list. Semicolons and new lines split first; otherwise commas outside brackets do, and a short fragment such as "OMS" or "FMS or TMS in
+ *  weeks" stays with the item before it. A closing label such as "(page claims)" belongs to every item. */
+function splitFeatureList(text) {
+    if (typeof text !== 'string' || !text.trim())
+        return [];
+    let label = '';
+    let body = text.trim();
+    const lm = body.match(/\s*\(((?:[^()]*\b(?:claims?|words|quote|figures?|title|headline)\b[^()]*))\)\s*[.]?$/i);
+    if (lm) {
+        label = lm[1].trim();
+        body = body.slice(0, lm.index).trim();
+    }
+    let pieces;
+    if (/[\n;]/.test(body))
+        pieces = body.split(/\n|;/);
+    else {
+        const raw = splitTopLevel(body);
+        pieces = [];
+        // a clean list of short items stays a list; the merging below is for a sentence that mixes long and short fragments
+        const allShort = raw.length > 1 && raw.every((r) => r.replace(/^and\s+/i, '').trim().split(/\s+/).length <= 4);
+        const VERBISH = /^(?:supports?|works?|integrates?|includes?|offers?|provides?|connects?|handles?|has|runs?|lets?|allows?|gives?|covers?|uses?)\b/i;
+        for (const r of raw) {
+            const t = r.replace(/^and\s+/i, '').trim();
+            const words = t.split(/\s+/);
+            const prev = pieces.length ? pieces[pieces.length - 1] : '';
+            const prevWords = prev ? prev.split(/\s+/).length : 0;
+            const acr = /^[A-Z]{2,6}\b/.test(t) && words.length <= 5;
+            // a short fragment is part of the list before it ("Modern Trade", "99.97% uptime"); a very short first fragment ("AI") joins the next one
+            if (prev && acr)
+                pieces[pieces.length - 1] += `, ${t}`;
+            else if (prev && !allShort && words.length <= 3 && prevWords >= 3 && !VERBISH.test(t))
+                pieces[pieces.length - 1] += `, ${t}`;
+            else if (prev && !allShort && prevWords <= 2 && !/,/.test(prev))
+                pieces[pieces.length - 1] += `, ${t}`;
+            else
+                pieces.push(t);
+        }
+    }
+    return pieces.map((p) => p.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '').replace(/^and\s+/i, '').replace(/[.]+$/, '')).filter(Boolean).map((t) => ({ text: t, label }));
 }
 //# sourceMappingURL=dealtext.js.map

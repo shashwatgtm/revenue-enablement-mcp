@@ -27,7 +27,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { neutraliseDeep } from './echo-safe.ts';
-import { describeWith, painClauses, solutionBrief, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
+import { splitFeatureList, type ListItem, aAn, describeWith, painClauses, solutionBrief, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, INVESTMENT_OVERLAY, type BlockerContext } from './answers.ts';
 import { explainSector, detectModel, VERTICALS, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
@@ -5299,13 +5299,42 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const tone = (args.tone as string) || 'professional';
   const senderContext = (args.sender_context as string) || '';
   // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
-  const ctx = readContext(undefined, { seller: [yourSolution, keyValueProp], context: [specificPainPoint], role: [targetPersona], buyer: [targetIndustry] });
+  const ctx = readContext(undefined, { seller: [yourSolution], context: [keyValueProp, specificPainPoint], role: [targetPersona], buyer: [targetIndustry] });
+  // Run 20 round 1b (D92): the product description is not pasted into an email (the short name is); the proof is split into items and
+  // each email uses one, with its label left for the check list; emails 4 and 5 are written, not frames; the persona's own concern
+  // and the sector's questions give the emails something to say beyond the user's sentences.
+  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const P = brief.short || 'our solution';
+  const v = ctx.v;
+  const investment = ctx.model === 'investment';
+  const rk = roleFor(targetPersona, investment);
+  const plural = pluralOf(targetPersona);
+  // The pain without the labels the user put on it, and its first clause that can be quoted on its own.
+  const painPlain = specificPainPoint.replace(/\s*\((?:page claim|customer words|customer quote|a seller's words|implied by[^)]*)\)/gi, '').trim();
+  const pains = painClauses(painPlain);
+  const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
+  const painQuoted = painLead ? q(painLead) : painPlain && painPlain.length <= 140 ? q(lowerFirstIfCommon(painPlain)) : '';
+  const areaNoun = v ? v.metrics[0] : 'this problem';
+  const valueItems = splitItems(keyValueProp).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
+  const valueMain = (valueItems.find((x) => !x.label) || valueItems[0])?.text || '';
+  const valueClaims: ProofItem[] = valueItems.filter((x) => x.label && x.text !== valueMain);
+  const proofAll = parseProof(socialProof);
+  const pool = pickProof(proofAll, 6, ['result', 'quote', 'story', 'scale']);
+  const recog = proofAll.filter((p) => p.kind === 'recognition');
+  const e2 = pool[0];
+  const e3 = pool[1] || pool[0];
+  const industryPhrase = targetIndustry ? ` in ${lowerFirstIfCommon(targetIndustry)}` : '';
   const cta = callToAction.trim().replace(/[.?!]$/, '');
   const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
     : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
     : /^(a|an|the|one|our)\b/i.test(cta) ? `Would ${lowerFirstIfCommon(cta)} next week make sense?` : `Would a ${lowerFirstIfCommon(cta)} next week make sense?`;
-  const valueLine = keyValueProp ? `${yourSolution} helps with exactly this: ${lowerFirstIfCommon(keyValueProp.trim().replace(/[.]$/, ''))}.` : `[Outcome you can prove for companies like theirs].`;
+  const valueLine = valueMain ? `${P} helps with exactly this: ${lowerFirstIfCommon(valueMain.replace(/[.]$/, ''))}.` : (brief.kind ? `${P} ${describeWith(brief)}.` : '');
   const signature = `[Your name]${senderContext ? `\n${senderContext.trim()}` : ''}`;
+  const area = areaNoun;
+  const otherRoles = v ? v.buyerRoles.filter((r) => familyOf(r, investment) !== familyOf(targetPersona, investment)).slice(0, 2) : [];
+  const usedProof = [e2, e3].filter((x, i, a): x is ProofItem => !!x && a.indexOf(x) === i);
+  const checkList = [...usedProof, ...recog.slice(0, 1), ...valueClaims].filter((x, i, a) => a.indexOf(x) === i);
+  const checks = checkList.length ? `\n\n---\n\n## Before you send\n\nCheck that each point below is current and that you may name it. The first ones are used in the emails above; a claim you gave in key_value_prop is listed here and is not stated as a fact in any email:\n${checkList.map((p) => `- ${q(clip(proofPhrase(p), 140))}: ${proofSource(p)}`).join('\n')}\n` : '';
 
   // Display text (output only): every template has a fixed number of emails, whatever num_emails says
   const emailsText = hasValue(args.num_emails) ? (args.num_emails as number).toLocaleString('en-US') : `${numEmails} (default)`;  // run 15: a given 0 is shown as 0, not replaced by 5
@@ -5328,26 +5357,24 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
 ## Emails: ${emailsText}
 ${fixedLengthNote}
 
+**Who you are writing to:** ${aAn(rk.label)}. They care about ${rk.cares}, and they worry about ${rk.worry}. Each email below is written for that concern.
+
 ---
 
 ### Email 1: The Opening (Day 1)
 
 **Subject Options:**
-- Question about [their company's] [relevant initiative]
-- A thought on ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[pain point]'}
-- [Mutual connection] suggested I reach out
+- Quick question on ${v ? v.metrics[0] : 'this'}
+- ${P} for ${plural}
+- ${painLead ? 'Does this sound familiar?' : 'A question for you'}
 
 **Body:**
 
 Hi [First Name],
 
-I've been following [Company]'s [relevant news/initiative] and noticed [observation].
-
-${specificPainPoint ? `[Only if true and provable: Many ${pluralOf(targetPersona)} I talk to tell me the same thing: ${q(lowerFirstIfCommon(specificPainPoint))}.] Is this something you're dealing with too?` : `[Only if true and provable: Many ${pluralOf(targetPersona)} I speak with tell me [common pain point] is a top priority this year.]`}
+I'm writing to ${plural}${industryPhrase} about one problem. ${painQuoted ? `Does this sound familiar: ${painQuoted}?` : `Is ${area} something your team is working on this year?`}
 
 ${valueLine}
-
-${socialProof ? `For context: ${socialProof.trim().replace(/[.]$/, '')}.` : ''}
 
 ${ctaQuestion}
 
@@ -5358,7 +5385,7 @@ ${signature}
 
 ### Email 2: The Value Add (Day 3)
 
-**Subject:** Re: [Previous subject] / Thought you'd find this useful
+**Subject:** Following up: ${v ? v.metrics[0] : 'my note'}
 
 **Body:**
 
@@ -5366,35 +5393,27 @@ Hi [First Name],
 
 Following up on my note from earlier this week.
 
-I wanted to share [resource/insight/case study] for ${pluralOf(targetPersona)} dealing with [challenge].
+${e2 ? `One result we can point to: ${proofPhrase(e2)}.` : `I do not have a result to quote in this note, so here is a question instead.`}
 
-[1-2 sentence description of the value]
-
-${socialProof ? `One result we can point to: ${socialProof.trim().replace(/[.]$/, '')}.` : 'Would be happy to share how this might apply to your situation.'}
+For ${plural}, the question that usually decides whether a change like this matters is: ${q(rk.questions[0])}
 
 Worth a conversation?
 
-[Your name]
+${signature}
 
 ---
 
 ### Email 3: The Social Proof (Day 7)
 
-**Subject:** How [similar company] solved [problem]
+**Subject:** How one organisation handled ${areaNoun}
 
 **Body:**
 
 Hi [First Name],
 
-[Only if true and provable: a real customer story you may share.] Wanted to share a quick story.
+${e3 ? `Wanted to share a quick story. The challenge was the one you may know: ${painQuoted || area}. With ${P}, the result was this: ${proofPhrase(e3)}.` : `I have no customer story to quote in this note. What I can offer is how ${plural}${industryPhrase} usually measure this before a change: ${v ? joinList(v.metrics.slice(0, 3)) : 'with a number they already track'}.`}
 
-${socialProof ? `The challenge was the one you may know: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}. With ${yourSolution}, the result was this: ${socialProof.trim().replace(/[.]$/, '')}.` : `[Similar company] was facing the same challenge: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}.
-
-After implementing ${yourSolution}, they achieved:
-- [Result 1]
-- [Result 2]`}
-
-${tone === 'provocative' ? "I'm curious: is this something you've been thinking about, or is everything running smoothly?" : "I thought this might be relevant given what I know about [their company]."}
+${tone === 'provocative' ? "I'm curious: is this something you've been thinking about, or is everything running smoothly?" : `I thought this might be relevant to ${aAn(rk.label)} who has to answer for ${rk.cares.split(',')[0]}.`}
 
 ${ctaQuestion}
 
@@ -5412,13 +5431,13 @@ Hi [First Name],
 
 I've reached out a few times but haven't heard back. I get it: you're busy.
 
-Just want to check: Is [solving pain point] not a priority right now, or is there someone else I should be talking to?
+Just checking: is the problem I described${painQuoted ? ` (${painQuoted})` : ''} not a priority right now, or is someone else the right person to talk to${otherRoles.length ? `, for example ${joinList(otherRoles.map((r) => `your ${r}`), 'or')}` : ''}?
 
-Either way, no hard feelings. Just want to make sure I'm not missing an opportunity to help.
+Either way, no hard feelings.
 
-[Your name]
+P.S. If timing is the only issue, tell me which quarter suits you and I will come back then.
 
-P.S. If timing is just bad, let me know and I'll follow up in [Q2/next quarter/etc.].
+${signature}
 
 ---
 
@@ -5432,14 +5451,13 @@ Hi [First Name],
 
 Last note from me for now.
 
-Before I go, I wanted to leave you with [insight/resource/invitation] that might be valuable even if we never connect:
-
-[Describe valuable content or insight]
-
-If you ever want to chat about [topic], my calendar is always open: [link]
+Before I go, here are the questions that ${plural}${industryPhrase} usually ask before they change how they manage ${areaNoun}, useful even if we never speak:
+${(v ? v.discovery.slice(0, 3) : rk.questions).map((x, i) => `${i + 1}. ${x}`).join('\n')}
+${recog[0] ? `\nIf credibility helps: ${proofPhrase(recog[0])}.\n` : ''}
+If you ever want to talk it through, reply to this email and I will make the time.
 
 All the best,
-[Your name]
+${signature}
 
 ---
 
@@ -5458,7 +5476,7 @@ All the best,
 - Research before sending
 - Personalize at least one element per email
 - Track open and reply rates
-- A/B test subject lines`,
+- A/B test subject lines${checks}`,
 
     warm_follow_up: () => `# Warm Follow-Up Sequence
 
@@ -5471,66 +5489,60 @@ ${fixedLengthNote}
 
 ### Email 1: Immediate Follow-Up (Same day/next morning)
 
-**Subject:** Great connecting: next steps on [topic]
+**Subject:** Great connecting: next steps on ${area}
 
 **Body:**
 
 Hi [First Name],
 
-Great speaking with you [today/at event/via referral context].
+Great speaking with you. As discussed, I'm sending the resources we talked about (add them here).
 
-As discussed, I'm attaching/sending:
-- [Resource 1 mentioned]
-- [Resource 2 mentioned]
+Key takeaways from our conversation, as I heard them:
+1. Your challenge: ${painQuoted || 'write it in their words'}
+2. How ${P} can help: ${valueMain ? lowerFirstIfCommon(valueMain.replace(/[.]$/, '')) : 'add the one benefit you agreed'}
+3. The agreed next step: add it here
 
-Key takeaways from our conversation:
-1. [Their challenge/goal]
-2. [How you can help]
-3. [Agreed next step]
-
-${callToAction === 'meeting' ? 'How does [Day/Time] look for our follow-up call?' : `Let me know if you'd like to ${callToAction}.`}
+${callToAction === 'meeting' ? 'Which day this week suits you for our follow-up call?' : `Let me know if you'd like to ${lowerFirstIfCommon(cta)}.`}
 
 Looking forward to continuing the conversation.
 
-[Your name]
+${signature}
 
 ---
 
 ### Email 2: Value Delivery (Day 3)
 
-**Subject:** [Resource] for [their specific situation]
+**Subject:** ${rk.label === 'stakeholder' ? 'Something useful for your situation' : `For ${aAn(rk.label)}: ${v ? v.metrics[0] : area}`}
 
 **Body:**
 
 Hi [First Name],
 
-I was thinking about our conversation and wanted to share this [resource/insight] that's directly relevant to [their challenge].
+I was thinking about our conversation. For ${aAn(rk.label)}, the question that usually matters is: ${q(rk.questions[0])}
 
-[Describe why it's valuable for them specifically]
-
-Thought it might help as you think through [initiative].
+${e2 ? `One result we can point to: ${proofPhrase(e2)}.` : 'Happy to share how others measure this if it helps.'}
 
 Any questions, let me know.
 
-[Your name]
+${signature}
 
 ---
 
 ### Email 3: Check-In (Day 7)
 
-**Subject:** Checking in: [topic]
+**Subject:** Checking in: ${area}
 
 **Body:**
 
 Hi [First Name],
 
-Wanted to check in and see if you had a chance to review [previous resource/proposal/materials].
+Wanted to check in and see if you had a chance to review what I sent.
 
-${socialProof ? `Also, thought you might be interested to know that ${socialProof}` : ''}
+${e3 ? `Also, in case it helps: ${proofPhrase(e3)}.` : ''}
 
-Any questions I can answer? Happy to hop on a quick call to discuss.
+Any questions I can answer? Happy to hop on a quick call.
 
-[Your name]
+${signature}
 
 ---
 
@@ -5539,7 +5551,7 @@ Any questions I can answer? Happy to hop on a quick call to discuss.
 - **Be specific**: Reference actual conversation points
 - **Deliver value**: Every email should help them
 - **Keep momentum**: Follow up within committed timeframes
-- **Stay relevant**: Connect to their goals, not yours`,
+- **Stay relevant**: Connect to their goals, not yours${checks}`,
 
     post_demo: () => `# Post-Demo Sequence
 
@@ -5552,33 +5564,30 @@ ${fixedLengthNote}
 
 ### Email 1: Same Day Thank You
 
-**Subject:** Thanks for your time today + [resource mentioned]
+**Subject:** Thanks for your time today
 
 **Body:**
 
 Hi [First Name],
 
-Thank you for taking the time to see ${yourSolution} in action today.
+Thank you for taking the time to see ${P} in action today.
 
-As promised, here's:
-- [Demo recording if available]
-- [Resources mentioned]
-- [Pricing/proposal if discussed]
+As promised, here is what I am sending: the demo recording if you have one, the resources we mentioned, and any pricing or proposal we discussed.
 
 What stood out to me from our conversation:
-- You mentioned [pain point] is costing [impact]
-- [Feature X] seemed particularly relevant for [their use case]
-- Next step: [what was agreed]
+- ${painQuoted ? `You mentioned ${painQuoted}` : 'The problem you described'}
+- The part of ${P} that seemed most relevant to your case (add it here)
+- The agreed next step (add it here)
 
 Questions from your side?
 
-[Your name]
+${signature}
 
 ---
 
 ### Email 2: Address Unstated Objections (Day 2)
 
-**Subject:** Thinking about [likely concern]
+**Subject:** Thinking about the likely concerns
 
 **Body:**
 
@@ -5586,15 +5595,13 @@ Hi [First Name],
 
 Following up on yesterday's demo.
 
-You may be wondering about [concern: implementation, adoption].
+You may be wondering about ${v ? joinList(v.objections.slice(0, 2).map((o) => o.objection.toLowerCase())) : 'implementation and adoption'}. ${v ? v.objections[0].response : 'Here is how we would handle each.'}
 
-[Proactively address the concern]
-
-${socialProof ? socialProof : '[Only if true: Happy to connect you with a customer who had similar concerns.]'}
+${e2 ? proofPhrase(e2) : 'Happy to connect you with a customer who had similar concerns, if one has agreed.'}
 
 Does this help? What other questions are on your mind?
 
-[Your name]
+${signature}
 
 ---
 
@@ -5606,37 +5613,29 @@ Does this help? What other questions are on your mind?
 
 Hi [First Name],
 
-As you discuss ${yourSolution} internally, I wanted to share some materials that might help:
+As you discuss ${P} internally, I wanted to share some materials that might help: a one-pager for executives, the ROI calculation, and a customer case study if I have one you may share.
 
-- [One-pager for executives]
-- [ROI calculator]
-- [Customer case study in their industry]
-
-Happy to be a resource as you have conversations with [stakeholders].
+${otherRoles.length ? `Happy to be a resource as you talk to your ${joinList(otherRoles, 'and')}.` : 'Happy to be a resource as you talk to the other stakeholders.'}
 
 Anything specific I can provide to help?
 
-[Your name]
+${signature}
 
 ---
 
 ### Email 4: Create Urgency (Day 10)
 
-**Subject:** Quick update + timeline
+**Subject:** Quick update and timeline
 
 **Body:**
 
 Hi [First Name],
 
-Wanted to share a quick update that might impact your timeline:
-
-[Relevant urgency driver: pricing, availability, competitor news, etc.]
-
-Given our conversation about [their timeline/goals], thought this would be relevant.
+Wanted to share a quick update that might affect your timeline (add the real reason here: pricing, availability or a date that matters to you).
 
 Can we find time this week to discuss next steps?
 
-[Your name]`,
+${signature}${checks}`,
 
     re_engagement: () => `# Re-Engagement Sequence
 
@@ -5649,21 +5648,19 @@ ${fixedLengthNote}
 
 ### Email 1: The Trigger Event
 
-**Subject:** [Their company news] + thought of our conversation
+**Subject:** Something I thought of after our conversation
 
 **Body:**
 
 Hi [First Name],
 
-I noticed [trigger event: news, job change, company milestone].
+I noticed a change at your company (add the real trigger here: news, a role change or a milestone).
 
-Congrats on [specific thing]!
-
-This made me think of our conversation from [timeframe] about [challenge]. Given [trigger], I wondered if [challenge] has become more of a priority.
+It made me think of our conversation about ${painQuoted || area}. I wondered whether it has become more of a priority.
 
 Worth reconnecting?
 
-[Your name]
+${signature}
 
 ---
 
@@ -5677,15 +5674,11 @@ Hi [First Name],
 
 It's been a while since we last connected.
 
-[Only if true and provable: Since then, we've [new capability/new customer/new result] that I thought would be relevant to your [challenge/initiative].]
-
-[Brief description of what's new]
-
-${socialProof ? socialProof : ''}
+${e2 ? `Since then: ${proofPhrase(e2)}.` : 'If something has changed on our side that matters to you, I will tell you what it is (add it here only if true).'}
 
 Would it make sense to reconnect and catch up?
 
-[Your name]
+${signature}
 
 ---
 
@@ -5697,18 +5690,18 @@ Would it make sense to reconnect and catch up?
 
 Hi [First Name],
 
-I don't want to keep reaching out if ${specificPainPoint ? lowerFirstIfCommon(specificPainPoint) : '[solving this challenge]'} isn't on your radar anymore.
+I don't want to keep reaching out if this problem${painQuoted ? ` (${painQuoted})` : ''} isn't on your radar anymore.
 
-Quick question: Is this still something you're thinking about, or should I check back at a different time?
+Quick question: is this still something you're thinking about, or should I check back at a different time?
 
 Either way is fine. I just want to respect your time.
 
-[Your name]`
+${signature}${checks}`,
   };
 
   const generator = sequenceTemplates[sequenceType];
   if (generator) {
-    const notes = ctx.v ? `\n\n---\n\n${sectorNotes(ctx.v, 'metrics')}\n- **Words this buyer uses:** ${ctx.v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
+    const notes = v ? `\n\n---\n\n${sectorNotes(v, 'metrics')}\n- **Words this buyer uses:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
     return `${generator()}${notes}\n\n${SUGGESTIONS_FOOTER}`;
   }
 
@@ -5726,18 +5719,18 @@ ${fixedLengthNote}
 ## General Structure
 
 ### Email 1: Open
-- Establish context/relevance
+- Establish context/relevance${painQuoted ? ` (${painQuoted})` : ''}
 - State purpose
 - Light CTA
 
 ### Email 2: Value
-- Deliver something useful
+- Deliver something useful${rk.questions[0] ? `, for example: ${q(rk.questions[0])}` : ''}
 - Build credibility
 - Soft CTA
 
 ### Email 3: Proof
-- Social proof/case study
-- Address objections
+- Social proof/case study${e2 ? `: ${proofPhrase(e2)}` : ''}
+- Address objections${v ? ` (${v.objections.slice(0, 2).map((o) => o.objection.toLowerCase()).join('; ')})` : ''}
 - Stronger CTA
 
 ### Email 4: Urgency
@@ -5757,7 +5750,21 @@ ${fixedLengthNote}
 ${SUGGESTIONS_FOOTER}`;
 }
 
+
 // Tool 9: Demo Script Builder
+// What a demo for each kind of seller shows (formats of evidence, not claims about any product: show only what the product really does).
+const DEMO_SHOW: Record<string, string[]> = {
+  'logistics-tech': ['A live re-plan when an order changes after the vehicles have left', 'The dispatcher view and the driver view of the same day', 'A before-and-after of cost per delivery or first-attempt delivery for one hub, if you have one you may show'],
+  'vertical-saas': ['An order captured in the outlet on a low-end phone, including with no signal', 'Secondary sales by outlet and by SKU as the sales head sees them', 'A beat plan and a trade scheme reaching the rep'],
+  fintech: ['One expense from capture to approval to posting in the ledger', 'The controls and the audit trail an internal auditor would ask for', 'What the finance team stops doing by hand at month end'],
+  'ai-native': ['Results on an evaluation set built from the buyer\'s own history', 'Where a person approves an action before it happens', 'How a wrong answer is caught, logged and corrected'],
+  ites: ['A sample monthly service report with SLA attainment', 'The transition plan for a similar client, anonymised', 'The governance calendar: reviews, escalation and who attends'],
+  telecom: ['The monitoring view of a set of sites', 'A sample outage and repair report', 'The wave plan for a rollout by region, with the fallback for each wave'],
+  cybersecurity: ['Exposures found and ranked in a sample environment', 'How a finding reaches the person who can fix it', 'What a proof of value would cover in the buyer\'s own environment'],
+  software: ['A real project imported through the path from the tools the team uses today', 'The same workflow run by a developer and read by a team lead', 'What the security reviewer can see about code and data access'],
+  saas: ['The workflow the buyer described, end to end, with their own example', 'The time from sign-up to first value', 'Where it sits among the tools they already use'],
+  investment: ['How a signal or a position is explained in plain words', 'A sample monthly report, including a month that went badly', 'Where the strategy sits in the buyer\'s investment process'],
+};
 function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const demoType = (args.demo_type as string) || 'first_look';
   const primaryAudience = (args.primary_audience as string) || 'decision maker';
@@ -5772,7 +5779,28 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const mustShowFeatures = (args.must_show_features as string) || '';
   const knownObjections = (args.known_objections as string) || '';
   const desiredOutcome = (args.desired_outcome as string) || 'advance the deal';
-  const demoCtx = readContext(undefined, { seller: [yourSolution, mustShowFeatures], context: [keyPainPoints, attendees], role: [primaryAudience], buyer: [customerIndustry] });
+  // Run 20 round 1b (D92): the short name replaces the pasted description; the must-show features are split into steps and their claim label
+  // is kept out of the script; each known objection is answered by its kind; no bracket is left where the pains, the sector or the audience can
+  // supply the words; the demo shows what that kind of seller is judged on.
+  const demoCtx = readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
+  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const P = brief.short || 'the product';
+  const v = demoCtx.v;
+  const investment = demoCtx.model === 'investment';
+  const modelKey = investment ? 'investment' : v ? v.id : '';
+  const bctx: BlockerContext = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: demoCtx.model };
+  const audienceRole = args.primary_audience ? roleFor(primaryAudience, investment) : null;
+  const pains = painClauses(keyPainPoints);
+  const painWhole = keyPainPoints.trim().replace(/[.]+$/, '');
+  const allFeats = splitFeatureList(mustShowFeatures);
+  // Credentials and scale claims (years in business, engineers, partnerships, certificates, uptime) cannot be shown live: they are
+  // mentioned, and the demo steps come from the features that can be run.
+  const CREDENTIAL = /\b(?:\d[\d,.+]*\s*(?:years|engineers|customers|companies|countries|partners|brands|users)|partnerships?|partners with|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|award|recogni\w*|leader in|trusted by|fortune|uptime|gartner|empanel\w*)\b/i;
+  const credentials = allFeats.filter((x) => CREDENTIAL.test(x.text));
+  const showable = allFeats.filter((x) => !CREDENTIAL.test(x.text));
+  const fallbackSteps: ListItem[] = (DEMO_SHOW[modelKey] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
+  const feats = showable.length ? showable : fallbackSteps;
+  const room = parseContacts(attendees, investment);
 
   // Calculate time allocations (same shares: 15% opening, 15% discovery, 50% demo, 15% discussion, 5% close).
   // Text and arithmetic only (run 9): the smaller parts round down and the demo takes the rest, so the parts
@@ -5798,6 +5826,49 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   };
 
+  const claimed = allFeats.filter((f) => f.label);
+  const flow = feats.length ? feats.slice(0, 7).map((f, i) => {
+    const pain = pains[i] || pains[0];
+    const metric = v ? v.metrics[i % v.metrics.length] : '';
+    return `**Step ${i + 1}: ${cap(clip(f.text, 90))}**
+
+*Setup:*
+"${pain ? `You told me about ${q(lowerFirstIfCommon(pain))}. ` : ''}Let me show you ${lowerFirstIfCommon(clip(f.text, 90))}."
+
+*Action:*
+Show it live, with the prospect's own example if you have one.${f.label ? ' Show only what you can run in front of them; this item is a claim from the company\'s own pages.' : ''}
+
+*Value check:*
+"${metric ? `How would this change ${metric} for you?` : 'What would this change for you?'}"
+
+*Check-in:*
+"How does this compare to how you're doing it today?"
+
+---
+
+`;
+  }).join('') : `**Step 1: The problem you were told about**
+
+*Setup:*
+"${pains[0] ? `You told me about ${q(lowerFirstIfCommon(pains[0]))}. ` : ''}Let me show you how ${P} handles that."
+
+*Action:*
+No must-show features were given (must_show_features). Show the one capability that answers the pain above, on the prospect's own example.
+
+*Value check:*
+"${v ? `How would this change ${v.metrics[0]} for you?` : 'What would this change for you?'}"
+
+*Check-in:*
+"How does this compare to how you're doing it today?"
+
+---
+
+`;
+  const showList = (DEMO_SHOW[modelKey] || []).map((x) => `- ${x}`).join('\n');
+  const closeLines = (feats.length ? feats.slice(0, 3) : [{ text: P, label: '' }]).map((f, i) => `${i + 1}. ${pains[i] ? q(lowerFirstIfCommon(pains[i])) : 'Your priority'} → ${P}: ${lowerFirstIfCommon(clip(f.text, 80))}`).join('\n');
+  const objItems = splitItems(knownObjections);
+  const likelyQs = ['How long does implementation take?', 'What does it need from our IT team?', 'What does pricing look like?'];
+
   return `# Demo Script: ${cap(demoType.replace(/_/g, ' '))}
 
 ## Demo Configuration
@@ -5805,11 +5876,14 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
 | Element | Details |
 |---------|---------|
 | **Type** | ${cap(demoType.replace(/_/g, ' '))} |
+| **Solution** | ${(args.your_solution as string) || NOT_SUPPLIED} |
 | **Primary Audience** | ${primaryAudience}${args.primary_audience ? '' : ' (default)'} |
-| **Other Attendees** | ${attendees || 'TBD'} |
+| **Other Attendees** | ${attendees || 'Not given'} |
 | **Industry** | ${customerIndustry || 'General'} |
 | **Duration** | ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'} |
 | **Desired Outcome** | ${desiredOutcome} |
+
+${demoCtx.line}
 
 ---
 
@@ -5827,20 +5901,20 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
 
 ## Pre-Demo Preparation
 
-### Research Checklist
-- [ ] Review previous conversations/notes
-- [ ] Research company news, priorities
-- [ ] Understand attendee roles and concerns
-- [ ] Prepare relevant customer examples
-- [ ] Test demo environment
+${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${aAn(audienceRole.label)}. They care about ${audienceRole.cares}, and worry about ${audienceRole.worry}. They need to see ${audienceRole.needs}.\n\n` : ''}${room.length ? `### Who else is in the room\n\n| Attendee | What they will look for |\n|---|---|\n${room.map((r) => `| ${cap(r.title)} | ${roleFor(r.title, investment).needs} |`).join('\n')}\n\n` : ''}### Research Checklist
+- Review previous conversations and notes
+- Research company news and priorities
+- Understand attendee roles and concerns
+- Prepare relevant customer examples${v ? ` (${proofOf(v)})` : ''}
+- Test the demo environment
 
 ### Technical Setup
-- [ ] Demo environment ready
-- [ ] Sample data loaded
-- [ ] Screen sharing tested
-- [ ] Backup plan ready
+- Demo environment ready
+- Sample data loaded
+- Screen sharing tested
+- Backup plan ready
 
-${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorContext}\n\n**Positioning:**\n- Highlight differentiators throughout\n- Don't mention competitor unless they do\n- Have proof points ready\n` : ''}
+${showList ? `### What ${v ? aAn(v.name) : 'a'} buyer wants to see\n\nShow only what ${P} really does:\n${showList}\n\n` : ''}${credentials.length ? `### Credentials to mention, not to show live\n\n${credentials.map((f) => `- ${f.text}`).join('\n')}\n\nSay each one in a sentence when it answers a concern. ${showable.length ? '' : 'You gave no feature that can be run live, so the demo steps below are the ones a buyer in this sector usually wants to see: show only what the product really does.'}\n\n` : ''}${claimed.length ? `### Claims to prove before you say them\n\n${claimed.map((f) => `- ${f.text} (${f.label})`).join('\n')}\n\n` : ''}${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorContext}\n\n**Positioning:**\n- Highlight what the buyer values throughout\n- Don't mention the competitor unless they do\n- Have proof points ready\n` : ''}
 
 ---
 
@@ -5848,21 +5922,21 @@ ${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorCont
 
 ### Part 1: Opening (${partMinutes(intro)})
 
-**[0:00] Introduction**
+**0:00 Introduction**
 
-"Thanks everyone for joining. I'm [Your name] and I'll be walking you through ${yourSolution} today.
+"Thanks everyone for joining. I will walk you through ${P} today.
 
-Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
+Before I share my screen, I want to make sure we cover what's most important to you. ${args.primary_audience ? `${cap(primaryAudience)}: what` : 'What'} would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
 
-**[Wait for response: this shapes your demo]**
+*Wait for the response: it shapes your demo.*
 
-**[${startAt(0.075, intro >= 2 ? 1 : 0)}] Agenda Setting**
+**${startAt(0.075, intro >= 2 ? 1 : 0)} Agenda Setting**
 
-"Perfect. Here's my plan for today:
-1. Quick validation of what I've learned about your situation
-2. Show you how ${yourSolution} addresses those specific needs
-3. Leave time for questions and discussion
-4. Agree on next steps
+"Here's my plan for today:
+1. A quick check of what I've learned about your situation
+2. How ${P} addresses those specific needs
+3. Time for questions and discussion
+4. Agreeing next steps
 
 Does that work for everyone?"
 
@@ -5870,13 +5944,15 @@ Does that work for everyone?"
 
 ### Part 2: Discovery Confirmation (${partMinutes(discovery)})
 
-**[${startAt(0.15, intro)}] Validate Understanding**
+**${startAt(0.15, intro)} Validate Understanding**
 
-"Before I show you anything, let me confirm what I've learned to make sure the demo is relevant:
+"Before I show you anything, let me confirm what I've learned so the demo is relevant:
 
-${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `From what I understand so far, you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
+${pains.length ? `From our conversations, it sounds like:\n${pains.map((p, i) => `${i + 1}. ${cap(p)}`).join('\n')}` : painWhole ? `From our conversations, it sounds like: ${painWhole}.` : `I have not been told your main pain points, so I will ask: what is the main problem you want solved?`}
 
-**[Listen and adjust demo focus based on responses]**
+Did I get that right? Anything to add?"
+
+*Listen, and adjust the demo to what you hear.*
 
 **Discovery Questions to Ask:**
 
@@ -5894,109 +5970,53 @@ ${demoType === 'executive_overview' ? `
 - "What are your top priorities for this year?"
 - "How does this initiative fit with broader company goals?"
 - "What would you need to see to move forward?"` : ''}
+${audienceRole ? audienceRole.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : ''}
 
 ---
 
 ### Part 3: Solution Demo (${partMinutes(demo)})
 
-**[${startAt(0.30, intro + discovery)}] Transition to Demo**
+**${startAt(0.30, intro + discovery)} Transition to Demo**
 
-"Great, that confirms what I thought. Let me show you how ${yourSolution} handles those challenges. I'm going to share my screen..."
+"Great, that confirms what I thought. Let me show you how ${P} handles those challenges. I'm going to share my screen..."
 
-**[Share screen with demo environment]**
+*Share your screen with the demo environment.*
 
 ---
 
 #### Demo Flow
 
-${(() => {
-  // Run 19 D80 (problem 3): every must-show feature becomes a demo step, tied to a pain point the user gave where there is one.
-  const feats = splitItems(mustShowFeatures);
-  const pains = splitItems(keyPainPoints);
-  if (!feats.length) return `**Feature 1: [Address Pain Point 1]**
-
-*Setup:*
-"${pains[0] ? `You mentioned ${q(lowerFirstIfCommon(pains[0]))}` : 'You mentioned [pain point]'}. Let me show you how we handle that..."
-
-*Action:*
-[Show the feature]
-
-*Value Statement:*
-"What this means for you is [business outcome]. [Only if true and provable: [Customer example] saw [specific result] using this.]"
-
-*Check-in:*
-"How does this compare to how you're doing it today?"
-
----
-
-**Feature 2: [Differentiator]**
-
-*Setup:*
-"This next part is where we differ from [alternative]: [differentiator you can prove]..."
-
-*Action:*
-[Show your differentiating capability]
-
-`;
-  return feats.map((f, i) => `**Step ${i + 1}: ${cap(f)}**
-
-*Setup:*
-"${pains[i] ? `You mentioned ${q(lowerFirstIfCommon(pains[i]))}. ` : pains[0] && i === 0 ? `You mentioned ${q(lowerFirstIfCommon(pains[0]))}. ` : ''}Let me show you ${lowerFirstIfCommon(f)}${demoCtx.v ? `, on a case that looks like your own ${demoCtx.v.vocabulary[0]} work` : ''}."
-
-*Action:*
-[Show ${lowerFirstIfCommon(f)} live, with the prospect's own example if you have it]
-
-*Value Statement:*
-"What this means for you is [the business outcome, in the prospect's numbers]."
-
-*Check-in:*
-"How does this compare to how you're doing it today?"
-
----
-
-`).join('');
-})()}
-${competitorContext ? `\n*Competitive note:*\nIf competitor comes up: "Great question. The key difference is [differentiator]. Would you like me to show you specifically?"` : ''}
+${flow}
+${competitorContext ? `\n*Competitive note:*\nIf the competitor comes up, ask which part of the evaluation matters most to the buyer and show that part. Say only what you can prove.\n` : ''}
 
 ---
 
 ### Part 4: Discussion (${partMinutes(discussion)})
 
-**[${startAt(0.80, intro + discovery + demo)}] Open for Questions**
+**${startAt(0.80, intro + discovery + demo)} Open for Questions**
 
 "Let me stop sharing for a moment. What questions do you have about what you've seen?"
 
-${knownObjections ? `**Anticipated Objections:**
+${objItems.length ? `**Anticipated Objections:**
 
-${splitItems(knownObjections).map((o) => `**Objection:** ${q(o)}
-**Response:** ${answerFor(o, demoCtx.v)}
+${objItems.map((o) => `**Objection:** ${q(o)}
+${blockerLines(o, bctx).join('\n')}
 
-`).join('')}` : `**Common Objections to Prepare For:**
+`).join('')}` : `**Questions to Prepare For${v ? ` in ${v.name}` : ''}:**
 
-**"How long does implementation take?"**
-"Typically [timeframe]. Our methodology includes [your implementation steps]..."
+${v ? v.objections.map((o) => `**"${o.objection}"**\nPattern of an answer: ${o.response}\n`).join('\n') : ''}
+${likelyQs.map((x) => { const a = answerBlocker(x, bctx); return `**"${x}"**\n${a.how}\nConfirm first: ${a.confirm}.\n`; }).join('\n')}`}${v && objItems.length ? `
 
-**"What about integration with [system]?"**
-"[Only if true and provable: We have pre-built integrations with [systems]. Let me show you...]" [If not: say what connects today and what does not.]
-
-**"What does pricing look like?"**
-"I'd like to understand your needs better to give you accurate pricing. Generally..."
-
-**"We need to think about it."**
-"Absolutely. What specific aspects do you want to think through? Maybe I can help."`}${demoCtx.v ? `
-
-${sectorNotes(demoCtx.v, 'objections')}` : ''}
+${sectorNotes(v, 'objections')}` : ''}
 
 ---
 
 ### Part 5: Close (${partMinutes(close)})
 
-**[${startAt(0.95, demoDuration - close)}] Summarize & Close**
+**${startAt(0.95, demoDuration - close)} Summarize & Close**
 
 "Before we wrap up, let me summarize what we covered:
-1. [Pain point 1] → ${yourSolution} addresses this with [feature]
-2. [Pain point 2] → You'd get [outcome]
-3. [Pain point 3] → This would help you [result]
+${closeLines}
 
 **The Ask:**
 
@@ -6006,12 +6026,12 @@ ${desiredOutcome === 'advance the deal' ? `
 Options might be:
 ${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
 - Reference call with a similar customer (only if one has agreed)
-- Pilot/POC discussion
+- ${v ? `A pilot: ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [{ m: 'Pilot discussion' }])[0].m)}` : 'Pilot/POC discussion'}
 
 What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accomplished that? What else do you need?"`}
 
 **If Positive:**
-"Great! I'll send a follow-up with [materials] and a calendar invite for [next step]. Who else should I include?"
+"Great! I'll send a follow-up with the materials we discussed and a calendar invite for the next step. Who else should I include?"
 
 **If Hesitant:**
 "What concerns do you still have? I want to make sure you have everything you need."
@@ -6053,6 +6073,7 @@ ${SUGGESTIONS_FOOTER}`;
 }
 
 // ============================================================================
+
 // MCP SERVER SETUP
 // ============================================================================
 

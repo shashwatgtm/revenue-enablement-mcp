@@ -65,4 +65,15 @@ export declare const isoDate: (d: Date) => string;
 export declare const weekdayName: (d: Date) => string;
 /** The separate pains in a typed pain statement: split at commas outside brackets and at semicolons; "with companies stuck on ..." loses its "with". */
 export declare function painClauses(text: string): string[];
+/** The verb phrase that joins a product to its kind: "is a billing platform for SaaS companies", or, when the kind has no article, "is described in your input as business connectivity for banks". */
+export declare function describeWith(b: SolutionBrief): string;
+/** "a finance leader", "an operations leader". */
+export declare function aAn(phrase: string): string;
+export interface ListItem {
+    text: string;
+    label: string;
+}
+/** The items of a typed list. Semicolons and new lines split first; otherwise commas outside brackets do, and a short fragment such as "OMS" or "FMS or TMS in
+ *  weeks" stays with the item before it. A closing label such as "(page claims)" belongs to every item. */
+export declare function splitFeatureList(text: string): ListItem[];
 //# sourceMappingURL=dealtext.d.ts.map

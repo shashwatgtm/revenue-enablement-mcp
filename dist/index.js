@@ -3425,6 +3425,23 @@ function executeTool(name, args) {
             return `Tool ${name} not recognized. Available tools: account_plan_builder, deal_strategy_coach, discovery_question_bank, roi_business_case_builder, mutual_action_plan_generator, win_loss_analyzer, proposal_section_writer, email_sequence_generator, demo_script_builder, pricing_negotiation_guide, champion_enablement_kit, competitive_trap_setter`;
     }
 }
+// Ways to restructure a deal when the budget is the problem, by how the seller charges (no figure but the user's own deal value).
+function restructureOptions(model, dealValue, haveValue, pilot) {
+    const half = haveValue ? money(dealValue / 2) : '';
+    const twelfth = haveValue ? money(dealValue / 12) : '';
+    const two = haveValue ? `Pay in two instalments of ${half} instead of ${money(dealValue)} at once (your deal value split in two)` : 'Pay in two instalments instead of all at once';
+    const monthly = haveValue ? `Bill monthly: ${twelfth} a month over twelve months (your deal value divided by twelve)` : 'Bill monthly instead of annually';
+    const byModel = {
+        saas: [`Start smaller: ${pilot}, then expand once the agreed measure is met`, two, monthly, 'Sign now and start the term at the next budget cycle (only if you can hold the terms until then)'],
+        services: ['Start with one service or one location and add scope after the first service review', two, 'Tie part of the fee to the service levels both sides agree', 'Pay each stage of the transition when its exit criteria are met'],
+        connectivity: ['Phase the contract by wave of sites and pay for each wave when it is live', 'Start with the worst-served sites, where the result will be clearest', two, 'Offer a longer term only if the buyer wants a lower monthly charge per site (your decision)'],
+        investment: ['Make the first allocation a first tranche, with the rest committed to a review date', 'Agree a phased allocation over dates both sides set', 'Agree the reporting you will provide in place of a fee reduction', 'Set out the full fee schedule next to what the buyer pays today, on the same basis'],
+        transactions: ['Start on one product line or region, then extend once volumes are proven', 'Offer volume tiers (your decision on where they start)', 'Agree a committed monthly volume in return for the rate'],
+        marketplace: ['Start in one category or region', 'Offer a take rate that steps with committed volume (your decision)', 'Agree co-marketing in place of a rate cut'],
+        hardware_software: ['Order the devices in stages and pay as each stage is delivered', two, 'Sign the software term now and phase the device order'],
+    };
+    return byModel[model || ''] || [`Start smaller: ${pilot}`, two, 'Sign now and start at the next budget cycle (only if you can hold the terms until then)'];
+}
 // Tool 10: Pricing Negotiation Guide
 function executePricingNegotiationGuide(args) {
     const scenario = args.scenario || 'discount_request';
@@ -3438,28 +3455,55 @@ function executePricingNegotiationGuide(args) {
     const decisionTimeline = args.decision_timeline || '';
     const approvalAuthority = args.approval_authority || '';
     // Run 19 D80 (problems 4 and 6): the trades follow the business model; the competitor gap and the value are the user's own.
-    const ctx = readContext(args.business_model, { seller: [yourSolution, yourLeverage], context: [valueDelivered, buyerLeverage, competitorPrice] });
+    // Run 20 round 1b (D92): the deal value, the leverage, the approver and the timeline shape every scenario; restructuring options are
+    // worked out from the deal value and the way the seller charges; no bracket is left where the inputs or the sector can supply the words.
+    const ctx = readContext(args.business_model, { seller: [yourSolution], context: [yourLeverage, valueDelivered, buyerLeverage, competitorPrice] });
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'our solution';
+    const v = ctx.v;
     const trades = verticals_ts_1.MODEL_TRADES[ctx.model || 'unknown'];
+    const modelKey = ctx.model === 'investment' ? 'investment' : v ? v.id : '';
+    const evalSteps = MAP_EVAL[modelKey] || [{ m: 'a pilot with one team', who: 'both' }];
+    const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
     const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
-    const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is [X]% cheaper"`;
+    const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
     const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
+    const haveValue = hasValue(args.deal_value) && dealValue > 0;
+    const options = restructureOptions(ctx.model, dealValue, haveValue, lowerFirstIfCommon(pilot));
     const discountedValue = dealValue - (dealValue * discountRequested / 100);
     const revenueAtRisk = dealValue * discountRequested / 100;
     // Display text (output only; the figures above are unchanged)
     const dealValueText = hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED;
     const bothPricingInputs = hasValue(args.deal_value) && hasValue(args.discount_requested);
     const pricingNotComputed = 'not computed: needs deal value and discount';
+    const valueQuoted = valueDelivered ? valueDelivered.trim().replace(/[.]$/, '') : '';
     const valueReframe = !valueDelivered
         ? `
-"Before we discuss price, let's revisit the value we identified:
-- [Value point 1]
-- [Value point 2]
-- [Value point 3]
+"Before we discuss price, let's revisit the value we identified together.${v ? ` What does ${v.metrics[0]} cost you today, and what would it be worth to move it?` : ' What does this problem cost you today, and what would it be worth to fix it?'}${hasValue(args.deal_value) ? ` At ${dealValueText}, how does that compare?` : ''}"
 
-At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's a [your ROI multiple, for example X:1] return on investment."`
+(Add value_delivered to put the buyer's own value points here instead of a question.)`
         : `
-"Before we discuss price, let's revisit what this has already delivered: ${valueDelivered.trim().replace(/[.]$/, '')}.
+"Before we discuss price, let's revisit what this has already delivered: ${valueQuoted}.
 ${hasValue(args.deal_value) ? `At ${dealValueText}, is that result worth more to you than the ${hasValue(args.discount_requested) ? `${discountRequested}%` : 'discount'} you are asking for?"` : 'What is that result worth to you in a year?" (add the deal value to compare the price with it)'}`;
+    // ---- the deal, the leverage and the approver, shown in every scenario ----
+    const claimWords = /\b(?:first|only|largest|leading|best|most|#1|unique|fastest|cheapest)\b/i;
+    const leverageLine = yourLeverage
+        ? `**Your leverage (your input):** ${yourLeverage.trim().replace(/[.]$/, '')}. Use it once, as the reason the price is what it is, and have the evidence ready.${claimWords.test(yourLeverage) ? ' It contains a claim ("first", "only", "largest", "leading" or similar): keep the source for it to hand, because the buyer will ask.' : ''}`
+        : `**Your leverage:** none given. Add your_leverage (a capability they need, a timeline, switching costs, an invested champion) and this guide builds the price conversation around it.`;
+    const theirLine = buyerLeverage ? `**Their leverage (your input):** ${buyerLeverage.trim().replace(/[.]$/, '')}. Answer it with the value case, not with a discount.` : '';
+    const dealBlock = `## Your deal
+
+| Factor | Value |
+|--------|-------|
+| **Solution** | ${args.your_solution ? yourSolution : NOT_SUPPLIED} |
+| **Deal value** | ${dealValueText} |
+${hasValue(args.discount_requested) ? `| **Discount requested** | ${discountRequested}% |\n| **Revenue at risk** | ${bothPricingInputs ? money(revenueAtRisk) : pricingNotComputed} |\n` : ''}| **Decision timeline** | ${decisionTimeline || 'Not specified'} |
+| **Who approves** | ${approvalAuthority || 'Not specified'} |
+${competitorPrice ? `| **Competitor price** | ${competitorPrice} |\n` : ''}
+${leverageLine}
+${theirLine ? `\n${theirLine}\n` : ''}${approvalAuthority ? `\nWrite the one-page case for ${approvalAuthority} first: the value, the price and what you ask in return.\n` : ''}${decisionTimeline ? `\nThe buyer's timeline is ${decisionTimeline}. Land any concession before it, not after.\n` : ''}
+---
+`;
     const scenarioGuides = {
         discount_request: () => `# Pricing Negotiation Guide: Discount Request
 
@@ -3469,6 +3513,7 @@ ${ctx.line}
 
 | Factor | Value |
 |--------|-------|
+| **Solution** | ${args.your_solution ? yourSolution : NOT_SUPPLIED} |
 | **Deal Value** | ${dealValueText} |
 | **Discount Requested** | ${hasValue(args.discount_requested) ? `${discountRequested}%` : NOT_SUPPLIED} |
 | **Revenue at Risk** | ${bothPricingInputs ? money(revenueAtRisk) : pricingNotComputed} |
@@ -3481,7 +3526,7 @@ ${ctx.line}
 ## Leverage Assessment
 
 ### Your Leverage
-${yourLeverage ? yourLeverage : `
+${yourLeverage ? `${yourLeverage}\n\n${leverageLine.replace(/^\*\*Your leverage \(your input\):\*\* [^.]*\.\s*/, '')}` : `
 Common leverage points: tick the ones that apply.
 - Unique capabilities they need
 - Time pressure (implementation timeline)
@@ -3508,7 +3553,7 @@ Common leverage points: tick the ones that apply.
 ${EXAMPLES}
 | What They Want | What You Ask For In Return |
 |----------------|--------------|
-${trades.map((t, i) => `| ${['10% discount', '15% discount', '5% discount', '10% discount'][i] || 'A discount'} | ${cap(t)} |`).join('\n')}
+${trades.map((t) => `| ${hasValue(args.discount_requested) ? `The ${discountRequested}% discount` : 'A discount'} | ${cap(t)} |`).join('\n')}
 
 ### Rule #2: Understand the Real Ask
 
@@ -3533,10 +3578,10 @@ ${valueReframe}
 
 **Do Say:**
 - "Help me understand what 'better' means. Is this about budget or value?"
-- "[Only if true and provable: We've already priced this competitively.] What specifically is the concern?"
+- "What specifically is the concern with the price?"
 - "What would need to happen for our current pricing to work?"
 
-### ${competitorLine}${gapMatch ? '' : ` ${EXAMPLE}`}
+### ${competitorLine}${gapMatch ? '' : ''}
 
 **Don't Say:** "We can match that."
 
@@ -3545,14 +3590,14 @@ ${valueReframe}
 - "Let's compare apples to apples. What capabilities are you comparing?"
 - "Price is one factor. What are the other criteria that matter?"
 
-### "We can only pay $X"
+### "We can only pay a lower figure"
 
 **Don't Say:** "I'll talk to my manager."
 
 **Do Say:**
 - "I understand budget constraints. Help me understand how that number was determined."
 - "Let's look at scope. What would need to change to fit that budget?"
-- "What if we structured payments differently? Would monthly work better?"
+- "What if we structured payments differently?${haveValue ? ` For example ${lowerFirstIfCommon(options[1] || options[0])}.` : ''}"
 
 ---
 
@@ -3580,9 +3625,11 @@ If discount approval is needed:
 
 1. **Document the ask**: Why, how much, what we get
 2. **Show your work**: What you've tried
-3. **Make a recommendation**: Not just "they want X%"
+3. **Make a recommendation**: Not just the percentage the buyer asked for
 4. **Get approval before offering**: Never surprise leadership`,
         budget_objection: () => `# Budget Objection Handling
+
+${ctx.line}
 
 ## The Objection: "We don't have budget"
 
@@ -3600,25 +3647,22 @@ If discount approval is needed:
 
 ### Strategy 1: Find Hidden Budget
 
-"Is there a discretionary fund for high-impact initiatives? Who would have authority over it?"
+"Is there a discretionary fund for high-impact initiatives? Who would have authority over it?"${approvalAuthority ? ` You named ${approvalAuthority} as the approver: ask whether they hold such a fund.` : ''}
 
 ### Strategy 2: Build Business Case for Budget
 
-"Let's build a business case that makes the ROI so clear, budget gets reallocated. What would leadership need to see?"
+"Let's build a business case that makes the return so clear that budget gets reallocated. What would leadership need to see?"
 
-${valueDelivered ? `\nBuild the case on the value you supplied: ${valueDelivered}.` : ''}
+${valueQuoted ? `Build the case on the value you supplied: ${valueQuoted}.` : `${v ? `Build the case on ${v.metrics[0]} and ${v.metrics[1]}: ask the buyer what each costs them today.` : 'Ask the buyer what the problem costs them today.'}`}${haveValue ? ` At ${dealValueText}, the value the buyer sees has to be higher than that every year.` : ''}
 
 ### Strategy 3: Restructure the Deal
 
-**Options:**
-- Phased implementation (smaller initial investment)
-- Monthly vs annual payment
-- Start smaller, expand later
-- Delay start until next budget cycle (with commitment now)
+**Options${haveValue ? ` (the amounts are your deal value ${dealValueText}, split or divided)` : ''}:**
+${options.map((o) => `- ${o}`).join('\n')}
 
 ### Strategy 4: Different Budget Source
 
-"Sometimes this comes from a different budget than you'd expect. Who else benefits from this outcome?"
+"Sometimes this comes from a different budget than you'd expect. Who else benefits from this outcome?"${v ? ` In ${v.name}: ${lowerFirstIfCommon(v.committee.split(';').slice(0, 1)[0])}, and ${lowerFirstIfCommon(v.committee.split(';').find((x) => /finance|checks|review/i.test(x))?.trim() || 'other functions review the cost')}.` : ''}
 
 ---
 
@@ -3626,15 +3670,15 @@ ${valueDelivered ? `\nBuild the case on the value you supplied: ${valueDelivered
 
 If budget genuinely isn't available:
 
-1. **Lock in pricing**: "We can hold this pricing until [date]"
+1. **Hold your pricing for a stated date**, if you can honour it: "We can hold this pricing until a date you set."
 2. **Secure commitment**: "If we do this, will you move forward?"
 3. **Stay engaged**: Monthly check-in until budget cycle
-4. **Create urgency**: "Pricing is increasing next quarter" (say this only if it is true)`,
+4. **Create urgency** only with a real reason (say this only if it is true)`,
         competitor_pricing: () => `# Competitor Pricing Response
 
 ## Situation: Competitor has lower price
 
-${competitorPrice ? `**Competitor Price:** ${competitorPrice}` : ''}
+${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a gap of ${gapMatch[1]}%${haveValue ? `: on your ${dealValueText} deal that is ${money(dealValue * Number(gapMatch[1]) / 100)} a year` : ''})` : ''}` : 'No competitor price was given (competitor_price).'}
 
 ---
 
@@ -3661,15 +3705,15 @@ ${competitorPrice ? `**Competitor Price:** ${competitorPrice}` : ''}
 
 ### Option 1: Win on Value, Not Price
 
-"We could probably be cheaper if we cut [capabilities]. But we've found that customers who prioritize price end up paying more in the long run through [hidden costs/limitations]. Is that a tradeoff you want to make?" (Example claim: keep it only if your own customer data supports it)
+"We could probably be cheaper if we cut capabilities. Which of the capabilities you asked for would you be happy to give up?" Only say more if your own customer data supports it.
 
 ### Option 2: Total Cost of Ownership
 
-"Let me show you a total cost comparison over 3 years. When you factor in [implementation, support, lost productivity from limitations], here's what the math looks like..." ${EXAMPLE}
+"Let me show you a total cost comparison over three years, with everything outside the quoted price: implementation, support and the time your own team spends."${haveValue ? ` Start from your ${dealValueText} and add the same items for the other option.` : ''}
 
 ### Option 3: Risk Framing
 
-"The question isn't who's cheapest. The question is: what's the cost of getting this wrong? With us, you get [risk mitigation]. Is that worth the difference in price?"
+"The question isn't who's cheapest. The question is: what's the cost of getting this wrong?${yourLeverage ? ` With us you get ${lowerFirstIfCommon((0, dealtext_ts_1.clip)(yourLeverage.trim().replace(/[.]$/, ''), 160))}.` : ''} Is that worth the difference in price?"
 
 ---
 
@@ -3678,7 +3722,7 @@ ${competitorPrice ? `**Competitor Price:** ${competitorPrice}` : ''}
 Suggest the buyer ask the competitor:
 1. "What's NOT included in that price?"
 2. "What does your highest-tier customer pay?"
-3. "Can I talk to a customer who's been with you 3+ years about total cost?" ${EXAMPLE}
+3. "Can I talk to a customer who's been with you three years or more about total cost?"
 4. "What happens when we need to scale?"`,
         procurement_pressure: () => `# Procurement Negotiation Guide
 
@@ -3691,14 +3735,14 @@ Procurement's job is to reduce costs. Don't take it personally, but don't cave u
 ## Understanding Procurement
 
 ### Their Goals:
-- Reduce vendor costs by X%
-- Demonstrate value to organization
+- Reduce vendor costs
+- Demonstrate value to the organization
 - Manage vendor risk
 - Standardize terms
 
 ### Their Tactics:
-- "We need 20% discount on everything" ${EXAMPLE}
-- "We only work with vendors who [term]"
+- A blanket discount request on everything
+- "We only work with vendors who accept our standard terms"
 - "Legal won't approve those terms"
 - "We're looking at other vendors"
 
@@ -3709,9 +3753,9 @@ Procurement's job is to reduce costs. Don't take it personally, but don't cave u
 ### Tactic 1: Go High Before They Go Low
 
 Before procurement engagement:
-- Get executive sponsorship
+- Get executive sponsorship${approvalAuthority ? ` (${approvalAuthority})` : ''}
 - Align on value with business stakeholders
-- Get champion to advocate internally
+- Get your champion to advocate internally
 
 ### Tactic 2: Separate Value from Price
 
@@ -3719,22 +3763,19 @@ Before procurement engagement:
 
 ### Tactic 3: Trade, Don't Cave
 
-**When they ask for 20% discount:** ${EXAMPLE}
+**When they ask for a discount${hasValue(args.discount_requested) ? ` of ${discountRequested}%` : ''}${haveValue && hasValue(args.discount_requested) ? ` (${money(revenueAtRisk)} off ${dealValueText})` : ''}:**
 "We're happy to discuss pricing. Here's what we can do at different commitment levels..."
 
-${EXAMPLES}
-| Commitment | Discount | Benefit to Them |
-|------------|----------|-----------------|
-| 1-year, net 30 | 0% | Standard terms |
-| 2-year, net 30 | 7% | Savings + price lock |
-| 3-year, prepaid | 12% | Maximum savings |
+| Commitment | What the buyer gives | What you may give in return (your decision) |
+|------------|----------------------|----------------------------------------------|
+${trades.map((t) => `| ${cap(t)} | A firm commitment in writing | A concession you set in advance, within what ${approvalAuthority || 'your approver'} allows |`).join('\n')}
 
 ### Tactic 4: Use Time
 
-If they're pressuring for discount:
+If they're pressuring for a discount:
 - "When does this need to be closed?"
 - "What's driving that timeline?"
-- "Let me see what I can do if we can commit by [date]"
+- "I can look at what is possible if we can commit by a date that works for both of us."
 
 ---
 
@@ -3757,7 +3798,7 @@ If they're pressuring for discount:
 
 ## Context: Existing Customer Renewal
 
-Renewals are different from new business. You have leverage (they're using your product) but also risk (they might leave).
+Renewals are different from new business. You have leverage (they're using ${P}) but also risk (they might leave).${haveValue ? ` The renewal is worth ${dealValueText}.` : ''}
 
 ---
 
@@ -3767,11 +3808,11 @@ Renewals are different from new business. You have leverage (they're using your 
 - Usage metrics: Are they using the product?
 - Support tickets: Are they having issues?
 - Champion status: Is your champion still there?
-- Value delivered: Can you quantify results?
+- Value delivered: ${valueQuoted ? `you gave: ${valueQuoted}` : 'Can you quantify results?'}
 
 ### Expansion Opportunity:
 - ${cap(scopeWord)}
-- Additional products
+- Additional products${brief.parts.length ? ` (${(0, dealtext_ts_1.joinList)(brief.parts.slice(0, 4).map(dealtext_ts_1.partLabel))})` : ''}
 - Higher tier
 - Professional services
 
@@ -3781,17 +3822,17 @@ Renewals are different from new business. You have leverage (they're using your 
 
 ### Scenario A: Happy Customer
 - Lead with expansion opportunity
-- Lock in multi-year at current rate
-- Ask for case study/reference
+- Lock in a multi-year term at the current rate, only if you can offer that
+- Ask for a case study or reference
 
 ### Scenario B: Dissatisfied Customer
 - Address issues before discussing renewal
-- Offer success plan
-- Consider concession for commitment to improve
+- Offer a success plan
+- Consider a concession for a commitment to improve
 
 ### Scenario C: Price Pressure
 - Document value delivered
-- Propose multi-year for discount
+- Propose a longer term in exchange for any concession
 - Don't match aggressive new-customer pricing
 
 ---
@@ -3809,43 +3850,42 @@ Renewals are different from new business. You have leverage (they're using your 
 
 ## Upsell During Renewal
 
-The renewal conversation is the best time to expand:
+The renewal conversation is a good time to expand:
 
-"Since we're discussing renewal, I wanted to share [additional product/tier]. [Only if true and provable: Other customers like you use it for [use case].] Would you like to see how that could benefit you?"`,
+"Since we're discussing renewal, I wanted to share ${brief.parts.length > 1 ? (0, dealtext_ts_1.partLabel)(brief.parts[1]) : 'what else ' + P + ' can do for you'}. Would you like to see how that could help?" Mention a customer example only if one has agreed.`,
         multi_year_negotiation: () => `# Multi-Year Deal Negotiation
 
 ## Value Exchange Framework
 
-Multi-year deals benefit both parties. Structure them to reflect that.
+Multi-year deals benefit both parties. Structure them to reflect that.${haveValue ? ` Your deal value of ${dealValueText} is the base for every term below.` : ''}
 
 ---
 
 ## What You Get:
 - Predictable revenue
 - Reduced churn risk
-- Higher LTV
 - Less sales effort on renewal
 
 ## What They Get:
 - A price agreed for the whole term (only if you offer one: say it in your contract's words)
 - Budget predictability
-- Reduced procurement cycles
+- Fewer procurement cycles
 - Deeper partnership
 
 ---
 
-## Example Multi-Year Discount Framework
+## Multi-Year Structure
 
 ${EXAMPLES}
-| Term | Example Discount | Your Discount |
-|------|------------------|---------------|
-| 1 year | 0% | - |
-| 2 years | 5-10% | - |
-| 3 years | 10-15% | - |
+| Term | What the buyer commits | What you can offer (your decision) |
+|------|------------------------|------------------------------------|
+| 1 year | The base deal${haveValue ? ` at ${dealValueText}` : ''} | Standard terms |
+| 2 years | A second year committed | A concession you set in advance |
+| 3 years | Three years committed | A larger concession, or a price lock (if you offer one) |
 
-**Important:** Price lock vs. actual discount
+**Important:** price lock vs. actual discount
 - "No price increase" is valuable without being a discount
-- "10% off current price, locked for 3 years" is aggressive ${EXAMPLE}
+- A discount for a longer term is your decision; set the amount in advance, not in the meeting
 
 ---
 
@@ -3853,24 +3893,24 @@ ${EXAMPLES}
 
 ### Option 1: Annual Payment
 - Lower risk for them
-- Consider payment milestone discount
+- Consider a payment-milestone concession
 
 ### Option 2: Prepaid
-- Maximum discount
+- Biggest concession from your side, if any
 - Improves your cash position
 - Reduced collection effort
 
 ### Option 3: Hybrid
 - Year 1 upfront
-- Years 2-3 annual
-- Moderate discount
+- Later years annual
+- Moderate concession
 
 ---
 
 ## Key Terms to Include:
 
-- [ ] Price lock for term
-- [ ] Growth pricing predefined
+- [ ] Price lock for term (only if you offer one)
+- [ ] Growth pricing agreed in advance
 - [ ] Auto-renewal language
 - [ ] Early termination clause (or lack thereof)
 - [ ] Success criteria for continued value`,
@@ -3878,18 +3918,18 @@ ${EXAMPLES}
 
 ## Large Deal Complexity
 
-Enterprise deals have unique dynamics: multiple stakeholders, long cycles, complex terms.
+Enterprise deals have unique dynamics: multiple stakeholders, long cycles, complex terms.${haveValue ? ` This one is ${dealValueText}.` : ''}
 
 ---
 
 ## Enterprise Buying Reality:
 
 ### Decision Makers:
-- Business sponsor (wants outcomes)
+${v ? `In ${v.name}: ${v.committee}` : `- Business sponsor (wants outcomes)
 - IT/Technical (wants fit and security)
 - Procurement (wants savings)
 - Legal (wants low risk)
-- Finance (wants predictability)
+- Finance (wants predictability)`}
 
 ### Each Has Different Concerns:
 | Stakeholder | Concern | Your Response |
@@ -3907,21 +3947,21 @@ Enterprise deals have unique dynamics: multiple stakeholders, long cycles, compl
 ### Tactic 1: Don't Get Isolated
 
 Procurement will try to separate you from business sponsors. Resist:
-- "I'd like to include [Business Sponsor] in this discussion to ensure alignment"
+- "I'd like to include ${approvalAuthority || 'the business sponsor'} in this discussion to ensure alignment"
 - "Can we set up a joint meeting to discuss terms and value together?"
 
 ### Tactic 2: Package the Deal
 
 Instead of line-item negotiation:
-- Bundle products and services
+- Bundle products and services${brief.parts.length ? ` (${(0, dealtext_ts_1.joinList)(brief.parts.slice(0, 4).map(dealtext_ts_1.partLabel))})` : ''}
 - Create "enterprise packages"
 - Make it hard to cherry-pick
 
 ### Tactic 3: Use Competition Carefully
 
 Enterprise deals often have multiple vendors. Position on value, not price:
-- "We know you're evaluating alternatives. Here's what makes us different: [differentiators you can prove]."
-- "[Only if your business case supports it: I'm confident our value justifies the investment.] Let me walk you through the business case."
+- "We know you're evaluating alternatives. Here's what makes us different: ${yourLeverage ? lowerFirstIfCommon((0, dealtext_ts_1.clip)(yourLeverage.trim().replace(/[.]$/, ''), 180)) : 'the differentiators you can prove'}."
+- "Let me walk you through the business case."
 
 ---
 
@@ -3937,11 +3977,16 @@ Enterprise deals often have multiple vendors. Position on value, not price:
 - Price integrity
 - Intellectual property
 - Liability limits
-- Right to case study/reference`
+- Right to case study/reference`,
     };
     const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
-    const pricingSector = ctx.v ? `\n\n---\n\n${sectorNotes(ctx.v, 'objections')}` : '';
-    return `${generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${yourSolution}`)}${pricingSector}`;
+    const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}` : '';
+    const text = generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${P}`);
+    // every scenario but the discount request (which has its own situation table) opens with the deal, the leverage and the approver
+    const withDeal = scenario === 'discount_request' || !scenarioGuides[scenario]
+        ? text
+        : text.replace(/^(# .+\n)/, (m) => `${m}\n${dealBlock}\n`);
+    return `${withDeal}${pricingSector}`;
 }
 // Tool 11: Champion Enablement Kit
 function executeChampionEnablementKit(args) {
@@ -5675,6 +5720,19 @@ ${fixedLengthNote}
 ${SUGGESTIONS_FOOTER}`;
 }
 // Tool 9: Demo Script Builder
+// What a demo for each kind of seller shows (formats of evidence, not claims about any product: show only what the product really does).
+const DEMO_SHOW = {
+    'logistics-tech': ['A live re-plan when an order changes after the vehicles have left', 'The dispatcher view and the driver view of the same day', 'A before-and-after of cost per delivery or first-attempt delivery for one hub, if you have one you may show'],
+    'vertical-saas': ['An order captured in the outlet on a low-end phone, including with no signal', 'Secondary sales by outlet and by SKU as the sales head sees them', 'A beat plan and a trade scheme reaching the rep'],
+    fintech: ['One expense from capture to approval to posting in the ledger', 'The controls and the audit trail an internal auditor would ask for', 'What the finance team stops doing by hand at month end'],
+    'ai-native': ['Results on an evaluation set built from the buyer\'s own history', 'Where a person approves an action before it happens', 'How a wrong answer is caught, logged and corrected'],
+    ites: ['A sample monthly service report with SLA attainment', 'The transition plan for a similar client, anonymised', 'The governance calendar: reviews, escalation and who attends'],
+    telecom: ['The monitoring view of a set of sites', 'A sample outage and repair report', 'The wave plan for a rollout by region, with the fallback for each wave'],
+    cybersecurity: ['Exposures found and ranked in a sample environment', 'How a finding reaches the person who can fix it', 'What a proof of value would cover in the buyer\'s own environment'],
+    software: ['A real project imported through the path from the tools the team uses today', 'The same workflow run by a developer and read by a team lead', 'What the security reviewer can see about code and data access'],
+    saas: ['The workflow the buyer described, end to end, with their own example', 'The time from sign-up to first value', 'Where it sits among the tools they already use'],
+    investment: ['How a signal or a position is explained in plain words', 'A sample monthly report, including a month that went badly', 'Where the strategy sits in the buyer\'s investment process'],
+};
 function executeDemoScriptBuilder(args) {
     const demoType = args.demo_type || 'first_look';
     const primaryAudience = args.primary_audience || 'decision maker';
@@ -5689,7 +5747,28 @@ function executeDemoScriptBuilder(args) {
     const mustShowFeatures = args.must_show_features || '';
     const knownObjections = args.known_objections || '';
     const desiredOutcome = args.desired_outcome || 'advance the deal';
-    const demoCtx = readContext(undefined, { seller: [yourSolution, mustShowFeatures], context: [keyPainPoints, attendees], role: [primaryAudience], buyer: [customerIndustry] });
+    // Run 20 round 1b (D92): the short name replaces the pasted description; the must-show features are split into steps and their claim label
+    // is kept out of the script; each known objection is answered by its kind; no bracket is left where the pains, the sector or the audience can
+    // supply the words; the demo shows what that kind of seller is judged on.
+    const demoCtx = readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'the product';
+    const v = demoCtx.v;
+    const investment = demoCtx.model === 'investment';
+    const modelKey = investment ? 'investment' : v ? v.id : '';
+    const bctx = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: demoCtx.model };
+    const audienceRole = args.primary_audience ? (0, answers_ts_1.roleFor)(primaryAudience, investment) : null;
+    const pains = (0, dealtext_ts_1.painClauses)(keyPainPoints);
+    const painWhole = keyPainPoints.trim().replace(/[.]+$/, '');
+    const allFeats = (0, dealtext_ts_1.splitFeatureList)(mustShowFeatures);
+    // Credentials and scale claims (years in business, engineers, partnerships, certificates, uptime) cannot be shown live: they are
+    // mentioned, and the demo steps come from the features that can be run.
+    const CREDENTIAL = /\b(?:\d[\d,.+]*\s*(?:years|engineers|customers|companies|countries|partners|brands|users)|partnerships?|partners with|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|award|recogni\w*|leader in|trusted by|fortune|uptime|gartner|empanel\w*)\b/i;
+    const credentials = allFeats.filter((x) => CREDENTIAL.test(x.text));
+    const showable = allFeats.filter((x) => !CREDENTIAL.test(x.text));
+    const fallbackSteps = (DEMO_SHOW[modelKey] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
+    const feats = showable.length ? showable : fallbackSteps;
+    const room = (0, dealtext_ts_1.parseContacts)(attendees, investment);
     // Calculate time allocations (same shares: 15% opening, 15% discovery, 50% demo, 15% discussion, 5% close).
     // Text and arithmetic only (run 9): the smaller parts round down and the demo takes the rest, so the parts
     // always add up to the requested length (before, 30 minutes gave 5 + 5 + 15 + 5 + 2 = 32).
@@ -5714,6 +5793,48 @@ function executeDemoScriptBuilder(args) {
         const sec = Math.round(Number(demoDuration) * share * 60);
         return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
     };
+    const claimed = allFeats.filter((f) => f.label);
+    const flow = feats.length ? feats.slice(0, 7).map((f, i) => {
+        const pain = pains[i] || pains[0];
+        const metric = v ? v.metrics[i % v.metrics.length] : '';
+        return `**Step ${i + 1}: ${cap((0, dealtext_ts_1.clip)(f.text, 90))}**
+
+*Setup:*
+"${pain ? `You told me about ${q(lowerFirstIfCommon(pain))}. ` : ''}Let me show you ${lowerFirstIfCommon((0, dealtext_ts_1.clip)(f.text, 90))}."
+
+*Action:*
+Show it live, with the prospect's own example if you have one.${f.label ? ' Show only what you can run in front of them; this item is a claim from the company\'s own pages.' : ''}
+
+*Value check:*
+"${metric ? `How would this change ${metric} for you?` : 'What would this change for you?'}"
+
+*Check-in:*
+"How does this compare to how you're doing it today?"
+
+---
+
+`;
+    }).join('') : `**Step 1: The problem you were told about**
+
+*Setup:*
+"${pains[0] ? `You told me about ${q(lowerFirstIfCommon(pains[0]))}. ` : ''}Let me show you how ${P} handles that."
+
+*Action:*
+No must-show features were given (must_show_features). Show the one capability that answers the pain above, on the prospect's own example.
+
+*Value check:*
+"${v ? `How would this change ${v.metrics[0]} for you?` : 'What would this change for you?'}"
+
+*Check-in:*
+"How does this compare to how you're doing it today?"
+
+---
+
+`;
+    const showList = (DEMO_SHOW[modelKey] || []).map((x) => `- ${x}`).join('\n');
+    const closeLines = (feats.length ? feats.slice(0, 3) : [{ text: P, label: '' }]).map((f, i) => `${i + 1}. ${pains[i] ? q(lowerFirstIfCommon(pains[i])) : 'Your priority'} → ${P}: ${lowerFirstIfCommon((0, dealtext_ts_1.clip)(f.text, 80))}`).join('\n');
+    const objItems = splitItems(knownObjections);
+    const likelyQs = ['How long does implementation take?', 'What does it need from our IT team?', 'What does pricing look like?'];
     return `# Demo Script: ${cap(demoType.replace(/_/g, ' '))}
 
 ## Demo Configuration
@@ -5721,11 +5842,14 @@ function executeDemoScriptBuilder(args) {
 | Element | Details |
 |---------|---------|
 | **Type** | ${cap(demoType.replace(/_/g, ' '))} |
+| **Solution** | ${args.your_solution || NOT_SUPPLIED} |
 | **Primary Audience** | ${primaryAudience}${args.primary_audience ? '' : ' (default)'} |
-| **Other Attendees** | ${attendees || 'TBD'} |
+| **Other Attendees** | ${attendees || 'Not given'} |
 | **Industry** | ${customerIndustry || 'General'} |
 | **Duration** | ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'} |
 | **Desired Outcome** | ${desiredOutcome} |
+
+${demoCtx.line}
 
 ---
 
@@ -5743,20 +5867,20 @@ function executeDemoScriptBuilder(args) {
 
 ## Pre-Demo Preparation
 
-### Research Checklist
-- [ ] Review previous conversations/notes
-- [ ] Research company news, priorities
-- [ ] Understand attendee roles and concerns
-- [ ] Prepare relevant customer examples
-- [ ] Test demo environment
+${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${(0, dealtext_ts_1.aAn)(audienceRole.label)}. They care about ${audienceRole.cares}, and worry about ${audienceRole.worry}. They need to see ${audienceRole.needs}.\n\n` : ''}${room.length ? `### Who else is in the room\n\n| Attendee | What they will look for |\n|---|---|\n${room.map((r) => `| ${cap(r.title)} | ${(0, answers_ts_1.roleFor)(r.title, investment).needs} |`).join('\n')}\n\n` : ''}### Research Checklist
+- Review previous conversations and notes
+- Research company news and priorities
+- Understand attendee roles and concerns
+- Prepare relevant customer examples${v ? ` (${proofOf(v)})` : ''}
+- Test the demo environment
 
 ### Technical Setup
-- [ ] Demo environment ready
-- [ ] Sample data loaded
-- [ ] Screen sharing tested
-- [ ] Backup plan ready
+- Demo environment ready
+- Sample data loaded
+- Screen sharing tested
+- Backup plan ready
 
-${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorContext}\n\n**Positioning:**\n- Highlight differentiators throughout\n- Don't mention competitor unless they do\n- Have proof points ready\n` : ''}
+${showList ? `### What ${v ? (0, dealtext_ts_1.aAn)(v.name) : 'a'} buyer wants to see\n\nShow only what ${P} really does:\n${showList}\n\n` : ''}${credentials.length ? `### Credentials to mention, not to show live\n\n${credentials.map((f) => `- ${f.text}`).join('\n')}\n\nSay each one in a sentence when it answers a concern. ${showable.length ? '' : 'You gave no feature that can be run live, so the demo steps below are the ones a buyer in this sector usually wants to see: show only what the product really does.'}\n\n` : ''}${claimed.length ? `### Claims to prove before you say them\n\n${claimed.map((f) => `- ${f.text} (${f.label})`).join('\n')}\n\n` : ''}${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorContext}\n\n**Positioning:**\n- Highlight what the buyer values throughout\n- Don't mention the competitor unless they do\n- Have proof points ready\n` : ''}
 
 ---
 
@@ -5764,21 +5888,21 @@ ${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorCont
 
 ### Part 1: Opening (${partMinutes(intro)})
 
-**[0:00] Introduction**
+**0:00 Introduction**
 
-"Thanks everyone for joining. I'm [Your name] and I'll be walking you through ${yourSolution} today.
+"Thanks everyone for joining. I will walk you through ${P} today.
 
-Before I share my screen, I want to make sure we cover what's most important to you. [Turn to primary audience]: What would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
+Before I share my screen, I want to make sure we cover what's most important to you. ${args.primary_audience ? `${cap(primaryAudience)}: what` : 'What'} would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
 
-**[Wait for response: this shapes your demo]**
+*Wait for the response: it shapes your demo.*
 
-**[${startAt(0.075, intro >= 2 ? 1 : 0)}] Agenda Setting**
+**${startAt(0.075, intro >= 2 ? 1 : 0)} Agenda Setting**
 
-"Perfect. Here's my plan for today:
-1. Quick validation of what I've learned about your situation
-2. Show you how ${yourSolution} addresses those specific needs
-3. Leave time for questions and discussion
-4. Agree on next steps
+"Here's my plan for today:
+1. A quick check of what I've learned about your situation
+2. How ${P} addresses those specific needs
+3. Time for questions and discussion
+4. Agreeing next steps
 
 Does that work for everyone?"
 
@@ -5786,13 +5910,15 @@ Does that work for everyone?"
 
 ### Part 2: Discovery Confirmation (${partMinutes(discovery)})
 
-**[${startAt(0.15, intro)}] Validate Understanding**
+**${startAt(0.15, intro)} Validate Understanding**
 
-"Before I show you anything, let me confirm what I've learned to make sure the demo is relevant:
+"Before I show you anything, let me confirm what I've learned so the demo is relevant:
 
-${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `From what I understand so far, you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
+${pains.length ? `From our conversations, it sounds like:\n${pains.map((p, i) => `${i + 1}. ${cap(p)}`).join('\n')}` : painWhole ? `From our conversations, it sounds like: ${painWhole}.` : `I have not been told your main pain points, so I will ask: what is the main problem you want solved?`}
 
-**[Listen and adjust demo focus based on responses]**
+Did I get that right? Anything to add?"
+
+*Listen, and adjust the demo to what you hear.*
 
 **Discovery Questions to Ask:**
 
@@ -5810,110 +5936,53 @@ ${demoType === 'executive_overview' ? `
 - "What are your top priorities for this year?"
 - "How does this initiative fit with broader company goals?"
 - "What would you need to see to move forward?"` : ''}
+${audienceRole ? audienceRole.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : ''}
 
 ---
 
 ### Part 3: Solution Demo (${partMinutes(demo)})
 
-**[${startAt(0.30, intro + discovery)}] Transition to Demo**
+**${startAt(0.30, intro + discovery)} Transition to Demo**
 
-"Great, that confirms what I thought. Let me show you how ${yourSolution} handles those challenges. I'm going to share my screen..."
+"Great, that confirms what I thought. Let me show you how ${P} handles those challenges. I'm going to share my screen..."
 
-**[Share screen with demo environment]**
+*Share your screen with the demo environment.*
 
 ---
 
 #### Demo Flow
 
-${(() => {
-        // Run 19 D80 (problem 3): every must-show feature becomes a demo step, tied to a pain point the user gave where there is one.
-        const feats = splitItems(mustShowFeatures);
-        const pains = splitItems(keyPainPoints);
-        if (!feats.length)
-            return `**Feature 1: [Address Pain Point 1]**
-
-*Setup:*
-"${pains[0] ? `You mentioned ${q(lowerFirstIfCommon(pains[0]))}` : 'You mentioned [pain point]'}. Let me show you how we handle that..."
-
-*Action:*
-[Show the feature]
-
-*Value Statement:*
-"What this means for you is [business outcome]. [Only if true and provable: [Customer example] saw [specific result] using this.]"
-
-*Check-in:*
-"How does this compare to how you're doing it today?"
-
----
-
-**Feature 2: [Differentiator]**
-
-*Setup:*
-"This next part is where we differ from [alternative]: [differentiator you can prove]..."
-
-*Action:*
-[Show your differentiating capability]
-
-`;
-        return feats.map((f, i) => `**Step ${i + 1}: ${cap(f)}**
-
-*Setup:*
-"${pains[i] ? `You mentioned ${q(lowerFirstIfCommon(pains[i]))}. ` : pains[0] && i === 0 ? `You mentioned ${q(lowerFirstIfCommon(pains[0]))}. ` : ''}Let me show you ${lowerFirstIfCommon(f)}${demoCtx.v ? `, on a case that looks like your own ${demoCtx.v.vocabulary[0]} work` : ''}."
-
-*Action:*
-[Show ${lowerFirstIfCommon(f)} live, with the prospect's own example if you have it]
-
-*Value Statement:*
-"What this means for you is [the business outcome, in the prospect's numbers]."
-
-*Check-in:*
-"How does this compare to how you're doing it today?"
-
----
-
-`).join('');
-    })()}
-${competitorContext ? `\n*Competitive note:*\nIf competitor comes up: "Great question. The key difference is [differentiator]. Would you like me to show you specifically?"` : ''}
+${flow}
+${competitorContext ? `\n*Competitive note:*\nIf the competitor comes up, ask which part of the evaluation matters most to the buyer and show that part. Say only what you can prove.\n` : ''}
 
 ---
 
 ### Part 4: Discussion (${partMinutes(discussion)})
 
-**[${startAt(0.80, intro + discovery + demo)}] Open for Questions**
+**${startAt(0.80, intro + discovery + demo)} Open for Questions**
 
 "Let me stop sharing for a moment. What questions do you have about what you've seen?"
 
-${knownObjections ? `**Anticipated Objections:**
+${objItems.length ? `**Anticipated Objections:**
 
-${splitItems(knownObjections).map((o) => `**Objection:** ${q(o)}
-**Response:** ${answerFor(o, demoCtx.v)}
+${objItems.map((o) => `**Objection:** ${q(o)}
+${(0, answers_ts_1.blockerLines)(o, bctx).join('\n')}
 
-`).join('')}` : `**Common Objections to Prepare For:**
+`).join('')}` : `**Questions to Prepare For${v ? ` in ${v.name}` : ''}:**
 
-**"How long does implementation take?"**
-"Typically [timeframe]. Our methodology includes [your implementation steps]..."
+${v ? v.objections.map((o) => `**"${o.objection}"**\nPattern of an answer: ${o.response}\n`).join('\n') : ''}
+${likelyQs.map((x) => { const a = (0, answers_ts_1.answerBlocker)(x, bctx); return `**"${x}"**\n${a.how}\nConfirm first: ${a.confirm}.\n`; }).join('\n')}`}${v && objItems.length ? `
 
-**"What about integration with [system]?"**
-"[Only if true and provable: We have pre-built integrations with [systems]. Let me show you...]" [If not: say what connects today and what does not.]
-
-**"What does pricing look like?"**
-"I'd like to understand your needs better to give you accurate pricing. Generally..."
-
-**"We need to think about it."**
-"Absolutely. What specific aspects do you want to think through? Maybe I can help."`}${demoCtx.v ? `
-
-${sectorNotes(demoCtx.v, 'objections')}` : ''}
+${sectorNotes(v, 'objections')}` : ''}
 
 ---
 
 ### Part 5: Close (${partMinutes(close)})
 
-**[${startAt(0.95, demoDuration - close)}] Summarize & Close**
+**${startAt(0.95, demoDuration - close)} Summarize & Close**
 
 "Before we wrap up, let me summarize what we covered:
-1. [Pain point 1] → ${yourSolution} addresses this with [feature]
-2. [Pain point 2] → You'd get [outcome]
-3. [Pain point 3] → This would help you [result]
+${closeLines}
 
 **The Ask:**
 
@@ -5923,12 +5992,12 @@ ${desiredOutcome === 'advance the deal' ? `
 Options might be:
 ${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
 - Reference call with a similar customer (only if one has agreed)
-- Pilot/POC discussion
+- ${v ? `A pilot: ${lowerFirstIfCommon((MAP_EVAL[modelKey] || [{ m: 'Pilot discussion' }])[0].m)}` : 'Pilot/POC discussion'}
 
 What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accomplished that? What else do you need?"`}
 
 **If Positive:**
-"Great! I'll send a follow-up with [materials] and a calendar invite for [next step]. Who else should I include?"
+"Great! I'll send a follow-up with the materials we discussed and a calendar invite for the next step. Who else should I include?"
 
 **If Hesitant:**
 "What concerns do you still have? I want to make sure you have everything you need."

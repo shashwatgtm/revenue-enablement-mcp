@@ -381,3 +381,40 @@ test("demo_script_builder: a services seller is shown what a services buyer want
   assert.doesNotMatch(r.text, BRACKET);
   assert.doesNotMatch(r.text, /Typically \[timeframe\]|\[your implementation steps\]|\[system\]/);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// pricing_negotiation_guide: deal value and leverage ignored; software terms for an investment seller; placeholders
+// ---------------------------------------------------------------------------------------------------------------------------
+test("pricing_negotiation_guide budget_objection: the deal value, the leverage and the approver are used", async () => {
+  const r = await call("pricing_negotiation_guide", { scenario: "budget_objection", deal_value: 150000, your_solution: LANEHOP, approval_authority: "Chief Operating Officer",
+    your_leverage: "the world's first agentic routing platform where humans govern and agents act", value_delivered: "Hollybrook Foods cut dispatch planning time by 66% (case study title)" });
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.match(r.text, /\$150,000/);
+  assert.match(r.text, /the world's first agentic routing platform where humans govern and agents act/);
+  assert.match(r.text, /Chief Operating Officer/);
+  assert.match(r.text, /\$75,000/);            // two instalments of the deal value
+  assert.match(r.text, /Hollybrook Foods cut dispatch planning time by 66%/);
+  assert.match(r.text, /pilot at one hub|one hub/i);
+  assert.match(r.text, /source/i);             // a "world's first" claim needs its source
+});
+test("pricing_negotiation_guide: an investment seller is not offered software terms", async () => {
+  const r = await call("pricing_negotiation_guide", { scenario: "budget_objection", deal_value: 250000, your_solution: EDGEFUND, your_leverage: "explainable models with signal attribution" });
+  assert.doesNotMatch(r.text, /monthly vs annual payment|phased implementation|per user|seats?\b/i);
+  assert.match(r.text, /first allocation|tranche|phased allocation|mandate/i);
+  assert.match(r.text, /\$250,000/);
+  assert.doesNotMatch(r.text, BRACKET);
+});
+test("pricing_negotiation_guide: every scenario is free of placeholders and uses the deal value", async () => {
+  const tools = (await rpc("tools/list", {})).result.tools;
+  const scenarios = tools.find((t) => t.name === "pricing_negotiation_guide").inputSchema.properties.scenario.enum;
+  assert.equal(scenarios.length, 7);
+  for (const scenario of scenarios) {
+    const r = await call("pricing_negotiation_guide", { scenario, deal_value: 90000, discount_requested: 10, your_solution: BRANCHWIRE, your_leverage: "managed end to end, one contract, one point of contact", competitor_price: "the incumbent operator quotes about 12% less" });
+    assert.equal(r.isError, false, scenario);
+    assert.doesNotMatch(r.text, BRACKET, scenario);
+    assert.doesNotMatch(r.text, /\bX%|\bXX|\$X\b|\(Example claim/, `${scenario}: made-up figure`);
+    assert.match(r.text, /\$90,000/, scenario);
+    assert.match(r.text, /one contract, one point of contact/, scenario);
+    assert.match(r.text, /Branchwire/, scenario);
+  }
+});

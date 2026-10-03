@@ -437,7 +437,7 @@ function splitFeatureList(text) {
                 pieces[pieces.length - 1] += `, ${t}`;
             else if (prev && !allShort && words.length <= 3 && prevWords >= 3 && !VERBISH.test(t))
                 pieces[pieces.length - 1] += `, ${t}`;
-            else if (prev && !allShort && prevWords <= 2 && !/,/.test(prev))
+            else if (prev && !allShort && prevWords <= 1 && !/,/.test(prev))
                 pieces[pieces.length - 1] += `, ${t}`;
             else
                 pieces.push(t);

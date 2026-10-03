@@ -2395,7 +2395,7 @@ ${SUGGESTIONS_FOOTER}`;
 
 // Tool 4: ROI Business Case Builder
 function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
-  const customerName = (args.customer_name as string) || '[Customer name]';
+  const customerName = (args.customer_name as string) || 'your customer';
   const industry = (args.industry as string) || 'Technology';
   const companySize = (args.company_size as string) || 'mid_market';
   // D45 (run 16): omitted, null and 0 are told apart with explicit checks, as for the price below. Omitted or null:
@@ -2616,10 +2616,10 @@ ${EXAMPLES}
 ### Why ${yourSolution} for ${customerName}
 
 **The Problem:**
-${currentProcess ? currentProcess : "[The customer's problem in their words]"}
+${currentProcess ? `Today ${customerName} handles it this way: ${currentProcess.trim().replace(/[.]$/, '')}.` : `No current process was given. Add current_process to put ${customerName}'s problem here in their words.`}
 
 **The Solution:**
-${yourSolution} addresses these challenges through [key capabilities].
+${(() => { const b = solutionBrief(yourSolution); return b.kind ? `${b.short} is ${lowerFirstIfCommon(b.kind)}${b.parts.length ? `, with ${joinList(b.parts.slice(0, 4).map(partLabel))}` : ''}.` : `${yourSolution}. Add a description to your_solution (what it is and what it does) to complete this line.`; })()}
 
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
@@ -2628,7 +2628,7 @@ ${roiSummary}
 ${paybackSummary}` : `- not computed: the annual value you gave is 0`}
 
 **Why Now:**
-- [Why this customer should act now, for example competitive pressure, if it applies]
+- Add what makes this urgent for ${customerName} (a deadline, a renewal, a target) before you send this page.
 - Cost of delay: ${valueComputed ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : nc}
 - Implementation timeline: ${timelineText}
 
@@ -2690,6 +2690,11 @@ function roiStructureAnswer(args: Record<string, unknown>, i: RoiStructureInput)
   const priceCell = i.priceGiven ? (i.solutionPrice === 0 ? '$0 (your input)' : `${money0(i.solutionPrice)} (your input)`) : NOT_SUPPLIED;
   const ctx = readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
   const customer = (args.customer_name as string) || 'your customer';
+  const brief = solutionBrief(args.your_solution ? i.yourSolution : '');
+  const P = brief.short || 'your solution';
+  const proof = parseProof(i.knownMetrics);
+  const costLines = splitItems(i.currentProcess.replace(/^today (?:they|the buyer) (?:handle|handles|do|does) it with\s+/i, ''));
+  const finance = ctx.v ? ctx.v.committee.match(/finance[^;.]*/i)?.[0] : undefined;
 
   const partial = costGiven && !pctGiven
     ? `You gave current_annual_cost (${given(i.ownCost)}). Add **expected_improvement_percent**, the share of that cost the buyer expects to save, and the value can be calculated.`
@@ -2704,6 +2709,29 @@ ${d.where}
 - **The buyer's figure to ask for:** ${d.figure}.
 - **Questions to ask:**
 ${d.questions.map((q) => `  - "${q}"`).join('\n')}`).join('\n\n');
+
+  // What the price alone implies: arithmetic on the user's own figure, no claim about the buyer's benefit.
+  const priceLine = i.priceGiven && i.solutionPrice > 0
+    ? `\n**What your price implies.** At the annual price you gave (${money0(i.solutionPrice)}), the value the buyer sees must be above ${money0(i.solutionPrice)} a year for any positive return, and above ${money0(i.solutionPrice * 2)} a year to return the price twice over. Over three years the buyer pays ${money0(i.solutionPrice * 3)} before any one-time cost. This is arithmetic on your price; it says nothing about the value.\n`
+    : '';
+
+  // Where the figures can come from in this case: the cost lines the user listed and the results the user quoted.
+  const costBlock = costLines.length ? `### Cost lines to price (from your current_process)
+
+Each way of working that ${P} would replace is a cost line. Put a yearly cost on each, then add them: that sum is \`current_annual_cost\`.
+
+| Cost line | Question to price it |
+|---|---|
+${costLines.map((c) => `| ${cap(c)} | "${costQuestion(c)}" |`).join('\n')}
+
+` : '';
+  const results = proof.filter((p) => p.kind === 'result' || p.kind === 'quote' || p.kind === 'story');
+  const others = proof.filter((p) => p.kind === 'recognition' || p.kind === 'scale');
+  const proofBlock = proof.length ? `### Results you quoted (reference points, not this buyer's figures)
+
+${results.length ? `These show the buyer what to measure. Each is another organisation's result, from ${proof.some((p) => p.label) ? 'the source you labelled' : 'your notes'}: do not enter one as this buyer's figure.\n\n| Result you quoted | What it tells you to measure |\n|---|---|\n${results.map((p) => `| ${proofPhrase(p)}${p.label ? ` (${proofSource(p)})` : ''} | ${measureOf(p.text)} |`).join('\n')}\n` : ''}${others.length ? `\nNot value figures, so not used in the calculation: ${others.map((p) => proofPhrase(p)).join('; ')}. Keep them for the proposal as credibility.\n` : ''}
+` : '';
+  const metricQs = ctx.v ? `\n**What ${ctx.v.name} buyers measure** (put a yearly cost on the ones the problem moves): ${ctx.v.metrics.join(', ')}.\n` : '';
 
   return `# ROI Business Case: ${customer}
 
@@ -2721,7 +2749,7 @@ ${partial}
 | \`solution_price\` | Your annual price, in dollars. Without it, ROI and payback use a labelled example price | ${i.priceGiven ? `given: ${priceCell}` : 'not supplied'} |
 
 Either option A on its own, or option B (both of its inputs), is enough to calculate the value.${i.priceGiven ? '' : ' Add `solution_price` as well.'} Then run roi_business_case_builder again.
-${i.revenueGiven || i.employeesGiven ? '\n`annual_revenue` and `employee_count` describe the customer\'s size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.\n' : ''}
+${priceLine}${i.revenueGiven || i.employeesGiven ? '\n`annual_revenue` and `employee_count` describe the customer\'s size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.\n' : ''}
 ## What you gave
 
 | Item | Value |
@@ -2736,6 +2764,9 @@ ${i.revenueGiven || i.employeesGiven ? '\n`annual_revenue` and `employee_count` 
 | **Implementation timeline** | ${i.implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`} |
 | **Confidence Level** | Not rated: no buyer figure was given, so no value or return is calculated |
 
+## Where the figures can come from in this case
+
+${costBlock}${proofBlock}${!costBlock && !proofBlock ? `You gave no current_process and no known_metrics, so the sections that would price the buyer's current way of working and use your quoted results are empty. Add them and this section fills in.\n` : ''}${metricQs}
 ## Value drivers${args.industry ? ` for ${args.industry}` : ''}
 
 ${i.primaryValueDriver === 'multiple' ? 'You chose several drivers. Each one needs its own figure from the buyer; do not add them up until each is checked.' : 'The driver you chose is described below.'}
@@ -2751,7 +2782,7 @@ ${ctx.v ? `${sectorNotes(ctx.v, 'metrics')}\n- **Turn one of these into the valu
 2. What share of that cost do you expect to remove, and what is that based on? This is \`expected_improvement_percent\`.
 3. If you can value the result directly, what is it worth to you in a year? This is \`annual_value_estimate\`.
 4. What is the annual price of the solution? This is \`solution_price\`.
-5. Who in finance will check these figures before the decision, and what proof will they need?
+5. Who in finance will check these figures before the decision, and what proof will they need?${finance ? ` (In ${ctx.v!.name}: ${lowerFirstIfCommon(finance)}.)` : ''}
 6. When would the value start (the implementation timeline), and what could delay it?
 
 ## How the calculation will work
@@ -2766,7 +2797,7 @@ Once the buyer's figures are in, the tool calculates in this order, and shows ev
 6. **Three-year net value** = three years of value minus three years of investment.
 7. **Sensitivity**: the same sums with half the value and with one and a half times the value.
 
-${i.currentProcess ? `## Current State\n${i.currentProcess}\n\n` : ''}${i.knownMetrics ? `## Customer-Provided Metrics\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers above.\n\n` : ''}## Next Steps
+${i.currentProcess && !costLines.length ? `## Current State\n${i.currentProcess}\n\n` : ''}${i.currentProcess && costLines.length ? `## Current State\n${costLines.map((c) => `- ${c}`).join('\n')}\n\n` : ''}${i.knownMetrics && !proof.length ? `## Customer-Provided Metrics\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers above.\n\n` : ''}${proof.length ? `*The results above are text. They are not used in a calculation until you give the buyer's own numbers as the inputs above.*\n\n` : ''}## Next Steps
 
 1. **Collect the figures**: put the questions above to the buyer and write down where each number comes from.
 2. **Run the tool again** with the inputs named under "What is missing".
@@ -2776,7 +2807,101 @@ ${i.currentProcess ? `## Current State\n${i.currentProcess}\n\n` : ''}${i.knownM
 ${SUGGESTIONS_FOOTER}`;
 }
 
+// The question that puts a yearly cost on one way of working, by the kind of way it is.
+function costQuestion(c: string): string {
+  if (/\b(?:manual\w*|spreadsheets?|excel|diar(?:y|ies)|paper|by hand)\b/i.test(c)) return 'How many people spend how many hours a week on this, what do they cost, and what do errors and delays on it cost on top?';
+  if (/\b(?:legacy|on-?prem\w*|old |existing|incumbent|traditional|conventional)\b/i.test(c)) return 'What does it cost a year to run (licences, support, upgrades), and what work do people do around it because it cannot do the job?';
+  if (/\b(?:cards?|cash|advances?|debit|credit|bank|banks|fees?|charges?)\b/i.test(c)) return 'What does it cost a year in fees and charges, and what is lost to leakage or delay that better control would remove?';
+  if (/\b(?:tools?|point|separate|several|multiple|vendors?|consoles?)\b/i.test(c)) return 'What do the pieces cost in total, and how many hours does it take to connect their output by hand?';
+  return 'What does it cost a year in money and in people\'s time, and what do its failures cost on top?';
+}
+// What a quoted result says to measure: the word that follows the number or the thing that changed.
+function measureOf(text: string): string {
+  const t = text.toLowerCase();
+  if (/dispatch|planning time|planning/.test(t)) return 'the time spent planning, and what that time costs';
+  if (/reimburse|cycle|turnaround|lead time|time to|faster|days?\b|weeks?\b|hours?\b|minutes?\b/.test(t)) return 'the time the process takes today, and what each day or hour costs';
+  if (/cost|sav|spend|expense/.test(t)) return 'the yearly cost of the current way of working';
+  if (/uptime|outage|downtime|availability/.test(t)) return 'the cost of an outage to the buyer, and how often it happens';
+  if (/coverage|calls|orders|conversion|revenue|growth|top line|market share|sales/.test(t)) return 'the revenue or volume the buyer gains or keeps from the change';
+  if (/return|rto|cancel|complaint|unpaid|churn|fraud|breach|incident|risk/.test(t)) return 'the cost of one incident, and how often one happens';
+  if (/adoption|users?|customers?/.test(t)) return 'the share of people who use it, and what unused licences or manual work cost';
+  return 'which of the buyer\'s own numbers would change, and what that change is worth in a year';
+}
+
+
 // Tool 5: Mutual Action Plan Generator
+// Run 20 round 1b (D92): every date is a working day (the plan is built in working days back from the close date), each phase gets
+// time in proportion to its work (the evaluation is not one week), the milestones follow how the sector buys (src/verticals.ts and
+// the investment overlay), and every milestone has an owner who can do it: a security or compliance review belongs to the buyer's
+// IT, security or risk reviewer, not to the champion. Each blocker is answered by its kind (src/answers.ts) with the owner for it.
+type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
+interface Step { m: string; who: Who }
+const MAP_EVAL: Record<string, Step[]> = {
+  'logistics-tech': [
+    { m: 'Agree the pilot hub, the baseline and the measure (cost per delivery, first-attempt delivery, dispatch planning time)', who: 'both' },
+    { m: 'Connect the pilot hub to the order, TMS and WMS data it needs', who: 'it' },
+    { m: 'Run a pilot at one hub for a full cycle of busy and quiet weeks, with the driver app live', who: 'champion' },
+    { m: 'Review the pilot against the baseline and decide the rollout order of the other hubs', who: 'both' },
+  ],
+  'vertical-saas': [
+    { m: 'Agree the pilot region, a comparable region without the product, and the measure (secondary sales, productive calls, outlet coverage)', who: 'both' },
+    { m: 'Connect the pilot region\'s distributor (DMS) and ERP data', who: 'it' },
+    { m: 'Run the pilot, including a test in outlets with a weak mobile signal', who: 'champion' },
+    { m: 'Review the pilot region against the comparable region and agree the wave plan', who: 'both' },
+  ],
+  fintech: [
+    { m: 'Agree the pilot entity or department and the baseline (days to close the books, reconciliation effort)', who: 'both' },
+    { m: 'Connect the pilot to the ERP or ledger it must post into', who: 'it' },
+    { m: 'Run the pilot in parallel with the current process for one close cycle', who: 'finance' },
+    { m: 'Internal audit and compliance review of the controls and the audit trail', who: 'risk' },
+  ],
+  'ai-native': [
+    { m: 'Build the evaluation set from the buyer\'s own history and agree the pass mark before any test', who: 'both' },
+    { m: 'Run the proof of concept with a person approving any action that moves money or changes a record', who: 'champion' },
+    { m: 'Review the results against the evaluation set and agree the guardrails for a production pilot', who: 'both' },
+  ],
+  ites: [
+    { m: 'Agree the scope of services and the SLA design (measures, reporting, service credits)', who: 'both' },
+    { m: 'Draft the transition plan: knowledge transfer, a parallel run and exit criteria for each stage', who: 'se' },
+    { m: 'Agree the governance model: monthly reports, review meetings and escalation', who: 'both' },
+    { m: 'Reference call with a similar client on SLA and transition outcomes (only if one has agreed)', who: 'champion' },
+  ],
+  telecom: [
+    { m: 'Site survey of the pilot sites and confirmation of the delivery time of each link', who: 'se' },
+    { m: 'Agree the pilot sites (the worst served first) and the baseline for uptime and repair time', who: 'both' },
+    { m: 'Bring the pilot sites live and compare uptime and repair time with the current operator\'s record for the same sites', who: 'champion' },
+    { m: 'Draft the wave plan by region, with a fallback link and a rollback rule for each wave', who: 'both' },
+  ],
+  cybersecurity: [
+    { m: 'Agree the proof of value in writing: scope, environment and the success criteria', who: 'both' },
+    { m: 'Connect the proof environment (cloud accounts, SIEM, ticketing)', who: 'it' },
+    { m: 'Run the proof of value and track the exposures found and closed, and the time to fix them', who: 'champion' },
+    { m: 'Review the findings with the security team, ranked against the alerts they handle today', who: 'both' },
+  ],
+  software: [
+    { m: 'Choose one real project and one team for the trial and agree the measure (release frequency, escaped defects)', who: 'both' },
+    { m: 'Migrate that project\'s existing scripts and tests through the import path', who: 'champion' },
+    { m: 'Review the results of the trial with the engineering lead', who: 'both' },
+  ],
+  saas: [
+    { m: 'Choose the workflow and the team for the pilot and agree the measure (time to first value)', who: 'both' },
+    { m: 'Connect the tools the pilot must work with', who: 'it' },
+    { m: 'Run the pilot to first value and review adoption', who: 'champion' },
+  ],
+  investment: [
+    { m: 'Send the due diligence pack: strategy description, process, risk limits and how results are explained', who: 'seller' },
+    { m: 'Present to the investment committee and answer its questions', who: 'both' },
+    { m: 'Agree the reporting: the monthly pack and how a bad month is explained', who: 'both' },
+    { m: 'Agree the first allocation: its size, its phasing and the date it is reviewed', who: 'eb' },
+  ],
+};
+const MAP_GENERIC_EVAL: Step[] = [
+  { m: 'Complete the technical evaluation or pilot against the criteria above', who: 'eval' },
+  { m: 'Validate the integration requirements', who: 'it' },
+];
+const STAGE_ORDER = ['discovery', 'evaluation', 'proposal', 'negotiation', 'procurement'];
+const STAGE_NAME: Record<string, string> = { discovery: 'Discovery', evaluation: 'Evaluation', proposal: 'Business Case & Alignment', negotiation: 'Commercial & Legal', procurement: 'Procurement' };
+
 function executeMutualActionPlanGenerator(args: Record<string, unknown>): string {
   const dealName = (args.deal_name as string) || 'Deal';
   const targetCloseDate = (args.target_close_date as string) || '';
@@ -2790,58 +2915,126 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
   const blockers = (args.blockers as string) || '';
   const yourSolution = (args.your_solution as string) || 'the solution';
 
-  // Calculate dates working backward from close date
-  const closeDate = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-  if (isNaN(closeDate.getTime())) {
+  const closeInput = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+  if (isNaN(closeInput.getTime())) {
     return `target_close_date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
   }
   const today = new Date();
-  const daysUntilClose = Math.round((closeDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  const daysUntilClose = Math.round((closeInput.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  const formatDate = isoDate;
 
-  // Calculate milestone dates
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
-  
-  const week1 = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const week2 = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-  const weekMinus3 = new Date(closeDate.getTime() - 21 * 24 * 60 * 60 * 1000);
-  const weekMinus2 = new Date(closeDate.getTime() - 14 * 24 * 60 * 60 * 1000);
-  const weekMinus1 = new Date(closeDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const ctx = readContext(undefined, { seller: [yourSolution], context: [knownRequirements, technicalEvaluators, blockers, dealName], role: [buyerChampion, economicBuyer] });
+  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const P = brief.short || 'the solution';
+  const v = ctx.v;
+  const investment = ctx.model === 'investment';
+  const bctx: BlockerContext = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: ctx.model };
 
-  // Stage-specific milestones
-  const stageMillestones: Record<string, string[]> = {
-    discovery: [
-      'Complete discovery sessions with all stakeholders',
-      'Document business requirements and success criteria',
-      'Identify all decision makers and influencers',
-      'Understand evaluation criteria and process'
-    ],
-    evaluation: [
-      'Complete technical evaluation/POC',
-      'Validate integration requirements',
-      'Confirm security and compliance requirements',
-      'Reference calls with similar customers (if you have them)'
-    ],
-    proposal: [
-      'Present business case to economic buyer',
-      'Align on ROI and success metrics',
-      'Finalize scope and pricing',
-      'Address all outstanding concerns'
-    ],
-    negotiation: [
-      'Complete commercial terms negotiation',
-      'Finalize legal/contract review',
-      'Confirm implementation timeline',
-      'Obtain final approvals'
-    ],
-    procurement: [
-      'Complete vendor registration',
-      'Submit required documentation',
-      'Finalize payment terms',
-      'Execute contract'
-    ]
+  // ---- people: who can own which milestone ----
+  const evaluators = parseContacts(technicalEvaluators, investment);
+  const pick = (fams: string[]): string => evaluators.find((e) => fams.includes(e.family))?.title || '';
+  const itName = pick(['it', 'engineering', 'data']) || pick(['security']) || 'Buyer IT reviewer (not named)';
+  const secName = pick(['security']) || pick(['it', 'engineering']) || pick(['risk']) || 'Buyer security reviewer (not named)';
+  const riskName = pick(['risk']) || pick(['security']) || 'Buyer risk and compliance reviewer (not named)';
+  const finName = pick(['finance']) || 'Buyer finance contact (not named)';
+  const champName = buyerChampion || 'Buyer champion (not named)';
+  const ebName = economicBuyer || 'Economic buyer (not named)';
+  const procName = procurementContact || 'Buyer procurement and legal (not named)';
+  const whoName = (w: Who): string => ({
+    champion: champName, eb: ebName, seller: 'Seller (account executive)', se: 'Seller (solutions engineer)', both: 'Both teams', it: `${itName} with Seller (solutions engineer)`,
+    security: secName, risk: riskName, proc: procName, finance: finName, eval: evaluators.length ? joinList(evaluators.slice(0, 3).map((e) => e.title)) : 'Buyer technical evaluators (not named)',
+  } as Record<Who, string>)[w];
+
+  // ---- the calendar, in working days ----
+  const start = onOrAfterWorkday(today);
+  const close = onOrBeforeWorkday(closeInput);
+  const closeNote = isoDate(close) !== isoDate(closeInput) ? ` (${isoDate(closeInput)} is a ${weekdayName(closeInput)}; the plan closes on ${weekdayName(close)} ${isoDate(close)})` : '';
+  const N = Math.max(workdaysBetween(start, close), 0);
+  const from = Math.max(STAGE_ORDER.indexOf(currentStage), 0);
+  const phaseStages = STAGE_ORDER.slice(from);
+  const modelKey = investment ? 'investment' : v ? v.id : '';
+  const evalWeight = ['ites', 'telecom', 'investment'].includes(modelKey) ? 5 : 4;
+  const weights = phaseStages.map((s) => (s === 'evaluation' ? evalWeight : s === 'discovery' ? 2 : 2));
+  const closeWeight = 1;
+  const totalW = weights.reduce((a, b) => a + b, 0) + closeWeight;
+  const lens: number[] = [];
+  let used = 0;
+  [...weights, closeWeight].forEach((w, i, all) => {
+    const len = i === all.length - 1 ? Math.max(N - used, 0) : Math.max(Math.round((N * w) / totalW), N >= 2 * all.length ? 2 : 1);
+    lens.push(len);
+    used += len;
+  });
+  // if rounding used more days than there are, take them back from the longest phase
+  let over = lens.reduce((a, b) => a + b, 0) - N;
+  while (over > 0) { const k = lens.indexOf(Math.max(...lens)); if (lens[k] <= 1) break; lens[k]--; over--; }
+  const bounds: { name: string; stage: string; a: Date; b: Date; len: number }[] = [];
+  let cursor = start;
+  [...phaseStages, 'close'].forEach((s, i) => {
+    const a = cursor;
+    const b = i === phaseStages.length ? close : addWorkdays(a, lens[i]);
+    bounds.push({ name: s === 'close' ? 'Close & Launch' : STAGE_NAME[s], stage: s, a, b: b.getTime() > close.getTime() ? close : b, len: lens[i] });
+    cursor = b.getTime() > close.getTime() ? close : b;
+  });
+  const dateIn = (ph: { a: Date; b: Date; len: number }, i: number, k: number): string => {
+    const step = Math.max(Math.ceil(((i + 1) * Math.max(ph.len, 1)) / Math.max(k, 1)), 1);
+    const d = addWorkdays(ph.a, step);
+    return isoDate(d.getTime() > ph.b.getTime() ? ph.b : d);
   };
 
-  const currentMilestones = stageMillestones[currentStage] || stageMillestones['evaluation'];
+  // ---- the steps of each phase ----
+  const evalSteps: Step[] = [...(MAP_EVAL[modelKey] || MAP_GENERIC_EVAL)];
+  if (!evalSteps.some((s) => /security|compliance|risk/i.test(s.m))) evalSteps.push({ m: 'Security and compliance review of the vendor and its data handling', who: 'security' });
+  evalSteps.push(brief.short ? { m: `Reference calls with similar ${P} customers (only if one has agreed)`, who: 'champion' } : { m: 'Reference calls with similar customers (only if one has agreed)', who: 'champion' });
+  const dedup = (steps: Step[]) => steps.filter((s, i) => steps.findIndex((t) => t.m === s.m) === i);
+  const stepsFor: Record<string, Step[]> = {
+    discovery: [
+      { m: 'Hold discovery sessions with each stakeholder named above', who: 'both' },
+      { m: 'Document the business requirements and the success criteria', who: 'champion' },
+      { m: 'Identify every decision maker and influencer, and what each will check', who: 'seller' },
+      { m: 'Agree the evaluation criteria and the process', who: 'both' },
+    ],
+    evaluation: dedup(evalSteps),
+    proposal: [
+      { m: 'Present the business case to the economic buyer', who: 'seller' },
+      { m: 'Align on ROI and success metrics with the finance contact', who: 'finance' },
+      { m: 'Finalize scope and pricing', who: 'seller' },
+      { m: 'Answer every open blocker in writing (see Risks & Blockers)', who: 'both' },
+    ],
+    negotiation: [
+      { m: 'Agree the commercial terms', who: 'both' },
+      { m: 'Complete the legal review and resolve the redlines', who: 'proc' },
+      { m: 'Confirm the implementation timeline and the owners on both sides', who: 'both' },
+      { m: 'Obtain the final approvals', who: 'eb' },
+    ],
+    procurement: [
+      { m: 'Complete vendor registration and submit the documents the buyer\'s process asks for', who: 'proc' },
+      { m: 'Finalize the payment terms', who: 'proc' },
+      { m: 'Complete the final approvals', who: 'eb' },
+    ],
+    close: [
+      { m: 'Contract signed', who: 'eb' },
+      { m: 'Implementation kickoff scheduled', who: 'both' },
+      { m: 'Success criteria documented', who: 'seller' },
+    ],
+  };
+  const phaseBlock = (ph: (typeof bounds)[number], n: number): string => {
+    const steps = stepsFor[ph.stage] || [];
+    const isCurrent = n === 1;
+    const rows = steps.map((s, i) => `| ${i + 1} | ${s.m} | ${whoName(s.who)} | ${dateIn(ph, i, steps.length)} | Pending |`);
+    const heading = `### Phase ${n}: ${ph.name}${isCurrent ? ', the current stage' : ''} (${formatDate(ph.a)} to ${formatDate(ph.b)})`;
+    const extra = ph.stage === 'evaluation' && v ? `\n**How this sector buys:** ${v.salesMotion}\n` : '';
+    const q2 = isCurrent && ph.stage !== 'close' ? `\n**Key Questions to Answer:**\n${knownProcessSteps ? `- Based on the process you gave: ${knownProcessSteps}` : `- Who else needs to be involved in the evaluation?\n- What is the approval process after the evaluation?\n- What could delay this?`}\n` : '';
+    return `${heading}\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n${rows.join('\n')}\n${extra}${q2}`;
+  };
+  const phasesText = bounds.map((ph, i) => phaseBlock(ph, i + 1)).join('\n---\n\n');
+  const tight = N < 10 ? `\n*Only ${N} working day${N === 1 ? '' : 's'} remain before the close date, so the phases are short and several steps must run in parallel. Check that the close date is realistic.*\n` : '';
+
+  // ---- requirements and blockers ----
+  const reqs = splitItems(knownRequirements);
+  const reqTable = reqs.length ? reqs.map((r, i) => `| ${i < 2 ? 'High' : 'Medium'} (agree with the buyer) | ${cap(r)} | Test in the evaluation: measure ${measureOf(r)} |`).join('\n') : '| High | Name the core requirement the buyer will judge the evaluation by | Not given: ask the champion |';
+  const blockerItems = splitItems(blockers);
+  const ownerFor = (kind: string): string => ({ integration: `${itName} with Seller (solutions engineer)`, compliance: `${secName} with Seller`, security: `${secName} with Seller`, terms: `${procName} with ${ebName}`, price: `${ebName} with Seller`, adoption: `${champName} with Seller`, accuracy: `${champName} with Seller (solutions engineer)`, setup: 'Seller (solutions engineer) with ' + itName }[kind] || `Seller with ${champName}`);
+  const blockerRows = blockerItems.map((b) => { const a = answerBlocker(b, bctx); return `| ${cap(b)} | ${a.sector || sentences(a.how).slice(0, 2).join(' ')} Confirm first: ${a.confirm}. | ${ownerFor(a.kind)} | Open |`; }).join('\n');
 
   return `# Mutual Action Plan: ${dealName}
 
@@ -2850,10 +3043,12 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
 | Item | Detail |
 |------|--------|
 | **Opportunity** | ${dealName} |
-| **Target Close Date** | ${formatDate(closeDate)}${targetCloseDate ? '' : ` (${NOT_SUPPLIED}: example date)`} |
-| **Days Until Close** | ${daysUntilClose} days${targetCloseDate ? '' : ` ${EXAMPLE}`} |
+| **Target Close Date** | ${formatDate(closeInput)}${targetCloseDate ? '' : ` (${NOT_SUPPLIED}: example date)`}${closeNote} |
+| **Days Until Close** | ${daysUntilClose} days${targetCloseDate ? '' : ` ${EXAMPLE}`} (${N} working days) |
 | **Current Stage** | ${currentStage.replace(/_/g, ' ')}${args.current_stage ? '' : ' (default)'} |
 | **Solution** | ${(args.your_solution as string) || NOT_SUPPLIED} |
+
+${ctx.line}
 
 ---
 
@@ -2862,122 +3057,60 @@ function executeMutualActionPlanGenerator(args: Record<string, unknown>): string
 ### Buyer Team
 | Role | Name | Engagement |
 |------|------|------------|
-| **Champion** | ${buyerChampion || 'TBD: need to identify'} | ${buyerChampion ? 'Engaged' : 'Not identified'} |
-| **Economic Buyer** | ${economicBuyer || 'TBD: need to identify'} | ${economicBuyer ? 'Needs engagement' : 'Not identified'} |
-| **Technical Evaluator(s)** | ${technicalEvaluators || 'TBD'} | ${technicalEvaluators ? 'In evaluation' : 'Not identified'} |
-| **Procurement** | ${procurementContact || 'TBD'} | ${procurementContact ? 'Not yet engaged' : 'Not identified'} |
+| **Champion** | ${buyerChampion || 'Not named: need to identify'} | ${buyerChampion ? 'Engaged' : 'Not identified'} |
+| **Economic Buyer** | ${economicBuyer || 'Not named: need to identify'} | ${economicBuyer ? 'Needs engagement' : 'Not identified'} |
+${evaluators.length ? evaluators.map((e) => `| **Technical evaluator** | ${e.title} | In evaluation: ${roleFor(e.title, investment).owns} |`).join('\n') : '| **Technical Evaluator(s)** | Not named | Not identified |'}
+| **Procurement** | ${procurementContact || 'Not named'} | ${procurementContact ? 'Not yet engaged' : 'Not identified'} |
 
 ### Seller Team
 | Role | Name | Responsibility |
 |------|------|----------------|
-| **Account Executive** | [Your name] | Deal ownership, relationship |
-| **Solutions Engineer** | [SE name] | Technical validation |
-| **Executive Sponsor** | [Exec name] | Executive alignment |
+| **Account Executive** | You | Deal ownership, relationship |
+| **Solutions Engineer** | Not named | Technical validation |
+| **Executive Sponsor** | Not named | Executive alignment |
 
 ---
 
 ## Success Criteria
 
 ### What Success Looks Like
-${knownRequirements ? knownRequirements : `
-**Business Outcomes:**
-- [Specific outcome 1 to validate]
-- [Specific outcome 2 to validate]
-- [Specific outcome 3 to validate]
-
-**Technical Requirements:**
-- [Technical requirement 1 to confirm]
-- [Technical requirement 2 to confirm]
-- [Technical requirement 3 to confirm]`}
+${knownRequirements ? knownRequirements : `You gave no requirements. Ask the champion what the buyer will judge ${P} by${v ? `; in ${v.name} they usually look at ${v.metrics.slice(0, 3).join(', ')}` : ''}.`}
 
 ### Evaluation Criteria
 | Priority | Criterion | Status |
 |----------|-----------|--------|
-${(() => { const reqs = splitItems(knownRequirements); return reqs.length ? reqs.map((r, i) => `| ${i < 2 ? 'High' : 'Medium'} (agree with the buyer) | ${cap(r)} | To be tested in the evaluation |`).join('\n') : '| High | [Core requirement] | Pending |\n| High | [Core requirement] | Pending |\n| Medium | [Important feature] | Pending |\n| Low | [Nice to have] | Pending |'; })()}
-${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [knownRequirements, technicalEvaluators, dealName] }); return c.v ? `\n${sectorNotes(c.v, 'metrics')}\n` : ''; })()}
+${reqTable}
+${v ? `\n${sectorNotes(v, 'metrics')}\n` : ''}
 
 ---
 
 ## Mutual Action Plan Timeline
-
-### Phase 1: ${cap(currentStage.replace(/_/g, ' '))}, the current stage (now to ${formatDate(week2)})
-
-| # | Milestone | Owner | Due Date | Status |
-|---|-----------|-------|----------|--------|
-${currentMilestones.map((m, i) => `| ${i + 1} | ${m} | ${i % 2 === 0 ? buyerChampion || 'Buyer' : 'Seller'} | ${formatDate(i < 2 ? week1 : week2)} | Pending |`).join('\n')}
-
-**Key Questions to Answer:**
-${knownProcessSteps ? `- Based on process: ${knownProcessSteps}` : `
-- Who else needs to be involved in evaluation?
-- What's the approval process after evaluation?
-- Are there competing priorities that could delay this?`}
-
----
-
-### Phase 2: Business Case & Alignment (${formatDate(week2)} to ${formatDate(weekMinus3)})
-
-| # | Milestone | Owner | Due Date | Status |
-|---|-----------|-------|----------|--------|
-| 5 | Present business case to ${economicBuyer || 'economic buyer'} | Seller + ${buyerChampion || 'Champion'} | ${formatDate(weekMinus3)} | Pending |
-| 6 | Align on ROI and success metrics | Both | ${formatDate(weekMinus3)} | Pending |
-| 7 | Finalize scope and pricing | Seller | ${formatDate(weekMinus3)} | Pending |
-| 8 | Reference calls completed | ${buyerChampion || 'Buyer'} | ${formatDate(weekMinus3)} | Pending |
-
-**Deliverables:**
-- [ ] Executive presentation
-- [ ] ROI calculator with customer data
-- [ ] Reference customer list (if you have one)
-- [ ] Draft proposal
-
----
-
-### Phase 3: Commercial & Legal (${formatDate(weekMinus3)} to ${formatDate(weekMinus1)})
-
-| # | Milestone | Owner | Due Date | Status |
-|---|-----------|-------|----------|--------|
-| 9 | Commercial terms agreed | Both | ${formatDate(weekMinus2)} | Pending |
-| 10 | Legal review initiated | ${procurementContact || 'Procurement'} | ${formatDate(weekMinus2)} | Pending |
-| 11 | Security/compliance review complete | Buyer IT | ${formatDate(weekMinus1)} | Pending |
-| 12 | All redlines resolved | Both | ${formatDate(weekMinus1)} | Pending |
-
-**Documentation Required:**
-- [ ] Master service agreement
-- [ ] Order form
-- [ ] SLA/support terms
-- [ ] Security questionnaire
-- [ ] DPA (if applicable)
-
----
-
-### Phase 4: Close & Launch (${formatDate(weekMinus1)} to ${formatDate(closeDate)})
-
-| # | Milestone | Owner | Due Date | Status |
-|---|-----------|-------|----------|--------|
-| 13 | Final approvals obtained | ${economicBuyer || 'Economic Buyer'} | ${formatDate(weekMinus1)} | Pending |
-| 14 | Contract signed | Both | ${formatDate(closeDate)} | Pending |
-| 15 | Implementation kickoff scheduled | Both | ${formatDate(closeDate)} | Pending |
-| 16 | Success criteria documented | Seller | ${formatDate(closeDate)} | Pending |
+${tight}
+${phasesText}
 
 ---
 
 ## Risks & Blockers
 
-${blockers ? `### Known Blockers
+${blockerItems.length ? `### Known Blockers
 ${blockers}
 
-**Mitigation Plan:**
+**Mitigation Plan:** each blocker is answered by its kind, from your own words. Where the answer needs a fact about ${P}, it says what to confirm first.
+
 | Blocker | Mitigation | Owner | Status |
 |---------|------------|-------|--------|
-${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [blockers, knownRequirements] }); return splitItems(blockers).map((b) => `| ${cap(b)} | ${answerFor(b, c.v)} | Agree an owner on each side | Open |`).join('\n'); })()}
-` : '### Potential Risks\n- Budget timing/availability\n- Competing priorities\n- Stakeholder alignment\n- Technical integration complexity'}
+${blockerRows}
+` : `### Potential Risks
+- No blockers were given. Ask the champion what could stop this deal and add each answer here.
+${v ? v.objections.slice(0, 3).map((o) => `- ${o.objection} (a usual objection in ${v.name})`).join('\n') : ''}`}
 
 ### Risk Assessment
 | Risk | Typical likelihood | Typical impact | Mitigation |
 |------|------------|--------|------------|
 | Timeline slips | Medium | High | Weekly check-ins, early escalation |
-| Budget not approved | Low | Critical | Build strong business case, executive sponsor |
-| Technical issues | Medium | Medium | POC/pilot validation |
-| Champion leaves | Low | Critical | Multi-thread across stakeholders |
+| Budget not approved | Low | Critical | A business case in the buyer's numbers and an executive sponsor |
+| Evaluation shows a gap | Medium | Medium | Agree the measure and the pass mark before the evaluation starts |
+| Champion leaves | Low | Critical | Multi-thread across ${evaluators.length ? joinList(evaluators.slice(0, 2).map((e) => e.title)) : 'the other stakeholders'} |
 
 ---
 
@@ -2986,14 +3119,14 @@ ${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [
 ### Regular Check-ins
 | Cadence | Participants | Purpose |
 |---------|--------------|---------|
-| Weekly | Champion + AE | Progress review, blocker removal |
-| Bi-weekly | Technical teams | Technical validation progress |
-| As needed | Executives | Strategic alignment |
+| Weekly | ${champName} and the account executive | Progress review, blocker removal |
+| Bi-weekly | ${evaluators.length ? joinList(evaluators.slice(0, 3).map((e) => e.title)) : 'Technical teams'} and the solutions engineer | Technical validation progress |
+| As needed | ${ebName} and the executive sponsor | Strategic alignment |
 
 ### Escalation Path
-1. First escalation: Champion → Economic Buyer
-2. Second escalation: AE Manager → Buyer Executive
-3. Final escalation: Seller Exec → Buyer Exec
+1. First escalation: ${champName} to ${ebName}
+2. Second escalation: the seller's manager to the buyer's executive
+3. Final escalation: the seller's executive to the buyer's executive
 
 ---
 
@@ -3001,10 +3134,10 @@ ${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [
 
 | Priority | Action | Owner | Due |
 |----------|--------|-------|-----|
-| High | ${!buyerChampion ? 'Identify and confirm champion' : 'Confirm next steps with champion'} | AE | ${formatDate(week1)} |
-| High | ${!economicBuyer ? 'Identify economic buyer' : 'Schedule economic buyer meeting'} | AE | ${formatDate(week1)} |
-| Medium | ${buyerChampion ? 'Share this MAP with buyer champion' : 'Share this MAP with your main buyer contact'} | AE | ${formatDate(today)} |
-| Medium | Validate timeline and milestones | Both | ${formatDate(week1)} |
+| High | ${!buyerChampion ? 'Identify and confirm the champion' : `Confirm next steps with ${buyerChampion}`} | AE | ${formatDate(addWorkdays(start, 1))} |
+| High | ${!economicBuyer ? 'Identify the economic buyer' : `Schedule a meeting with ${economicBuyer}`} | AE | ${formatDate(addWorkdays(start, 2))} |
+| Medium | ${buyerChampion ? `Share this plan with ${buyerChampion}` : 'Share this plan with your main buyer contact'} | AE | ${formatDate(start)} |
+| Medium | Validate the timeline and milestones with the buyer | Both | ${formatDate(addWorkdays(start, 3))} |
 
 ---
 
@@ -3021,6 +3154,7 @@ ${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [
 *This is a living document. Please update as things change.*
 *Last Updated: ${formatDate(today)}*`;
 }
+
 
 // Tool 6: Win/Loss Analyzer
 // Run 20 round 1b (D92): the judges scored every answer 1 because the competitor analysis ignored the deal and printed a blank

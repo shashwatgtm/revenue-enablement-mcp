@@ -161,13 +161,22 @@ test("the saved old answers cover every case", () => {
 
 for (const [key, args] of Object.entries(CASES)) {
   test(`buyer figures (${key}): every calculated line equals the old answer`, async () => {
-    const old = readFileSync(new URL(`./fixtures/roi-figures-before/${key}.md`, import.meta.url), "utf8");
+    // Run 20 round 1b: a customer not named is "your customer" in the title (it was the bracket "[Customer name]").
+    const old = readFileSync(new URL(`./fixtures/roi-figures-before/${key}.md`, import.meta.url), "utf8").replace(/\[Customer name\]/g, "your customer");
     const { isError, text } = await call(args);
     assert.equal(isError, false);
     const a = sections(old), b = sections(text);
     assert.deepEqual(b.map(name), a.map(name), "the same sections in the same order");
     for (let i = 0; i < a.length; i++) {
       if (/^## (?:Executive Summary|Assumptions)/.test(a[i])) continue; // profile rows and the assumption list: checked by hand and below
+      if (/^## One-Page Executive Summary/.test(a[i])) {
+        // Run 20 round 1b: the one-page summary's bracket placeholders ("[key capabilities]", "[The customer's problem in their words]") were
+        // a defect and are now sentences built from the inputs. Every line with a number still has to be the old one.
+        const numeric = a[i].split("\n").filter((l) => /\d/.test(l)).map((l) => l.replace("- not computed: needs annual revenue or employee count", "- not computed: the annual value you gave is 0"));
+        for (const l of numeric) assert.ok(b[i].split("\n").includes(l), `one-page summary line changed: ${l}`);
+        assert.doesNotMatch(b[i], /\[[A-Z][^\]\n]{3,}\]/, "no bracket placeholder in the one-page summary");
+        continue;
+      }
       // One display line changed on purpose: when the buyer's value is 0 the one-page summary used to say "needs annual revenue or
       // employee count", which is wrong now that no value comes from revenue or employees. No number or calculation changed.
       const was = a[i].replace("- not computed: needs annual revenue or employee count", "- not computed: the annual value you gave is 0");

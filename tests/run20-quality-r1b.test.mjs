@@ -210,3 +210,62 @@ test("discovery_question_bank: an investment seller is asked in investment words
   assert.doesNotMatch(r.text, /month-end close|ledger|card spend|ERP/i);
   assert.match(r.text, /investment committee|your committee|risk limits|reporting/i);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// mutual_action_plan_generator: Saturday dates, a one-week evaluation, security milestones owned by the champion, generic milestones
+// ---------------------------------------------------------------------------------------------------------------------------
+const isoDates = (text) => [...text.matchAll(/\b(20\d\d-\d\d-\d\d)\b/g)].map((m) => m[1]);
+const timeline = (text) => text.split("## Mutual Action Plan Timeline")[1].split("## Risks & Blockers")[0];
+const futureDate = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+test("mutual_action_plan_generator: no milestone falls on a Saturday or Sunday, whatever the close date", async () => {
+  for (const days of [74, 75, 76, 77, 78, 79, 80]) {
+    const close = futureDate(days);
+    const r = await call("mutual_action_plan_generator", { deal_name: "Retail deal for Lanehop", target_close_date: close, current_stage: "evaluation", your_solution: LANEHOP, buyer_champion: "Head of Last-mile", economic_buyer: "Chief Operating Officer", technical_evaluators: "IT Director, Group Logistics Manager" });
+    assert.equal(r.isError, false, r.text);
+    const dates = isoDates(timeline(r.text));
+    assert.ok(dates.length >= 12, `only ${dates.length} dates`);
+    for (const d of dates) { const w = new Date(d + "T00:00:00Z").getUTCDay(); assert.ok(w !== 0 && w !== 6, `${d} (close ${close}) is a weekend day`); }
+  }
+});
+test("mutual_action_plan_generator: the evaluation gets real time and the security review goes to the buyer's IT or security reviewer", async () => {
+  const close = futureDate(75);
+  const r = await call("mutual_action_plan_generator", { deal_name: "Retail deal for Lanehop", target_close_date: close, current_stage: "evaluation", your_solution: LANEHOP,
+    buyer_champion: "Head of Last-mile", economic_buyer: "Chief Operating Officer", technical_evaluators: "IT Director, Security Lead, Group Logistics Manager" });
+  const head = r.text.match(/### Phase \d: Evaluation[^\n]*\((\d{4}-\d\d-\d\d) to (\d{4}-\d\d-\d\d)\)/);
+  assert.ok(head, "evaluation phase heading with dates");
+  let n = 0; const d = new Date(head[1] + "T00:00:00Z"); const end = new Date(head[2] + "T00:00:00Z");
+  while (d < end) { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6) n++; }
+  assert.ok(n >= 10, `the evaluation lasts only ${n} working days`);
+  const sec = r.text.split("\n").find((l) => /security and compliance review/i.test(l) && l.startsWith("|"));
+  assert.ok(sec, "a security review milestone");
+  assert.match(sec, /Security Lead|IT Director/);
+  assert.doesNotMatch(sec, /Head of Last-mile/);
+  // reference calls once only
+  assert.ok((r.text.match(/Reference calls?/gi) || []).length <= 2, "reference calls are not repeated in two phases");
+});
+test("mutual_action_plan_generator: the milestones follow how the sector buys", async () => {
+  const close = futureDate(90);
+  const base = { target_close_date: close, current_stage: "evaluation" };
+  const log = (await call("mutual_action_plan_generator", { ...base, deal_name: "Retail deal", your_solution: LANEHOP, buyer_champion: "Head of Last-mile" })).text;
+  assert.match(log, /pilot at one hub/i);
+  const it = (await call("mutual_action_plan_generator", { ...base, deal_name: "BFSI deal", your_solution: ITSERV, buyer_champion: "IT Manager" })).text;
+  assert.match(it, /transition/i); assert.match(it, /knowledge transfer/i); assert.match(it, /SLA/);
+  const inv = (await call("mutual_action_plan_generator", { ...base, deal_name: "Pension deal", your_solution: EDGEFUND, buyer_champion: "portfolio manager", technical_evaluators: "risk teams, compliance committees" })).text;
+  assert.match(inv, /investment committee/i); assert.match(inv, /due diligence|first allocation/i);
+  assert.doesNotMatch(inv, /close the books|reconciliation|finance controller/i);
+  const sec = (await call("mutual_action_plan_generator", { ...base, deal_name: "Bank deal", your_solution: "Vigilwall, a cloud attack surface platform: asset discovery and exposure ranking", buyer_champion: "SOC analysts" })).text;
+  assert.match(sec, /proof of value/i);
+  const net = (await call("mutual_action_plan_generator", { ...base, deal_name: "Branch network", your_solution: BRANCHWIRE, buyer_champion: "IT Infrastructure Head" })).text;
+  assert.match(net, /site survey/i); assert.match(net, /pilot sites|wave/i);
+  for (const t of [log, it, inv, sec, net]) { assert.doesNotMatch(t, BRACKET); assert.doesNotMatch(t, /\[Your name\]|\[SE name\]|\[Exec name\]/); }
+});
+test("mutual_action_plan_generator: each blocker is answered by its kind with an owner who can act on it", async () => {
+  const r = await call("mutual_action_plan_generator", { deal_name: "Bank deal", target_close_date: futureDate(80), current_stage: "evaluation", your_solution: SPENDRILL, buyer_champion: "Finance Controller", economic_buyer: "CFO", technical_evaluators: "IT Director",
+    blockers: "Does Spendrill integrate with NetSuite?; Does Spendrill support GST and e-invoicing?; How long does it take to set up?" });
+  assert.doesNotMatch(r.text, NO_ANSWER);
+  const rows = r.text.split("\n").filter((l) => /^\| .*(NetSuite|GST|set up)/.test(l) && /Open/.test(l));
+  assert.equal(rows.length, 3, rows.join("\n"));
+  assert.match(rows[0], /system by system/i); assert.match(rows[0], /IT Director/);
+  assert.match(rows[1], /exact rule/i);
+  assert.match(rows[2], /dated plan/i);
+});

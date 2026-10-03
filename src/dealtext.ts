@@ -288,8 +288,6 @@ export function proofSource(p: ProofItem): string {
   if (!l) return 'as you gave it';
   if (/quote|words/.test(l)) return 'a customer\'s own words';
   if (/claim/.test(l)) return 'a claim from the company\'s own pages';
-  if (/title|headline/.test(l)) return 'a published customer story headline';
-  if (/analyst|recognition/.test(l)) return 'analyst or award recognition';
   return p.label;
 }
 
@@ -305,7 +303,7 @@ export function pickProof(items: ProofItem[], n: number, prefer: ProofItem['kind
 
 /** A proof item as a sentence-ready phrase: a customer quote keeps its speaker; the label is left out (it is listed in the checks). */
 export function proofPhrase(p: ProofItem): string {
-  return p.text.replace(/^(?:Customer (?:quote|words)):\s*/i, '').replace(/\s+on the home page\b/i, '').trim();
+  return p.text.replace(/^(?:Customer (?:quote|words)|Recognition listed on the home page|Success story):\s*/i, '').replace(/\s+on the home page\b/i, '').trim();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------

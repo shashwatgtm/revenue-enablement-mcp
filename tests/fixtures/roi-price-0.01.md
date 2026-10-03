@@ -1,4 +1,4 @@
-# ROI Business Case: [Customer name]
+# ROI Business Case: your customer
 
 *Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
 
@@ -111,13 +111,13 @@ Example figures: replace with your own.
 
 ## One-Page Executive Summary
 
-### Why Helix Platform for [Customer name]
+### Why Helix Platform for your customer
 
 **The Problem:**
-[The customer's problem in their words]
+No current process was given. Add current_process to put your customer's problem here in their words.
 
 **The Solution:**
-Helix Platform addresses these challenges through [key capabilities].
+Helix Platform. Add a description to your_solution (what it is and what it does) to complete this line.
 
 **The Value:**
 Example figures: replace with your own.
@@ -126,7 +126,7 @@ Example figures: replace with your own.
 - **0.0 months** payback
 
 **Why Now:**
-- [Why this customer should act now, for example competitive pressure, if it applies]
+- Add what makes this urgent for your customer (a deadline, a renewal, a target) before you send this page.
 - Cost of delay: $8,333/month (Example figure: replace with your own)
 - Implementation timeline: 90 days (Example figure: replace with your own)
 

@@ -1777,6 +1777,15 @@ Ask yourself:
 ${SUGGESTIONS_FOOTER}`;
 }
 // Tool 3: Discovery Question Bank
+// Run 21b: the measures of a sector, ordered by the user's own words. A measure that shares a word with the pain the user typed (or, less, with the
+// solution description) comes first; the rest keep the sector's order, so nothing is dropped and nothing is added. No match: the sector's order stands.
+const MEASURE_STOP = new Set(['rate', 'time', 'share', 'effort', 'cost', 'number', 'count', 'average', 'total', 'per', 'and', 'the', 'for', 'with', 'from', 'that', 'this', 'your']);
+const measureStems = (t) => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !MEASURE_STOP.has(w)).map((w) => w.replace(/s$/, '').slice(0, 4)));
+function rankMeasures(measures, pain, solution) {
+    const p = measureStems(pain), d = measureStems(solution);
+    const score = (m) => [...measureStems(m)].reduce((n, w) => n + (p.has(w) ? 2 : 0) + (d.has(w) ? 1 : 0), 0);
+    return measures.map((m, i) => ({ m, i, s: score(m) })).sort((x, y) => y.s - x.s || x.i - y.i).map((x) => x.m);
+}
 function executeDiscoveryQuestionBank(args) {
     const framework = args.framework || 'meddpicc';
     const prospectIndustry = args.prospect_industry || '';
@@ -1791,6 +1800,7 @@ function executeDiscoveryQuestionBank(args) {
     // Run 20 round 1b (D92): no bracket placeholder where the input or the sector notes can supply the words; the pain the user typed is
     // split into its separate pains instead of being quoted whole again and again; the prospect's role and the parts of the solution
     // each get their own questions.
+    const sectorMetrics = ctx.v ? rankMeasures(ctx.v.metrics, knownPainPoints, args.your_solution ? yourSolution : '') : []; // the sector's measures, led by the ones the user's own pain and solution words point to (run 21b)
     const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
     const P = brief.short || 'your solution';
     const investment = ctx.model === 'investment';
@@ -1802,9 +1812,9 @@ function executeDiscoveryQuestionBank(args) {
     const signer = signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
     const partNames = brief.parts.map(dealtext_ts_1.partLabel);
     const critA = partNames[0] || (brief.kind ? lowerFirstIfCommon(brief.kind) : P);
-    const critB = partNames[1] || ctx.v?.metrics[0] || 'the outcome you care about';
+    const critB = partNames[1] || sectorMetrics[0] || 'the outcome you care about';
     const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics.trim());
-    const firstMetric = ctx.v ? ctx.v.metrics[0] : 'the number this problem moves';
+    const firstMetric = ctx.v ? sectorMetrics[0] : 'the number this problem moves';
     const metricsFollowUp = !knownMetrics ? '' : noMetrics
         ? `**Not known yet:** no metrics shared so far. Ask for a baseline first:\n- "How do you measure ${firstMetric} today, and who owns that number?"`
         : `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${q(lowerFirstIfCommon((0, dealtext_ts_1.clip)(knownMetrics, 120)))}. How are you measuring that today, and how often?"`;
@@ -2100,7 +2110,7 @@ ${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the
 
 **Influencing:**
 - "How important is ${critA} to you?"
-- "Have you considered ${ctx.v ? ctx.v.metrics[0] : 'the measure you will judge the result by'} as a criterion?"
+- "Have you considered ${ctx.v ? sectorMetrics[0] : 'the measure you will judge the result by'} as a criterion?"
 - "What's the weighting between price and value?"`;
     // Challenger Questions
     const challengerQuestions = `
@@ -2111,11 +2121,11 @@ ${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the
 
 **Reframe Questions:**
 ${painLead ? `- "You described ${q(painLead)}. Where does it start: before the work reaches your team, inside it, or at the handover?"` : '- "Where does the problem start: before the work reaches your team, inside it, or at the handover?"'}
-- "Which of the numbers you track${ctx.v ? ` (${ctx.v.metrics.slice(0, 3).join(', ')})` : ''} would move first if this were fixed?"
+- "Which of the numbers you track${ctx.v ? ` (${sectorMetrics.slice(0, 3).join(', ')})` : ''} would move first if this were fixed?"
 - "What would you have to believe for this not to be worth fixing this year?"
 
 **Insight starters (use only what you can show):**
-- If you hold data on ${ctx.v ? ctx.v.metrics[0] : 'the measure that matters'} across your customers, open with the pattern it shows, with its source and period.
+- If you hold data on ${ctx.v ? sectorMetrics[0] : 'the measure that matters'} across your customers, open with the pattern it shows, with its source and period.
 - If a customer's before-and-after exists${ctx.v ? ` (${proofOf(ctx.v)})` : ''}, tell it in two sentences and name what changed.
 - If you cannot show an insight, ask the question instead of stating one.
 
@@ -2269,7 +2279,7 @@ ${gapSection}${roleSection}${sectorSection}${painSection}${partSection}`;
 1. Deep-dive into pain and impact${painLead ? ` (start with ${q(painLead)})` : ''}
 2. Identify all stakeholders${ctx.v ? ` (${ctx.v.buyerRoles.slice(0, 4).join(', ')} are the usual ones in ${ctx.v.name})` : ''}
 3. Understand buying process
-4. Quantify business case${ctx.v ? ` (${ctx.v.metrics.slice(0, 3).join(', ')})` : ''}
+4. Quantify business case${ctx.v ? ` (${sectorMetrics.slice(0, 3).join(', ')})` : ''}
 
 **Questions to Prioritize:**
 - Pain quantification questions

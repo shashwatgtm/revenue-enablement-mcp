@@ -4822,13 +4822,30 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const sectorProof = v ? `In ${v.name}, the evidence that lands is this: ${proofOf(v)}.` : '';
 
   // Tone adjustments
-  const toneStyles: Record<string, { opening: string; language: string }> = {
-    formal: { opening: 'We are pleased to present this proposal. It outlines', language: 'professional and structured' },
-    consultative: { opening: 'This proposal outlines', language: 'partnership-oriented' },
-    bold: { opening: 'The opportunity before you is set out below. This proposal outlines', language: 'confident and direct' },
-    conservative: { opening: 'We respectfully submit this proposal. It outlines', language: 'measured and thorough' },
+  const toneStyles: Record<string, { opening: string; language: string; lead: string }> = {
+    formal: { opening: 'We are pleased to present this proposal. It outlines', language: 'professional and structured', lead: 'We are pleased to present this proposal.' },
+    consultative: { opening: 'This proposal outlines', language: 'partnership-oriented', lead: '' },
+    bold: { opening: 'The opportunity before you is set out below. This proposal outlines', language: 'confident and direct', lead: 'The opportunity before you is set out below.' },
+    conservative: { opening: 'We respectfully submit this proposal. It outlines', language: 'measured and thorough', lead: 'We respectfully submit this proposal.' },
   };
   const toneStyle = toneStyles[tone] || toneStyles['consultative'];
+  // Run 21c: the opening and the next steps of the executive summary are written from the inputs (challenge, first reason, first result, price, rollout).
+  const tidy = (x: string) => x.trim().replace(/[.]+$/, '');
+  const execLead = [
+    toneStyle.lead,
+    challenges.length ? `${customerName}${customerIndustry ? ` (${customerIndustry})` : ''} told us about ${challenges.length === 1 ? 'one problem' : `${challenges.length} problems`}, starting with this: ${tidy(challenges[0])}.` : `No challenges were given to this tool: add customer_challenges to open on ${customerName}'s own problem.`,
+    diffs.length ? `${P} is our answer, and the first reason is this: ${tidy(diffs[0])}.` : `${P} is our answer.`,
+    outcomes.length ? `The result we propose to be held to: ${cleanClaim(outcomes[0])}.` : '',
+    pricing ? `The investment is ${tidy(pricing)}.` : '',
+  ].filter(Boolean).join(' ');
+  const stockFirst = (MAP_EVAL[stockKey(v, modelKey)] || [])[0];
+  const stepList: string[] = [
+    challenges.length ? `Confirm the scope with ${customerName}: ${joinList(challenges.slice(0, 3).map(tidy))}.` : `Confirm the scope with ${customerName} (add customer_challenges to name it here).`,
+    implementationApproach ? `Agree the rollout: ${tidy(implementationApproach)}.` : stockFirst ? `Agree the rollout, starting from this: ${lowerFirstIfCommon(tidy(stockFirst.m))}.` : '',
+    outcomes.length ? `Agree the measure and its baseline: ${cleanClaim(outcomes[0])}.` : '',
+    pricing ? `Confirm the investment: ${tidy(pricing)}.` : '',
+  ].filter(Boolean);
+  const nextSteps = stepList.map((t, i) => `${i + 1}. ${t}`).join('\n');
   const bullets = (items: string[], fallback: string) => (items.length ? items.map((c) => `- ${c.trim()}`).join('\n') : fallback);
 
   // Section generators
@@ -4837,7 +4854,7 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
 
 ## Proposal for ${customerName}
 
-${audienceLine}${toneStyle.opening} how ${P} can help ${customerName} with ${customerChallenges ? 'the challenges below' : 'the challenges they named (none were given to this tool: add customer_challenges)'}.
+${audienceLine}${execLead}
 
 ### The Solution
 
@@ -4871,11 +4888,7 @@ ${diffs.length ? `The recommendation above lists what sets ${P} apart. Add one p
 ${claimsBlock}
 ### Next Steps
 
-We recommend the following path forward:
-1. Review this proposal and provide feedback
-2. Schedule a working session to finalize scope
-3. Begin implementation planning
-4. Kick off the project
+${nextSteps}
 
 ---
 
@@ -5738,311 +5751,372 @@ const DEMO_SHOW: Record<string, string[]> = {
   saas: ['The workflow the buyer described, end to end, with their own example', 'The time from sign-up to first value', 'Where it sits among the tools they already use'],
   investment: ['How a signal or a position is explained in plain words', 'A sample monthly report, including a month that went badly', 'Where the strategy sits in the buyer\'s investment process'],
 };
+// Run 21c (draft rewrite): the demo script is a script, not an outline. Spoken lines ("Say:", "Ask:") and on-screen steps ("On screen:") are written
+// from the user's own inputs: the pains become the opening and the playback, every feature or flow to show becomes a step, the objections are answered
+// where they would come up, the outcome builds the close. A credential, a figure or a claim is said, not shown, and keeps its source label.
+// Nothing here states a fact about the user's product: where a fact is needed, a "Confirm before you say it" line says which one.
+const DS_STOP = new Set(['that', 'this', 'with', 'from', 'your', 'have', 'does', 'will', 'what', 'about', 'into', 'their', 'them', 'they', 'when', 'where', 'which', 'more', 'most', 'some', 'such', 'each', 'only', 'over', 'under', 'very', 'need', 'needs', 'make', 'makes', 'already', 'long', 'take', 'much', 'platform', 'software', 'solution', 'product', 'also', 'than', 'then', 'there', 'would', 'could', 'should', 'every', 'work', 'works']);
+const dsStems = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !DS_STOP.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
+function dsOverlap(a: string, b: string, skip?: Set<string>): number {
+  const x = dsStems(a), y = dsStems(b);
+  let n = 0;
+  for (const w of x) if (y.has(w) && !(skip && skip.has(w))) n++;
+  return n;
+}
+// A typed phrase placed inside a sentence: its first word is lowered only when it is an ordinary word ("Change order approval"), never a name ("Platform for AI Agents").
+const dsLow = (t: string): string => { const w = t.trim().split(/\s+/)[0] || ''; return isCommonWord(w) ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+const DS_ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
+const DS_CREDENTIAL = /^\s*[\d$]|\d[\d,.]*\s?(?:\+|%|[KMB]\b)|\$\s?\d|\b(?:proven|case stud(?:y|ies)|annual revenue|\d[\d,.+]*\s*(?:%|years|engineers|customers|companies|countries|partners|brands|users)|partnerships?|partners with|certified|certifications?|iso\s?\d{4,5}|soc ?[12]|pci|fedramp|award|recogni\w*|leader in|named a leader|trusted by|fortune|uptime|availability|gartner|empanel\w*)/i;
+// The parts a product description lists, when the description lists them after a colon or after "covering", "including" and the like.
+function dsParts(brief: SolutionBrief): string[] {
+  if (brief.parts.length >= 2) return brief.parts.map(partLabel).filter((p) => p.length > 1);
+  const m = brief.full.match(/\b(?:covering|including|includes|featuring|offering|spanning)\s+(.+)$/i);
+  if (!m) return [];
+  const out: string[] = [];
+  for (const raw of splitTopLevel(m[1])) {
+    const p = raw.replace(/^and\s+/i, '').trim();
+    if (!p || p.split(/\s+/).length > 6) break;
+    out.push(p);
+  }
+  return out.length >= 3 ? out : [];
+}
+interface DsCtx { P: string; pain: string; competitor: string; itPerson: string; securityPerson: string; bctx: BlockerContext }
+// One objection answered in the seller's spoken words, by its kind, from the objection's own words and the deal's inputs.
+// "Can it fit our cost codes?" asks whether a case is covered, whatever words it holds; the shared kind table reads the word "cost" as a price question.
+function dsKind(t: string, bctx: BlockerContext): string {
+  if (/^(?:can|does|will|could|would)\s+(?:it|the platform|the product|the tool|\S+)\s+(?:fit|match|support|handle|cover|work with)\s+(?:our|my|your)\b/i.test(t.trim())) return 'coverage';
+  if (/^why\b.*\b(?:over|instead of|rather than)\b/i.test(t.trim())) return 'compare';
+  if (/\b(?:buy|licen[sc]es?|seats?|suites?|bundles?|packages?|tiers?|editions?|add[- ]?ons?|modules?|sku)\b/i.test(t)) return 'packaging';
+  return answerBlocker(t, bctx).kind;
+}
+function dsAnswer(t: string, c: DsCtx): { say: string; check: string; sector: string } {
+  const a = answerBlocker(t, c.bctx);
+  const kind = dsKind(t, c.bctx);
+  const P = c.P;
+  const costOf = c.pain ? 'what the problems you told me about cost you today' : 'what the current way of working costs you today';
+  let lead = '';
+  switch (kind) {
+    case 'offline': lead = 'Fair, and I would rather show it than say it. I will show what a person can still do with no signal, what waits until the device reconnects, and what happens when two people change the same record. If you tell me where your people lose signal, we can test it there with your own users.'; break;
+    case 'integration': {
+      const systems = namedThings(t, [c.P]).filter((s) => !/^(?:API|APIs|SDK)$/i.test(s));
+      lead = `Let us take it system by system${systems.length ? ` (${joinList(systems)})` : ''}. For each one I will tell you whether the link is built in, goes through an API or needs a file transfer, who builds it and who owns it on your side.${c.itPerson ? ` I would like the ${c.itPerson} on a technical call to agree which data moves in which direction.` : ' I would like your IT owner on a technical call to agree which data moves in which direction.'}`;
+      break;
+    }
+    case 'compliance': {
+      const named = [...new Set((t.match(/\b(?:asc ?606|ifrs ?\d*|gaap|gdpr|dpdp|soc ?[12](?: type [i]+)?|iso ?\d{4,5}|pci(?:[- ]dss)?|rbi|sebi|fedramp|cert-in|gst)\b/gi) || []).map((x) => x.toUpperCase().replace(/\s+/g, ' ')))];
+      lead = `You asked about ${named.length ? joinList(named) : 'the requirement you named'}. I will tell you exactly what ${P} supports, what your own team or auditor still has to do, and send the document that proves it before you have to ask for it.`;
+      break;
+    }
+    case 'packaging': lead = `Let me put the options side by side: what each package includes, what you can buy on its own, and what happens to the price if you add or remove a product later. I will send it in writing so you can compare it with what you have today.`; break;
+    case 'terms': lead = 'I will put the terms in writing in one place: what is paid and when, what is refundable, what happens on cancellation, and whether any minimum or maintenance fee applies. I will not promise anything the written terms do not say.'; break;
+    case 'price': lead = `Fair question. Before I give you a number I want to set it next to ${costOf}, because that is the comparison that matters. I will put price, set-up, integration and your team's time on one page, so you can set it against ${c.competitor || 'what you do today'} on the same basis.`; break;
+    case 'setup': lead = `Let me give you a dated plan, not a promise: the steps from signing to first use, who does what on each side, and what you need to have ready. We agree the plan before any contract is signed.`; break;
+    case 'security': lead = `I will bring the answers before you ask: where the data is stored and processed, who can see it, how it is protected and deleted. I will send the security documents first and set up a call with ${c.securityPerson ? `the ${c.securityPerson}` : 'your reviewer'}.`; break;
+    case 'accuracy': lead = `Do not take my word for it. Let us run ${P} on your own data, compare it with what you use today, and agree the measure and the pass mark before we start.`; break;
+    case 'adoption': lead = `Let us plan adoption with the people who will use ${P} every day: a small first group, one measure of use agreed before we begin, and a named owner on your side. Their results make the case for everyone else.`; break;
+    case 'incumbent': lead = `Let me start from what your current setup does not do today, in your words, and what that costs you. Where it is good we keep it and sit alongside it; we replace it only where the gap is clear. I will draw the overlap line by line, including what it does better.`; break;
+    case 'proof': lead = `Let us agree a short proof on your own environment, with the success measure written down before it starts, and references from customers who have agreed to speak to you.`; break;
+    case 'coverage': lead = `I would not answer that with a plain yes. Let us list the cases behind your question and, for each, say whether it is supported today, supported with set-up, or not supported. Then I suggest a pilot on the case that matters most to you.`; break;
+    case 'compare': lead = `I will answer that as a difference in what each is for, not as a feature list: what it is for, who uses it, what it costs you and what it needs from your team. Where the other option is the better choice for a case, I will say so.`; break;
+    case 'process': lead = `Here is how it works in three parts: what happens, who acts, and how long it takes. I will also put it in the proposal, so you do not have to rely on my memory.`; break;
+    case 'why': lead = `Let me explain the cause in your terms first, then show you where you can see it and where you can change it.`; break;
+    case 'timing': lead = `Understood. Is there an event that makes this urgent, a renewal, an audit, a season or a target? If there is one, I would plan back from it.`; break;
+    default: lead = `That is a fair point, and I want to answer it with facts, not a guess. I will give you what I can show now, and for anything I cannot, I will tell you what I will bring back and by when.`;
+  }
+  const swapped = kind !== a.kind;
+  const own: Record<string, { ask: string; check: string }> = {
+    coverage: { ask: 'Which cases matter most to you, and which ones have caused trouble before?', check: `which of those cases ${P} supports today, which need configuration, and which it does not support` },
+    compare: { ask: 'What are you trying to get done with it, and what have you tried so far?', check: `what ${P} and the other option each do today, from your own product documentation, and who each is for; do not claim a difference you cannot show` },
+    packaging: { ask: 'Which of these do you need on day one, and which can wait?', check: `which products ${P} sells on their own, which only as part of a package, and how extra licenses are priced, from your current price list` },
+  };
+  const mine = swapped ? own[kind] : undefined;
+  return { say: `${lead} ${mine ? mine.ask : a.ask}`, check: mine ? mine.check : a.confirm, sector: swapped ? '' : a.sector };
+}
 function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const demoType = (args.demo_type as string) || 'first_look';
-  const primaryAudience = (args.primary_audience as string) || 'decision maker';
-  const attendees = (args.attendees as string) || '';
-  const customerIndustry = (args.customer_industry as string) || '';
-  const yourSolution = (args.your_solution as string) || 'our solution';
-  const keyPainPoints = (args.key_pain_points as string) || '';
-  const competitorContext = (args.competitor_context as string) || '';
+  const typeLabel = cap(demoType.replace(/_/g, ' '));
+  const given = (k: string): string => (typeof args[k] === 'string' ? (args[k] as string).trim() : '');
+  const primaryAudience = given('primary_audience');
+  const attendees = given('attendees');
+  const customerIndustry = given('customer_industry');
+  const yourSolution = given('your_solution');
+  const keyPainPoints = given('key_pain_points');
+  const competitorContext = given('competitor_context');
   const demoDuration = (args.demo_duration as number) || 30;
   const durationGiven = hasValue(args.demo_duration) && demoDuration === args.demo_duration;  // run 15: a given 0 falls back to 30, labelled as the default
   const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
-  const mustShowFeatures = (args.must_show_features as string) || '';
-  const knownObjections = (args.known_objections as string) || '';
-  const desiredOutcome = (args.desired_outcome as string) || 'advance the deal';
-  // Run 20 round 1b (D92): the short name replaces the pasted description; the must-show features are split into steps and their claim label
-  // is kept out of the script; each known objection is answered by its kind; no bracket is left where the pains, the sector or the audience can
-  // supply the words; the demo shows what that kind of seller is judged on.
+  const mustShowFeatures = given('must_show_features');
+  const knownObjections = given('known_objections');
+  const outcomeText = given('desired_outcome');
   const demoCtx = readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
-  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const brief = solutionBrief(yourSolution);
   const P = brief.short || 'the product';
   const v = demoCtx.v;
   const investment = demoCtx.model === 'investment';
   const modelKey = investment ? 'investment' : v ? v.id : '';
-  const bctx: BlockerContext = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: demoCtx.model };
-  const audienceRole = args.primary_audience ? roleFor(primaryAudience, investment) : null;
-  const pains = painClauses(keyPainPoints);
-  const painWhole = keyPainPoints.trim().replace(/[.]+$/, '');
-  const allFeats = splitFeatureList(mustShowFeatures);
-  // Credentials and scale claims (years in business, engineers, partnerships, certificates, uptime) cannot be shown live: they are
-  // mentioned, and the demo steps come from the features that can be run.
-  const CREDENTIAL = /\b(?:\d[\d,.+]*\s*(?:years|engineers|customers|companies|countries|partners|brands|users)|partnerships?|partners with|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|award|recogni\w*|leader in|trusted by|fortune|uptime|gartner|empanel\w*)\b/i;
-  const credentials = allFeats.filter((x) => CREDENTIAL.test(x.text));
-  const showable = allFeats.filter((x) => !CREDENTIAL.test(x.text));
-  const fallbackSteps: ListItem[] = (DEMO_SHOW[stockKey(v, modelKey)] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
-  const feats = showable.length ? showable : fallbackSteps;
+  const bctx: BlockerContext = { product: P, sectorObjections: v?.objections, sectorName: v?.name, model: demoCtx.model };
+  const audienceRole = primaryAudience ? roleFor(primaryAudience, investment) : null;
+  const audience = primaryAudience || 'decision maker';
   const room = parseContacts(attendees, investment);
+  const painWhole = keyPainPoints.replace(/[.]+$/, '');
+  const clauses = painClauses(keyPainPoints);
+  // The playback uses the clauses when they carry the whole pain statement; otherwise it quotes the statement as typed (a figure and its source label stay),
+  // and the steps are paired with the pieces of that statement (cut at colons, semicolons, "while" and commas outside brackets).
+  const clausesWhole = clauses.length > 0 && clauses.join(' ').length >= painWhole.length * 0.8;
+  const fit = (x: string): string => { if (x.length <= 160) return x; const cut = x.slice(0, 160); const at = cut.lastIndexOf(', '); return at > 60 ? cut.slice(0, at) : clip(x, 160); };
+  const pieces = painWhole.split(/;|:\s|\bwhile\b/i).map((x) => x.replace(/^[\s,]*(?:and|but|with|plus)\s+/i, '').replace(/[\s,]+$/, '').trim()).filter((x) => x.split(/\s+/).length >= 3);
+  const pains = clausesWhole || !pieces.length ? clauses : pieces.slice(0, 6).map(fit);
+  const painText = (i: number): string => (pains.length ? pains[i % pains.length] : painWhole ? clip(painWhole, 130) : '');
 
-  // Calculate time allocations (same shares: 15% opening, 15% discovery, 50% demo, 15% discussion, 5% close).
-  // Text and arithmetic only (run 9): the smaller parts round down and the demo takes the rest, so the parts
-  // always add up to the requested length (before, 30 minutes gave 5 + 5 + 15 + 5 + 2 = 32).
-  const intro = Math.floor(demoDuration * 0.15);
-  const discovery = Math.floor(demoDuration * 0.15);
-  const discussion = Math.floor(demoDuration * 0.15);
-  const close = Math.round(demoDuration * 0.05);
-  const demo = Number(demoDuration) - intro - discovery - discussion - close;
-  // Text only (run 10): a part that rounds to 0 minutes says "under 1 min", and a demo under 10 minutes carries a plain
-  // note that the parts are rounded. The shares and the arithmetic above are unchanged.
-  const partMin = (n: number) => (n > 0 ? `${n} min` : 'under 1 min');
-  const partMinutes = (n: number) => (n > 0 ? `${n} minute${n === 1 ? '' : 's'}` : 'under a minute');
-  const shortNote = Number(demoDuration) < 10
-    ? '\n\nThis demo is short, so the parts are rounded to whole minutes and some parts take less than a minute. Keep each of those to a sentence or two.'
-    : '';
-  // Text only (run 11, R11-07): under 10 minutes the start times come from the same shares in minutes and seconds, so
-  // every part starts inside the demo and the times go up (5 minutes: 0:00, 0:23, 0:45, 1:30, 4:00, 4:45). Agenda
-  // Setting sits halfway through the opening. 10 minutes and longer: whole minutes, as before.
-  const startAt = (share: number, whole: number) => {
-    if (Number(demoDuration) >= 10) return `${whole}:00`;
-    const sec = Math.round(Number(demoDuration) * share * 60);
-    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  // What to show: the features the user gave that can be run live; credentials and figures are said, not shown.
+  const allFeats = splitFeatureList(mustShowFeatures);
+  // The list splitter keeps a short fragment ("99.95% uptime") with the item before it; a credential fused with a flow to show is cut apart again here.
+  const sepFeats: ListItem[] = allFeats.flatMap((x) => (DS_CREDENTIAL.test(x.text) && splitTopLevel(x.text).length > 1 ? splitTopLevel(x.text).map((t) => ({ text: t, label: x.label })) : [x]));
+  const credentials = sepFeats.filter((x) => DS_CREDENTIAL.test(x.text));
+  const showable = sepFeats.filter((x) => !DS_CREDENTIAL.test(x.text));
+  const claimed = sepFeats.filter((x) => x.label);
+  const demoSecs = Number(demoDuration);
+  const intro = Math.floor(demoSecs * 0.15);
+  const discovery = Math.floor(demoSecs * 0.15);
+  const discussion = Math.floor(demoSecs * 0.15);
+  const close = Math.round(demoSecs * 0.05);
+  const demo = demoSecs - intro - discovery - discussion - close;
+  const maxSteps = Math.max(1, Math.min(7, Math.floor(demo / 3)));
+  let stepSource: ListItem[] = showable;
+  let stepsFrom: 'features' | 'parts' | 'pains' | 'sector' = 'features';
+  if (!stepSource.length) {
+    const parts = dsParts(brief);
+    const ctxWords = `${keyPainPoints} ${mustShowFeatures} ${attendees} ${primaryAudience}`;
+    if (parts.length) {
+      stepSource = parts.map((p, i) => ({ p, i, s: dsOverlap(p, ctxWords) })).sort((x, y) => y.s - x.s || x.i - y.i).map((x) => ({ text: x.p, label: '' }));
+      stepsFrom = 'parts';
+    } else if (pains.length) {
+      stepSource = pains.map((p) => ({ text: `How ${P} handles ${dsLow(p)}`, label: '' }));
+      stepsFrom = 'pains';
+    } else {
+      stepSource = (DEMO_SHOW[stockKey(v, modelKey)] || []).slice(0, 3).map((t) => ({ text: t, label: '' }));
+      stepsFrom = 'sector';
+    }
+  }
+  const shownFeats = stepSource.slice(0, maxSteps);
+  const notShown = showable.length ? stepSource.slice(maxSteps) : [];
+  const perStep = Math.max(1, Math.floor(demo / Math.max(1, shownFeats.length)));
+  // Pair each step with the pain it answers: the pain that shares most words with it, else the next one not yet used.
+  const usedPain = new Set<number>();
+  type DemoStep = { title: string; low: string; text: string; label: string; pain: string; metric: string; show: string };
+  const steps: DemoStep[] = shownFeats.map((f, i) => {
+    let pick = -1, best = 0;
+    pains.forEach((p, j) => { const s = dsOverlap(f.text, p); if (!usedPain.has(j) && s > best) { best = s; pick = j; } });
+    if (pick < 0 && stepsFrom === 'pains') pick = i % pains.length;
+    if (pick < 0) { const free = pains.findIndex((_, j) => !usedPain.has(j)); pick = free >= 0 ? free : i % Math.max(1, pains.length); }
+    if (pick >= 0 && pains.length) usedPain.add(pick);
+    const pain = pains.length ? pains[pick % pains.length] : painWhole ? clip(painWhole, 130) : '';
+    const fw = dsStems(f.text);
+    const metric = v ? (v.metrics.find((m) => [...dsStems(m)].some((w) => fw.has(w))) || '') : '';
+    const imperative = /^(?:send|create|track|get|see|view|search|export|import|approve|submit|book|schedule|find|manage|monitor|ship|route|plan|scan|detect|block|assign|pick|upload|invite|set up|connect|measure|compare|build|report)\b/i.test(f.text);
+    const showPhrase = imperative ? `how you ${dsLow(clip(f.text, 90))}` : /^(?:supports?|works?|integrates?|includes?|offers?|provides?|connects?|handles?|has|runs?|lets?|allows?|gives?|covers?|uses?|syncs?|captures?|plans?|re-plans?|detects?|ranks?|maps?)\b/i.test(f.text) ? `that it ${dsLow(clip(f.text, 90))}` : dsLow(clip(f.text, 90));
+    return { title: cap(clip(f.text, 90)), low: dsLow(clip(f.text, 90)), text: f.text, label: f.label, pain, metric, show: showPhrase };
+  });
+
+  // Objections: the user's, else the sector's usual ones. Each is placed where it would come up.
+  const typed = splitItems(knownObjections).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+  const fromSector = !typed.length && !!v;
+  const objections = typed.length ? typed : fromSector ? v!.objections.slice(0, 3).map((o) => cap(o.objection)) : [];
+  const itPerson = room.find((r) => r.family === 'it' || r.family === 'engineering')?.title || '';
+  const securityPerson = room.find((r) => r.family === 'security' || r.family === 'risk')?.title || '';
+  const dctx: DsCtx = { P, pain: painText(0), competitor: competitorContext, itPerson, securityPerson, bctx };
+  const pStems = dsStems(`${P} ${brief.name}`);
+  const atClose: string[] = [], atStep: Record<number, string[]> = {}, atDiscussion: string[] = [];
+  for (const o of objections) {
+    const kind = dsKind(o, bctx);
+    if (kind === 'price' || kind === 'packaging' || kind === 'terms' || kind === 'timing' || kind === 'proof') { atClose.push(o); continue; }
+    let pick = -1, best = 0;
+    steps.forEach((s, i) => { const sc = dsOverlap(o, `${s.title} ${s.pain}`, pStems); if (sc > best) { best = sc; pick = i; } });
+    if (pick >= 0) (atStep[pick] = atStep[pick] || []).push(o); else atDiscussion.push(o);
+  }
+  const objectionBlock = (o: string): string => {
+    const r = dsAnswer(o, dctx);
+    return `Buyer may ask: "${o.replace(/[?.]+$/, '')}${/\?$/.test(o) ? '?' : ''}"\nSay: "${r.say}"\nConfirm before you say it: ${r.check}.${r.sector ? `\nThe usual pattern in ${v ? v.name : 'this sector'}: ${r.sector}` : ''}`;
   };
 
-  const claimed = allFeats.filter((f) => f.label);
-  const flow = feats.length ? feats.slice(0, 7).map((f, i) => {
-    const pain = pains[i] || pains[0];
-    const fw = new Set(f.text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 5));
-    const metric = v ? (v.metrics.find((m) => m.toLowerCase().split(/[^a-z0-9]+/).some((w) => w.length >= 5 && fw.has(w))) || '') : '';
-    const showPhrase = /^(?:supports?|works?|integrates?|includes?|offers?|provides?|connects?|handles?|has|runs?|lets?|allows?|gives?|covers?|uses?|syncs?|captures?|plans?|re-plans?|detects?|ranks?|maps?)\b/i.test(f.text) ? `that it ${lowerFirstIfCommon(clip(f.text, 90))}` : lowerFirstIfCommon(clip(f.text, 90));
-    return `**Step ${i + 1}: ${cap(clip(f.text, 90))}**
+  // Times (same shares as before: 15% opening, 15% confirm, 50% demo, 15% discussion, 5% close; the parts always add up to the length).
+  const partMinutes = (n: number) => (n > 0 ? `${n} minute${n === 1 ? '' : 's'}` : 'under a minute');
+  const partMin = (n: number) => (n > 0 ? `${n} min` : 'under 1 min');
+  const startAt = (share: number, whole: number) => {
+    if (demoSecs >= 10) return `${whole}:00`;
+    const sec = Math.round(demoSecs * share * 60);
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  };
+  const shortNote = demoSecs < 10 ? '\n\nThis demo is short, so the parts are rounded to whole minutes and some parts take less than a minute. Keep each of those to a sentence or two.' : '';
 
-*Setup:*
-"${pain ? `You told me about ${q(lowerFirstIfCommon(pain))}. ` : ''}Let me show you ${showPhrase}."
+  // What was not given, said once.
+  const missing: string[] = [];
+  if (!primaryAudience) missing.push('primary_audience (the draft speaks to the room as a whole)');
+  if (!attendees) missing.push('attendees (nobody else is asked by role)');
+  if (!customerIndustry) missing.push('customer_industry (the opening names no industry)');
+  if (!keyPainPoints) missing.push('key_pain_points (the playback asks the room for their main problem)');
+  if (!competitorContext) missing.push('competitor_context (no comparison line)');
+  if (!durationGiven) missing.push('demo_duration (30 minutes used)');
+  if (!mustShowFeatures) missing.push(`must_show_features (the steps come from ${stepsFrom === 'parts' ? 'the parts named in your_solution' : stepsFrom === 'pains' ? 'your pain points' : 'the usual demo list of this kind of seller'})`);
+  if (!knownObjections) missing.push(fromSector ? 'known_objections (the usual objections of the sector are answered instead)' : 'known_objections (no objection is answered; add them for a spoken answer to each)');
+  if (!outcomeText) missing.push('desired_outcome (the close aims at agreeing the next step)');
+  const notUsed: string[] = [];
+  if (notShown.length) notUsed.push(`${notShown.map((f) => f.text).join('; ')} because the demo has room for ${maxSteps} step${maxSteps === 1 ? '' : 's'}${maxSteps === 1 ? '' : ' of about 3 minutes'}; add minutes or move them to a follow-up session`);
+  const topLines = [
+    missing.length ? `Not given: ${missing.join(', ')}. Add what is missing and the draft will name it.` : '',
+    notUsed.length ? `Not used in the draft: ${notUsed.join('; ')}.` : '',
+  ].filter(Boolean).join('\n\n');
 
-*Action:*
-Show it live, with the prospect's own example if you have one.${f.label ? ' Show only what you can run in front of them; this item is a claim from the company\'s own pages.' : ''}
+  // ----- the script -----
+  const ask = (t: string) => `Ask: "${t}"`;
+  const roomTitles = room.map((r) => r.title);
+  const who = joinList([audience === 'decision maker' ? '' : audience, ...roomTitles].filter(Boolean).map((x) => `the ${x}`));
+  const stepTitles = steps.map((s) => s.low);
+  const painPlayback = !keyPainPoints ? ''
+    : clausesWhole ? pains.map((p, i) => `${DS_ORDINAL[i]}, ${p}`).join('; ') + '.'
+    : `${painWhole}.`;
+  const outcomeLine = outcomeText ? `The outcome I am aiming for in this session: ${outcomeText.replace(/[.]+$/, '')}.` : 'What I would like by the end of this session is a clear next step that we both agree.';
 
-*Value check:*
-"${metric ? `How would this change ${metric} for you?` : 'Which of your own numbers would this change, and by how much?'}"
+  const opening = [
+    `Say: "Thanks for making the time. Over the next ${demoDuration} ${minutesWord} I will take you through ${P}${who ? `, with ${who} in the room` : ''}${customerIndustry ? `, and with ${customerIndustry} in mind` : ''}."`,
+    keyPainPoints ? `Say: "Here is what I heard before today: ${painPlayback}"` : '',
+    `Say: "${outcomeLine}"`,
+    `Say: "The plan: first I confirm that I have your problem right, then ${demo} ${demo === 1 ? 'minute' : 'minutes'} of demo (${joinList(stepTitles)}), then your questions, then the next step."`,
+    ask(`Before I share my screen: ${primaryAudience ? `${primaryAudience}, what` : 'what'} would make ${demoDuration === 1 ? 'this' : 'these'} ${demoDuration} ${minutesWord} worth it for you?`),
+  ].filter(Boolean).join('\n\n');
 
-*Check-in:*
-"How does this compare to how you're doing it today?"
+  const typeQuestion: Record<string, string> = {
+    first_look: pains.length > 1 ? `Of those ${pains.length} problems, which one should we solve first?` : keyPainPoints ? `How long has this been a problem, and who feels it most?` : 'What is the one thing you most want solved?',
+    technical_deep_dive: `Which systems must ${P} work with, and who owns each one?`,
+    executive_overview: keyPainPoints ? `What result on ${dsLow(painText(0))} would make this worth the team's time this year?` : 'What outcome would make this worth the team\'s time this year?',
+    competitive_displacement: competitorContext ? `What does ${competitorContext} do well for you today, and where does it fall short?` : 'What do you use today, and where does it fall short?',
+    expansion_upsell: `Which part of ${P} works best for you today, and where else does the same problem show up?`,
+    proof_of_concept: keyPainPoints ? `What result on ${dsLow(painText(0))} would you need to see in a trial to call it a success?` : 'What result would you need to see in a trial to call it a success?',
+  };
+  const roleAsks: string[] = [];
+  const seenFam: Record<string, number> = {};
+  const pushRole = (title: string) => {
+    const fam = familyOf(title, investment);
+    const n = seenFam[fam] || 0; seenFam[fam] = n + 1;
+    const qs = roleFor(title, investment).questions;
+    roleAsks.push(`Ask the ${title}: "${qs[n % qs.length]}"`);
+  };
+  if (primaryAudience) pushRole(primaryAudience);
+  room.forEach((r) => pushRole(r.title));
+  const confirm = [
+    keyPainPoints ? `Say: "Let me play back what I heard, so the demo stays on your problem and not mine: ${painPlayback} Did I get that right, and what would you add?"` : `Say: "I have not been told your main problem, so before I show anything: what is the one thing you most want solved?"`,
+    ...roleAsks,
+    ask(typeQuestion[demoType] || typeQuestion.first_look),
+  ].join('\n\n');
 
----
+  const stepBlocks = steps.map((s, i) => {
+    const lines = [`**Step ${i + 1}: ${s.title}** (about ${perStep} ${perStep === 1 ? 'minute' : 'minutes'})`];
+    lines.push(`On screen: ${s.title}${s.pain ? `, run on one real case of ${dsLow(s.pain)}` : ''}.${s.label ? ` Run it only if it works live (${s.label}).` : ''}`);
+    lines.push(`Say: "${s.pain ? `This one is for what you told me about: ${dsLow(s.pain)}. ` : ''}Here is ${s.show}."`);
+    lines.push(ask(s.metric ? `What is ${s.metric} for you today, and what would you want it to be after this?` : s.pain ? `You told me: ${dsLow(s.pain)}. How often does that happen today, and who has to step in when it does?` : 'How often does this happen today, and who has to step in when it does?'));
+    for (const o of atStep[i] || []) lines.push(objectionBlock(o));
+    return lines.join('\n');
+  });
+  const saidLabels = [...new Set(credentials.map((c) => c.label || 'given as a feature to show'))];
+  const said = credentials.length ? [`Say: "Worth knowing, though I will not demo ${credentials.length === 1 ? 'it' : 'them'}: ${credentials.map((c) => c.text).join('; ')}." *(${saidLabels.join('; ')}; have the source ready)*`] : [];
+  const compareLine = competitorContext ? `Say: "I will only say what I can show you. You are weighing this against ${competitorContext}: which part of that comparison matters most to you? Let me show that part next."` : '';
+  const flow = [
+    `Say: "Let me share my screen. I will keep to what you asked to see: ${joinList(stepTitles)}."`,
+    ...stepBlocks,
+    said.length ? said.join('\n') : '',
+    compareLine,
+  ].filter(Boolean).join('\n\n');
 
-`;
-  }).join('') : `**Step 1: The problem you were told about**
+  const discussionBlock = [
+    `Say: "I will stop sharing here. What did that raise for you?"`,
+    ...atDiscussion.map(objectionBlock),
+  ].join('\n\n');
 
-*Setup:*
-"${pains[0] ? `You told me about ${q(lowerFirstIfCommon(pains[0]))}. ` : ''}Let me show you how ${P} handles that."
+  const recap = steps.length ? steps.map((s) => (s.pain ? `You told me about ${dsLow(s.pain)}, and you saw ${s.low}.` : `You saw ${s.low}.`)).join(' ') : `You saw ${P}.`;
+  const nextStepOption = v ? dsLow((MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'Pilot discussion' }])[0].m) : '';
+  const closeBlock = [
+    `Say: "Here is what we covered. ${recap}"`,
+    ...atClose.map(objectionBlock),
+    outcomeText ? `Say: "What I set out to do today: ${outcomeText.replace(/[.]+$/, '')}. Are we there? If not, what is still missing?"` : `Say: "What would be the right next step from here, and who should be part of it?"${nextStepOption ? `\nThe next step to offer, from this sector: ${nextStepOption}.` : ''}`,
+    `If yes. Say: "I will send a summary of ${joinList(stepTitles)} and an invite for the next step. Who else${roomTitles.length ? ` besides the ${joinList(roomTitles)}` : ''} should be on it?"`,
+    `If hesitant. Say: "Which of the problems we played back is still not answered for you?${painText(0) ? ` Is it ${dsLow(painText(0))}, or something else?` : ''} I want you to have everything you need."`,
+  ].join('\n\n');
 
-*Action:*
-No must-show features were given (must_show_features). Show the one capability that answers the pain above, on the prospect's own example.
-
-*Value check:*
-"${v ? `How would this change ${v.metrics[0]} for you?` : 'What would this change for you?'}"
-
-*Check-in:*
-"How does this compare to how you're doing it today?"
-
----
-
-`;
   const showList = (DEMO_SHOW[stockKey(v, modelKey)] || []).map((x) => `- ${x}`).join('\n');
-  const closeLines = (feats.length ? feats.slice(0, 3) : [{ text: P, label: '' }]).map((f, i) => `${i + 1}. ${pains[i] ? q(lowerFirstIfCommon(pains[i])) : 'Your priority'} → ${P}: ${lowerFirstIfCommon(clip(f.text, 80))}`).join('\n');
-  const objItems = splitItems(knownObjections);
-  const likelyQs = ['How long does implementation take?', 'What does it need from our IT team?', 'What does pricing look like?'];
+  const notesBlock = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}${showList ? `\n- **What ${aAn(v.name)} buyer wants to see:** show only what ${P} really does:\n${showList.replace(/^- /gm, '  - ')}` : ''}\n- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
 
-  return `# Demo Script: ${cap(demoType.replace(/_/g, ' '))}
+  const afterLines = [
+    objections.length ? `- Send the written answers to: ${objections.map((o) => o.replace(/[?.]+$/, '')).join('; ')}.` : '',
+    claimed.length ? `- Prove before you send: ${claimed.map((f) => `${f.text} (${f.label})`).join('; ')}.` : '',
+    `- Send the summary promised in the close, and brief your champion separately.`,
+  ].filter(Boolean).join('\n');
 
-## Demo Configuration
+  return `# Demo Script: ${typeLabel}
+
+${topLines ? `${topLines}\n\n` : ''}## Demo Configuration
 
 | Element | Details |
 |---------|---------|
-| **Type** | ${cap(demoType.replace(/_/g, ' '))} |
-| **Solution** | ${(args.your_solution as string) || NOT_SUPPLIED} |
-| **Primary Audience** | ${primaryAudience}${args.primary_audience ? '' : ' (default)'} |
-| **Other Attendees** | ${attendees || 'Not given'} |
-| **Industry** | ${customerIndustry || 'General'} |
-| **Duration** | ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'} |
-| **Desired Outcome** | ${desiredOutcome} |
-
+| **Type** | ${typeLabel} |
+| **Solution** | ${yourSolution || NOT_SUPPLIED} |
+| **Primary Audience** | ${audience}${primaryAudience ? '' : ' (default)'} |
+${attendees ? `| **Other Attendees** | ${attendees} |\n` : ''}${customerIndustry ? `| **Industry** | ${customerIndustry} |\n` : ''}| **Duration** | ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'} |
+${competitorContext ? `| **Competitor or alternative** | ${competitorContext} |\n` : ''}${outcomeText ? `| **Desired Outcome** | ${outcomeText} |\n` : ''}
 ${demoCtx.line}
 
 ---
 
 ## Time Allocation
 
-| Section | Time | Focus |
-|---------|------|-------|
-| Opening & Agenda | ${partMin(intro)} | Set expectations |
-| Discovery/Confirm | ${partMin(discovery)} | Validate understanding |
-| Solution Demo | ${partMin(demo)} | Show value |
-| Discussion | ${partMin(discussion)} | Address questions |
-| Close & Next Steps | ${partMin(close)} | Advance deal |${shortNote}
+| Section | Time | What it does |
+|---------|------|--------------|
+| Opening | ${partMin(intro)} | ${keyPainPoints ? 'Says what you heard' : 'Asks for the main problem'}, states the outcome |
+| Confirm | ${partMin(discovery)} | Plays the problem back${room.length ? ` and asks ${room.length + (primaryAudience ? 1 : 0)} roles` : ''} |
+| Demo | ${partMin(demo)} | ${steps.length} step${steps.length === 1 ? '' : 's'}: ${joinList(stepTitles)} |
+| Discussion | ${partMin(discussion)} | ${atDiscussion.length ? `${atDiscussion.length} objection${atDiscussion.length === 1 ? '' : 's'} and open questions` : 'Open questions'} |
+| Close | ${partMin(close)} | ${outcomeText ? 'Tests the outcome' : 'Agrees the next step'} |${shortNote}
 
 ---
 
-## Pre-Demo Preparation
+## Before You Start
 
-${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${aAn(audienceRole.label)}. They care about ${audienceRole.cares}, and worry about ${audienceRole.worry}. They need to see ${audienceRole.needs}.\n\n` : ''}${room.length ? `### Who else is in the room\n\n| Attendee | What they will look for |\n|---|---|\n${room.map((r) => `| ${cap(r.title)} | ${roleFor(r.title, investment).needs} |`).join('\n')}\n\n` : ''}### Research Checklist
-- Review previous conversations and notes
-- Research company news and priorities
-- Understand attendee roles and concerns
-- Prepare relevant customer examples${v ? `: ${proofOf(v)}` : ''}${v ? `\n- Use the words this sector's buyers use, where they are true for the prospect: ${v.vocabulary.join(', ')}` : ''}
-- Test the demo environment
-
-### Technical Setup
-- Demo environment ready
-- Sample data loaded
-- Screen sharing tested
-- Backup plan ready
-
-${showList ? `### What ${v ? aAn(v.name) : 'a'} buyer wants to see\n\nShow only what ${P} really does:\n${showList}\n\n` : ''}${credentials.length ? `### Credentials to mention, not to show live\n\n${credentials.map((f) => `- ${f.text}`).join('\n')}\n\nSay each one in a sentence when it answers a concern. ${showable.length ? '' : 'You gave no feature that can be run live, so the demo steps below are the ones a buyer in this sector usually wants to see: show only what the product really does.'}\n\n` : ''}${claimed.length ? `### Claims to prove before you say them\n\n${claimed.map((f) => `- ${f.text} (${f.label})`).join('\n')}\n\n` : ''}${competitorContext ? `### Competitive Context\n**Competitor:** ${competitorContext}\n\n**Positioning:**\n- Highlight what the buyer values throughout\n- Don't mention the competitor unless they do\n- Have proof points ready\n` : ''}
-
----
+${audienceRole ? `### Who you are showing it to\n\n${primaryAudience} is ${aAn(audienceRole.label)}. They care about ${audienceRole.cares}, and worry about ${audienceRole.worry}. They need to see ${audienceRole.needs}.\n\n` : ''}${room.length ? `### Who else is in the room\n\n| Attendee | What they will look for |\n|---|---|\n${room.map((r) => `| ${cap(r.title)} | ${roleFor(r.title, investment).needs} |`).join('\n')}\n\n` : ''}${claimed.length ? `### Claims to prove before you say them\n\n${claimed.map((f) => `- ${f.text} (${f.label})`).join('\n')}\n\n` : ''}${stepsFrom === 'parts' ? `The steps below come from the parts named in your_solution: replace them with the flows you want to show.\n\n` : ''}---
 
 ## Demo Script
 
-### Part 1: Opening (${partMinutes(intro)})
+### Part 1: Opening (${partMinutes(intro)}, from 0:00)
 
-**0:00 Introduction**
-
-"Thanks everyone for joining. I will walk you through ${P} today.
-
-Before I share my screen, I want to make sure we cover what's most important to you. ${args.primary_audience ? `${cap(primaryAudience)}: what` : 'What'} would make this ${demoDuration} ${minutesWord} valuable for you?"${durationGiven ? '' : '\n\n*The length above is an example: replace it with your own.*'}
-
-*Wait for the response: it shapes your demo.*
-
-**${startAt(0.075, intro >= 2 ? 1 : 0)} Agenda Setting**
-
-"Here's my plan for today:
-1. A quick check of what I've learned about your situation
-2. How ${P} addresses those specific needs
-3. Time for questions and discussion
-4. Agreeing next steps
-
-Does that work for everyone?"
+${opening}
 
 ---
 
-### Part 2: Discovery Confirmation (${partMinutes(discovery)})
+### Part 2: Confirm (${partMinutes(discovery)}, from ${startAt(0.15, intro)})
 
-**${startAt(0.15, intro)} Validate Understanding**
-
-"Before I show you anything, let me confirm what I've learned so the demo is relevant:
-
-${pains.length ? `From our conversations, it sounds like:\n${pains.map((p, i) => `${i + 1}. ${cap(p)}`).join('\n')}` : painWhole ? `From our conversations, it sounds like: ${painWhole}.` : `I have not been told your main pain points, so I will ask: what is the main problem you want solved?`}
-
-Did I get that right? Anything to add?"
-
-*Listen, and adjust the demo to what you hear.*
-
-**Discovery Questions to Ask:**
-
-${demoType === 'first_look' ? `
-- "What's driving your interest in looking at solutions like this?"
-- "What does success look like for you?"
-- "Who else needs to be involved in this decision?"` : ''}
-
-${demoType === 'technical_deep_dive' ? `
-- "What's your current technical environment?"
-- "What integration requirements are critical?"
-- "What security/compliance requirements do you have?"` : ''}
-
-${demoType === 'executive_overview' ? `
-- "What are your top priorities for this year?"
-- "How does this initiative fit with broader company goals?"
-- "What would you need to see to move forward?"` : ''}
-${audienceRole ? audienceRole.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : ''}
+${confirm}
 
 ---
 
-### Part 3: Solution Demo (${partMinutes(demo)})
-
-**${startAt(0.30, intro + discovery)} Transition to Demo**
-
-"Great, that confirms what I thought. Let me show you how ${P} handles those challenges. I'm going to share my screen..."
-
-*Share your screen with the demo environment.*
-
----
-
-#### Demo Flow
+### Part 3: Demo (${partMinutes(demo)}, from ${startAt(0.30, intro + discovery)})
 
 ${flow}
-${competitorContext ? `\n*Competitive note:*\nIf the competitor comes up, ask which part of the evaluation matters most to the buyer and show that part. Say only what you can prove.\n` : ''}
 
 ---
 
-### Part 4: Discussion (${partMinutes(discussion)})
+### Part 4: Discussion (${partMinutes(discussion)}, from ${startAt(0.80, intro + discovery + demo)})
 
-**${startAt(0.80, intro + discovery + demo)} Open for Questions**
-
-"Let me stop sharing for a moment. What questions do you have about what you've seen?"
-
-${objItems.length ? `**Anticipated Objections:**
-
-${objItems.map((o) => `**Objection:** ${q(o)}
-${blockerLines(o, bctx).join('\n')}
-
-`).join('')}` : `**Questions to Prepare For${v ? ` in ${v.name}` : ''}:**
-
-${v ? v.objections.map((o) => `**"${o.objection}"**\nPattern of an answer: ${o.response}\n`).join('\n') : ''}
-${likelyQs.map((x) => { const a = answerBlocker(x, bctx); return `**"${x}"**\n${a.how}\nConfirm first: ${a.confirm}.\n`; }).join('\n')}`}${v && objItems.length ? `
-
-${sectorNotes(v, 'objections')}` : ''}
+${discussionBlock}
 
 ---
 
-### Part 5: Close (${partMinutes(close)})
+### Part 5: Close (${partMinutes(close)}, from ${startAt(0.95, demoSecs - close)})
 
-**${startAt(0.95, demoDuration - close)} Summarize & Close**
-
-"Before we wrap up, let me summarize what we covered:
-${closeLines}
-
-**The Ask:**
-
-${desiredOutcome === 'advance the deal' ? `
-"Based on what you've seen, what would be helpful as a next step?
-
-Options might be:
-${demoType === 'technical_deep_dive' ? '' : '- Technical deep dive with your team\n'}- Business case review
-- Reference call with a similar customer (only if one has agreed)
-- ${v ? `A pilot: ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'Pilot discussion' }])[0].m)}` : 'Pilot/POC discussion'}
-
-What makes sense for you?"` : `"Our goal was to ${desiredOutcome}. Have we accomplished that? What else do you need?"`}
-
-**If Positive:**
-"Great! I'll send a follow-up with the materials we discussed and a calendar invite for the next step. Who else should I include?"
-
-**If Hesitant:**
-"What concerns do you still have? I want to make sure you have everything you need."
+${closeBlock}
 
 ---
 
-## Post-Demo Checklist
+## After The Demo
 
-- [ ] Send follow-up email within 2 hours
-- [ ] Include demo recording (if recorded)
-- [ ] Send resources promised
-- [ ] Update CRM with notes
-- [ ] Schedule next meeting
-- [ ] Brief champion separately
-
----
-
-## Demo Tips
-
-**Do:**
-- Lead with outcomes, not features
-- Ask questions throughout
-- Personalize examples
-- Confirm understanding frequently
-- Leave time for questions
-
-**Don't:**
-- Show everything you can do
-- Talk more than listen
-- Ignore attendee body language
-- Avoid tough questions
-- Leave without clear next steps
-
----
-
-*Customize this script based on pre-demo discovery*
+${afterLines}${notesBlock}
 
 ${SUGGESTIONS_FOOTER}`;
 }

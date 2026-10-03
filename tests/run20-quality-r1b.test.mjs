@@ -359,7 +359,8 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.doesNotMatch(r.text, /\[Your name\]/);
   assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1, "description pasted more than once");
   assert.doesNotMatch(r.text, NO_ANSWER);
-  const obj = r.text.split("**Anticipated Objections:**")[1].split("### Part 5")[0];
+  // run 21c: draft rewrite. The objections now sit in the script where they come up (in a step, in the discussion or at the close), each with its spoken answer.
+  const obj = r.text.split("## Demo Script")[1].split("\n## ")[0];
   assert.equal((obj.match(/Confirm before you say it/g) || []).length, 3);
   assert.match(obj, /with no signal|low-signal/i);          // offline
   assert.match(obj, /system by system/i);                    // integration
@@ -370,7 +371,7 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.match(r.text, /\*\*Step 3: Integration with an existing TMS or ERP in weeks\*\*/);
   assert.match(r.text, /Claims to prove before you say them/);
   // the pains are separate, the audience and the room are used
-  assert.match(r.text, /1\. Manual or outdated route planning/);
+  assert.match(r.text, /first, manual or outdated route planning/);   // run 21c: draft rewrite (the playback is one spoken line)
   assert.match(r.text, /Head of Last-mile/);
   assert.match(r.text, /operations leader/);
   assert.match(r.text, /A live re-plan when an order changes/);

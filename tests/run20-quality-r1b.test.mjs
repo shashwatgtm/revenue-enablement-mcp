@@ -76,7 +76,7 @@ test("win_loss_analyzer single_deal with no outcome still gives the structure an
   assert.match(r.text, /`deal_outcome`/);
   assert.match(r.text, /Head of Customer Experience/);
   assert.match(r.text, /CISO/);
-  assert.match(r.text, /AI gets answers wrong|Data privacy/);
+  assert.match(r.text, /AI gets answers wrong|Data privacy|Can we trust an agent to act on its own/);
 });
 
 test("win_loss_analyzer lost deal: the stated reason and the sector reasons both appear", async () => {

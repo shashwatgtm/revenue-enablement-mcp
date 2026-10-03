@@ -29,6 +29,7 @@ exports.painClauses = painClauses;
 exports.describeWith = describeWith;
 exports.aAn = aAn;
 exports.splitFeatureList = splitFeatureList;
+exports.capitaliseSolutionPhrase = capitaliseSolutionPhrase;
 // ---------------------------------------------------------------------------------------------------------------------------
 // Splitting
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -479,5 +480,9 @@ function splitFeatureList(text) {
         }
     }
     return pieces.map((p) => p.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '').replace(/^and\s+/i, '').replace(/[.]+$/, '')).filter(Boolean).map((t) => ({ text: t, label }));
+}
+/** Run 21c round 3: "our solution", "the solution" and the like stand in for a name that was not clearly given; at the start of a sentence they take a capital. */
+function capitaliseSolutionPhrase(text) {
+    return text.replace(/(^|[.!?]\s+|\n)((?:[-*]\s+|#+\s+)?)(our|your|the|this) (solution|product)\b/g, (_m, pre, mark, w, n) => `${pre}${mark}${w.charAt(0).toUpperCase()}${w.slice(1)} ${n}`);
 }
 //# sourceMappingURL=dealtext.js.map

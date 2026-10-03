@@ -76,4 +76,6 @@ export interface ListItem {
 /** The items of a typed list. Semicolons and new lines split first; otherwise commas outside brackets do, and a short fragment such as "OMS" or "FMS or TMS in
  *  weeks" stays with the item before it. A closing label such as "(page claims)" belongs to every item. */
 export declare function splitFeatureList(text: string): ListItem[];
+/** Run 21c round 3: "our solution", "the solution" and the like stand in for a name that was not clearly given; at the start of a sentence they take a capital. */
+export declare function capitaliseSolutionPhrase(text: string): string;
 //# sourceMappingURL=dealtext.d.ts.map

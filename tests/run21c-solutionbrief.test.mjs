@@ -93,3 +93,13 @@ test("a pasted paragraph with a colon list and a bracket note gives no space bef
   assert.equal(b.short, "");
   for (const p of b.parts) assert.doesNotMatch(p, /\.\s+[A-Z]/, p);
 });
+
+// Run 21c round 3: with no clear name the text says "our solution", and it began sentences in lower case ("our solution is our answer").
+test("a sentence that begins with the solution phrase starts with a capital", async () => {
+  const sol = "Firstsource customer experience and collections services on Kairos, AI-native business operations: it designs, builds and runs customer experience, collections and back office under one contract";
+  for (const tool of ["proposal_section_writer", "email_sequence_generator", "champion_enablement_kit", "win_loss_analyzer", "demo_script_builder", "competitive_trap_setter"]) {
+    const out = await call(tool, base(sol)[tool]);
+    const m = out.match(/(?:^|[.!?]\s+|\n)(?:[-*]\s+|#+\s+)?(?:our|your|the|this) (?:solution|product)\b/);
+    assert.ok(!m, `${tool}: ${m && out.slice(Math.max(0, m.index - 20), m.index + 60)}`);
+  }
+});

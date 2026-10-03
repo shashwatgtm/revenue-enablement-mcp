@@ -6065,7 +6065,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: result.replace(/\n{3,}/g, '\n\n'),
+                        text: (0, dealtext_ts_1.capitaliseSolutionPhrase)(result.replace(/\n{3,}/g, '\n\n')),
                     },
                 ],
             };

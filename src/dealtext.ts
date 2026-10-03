@@ -102,6 +102,19 @@ function leadingCapitals(name: string): string {
   return out.slice(0, 3).join(' ') || words.slice(0, 2).join(' ');
 }
 
+const NOT_A_NAME = /^(?:platform|software|tool|tools|solution|solutions|product|products|app|apps|service|services|saas|suite|system|systems|ai|api|apis|our|your|the|a|an|we|this|that|my|it)$/i;
+const NAME_JOINERS = /^(?:from|by|of|for|and|&|the|de)$/i;
+
+/** True only when the text before a comma or colon reads as a product name the user typed: one word, or up to four words starting with a capital ("Acme CRM", "Branchwire managed SD-WAN"), as CRAFT GTM's shortName() reads it. */
+function isClearName(name: string): boolean {
+  const toks = name.split(/\s+/);
+  if (!toks.length || toks.length > 4) return false;
+  if (/^(?:our|your|the|a|an|we|this|that|my)$/i.test(toks[0])) return false;
+  if (toks.length === 1) return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]);
+  if (!/^[A-Z0-9]/.test(toks[0]) || NAME_JOINERS.test(toks[toks.length - 1])) return false;
+  return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name);
+}
+
 export function solutionBrief(input: string): SolutionBrief {
   const full = (input || '').trim().replace(/\s+/g, ' ');
   if (!full) return { name: '', short: '', kind: '', parts: [], full: '' };
@@ -109,15 +122,28 @@ export function solutionBrief(input: string): SolutionBrief {
   const colon = full.indexOf(': ');
   let name = full;
   let rest = '';
-  if (comma > 0 && comma <= 80 && (colon < 0 || comma < colon)) {
+  let named = false;
+  if (comma > 0 && comma <= 80 && (colon < 0 || comma < colon) && isClearName(full.slice(0, comma))) {
     name = full.slice(0, comma);
     rest = full.slice(comma + 2);
-  } else if (colon > 0 && colon <= 80) {
+    named = true;
+  } else if (colon > 0 && colon <= 80 && isClearName(full.slice(0, colon))) {
     name = full.slice(0, colon);
     rest = full.slice(colon + 2);
-  } else if (full.split(/\s+/).length > 8) {
-    // a long text with no name before a comma or colon: there is no short name to use (callers say "the solution")
-    return { name: '', short: '', kind: '', parts: [], full };
+    named = true;
+  }
+  if (!named) {
+    // run 21c A1: no name was clearly given. A short description is used whole; a long one gives no short name (callers say "your solution").
+    // A list of parts after a colon is still read.
+    const wordsAll = full.split(/\s+/).length;
+    const short = wordsAll <= 6 ? full.replace(/[.]+$/, '') : '';
+    const at = full.indexOf(': ');
+    let parts: string[] = [];
+    if (at > 0 && at <= 120) {
+      const probe = solutionBrief(`Zq${full.slice(at)}`);
+      parts = probe.parts;
+    }
+    return { name: short, short, kind: '', parts, full };
   }
   let short = name.split(/\s+from\s+/i)[0];
   if (short.split(/\s+/).length > 4) short = leadingCapitals(short);

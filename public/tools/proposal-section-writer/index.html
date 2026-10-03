@@ -173,7 +173,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-10-02",
+   "dateModified": "2026-10-03",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -273,17 +273,18 @@
     <div class="hero-grid"><div class="hx10-split-text">
       <p class="sub">Give it the proposal section you need and your solution. Get a draft of that section, such as an executive summary, a solution overview or a pricing justification.</p>
       <p class="hx10-actions hx11-tool-acts"><a class="hx-btn" href="?example=1#run">Try it with an example</a><a class="slink" href="#run">Use your own details</a></p>
-      <p class="hx-byline">Last updated <time datetime="2026-10-02">2 October 2026</time></p>
+      <p class="hx-byline">Last updated <time datetime="2026-10-03">3 October 2026</time></p>
     </div><figure class="hx8-vis hx10-split-vis "><svg viewBox="0 0 360 386" width="360" height="386" role="img" aria-labelledby="v7t v7d" class="hx8-svg"><title id="v7t">Proposal sections</title><desc id="v7d">Proposal sections: Executive Summary, then The Opportunity, then Our Recommendation, then Expected Outcomes, then How We Will Get There, then Investment Overview, then Why Lanehop, then Next Steps.</desc><text x="0" y="16" class="v-k" text-anchor="start">Proposal sections</text><rect x="0" y="30" width="360" height="38" class="v-ox v-drop d1"/><text x="180" y="53" class="v-tp" text-anchor="middle">Executive Summary</text><rect x="0" y="74" width="360" height="38" class="v-ink7 v-drop d2"/><text x="180" y="97" class="v-tp" text-anchor="middle">The Opportunity</text><rect x="0" y="118" width="360" height="38" class="v-clayd v-drop d3"/><text x="180" y="141" class="v-ts" text-anchor="middle">Our Recommendation</text><rect x="0" y="162" width="360" height="38" class="v-ink7 v-drop d4"/><text x="180" y="185" class="v-tp" text-anchor="middle">Expected Outcomes</text><rect x="0" y="206" width="360" height="38" class="v-clayd v-drop d5"/><text x="180" y="229" class="v-ts" text-anchor="middle">How We Will Get There</text><rect x="0" y="250" width="360" height="38" class="v-ink7 v-drop d6"/><text x="180" y="273" class="v-tp" text-anchor="middle">Investment Overview</text><rect x="0" y="294" width="360" height="38" class="v-clayd v-drop d7"/><text x="180" y="317" class="v-ts" text-anchor="middle">Why Lanehop</text><rect x="0" y="338" width="360" height="38" class="v-ink7 v-drop d8"/><text x="180" y="361" class="v-tp" text-anchor="middle">Next Steps</text></svg><figcaption>How the answer is laid out, using the sections the tool prints.</figcaption></figure></div>
   </div>
 </section>
 
 <div class="hx-body">
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Proposal Section Writer">
-  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Proposal Section Writer</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/proposal_section_writer" data-tool="proposal_section_writer" data-title="Proposal Section Writer"><p class="hx-help">You need: Section type, Your solution. You can add: Customer name, Customer industry, Customer challenges, Key differentiators, Pricing, Implementation approach, Success metrics, Tone.</p>
+  <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Proposal Section Writer</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/proposal_section_writer" data-tool="proposal_section_writer" data-title="Proposal Section Writer"><p class="hx-help">You need: Section type, Your solution. You can add: Customer name, Customer industry, Primary audience, Customer challenges, Key differentiators, Pricing, Implementation approach, Success metrics, Tone.</p>
 <div class="hx-field"><label for="f-section_type">Section type <span class="hx-req" aria-hidden="true">*</span></label><select id="f-section_type" name="section_type" data-kind="string" required aria-required="true" aria-describedby="f-section_type-help"><option value="" disabled selected>Choose one</option><option value="executive_summary">Executive summary</option><option value="problem_statement">Problem statement</option><option value="solution_overview">Solution overview</option><option value="implementation_plan">Implementation plan</option><option value="pricing_justification">Pricing justification</option><option value="risk_mitigation">Risk mitigation</option><option value="success_metrics">Success metrics</option><option value="company_overview">Company overview</option><option value="case_studies">Case studies</option><option value="next_steps">Next steps</option></select><p class="hx-help" id="f-section_type-help">Proposal section to generate</p></div>
 <div class="hx-field"><label for="f-customer_name">Customer name <span class="hx-opt">(optional)</span></label><input id="f-customer_name" name="customer_name" type="text" maxlength="6000" data-kind="string" aria-describedby="f-customer_name-help"><p class="hx-help" id="f-customer_name-help">Customer name</p></div>
 <div class="hx-field"><label for="f-customer_industry">Customer industry <span class="hx-opt">(optional)</span></label><input id="f-customer_industry" name="customer_industry" type="text" maxlength="6000" data-kind="string" aria-describedby="f-customer_industry-help"><p class="hx-help" id="f-customer_industry-help">Customer industry</p></div>
+<div class="hx-field"><label for="f-primary_audience">Primary audience <span class="hx-opt">(optional)</span></label><select id="f-primary_audience" name="primary_audience" data-kind="string" aria-describedby="f-primary_audience-help"><option value="">Not specified</option><option value="c_suite">C-suite</option><option value="vp_level">VP level</option><option value="director">Director</option><option value="manager">Manager</option><option value="technical">Technical</option><option value="procurement">Procurement</option></select><p class="hx-help" id="f-primary_audience-help">Adds a one-line note at the top of the executive summary on what this audience looks for</p></div>
 <div class="hx-field"><label for="f-customer_challenges">Customer challenges <span class="hx-opt">(optional)</span></label><textarea id="f-customer_challenges" name="customer_challenges" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-customer_challenges-help"></textarea><p class="hx-help" id="f-customer_challenges-help">Key challenges identified</p></div>
 <div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
 <div class="hx-field"><label for="f-key_differentiators">Key differentiators <span class="hx-opt">(optional)</span></label><textarea id="f-key_differentiators" name="key_differentiators" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-key_differentiators-help"></textarea><p class="hx-help" id="f-key_differentiators-help">Why you vs alternatives</p></div>
@@ -320,7 +321,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.22 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -331,6 +332,8 @@
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Executive Summary</h4>
 <h5 class="hxr-h3">Proposal for Example Logistics Co</h5>
 <p>This proposal outlines how Lanehop can help Example Logistics Co with the challenges below.</p>
+<h6 class="hxr-h4">The Solution</h6>
+<p>Lanehop</p>
 <h6 class="hxr-h4">The Opportunity</h6>
 <p>Key challenges for Example Logistics Co:</p>
 <ul>
@@ -338,6 +341,7 @@
 <li>Each city plans routes in its own spreadsheet</li>
 <li>Dispatchers spend hours re-planning routes when orders change</li>
 </ul>
+<p>In logistics tech, buyers usually judge a change like this by cost per delivery, first-attempt delivery rate and on-time delivery.</p>
 <h6 class="hxr-h4">Our Recommendation</h6>
 <p>What Lanehop offers Example Logistics Co:</p>
 <ul>
@@ -346,18 +350,13 @@
 <li><strong>Live in six weeks without IT help</strong></li>
 </ul>
 <h6 class="hxr-h4">Expected Outcomes</h6>
-<p>Within 12 months of implementation (Example figure: replace with your own), Example Logistics Co can expect:</p>
-<ul>
-<li>[Outcome you can prove]</li>
-<li>[Second outcome you can prove]</li>
-<li>[How you will measure them]</li>
-</ul>
+<p>No success metrics were given. Add Success metrics. In logistics tech the usual ones are cost per delivery, first-attempt delivery rate, on-time delivery and deliveries per vehicle per day; agree the measure and the baseline with Example Logistics Co.</p>
 <h6 class="hxr-h4">How We Will Get There</h6>
-<p>[Your rollout plan: phases, who is involved on both sides and when value starts]</p>
+<p>No rollout plan was given (Implementation approach). In logistics tech a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) agree the pilot hub, the baseline and the measure (cost per delivery, first-attempt delivery, dispatch planning time); (2) run a pilot at one hub for a full cycle of busy and quiet weeks, with the driver app live.</p>
 <h6 class="hxr-h4">Investment Overview</h6>
-<p>[Pricing: add yours or point to your pricing section]</p>
+<p>No pricing was given. Add pricing here, or point to your pricing section.</p>
 <h6 class="hxr-h4">Why Lanehop</h6>
-<p>The recommendation above lists what sets Lanehop apart. Add one piece of evidence for each point before you send this; in logistics tech, the evidence that lands is this: a before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks..</p>
+<p>The recommendation above lists what sets Lanehop apart. Add one piece of evidence for each point before you send this. In logistics tech, the evidence that lands is this: a before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</p>
 <h6 class="hxr-h4">Next Steps</h6>
 <p>We recommend the following path forward:</p>
 <ol>
@@ -372,6 +371,7 @@
 <h6 class="hxr-h4">Sector notes: logistics tech</h6>
 <ul>
 <li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last-Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the TMS, WMS and order systems; finance checks the cost per delivery case.</li>
+<li><strong>Words this sector's buyers use:</strong> dispatch, fleet, last-mile, route plan, first-attempt delivery, proof of delivery, 3PL, cost per delivery, delivery SLA, TMS. Use them where they are true for the prospect.</li>
 <li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
 </ul></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/proposal-section-writer/</span></footer>

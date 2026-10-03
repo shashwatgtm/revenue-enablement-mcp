@@ -172,7 +172,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-10-02",
+   "dateModified": "2026-10-03",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -220,7 +220,7 @@
     <div class="crop"><span class="cm tl" aria-hidden="true"></span><span class="cm tr" aria-hidden="true"></span><span class="cm bl" aria-hidden="true"></span><span class="cm br" aria-hidden="true"></span><h1 id="h1">Revenue Enablement docs</h1></div>
     <div class="hx-hero-text"><div class="hx10-split-text">
       <p class="sub">The MCP address, the REST API behind the web forms, and every field of all 12 tools.</p>
-      <p class="hx-byline">By <a href="https://gtmhelix.com/about/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix&nbsp;GTM&nbsp;Consulting · Last updated <time datetime="2026-10-02">2 October 2026</time></p>
+      <p class="hx-byline">By <a href="https://gtmhelix.com/about/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix&nbsp;GTM&nbsp;Consulting · Last updated <time datetime="2026-10-03">3 October 2026</time></p>
     </div></div>
   </div>
 </section>
@@ -232,7 +232,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.21.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.22.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -279,18 +279,19 @@
 <tr><td>1.2.18</td><td>1 October 2026</td><td>GitHub, commit 552b944</td></tr>
 <tr><td>1.2.19</td><td>1 October 2026</td><td>GitHub, commit 72bc033</td></tr>
 <tr><td>1.2.20</td><td>2 October 2026</td><td>GitHub, commit f608cb0</td></tr>
-<tr><td>1.2.21 (this site)</td><td>2 October 2026</td><td>GitHub, commit e1fc180</td></tr>
+<tr><td>1.2.21</td><td>2 October 2026</td><td>GitHub, commit e1fc180</td></tr>
+<tr><td>1.2.22 (this site)</td><td>3 October 2026</td><td>GitHub, commit c93cf91</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.21.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.22.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>
   <p><code>account_plan_builder</code></p>
-  <p class="hx-prose">Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. <a href="/tools/account-plan-builder/">Open the form</a>.</p>
+  <p class="hx-prose">Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up. <a href="/tools/account-plan-builder/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
@@ -339,21 +340,21 @@
 <section class="hx-section" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
   <h3 id="d-roi-business-case-builder">ROI Business Case Builder</h3>
   <p><code>roi_business_case_builder</code></p>
-  <p class="hx-prose">Build an ROI business case from your inputs: the annual value comes from the buyer&#x27;s own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary. <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
+  <p class="hx-prose">Build an ROI business case from the buyer&#x27;s own figures: annual_value_estimate, or current_annual_cost with expected_improvement_percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). <a href="/tools/roi-business-case-builder/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
-<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
+<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>The customer&#x27;s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer&#x27;s own figures (annual_value_estimate, or current_annual_cost with expected_improvement_percent)</td></tr>
 <tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
-<tr><td><code>annual_revenue</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
-<tr><td><code>employee_count</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Number of employees</td></tr>
+<tr><td><code>annual_revenue</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Customer annual revenue. Shown as your input; it is not turned into a value</td></tr>
+<tr><td><code>employee_count</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Number of employees. Shown as your input; it is not turned into a value</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>solution_price</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
 <tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
-<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer&#x27;s figures; to turn the buyer&#x27;s figures into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</td></tr>
 <tr><td><code>current_annual_cost</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</td></tr>
 <tr><td><code>expected_improvement_percent</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</td></tr>
 <tr><td><code>annual_value_estimate</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
-<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation</td></tr>
 <tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
   </tbody></table></div>
 </section>
@@ -400,7 +401,7 @@
 <tr><td><code>section_type</code></td><td>string</td><td>yes</td><td>executive_summary, problem_statement, solution_overview, implementation_plan, pricing_justification, risk_mitigation, success_metrics, company_overview, case_studies, next_steps</td><td>Proposal section to generate</td></tr>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer name</td></tr>
 <tr><td><code>customer_industry</code></td><td>string</td><td>no</td><td></td><td>Customer industry</td></tr>
-<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Accepted but not used yet: the text is the same for every audience</td></tr>
+<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Adds a one-line note at the top of the executive summary on what this audience looks for</td></tr>
 <tr><td><code>customer_challenges</code></td><td>string</td><td>no</td><td></td><td>Key challenges identified</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>key_differentiators</code></td><td>string</td><td>no</td><td></td><td>Why you vs alternatives</td></tr>
@@ -454,9 +455,9 @@
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
 <tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current deal value</td></tr>
 <tr><td><code>discount_requested</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
-<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Accepted but not used yet by this tool</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge</td></tr>
 <tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>
-<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Shown in the output; the value example does not use it</td></tr>
+<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own</td></tr>
 <tr><td><code>buyer_leverage</code></td><td>string</td><td>no</td><td></td><td>Buyer leverage points (size, reference potential, etc.)</td></tr>
 <tr><td><code>your_leverage</code></td><td>string</td><td>no</td><td></td><td>Your leverage points (unique features, timeline, etc.)</td></tr>
 <tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>

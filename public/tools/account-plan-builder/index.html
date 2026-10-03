@@ -173,7 +173,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-10-02",
+   "dateModified": "2026-10-03",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -211,7 +211,7 @@
    "@type": "WebApplication",
    "@id": "https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/#app",
    "name": "Account Plan Builder (Revenue Enablement)",
-   "description": "Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.",
+   "description": "Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.",
    "url": "https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/",
    "applicationCategory": "BusinessApplication",
    "browserRequirements": "Any modern browser; works without JavaScript",
@@ -273,7 +273,7 @@
     <div class="hero-grid"><div class="hx10-split-text">
       <p class="sub">Give it the account name, plus contacts, products and notes if you have them. Get an account overview, a power map, whitespace analysis, a 90-day plan and a research checklist.</p>
       <p class="hx10-actions hx11-tool-acts"><a class="hx-btn" href="?example=1#run">Try it with an example</a><a class="slink" href="#run">Use your own details</a></p>
-      <p class="hx-byline">Last updated <time datetime="2026-10-02">2 October 2026</time></p>
+      <p class="hx-byline">Last updated <time datetime="2026-10-03">3 October 2026</time></p>
     </div><figure class="hx8-vis hx10-split-vis "><svg viewBox="0 0 360 164" width="360" height="164" role="img" aria-labelledby="v1t v1d" class="hx8-svg"><title id="v1t">90-Day Account Plan</title><desc id="v1d">90-Day Account Plan: from Today to Day 90 through Days 1 to 30: Foundation, Days 31 to 60: Engagement, Days 61 to 90: Close or Expand.</desc><text x="0" y="16" class="v-k" text-anchor="start">90-Day Account Plan</text><line x1="8" y1="58" x2="352" y2="58" class="v-line v-draw"/><rect x="0" y="50" width="16" height="16" class="v-ox"/><rect x="344" y="50" width="16" height="16" class="v-sig v-fade d9"/><text x="0" y="86" class="v-tm" text-anchor="start">Today</text><text x="360" y="86" class="v-tm" text-anchor="end">Day 90</text><rect x="20" y="100" width="101" height="44" class="v-clay v-slide d1"/><text x="26" y="118" class="v-ts" text-anchor="start">Days 1 to 30:</text><text x="26" y="131" class="v-ts" text-anchor="start">Foundation</text><rect x="127" y="100" width="101" height="44" class="v-clay v-slide d2"/><text x="133" y="118" class="v-ts" text-anchor="start">Days 31 to 60:</text><text x="133" y="131" class="v-ts" text-anchor="start">Engagement</text><rect x="233" y="100" width="101" height="44" class="v-clay v-slide d3"/><text x="239" y="118" class="v-ts" text-anchor="start">Days 61 to 90:</text><text x="239" y="131" class="v-ts" text-anchor="start">Close or</text><text x="239" y="144" class="v-ts" text-anchor="start">Expand</text></svg></figure></div>
   </div>
 </section>
@@ -319,7 +319,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">From version 1.2.21 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">From version 1.2.22 of this tool, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -330,94 +330,83 @@
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Strategic Account Plan: Example Logistics Co</h4>
 <h5 class="hxr-h3">Account Overview</h5>
 <div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account Name</strong></td><td>Example Logistics Co</td></tr><tr><td><strong>Industry</strong></td><td>third-party logistics</td></tr><tr><td><strong>Account Tier</strong></td><td>Growth (set by this tool's rule from Current ARR)</td></tr><tr><td><strong>Current ARR</strong></td><td>$36,000</td></tr><tr><td><strong>Expansion Potential</strong></td><td>Medium (set by this tool's rule from Current ARR, not from your notes)</td></tr><tr><td><strong>Your Solution</strong></td><td>Lanehop</td></tr></tbody></table></div>
+<p><em>Sector: read from your inputs as logistics tech (from the buyer's industry: your own description names no sector, so describe what you sell for notes that fit it). Business model: software subscription (the usual model in this sector, assumed; set Business model to change it).</em></p>
 <hr>
 <h5 class="hxr-h3">Strategic Analysis</h5>
 <h6 class="hxr-h4">Power Map (To Be Mapped)</h6>
-<p><strong>Discovery Priorities:</strong></p>
+<p>You gave no contacts. Start with these questions (written for logistics tech):</p>
 <ol>
-<li value="1">Who owns the problem you solve?</li>
-<li value="2">Who controls the budget?</li>
+<li value="1">Who owns the problem Lanehop solves? In logistics tech this is usually: the Head of Logistics or Last-Mile Operations champions</li>
+<li value="2">Who controls the budget? The COO or Head of Supply Chain signs.</li>
 <li value="3">Who will use the solution daily?</li>
-<li value="4">Who must approve the purchase?</li>
+<li value="4">Who must approve the purchase, and what do they check?</li>
 </ol>
-<p><strong>Typical Stakeholders (a general list, not specific to third-party logistics):</strong></p>
-<ul>
-<li><strong>Economic Buyer</strong>: CFO, VP Operations, Business Unit Head</li>
-<li><strong>Technical Buyer</strong>: CTO, VP Engineering, IT Director</li>
-<li><strong>User Buyer</strong>: Department Head, Team Lead</li>
-<li><strong>Champion</strong>: Someone with the pain + influence</li>
-</ul>
+<p><strong>Roles to look for:</strong> Chief Operating Officer, Head of Supply Chain, Head of Last-Mile Operations, Fleet Manager, Transport Manager, Head of IT.</p>
 <hr>
 <h6 class="hxr-h4">Current Footprint</h6>
 <p>Lanehop route planning in 3 of their 12 cities</p>
 <h6 class="hxr-h4">Whitespace Opportunities</h6>
-<p>Based on current products, consider expansion into:</p>
+<p>Confirm what exactly the account uses of Lanehop today and what it still does by other means.</p>
 <ol>
-<li value="1"><strong>Adjacent use cases</strong>: Who else has similar problems?</li>
-<li value="2"><strong>Deeper penetration</strong>: More users, more features, more data</li>
-<li value="3"><strong>Cross-sell</strong>: Complementary products they don't have</li>
-<li value="4"><strong>Upsell</strong>: Premium tiers, enterprise features</li>
+<li value="1"><strong>Adjacent use cases:</strong> which other teams or units feel the same problem (ask your contacts above who else is affected)</li>
+<li value="2"><strong>Deeper use:</strong> where the teams you already serve still work around Lanehop</li>
+<li value="3"><strong>Cross-sell:</strong> complementary parts of your offer they do not have</li>
+<li value="4"><strong>Proof first:</strong> show the result in the footprint you have before asking for more; in logistics tech buyers trust this form of proof: a before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks</li>
 </ol>
 <hr>
 <h6 class="hxr-h4">Competitive Intelligence Needed</h6>
-<ul>
-<li>Who else are they evaluating?</li>
-<li>Who are they using today?</li>
-<li>What would make them switch?</li>
-</ul>
-<p><strong>Discovery Questions:</strong></p>
+<p>No threats were given. Ask:</p>
 <ol>
-<li value="1">"Who else is solving this problem for you today?"</li>
+<li value="1">"Who else is solving this problem for you today, including doing it by hand?"</li>
 <li value="2">"What would need to change for you to consider alternatives?"</li>
-<li value="3">"What's worked and not worked with current solutions?"</li>
+<li value="3">"What has worked and not worked with the current way?"</li>
 </ol>
 <hr>
 <h5 class="hxr-h3">90-Day Account Plan</h5>
-<h6 class="hxr-h4">Days 1-30: Deepen the relationship (by 2026-11-01)</h6>
+<h6 class="hxr-h4">Days 1-30: Deepen the relationship (by 2026-11-02)</h6>
 <p><strong>Objectives:</strong></p>
 <ul>
 <li>[ ] Complete stakeholder mapping (all decision makers identified)</li>
 <li>[ ] Understand current state and pain points (in logistics tech, ask about cost per delivery, first-attempt delivery rate, on-time delivery)</li>
 <li>[ ] Identify 2 or 3 potential champions</li>
-<li>[ ] Document competitive landscape</li>
+<li>[ ] Document the competitive landscape, including doing it by hand</li>
 </ul>
 <p><strong>Key Activities:</strong></p>
 <ol>
-<li value="1">Schedule discovery meetings with key stakeholders</li>
-<li value="2">Research company news, earnings, initiatives</li>
-<li value="3">Map org chart and reporting relationships</li>
-<li value="4">Identify business triggers and priorities</li>
+<li value="1">Schedule discovery meetings with the people who own the problem</li>
+<li value="1">Map the org chart and reporting lines against the usual committee in logistics tech</li>
+<li value="2">Identify the business trigger behind this account's priorities</li>
 </ol>
 <p><strong>Success Criteria:</strong></p>
 <ul>
-<li>Champion identified and engaged</li>
-<li>Pain points documented and quantified</li>
+<li>A champion identified and engaged</li>
+<li>Pain points documented and quantified in their numbers</li>
 <li>Initial business case hypothesis</li>
 </ul>
 <hr>
-<h6 class="hxr-h4">Days 31-60: Engagement (by 2026-12-01)</h6>
+<h6 class="hxr-h4">Days 31-60: Engagement (by 2026-12-02)</h6>
 <p><strong>Objectives:</strong></p>
 <ul>
 <li>[ ] Demonstrate value to key stakeholders</li>
-<li>[ ] Build business case with quantified ROI</li>
-<li>[ ] Multi-thread across buying committee</li>
+<li>[ ] Build the business case with the account's own figures (the ROI Business Case Builder tool needs their cost or value figures)</li>
+<li>[ ] Multi-thread across the buying committee, including Chief Operating Officer and Head of Supply Chain</li>
 <li>[ ] Address technical and procurement requirements</li>
 </ul>
 <p><strong>Key Activities:</strong></p>
 <ol>
-<li value="1">Conduct demo/workshop with stakeholders</li>
-<li value="2">Develop ROI model with customer data</li>
-<li value="3">Connect champion with reference customers, if you have them</li>
-<li value="4">Begin technical validation if needed</li>
+<li value="1">Run a demo or working session on the account's own case</li>
+<li value="2">Develop the ROI model with the account's data</li>
+<li value="3">Connect the champion with reference customers, if you have them</li>
+<li value="4">Agree a proof: a before and after of cost per delivery or first-attempt delivery at one hub, measured over a full cycle of busy and quiet weeks</li>
 </ol>
 <p><strong>Success Criteria:</strong></p>
 <ul>
-<li>Business case accepted by economic buyer</li>
+<li>Business case accepted by the economic buyer</li>
 <li>Technical requirements validated</li>
 <li>Procurement process understood</li>
 </ul>
 <hr>
-<h6 class="hxr-h4">Days 61-90: Close/Expand (by 2026-12-31)</h6>
+<h6 class="hxr-h4">Days 61-90: Close/Expand (by 2027-01-01)</h6>
 <p><strong>Objectives:</strong></p>
 <ul>
 <li>[ ] Close expansion deal</li>
@@ -430,7 +419,7 @@
 <li value="1">Finalize commercial terms</li>
 <li value="2">Complete procurement process</li>
 <li value="3">Kick off implementation planning</li>
-<li value="4">Identify next expansion opportunity</li>
+<li value="4">Identify the next expansion opportunity</li>
 </ol>
 <p><strong>Success Criteria:</strong></p>
 <ul>
@@ -440,28 +429,27 @@
 </ul>
 <hr>
 <h5 class="hxr-h3">Account Intelligence</h5>
-<h6 class="hxr-h4">Research Checklist</h6>
+<h6 class="hxr-h4">What to Research</h6>
 <ul>
-<li>[ ] Recent news and press releases</li>
-<li>[ ] Earnings calls and investor presentations (if the company is public)</li>
-<li>[ ] LinkedIn for org changes and hiring</li>
-<li>[ ] Glassdoor for culture insights</li>
-<li>[ ] G2/review sites for tech stack</li>
-<li>[ ] Job postings for priorities</li>
+<li>The words this sector's buyers use: dispatch, fleet, last-mile, route plan, first-attempt delivery, proof of delivery, 3PL, cost per delivery, delivery SLA, TMS; listen for them in what the account publishes</li>
+<li>Recent news and press releases that touch cost per delivery or first-attempt delivery rate</li>
+<li>Earnings calls and investor presentations (if the company is public)</li>
+<li>Hiring and org changes for the roles above</li>
+<li>Job postings for priorities</li>
 </ul>
 <h6 class="hxr-h4">Key Questions to Answer</h6>
 <ol>
 <li value="1">What are their top 3 strategic priorities this year?</li>
-<li value="2">How do they measure success?</li>
+<li value="2">How do they measure success (is it cost per delivery or first-attempt delivery rate?)?</li>
 <li value="3">What's their budget cycle?</li>
 <li value="4">Who has buying authority?</li>
 <li value="5">What would prevent them from buying?</li>
 </ol>
 <hr>
 <h5 class="hxr-h3">Next Actions</h5>
-<div class="hx-table"><table><thead><tr><th>Priority</th><th>Action</th><th>Owner</th><th>Due Date</th></tr></thead><tbody><tr><td>High</td><td>Identify and engage a champion</td><td>AE</td><td>Week 1</td></tr><tr><td>High</td><td>Map decision-making process</td><td>AE</td><td>Week 2</td></tr><tr><td>Medium</td><td>Research competitive landscape</td><td>AE</td><td>Week 2</td></tr><tr><td>Medium</td><td>Build initial business case</td><td>AE + SE</td><td>Week 3</td></tr><tr><td>Low</td><td>Document account in CRM</td><td>AE</td><td>Ongoing</td></tr></tbody></table></div>
+<div class="hx-table"><table><thead><tr><th>Priority</th><th>Action</th><th>Owner</th><th>Due Date</th></tr></thead><tbody><tr><td>High</td><td>Identify and engage a champion</td><td>AE</td><td>Week 1</td></tr><tr><td>High</td><td>Map the decision-making process</td><td>AE</td><td>Week 2</td></tr><tr><td>Medium</td><td>Research the competitive landscape</td><td>AE</td><td>Week 2</td></tr><tr><td>Medium</td><td>Build the initial business case</td><td>AE + SE</td><td>Week 3</td></tr><tr><td>Low</td><td>Document the account in CRM</td><td>AE</td><td>Ongoing</td></tr></tbody></table></div>
 <hr>
-<p><em>Account Plan Generated: 2026-10-02</em></p>
+<p><em>Account Plan Generated: 2026-10-03</em></p>
 <p><em>Review and Update: Monthly</em></p>
 <p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/</span></footer>

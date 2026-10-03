@@ -1,0 +1,352 @@
+// Run 20 round 1b (D92): text helpers shared by the Revenue tools. Pure functions, no network, no figures (B82).
+// They exist so that text a user typed is cut and reused by parts that are really there: a product description is split into its
+// name, its kind and its listed parts; contacts become one row each with the role the user stated; proof becomes items with their
+// labels; an objection is answered by its kind. Nothing here says a fact about the user's product: where a fact is needed, the
+// helper says what to confirm.
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Splitting
+// ---------------------------------------------------------------------------------------------------------------------------
+
+/** Splits at commas that are outside brackets and quotes. */
+export function splitTopLevel(text: string, sep: RegExp = /,/): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  let quote = false;
+  const re = new RegExp(sep.source, sep.flags.replace('g', ''));
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '(' || ch === '[') depth++;
+    else if ((ch === ')' || ch === ']') && depth > 0) depth--;
+    else if (ch === '"' || ch === '“' || ch === '”') quote = !quote;
+    if (depth === 0 && !quote) {
+      const m = re.exec(text.slice(i));
+      if (m && m.index === 0 && m[0].length > 0) {
+        out.push(cur);
+        cur = '';
+        i += m[0].length - 1;
+        continue;
+      }
+    }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map((x) => x.trim()).filter(Boolean);
+}
+
+const ABBREV = /(?:\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Rs|Inc|Ltd|Co|St|No|approx|incl|Fig|Eq)|\b[A-Z])\.$/;
+/** Sentences, split only at a real sentence end: not inside a number (3.5), an abbreviation (Rs. 15, e.g.) or after a single capital. */
+export function sentences(text: string): string[] {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (!t) return [];
+  const out: string[] = [];
+  let start = 0;
+  const re = /[.!?]+(?=\s+["'“(\[]?[A-Z0-9])/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(t))) {
+    const end = m.index + m[0].length;
+    const piece = t.slice(start, end);
+    if (ABBREV.test(piece.trim()) && !/[!?]$/.test(piece.trim())) continue;
+    out.push(piece.trim());
+    start = end;
+  }
+  const rest = t.slice(start).trim();
+  if (rest) out.push(rest);
+  return out;
+}
+
+/** Cuts a text at a word boundary, never inside a word; adds nothing when it already fits. */
+export function clip(text: string, max: number): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > max * 0.5 ? cut.slice(0, sp) : cut).replace(/[\s,;:(-]+$/, '').replace(/\b(?:and|or|the|a|an|of|to|for|with|in|on|by)$/i, '').trim();
+}
+
+/** "a, b and c" from a list. */
+export function joinList(items: string[], word = 'and'): string {
+  if (items.length <= 1) return items[0] || '';
+  return `${items.slice(0, -1).join(', ')} ${word} ${items[items.length - 1]}`;
+}
+
+const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+export const lowerFirstWord = (s: string): string => (/^[A-Z][a-z]/.test(s) && !/^(?:I|AI|API|ERP|CRM)\b/.test(s) ? lc(s) : s);
+export const upperFirst = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// The product description
+// ---------------------------------------------------------------------------------------------------------------------------
+
+export interface SolutionBrief {
+  /** the product as typed before its description ("Happay", "Chargebee Billing", "Sarvam from Sarvam AI") */
+  name: string;
+  /** the short name used in running text ("Sarvam") */
+  short: string;
+  /** what it is, in the user's words ("an API platform for building and using APIs"); '' when the text gives none */
+  kind: string;
+  /** the parts the description lists after a colon or "made of" */
+  parts: string[];
+  full: string;
+}
+
+function leadingCapitals(name: string): string {
+  const words = name.split(/\s+/);
+  const out: string[] = [];
+  for (const w of words) {
+    if (/^[A-Z0-9][A-Za-z0-9.&'-]*$/.test(w) || (out.length && /^(?:of|and|for)$/i.test(w) && false)) out.push(w); else break;
+  }
+  return out.slice(0, 3).join(' ') || words.slice(0, 2).join(' ');
+}
+
+export function solutionBrief(input: string): SolutionBrief {
+  const full = (input || '').trim().replace(/\s+/g, ' ');
+  if (!full) return { name: '', short: '', kind: '', parts: [], full: '' };
+  const comma = full.indexOf(', ');
+  const colon = full.indexOf(': ');
+  let name = full;
+  let rest = '';
+  if (comma > 0 && comma <= 80 && (colon < 0 || comma < colon)) {
+    name = full.slice(0, comma);
+    rest = full.slice(comma + 2);
+  } else if (colon > 0 && colon <= 80) {
+    name = full.slice(0, colon);
+    rest = full.slice(colon + 2);
+  } else if (full.split(/\s+/).length > 8) {
+    name = leadingCapitals(full);
+    rest = full.slice(name.length).trim();
+  }
+  let short = name.split(/\s+from\s+/i)[0];
+  if (short.split(/\s+/).length > 4) short = leadingCapitals(short);
+  // kind: the words up to the first colon, " made of ", " that ", " which " or " - "
+  let kindSrc = rest;
+  const colonAt = kindSrc.indexOf(': ');
+  let partsSrc = '';
+  if (colonAt >= 0) { partsSrc = kindSrc.slice(colonAt + 2); kindSrc = kindSrc.slice(0, colonAt); }
+  const made = kindSrc.search(/\s+made (?:of|up of)\s+/i);
+  if (made >= 0) { partsSrc = partsSrc || kindSrc.slice(made).replace(/^\s+made (?:of|up of)\s+/i, ''); kindSrc = kindSrc.slice(0, made); }
+  const cutAt = kindSrc.search(/\s+(?:that|which|where)\s+|\s+[-–—]\s+/i);
+  if (cutAt > 0) kindSrc = kindSrc.slice(0, cutAt);
+  const kind = clip(kindSrc.replace(/[.;]+$/, ''), 150);
+  let parts: string[] = [];
+  if (partsSrc) {
+    // a trailing "for <buyers>" is who it is for, not a part
+    const src = partsSrc.replace(/[.]+$/, '').replace(/,\s+for\s+.*$/i, '');
+    const top = splitTopLevel(src);
+    const expanded: string[] = [];
+    top.forEach((p, i) => {
+      if (i === top.length - 1 && top.length > 1) {
+        // the last item may hold the closing "and": "X (a, b) and Y analytics" is two parts; "travel and expense analytics" stays one when no bracket comes before the "and"
+        const m = p.match(/^(.*\))\s+and\s+(.+)$/);
+        if (m) { expanded.push(m[1]); expanded.push(m[2]); return; }
+        const m2 = p.match(/^(.+?)\s+and\s+(.+)$/);
+        if (m2 && /^(?:[a-z]+\s+){0,2}[a-z]+$/i.test(m2[1]) && !/\b(?:builds?|runs?|designs?)\b/i.test(m2[1]) && m2[1].split(/\s+/).length >= 2) { expanded.push(m2[1]); expanded.push(m2[2]); return; }
+      }
+      expanded.push(p);
+    });
+    const cleaned = expanded.map((p) => p.replace(/^and\s+/i, '').trim()).filter((p) => p.length > 1);
+    // a sentence about the product is not a list of parts
+    const sentenceLike = cleaned.some((p) => /\b(?:designs|builds|runs|helps|overlays)\b/i.test(p) || partLabel(p).split(/\s+/).length > 12 || (short.length > 2 && p.toLowerCase().includes(short.toLowerCase())));
+    parts = !sentenceLike && cleaned.length >= 2 ? cleaned.slice(0, 14) : [];
+  }
+  return { name, short: short || name, kind, parts, full };
+}
+
+/** The name of a part without its bracket: "prepaid cards (petty cash, fleet)" -> "prepaid cards". */
+export function partLabel(part: string): string {
+  return part.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim().replace(/^(?:a|an|the)\s+/i, '');
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Roles
+// ---------------------------------------------------------------------------------------------------------------------------
+
+export type RoleFamily = 'finance' | 'security' | 'risk' | 'it' | 'engineering' | 'operations' | 'sales' | 'product' | 'marketing' | 'hr' | 'procurement' | 'executive' | 'data' | 'customer' | 'investment' | 'other';
+
+const FAMILY_RULES: [RoleFamily, RegExp][] = [
+  ['investment', /\b(?:portfolio manager|chief investment|investment (?:committee|officer|team)|allocators?)/i],
+  ['security', /\b(?:ciso|chief information security|cso\b|security|soc\b|infosec|threat|incident response|brand protection|cyber)/i],
+  ['risk', /\b(?:risk|compliance|audit|legal|counsel|dpo|privacy|governance)/i],
+  ['finance', /\b(?:cfo|chief financial|finance|controller|treasur|accounts? (?:payable|receivable)|accounting|fp&a|billing)/i],
+  ['procurement', /\b(?:procurement|purchasing|vendor management|sourcing)/i],
+  ['hr', /\b(?:hr\b|human resources|people (?:operations|team)|chro)/i],
+  ['engineering', /\b(?:cto\b|chief technology|engineer|developer|devops|qa\b|testing|test\b|architect|platform (?:leader|lead|team)|software|sre)/i],
+  ['data', /\b(?:data|analytics|ai\b|ml\b)/i],
+  ['it', /\b(?:cio\b|chief information officer|it\b|information technology|infrastructure|network|systems?|digital transformation|technology)/i],
+  ['operations', /\b(?:coo\b|chief operating|operations|supply chain|logistics|last[- ]mile|fleet|dispatch|transport|fulfil|warehouse|e-?commerce|delivery)/i],
+  ['sales', /\b(?:sales|revenue|cro\b|gtm|business development|commercial|field|distribut|trade marketing|route to market)/i],
+  ['product', /\b(?:product|cpo\b)/i],
+  ['marketing', /\b(?:marketing|cmo\b|growth|brand)/i],
+  ['customer', /\b(?:customer (?:experience|success|service)|support|service agents?|cx\b)/i],
+  ['executive', /\b(?:ceo|founder|co-founder|managing director|md\b|president|chairman|owner|general manager|gm\b|business unit head)/i],
+];
+/** The family of a job title. When the seller is an investment manager, a plain CIO is the chief investment officer. */
+export function familyOf(title: string, investmentBuyer = false): RoleFamily {
+  if (investmentBuyer && /\b(?:cio|chief investment officer)\b/i.test(title) && !/information/i.test(title)) return 'investment';
+  for (const [f, re] of FAMILY_RULES) if (re.test(title)) return f;
+  return 'other';
+}
+export type Level = 'exec' | 'head' | 'manager' | 'staff' | 'group';
+export function levelOf(title: string): Level {
+  const t = title.toLowerCase();
+  if (/\b(?:chief|ceo|cfo|coo|cio|cto|ciso|cso|cmo|cro|cpo|founder|owner|managing director|chairman)\b/.test(t) || (/\bpresident\b/.test(t) && !/\bvice president\b/.test(t))) return 'exec';
+  if (/\b(?:vp|vice president|svp|evp|head|director|general manager|gm\b|leader|sr\.? director)\b/.test(t) && !/\bteams?\b/.test(t)) return 'head';
+  if (/\b(?:teams?|committees?|users?|analysts|agents|reps|representatives|employees|managers|engineers|developers|administrators?)\b/.test(t) && !/\b(?:senior|sr\.?|lead|principal)\b/.test(t) && /s\b|team/.test(t)) return 'group';
+  if (/\b(?:manager|lead|senior|sr\.?|principal|supervisor)\b/.test(t)) return 'manager';
+  return 'staff';
+}
+
+export interface Contact {
+  raw: string;
+  title: string;
+  tag: string | null;       // the role the user wrote in brackets or after "as": champion, buyer, economic buyer ...
+  family: RoleFamily;
+  level: Level;
+}
+const TITLE_WORD = /\b(?:manager|director|vp|head|lead|chief|officer|president|engineer|analyst|architect|developer|advocate|founder|owner|specialist|consultant|executive|administrator|coordinator|controller|supervisor|counsel|partner)\b/i;
+const BARE_TITLE_END = /\b(?:manager|director|vp|head|lead|chief|officer|president|senior|sr\.?|vice president|svp|evp)$/i;
+
+/** One contact per entry. Splits at semicolons, new lines and commas outside brackets; "Manager, Operations (champion)" stays one title. */
+export function parseContacts(text: string, investmentBuyer = false): Contact[] {
+  if (typeof text !== 'string' || !text.trim()) return [];
+  const chunks: string[] = [];
+  for (const line of text.split(/\n|;/)) {
+    const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '');
+    if (!l) continue;
+    const pieces = splitTopLevel(l);
+    for (const p of pieces) {
+      const prev = chunks.length ? chunks[chunks.length - 1] : '';
+      const bare = p.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+      const prevOpen = prev && !/\)\s*$/.test(prev) && BARE_TITLE_END.test(prev.trim());
+      const looksLikeFunction = bare.split(/\s+/).length <= 3 && /^[A-Z]/.test(bare) && !TITLE_WORD.test(bare) && !/\b(?:teams?|managers|employees|analysts|users)\b/i.test(bare);
+      if (prevOpen && looksLikeFunction && !/^(?:HR|IT)$/.test(bare)) chunks[chunks.length - 1] = `${prev}, ${p}`;
+      else chunks.push(p);
+    }
+  }
+  return chunks.map((raw) => {
+    const m = raw.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+    const title = (m ? m[1] : raw).trim();
+    let tag = m ? m[2].trim().toLowerCase() : null;
+    if (!tag) {
+      const asM = raw.match(/^(.*?)\s*[-–:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|user|influencer|evaluator)\s*$/i);
+      if (asM) return { raw, title: asM[1].trim(), tag: asM[2].toLowerCase(), family: familyOf(asM[1], investmentBuyer), level: levelOf(asM[1]) } as Contact;
+    }
+    return { raw, title, tag, family: familyOf(title, investmentBuyer), level: levelOf(title) } as Contact;
+  });
+}
+
+/** Plain words for a stated tag ("economic buyer" stays; "buyer" is the person who decides). */
+export function tagKind(tag: string | null): 'champion' | 'economic' | 'buyer' | 'blocker' | 'user' | 'influencer' | 'other' | null {
+  if (!tag) return null;
+  if (/champion|sponsor|advocate/.test(tag)) return 'champion';
+  if (/economic/.test(tag)) return 'economic';
+  if (/buyer|decision|signs?|approver/.test(tag)) return 'buyer';
+  if (/block|against|oppos|detract|negative/.test(tag)) return 'blocker';
+  if (/user/.test(tag)) return 'user';
+  if (/influenc|evaluat|technical|neutral|supporter|support/.test(tag)) return 'influencer';
+  return 'other';
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Proof
+// ---------------------------------------------------------------------------------------------------------------------------
+
+export interface ProofItem {
+  /** the claim as typed, without its trailing label */
+  text: string;
+  /** what the user said it is: "customer quote", "page claim", "case study title" ... or '' */
+  label: string;
+  kind: 'result' | 'quote' | 'recognition' | 'scale' | 'story';
+}
+const RECOGNITION = /\b(?:named|leader|award|recogni(?:[sz]\w*|tion)|featured|frost radar|magic quadrant|analyst|excellence|ranked|ranking|everest|hfs|isg|kuppingercole|gartner|forrester|idc|g2\b|enterprise innovator|major contender|certified|empanel\w*)\b/i;
+const RESULT = /\d[\d,.]*\s?(?:%|x\b|X\b|percent|hours?|days?|weeks?|months?|minutes?|crore|lakhs?|million|billion|mn\b|bn\b|m\b)|\b(?:\d+x|half|doubl\w+|triple\w*)\b|\bsav(?:ed|ing|es)\b|\b(?:cut|cuts|reduc\w+|improv\w+|increas\w+|faster|fewer|lower|higher|grew|grow\w*|jumped|boost\w+|achiev\w+)\b/i;
+const SCALE = /\b(?:\d[\d,.+]*\s?(?:\+|k\b|m\b|million|billion|lakhs?|crore)?\s*(?:companies|customers|businesses|brands|users|clients|teams|developers|sources|countries|retailers)|trust|use[sd]? by|more than \d)/i;
+
+export function parseProof(text: string): ProofItem[] {
+  if (typeof text !== 'string' || !text.trim()) return [];
+  const raw = text.split(/\n|;/).map((x) => x.trim().replace(/^(?:[-*•]|\d+[.)])\s*/, '')).filter(Boolean);
+  return raw.map((r) => {
+    let label = '';
+    let body = r.replace(/[.]+$/, '');
+    // a trailing bracket that is a label: (page claim), (customer quote), (case study title) ...
+    const m = body.match(/^(.*?)\s*\(((?:[^()]|\([^)]*\))*(?:quote|claim|title|headline|study|words|figures?|story|page|ebook|report|analyst|recognition|listed)[^()]*)\)\s*$/i);
+    if (m) { body = m[1].trim(); label = m[2].trim(); }
+    const quoteLike = /\bquote\b|\bwords\b|\bsaid\b/i.test(label) || /^(?:customer|ceo|cfo|cio|cto|ciso|cso|vp|head|director)\b[^:]{0,60}:/i.test(body) || /^[A-Z][A-Za-z.' -]{2,40}\b(?:CFO|CEO|CIO|CTO|CISO|CSO|VP|Director|Head)\b[^:]{0,40}:/.test(body);
+    let kind: ProofItem['kind'] = 'story';
+    if (RECOGNITION.test(body) && !/\d+\s?%/.test(body)) kind = 'recognition';
+    else if (quoteLike) kind = 'quote';
+    else if (RESULT.test(body)) kind = 'result';
+    else if (SCALE.test(body)) kind = 'scale';
+    return { text: body, label, kind };
+  }).filter((p) => p.text.length > 2);
+}
+
+/** The label to show for an item, in words a reader can check ("a customer quote on the company's website"). */
+export function proofSource(p: ProofItem): string {
+  const l = p.label.toLowerCase();
+  if (!l) return 'as you gave it';
+  if (/quote|words/.test(l)) return 'a customer\'s own words';
+  if (/claim/.test(l)) return 'a claim from the company\'s own pages';
+  if (/title|headline/.test(l)) return 'a published customer story headline';
+  if (/analyst|recognition/.test(l)) return 'analyst or award recognition';
+  return p.label;
+}
+
+/** Picks up to `n` proof items of the preferred kinds, in order, without repeating one; recognition last. */
+export function pickProof(items: ProofItem[], n: number, prefer: ProofItem['kind'][] = ['result', 'quote', 'story', 'scale', 'recognition'], skip: ProofItem[] = []): ProofItem[] {
+  const out: ProofItem[] = [];
+  for (const k of prefer) for (const p of items) {
+    if (out.length >= n) return out;
+    if (p.kind === k && !out.includes(p) && !skip.includes(p)) out.push(p);
+  }
+  return out;
+}
+
+/** A proof item as a sentence-ready phrase: a customer quote keeps its speaker; the label is left out (it is listed in the checks). */
+export function proofPhrase(p: ProofItem): string {
+  return p.text.replace(/^(?:Customer (?:quote|words)):\s*/i, '').replace(/\s+on the home page\b/i, '').trim();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Dates (working days)
+// ---------------------------------------------------------------------------------------------------------------------------
+export function isWeekend(d: Date): boolean { const w = d.getUTCDay(); return w === 0 || w === 6; }
+/** The same day, or the last working day before it. */
+export function onOrBeforeWorkday(d: Date): Date { const x = new Date(d.getTime()); while (isWeekend(x)) x.setUTCDate(x.getUTCDate() - 1); return x; }
+/** The same day, or the next working day after it. */
+export function onOrAfterWorkday(d: Date): Date { const x = new Date(d.getTime()); while (isWeekend(x)) x.setUTCDate(x.getUTCDate() + 1); return x; }
+/** n working days after d (negative: before). */
+export function addWorkdays(d: Date, n: number): Date {
+  const x = new Date(d.getTime());
+  const step = n < 0 ? -1 : 1;
+  let left = Math.abs(n);
+  while (left > 0) { x.setUTCDate(x.getUTCDate() + step); if (!isWeekend(x)) left--; }
+  return x;
+}
+/** Working days between two dates, counting d2 but not d1 (0 when d2 is not after d1). */
+export function workdaysBetween(d1: Date, d2: Date): number {
+  if (d2.getTime() <= d1.getTime()) return 0;
+  let n = 0;
+  const x = new Date(d1.getTime());
+  while (x.getTime() < d2.getTime()) { x.setUTCDate(x.getUTCDate() + 1); if (!isWeekend(x)) n++; }
+  return n;
+}
+export const isoDate = (d: Date): string => d.toISOString().split('T')[0];
+const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const weekdayName = (d: Date): string => WEEKDAY[d.getUTCDay()];
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Pain points typed as a sentence
+// ---------------------------------------------------------------------------------------------------------------------------
+/** The separate pains in a typed pain statement: split at commas outside brackets and at semicolons; "with companies stuck on ..." loses its "with". */
+export function painClauses(text: string): string[] {
+  if (typeof text !== 'string' || !text.trim()) return [];
+  const raw = text.split(/\n|;/).flatMap((x) => splitTopLevel(x));
+  const out = raw.map((x) => x.replace(/^(?:and|with|plus|while|but|also)\s+/i, '').replace(/[.]+$/, '').trim())
+    // a clause that can be quoted on its own: short, and not leaning on another clause ("most systems were not built for that")
+    .filter((x) => { const n = x.split(/\s+/).length; return n >= 2 && n <= 9 && x.length > 4 && !/^(?:so|most|which|that|this|it|they|these|those)\b/i.test(x) && !/\b(?:that|this|it|them)$/i.test(x); });
+  const uniq: string[] = [];
+  for (const o of out) if (!uniq.includes(o)) uniq.push(o);
+  return uniq.slice(0, 6);
+}

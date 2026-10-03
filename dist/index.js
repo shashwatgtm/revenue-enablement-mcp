@@ -25,6 +25,8 @@ const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
 const echo_safe_ts_1 = require("./echo-safe.js");
+const dealtext_ts_1 = require("./dealtext.js");
+const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
 // ("Fewer failed deliveries" becomes "fewer failed deliveries"). Any other capitalised word is kept as typed, because it may be a
@@ -962,13 +964,43 @@ function q(s) {
 // only when the earlier ones name no sector. A security tool sold to banks is cybersecurity.
 function readContext(explicitModel, input) {
     const read = (0, verticals_ts_1.explainSector)(input);
-    const v = read.vertical;
-    const m = (0, verticals_ts_1.detectModel)(explicitModel, input);
-    const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
+    let v = read.vertical;
+    let source = read.source;
+    const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' \n ');
+    // Run 20 round 1b: "AI-native" is how a product is built, not what it sells. When the seller's whole description (not only the part
+    // before "for ...") names a trade with a strong word of its own, and the AI words are only that kind of marketing label, the trade decides
+    // (an "AI-native CNAPP" is cybersecurity, "AI-native business operations" with a back office is ITeS).
+    if (v && v.id === 'ai-native' && sellerText) {
+        const MARKETING = /^(?:ai|ai[- ]native|ai[- ]first|ai agents?|agents? that|agentic|copilots?|genai|gen ai|generative ai|ai assistants?)$/;
+        if (read.strong.every((w) => MARKETING.test(w))) {
+            let best = null;
+            for (const cand of verticals_ts_1.VERTICALS) {
+                if (cand.id === 'ai-native' || cand.id === 'saas')
+                    continue;
+                const n = new Set((sellerText.match(new RegExp(cand.match.source, 'gi')) || []).map((x) => x.toLowerCase())).size;
+                if (n > 0 && (!best || n > best.n))
+                    best = { v: cand, n };
+            }
+            if (best) {
+                v = best.v;
+                source = 'seller';
+            }
+        }
+    }
+    let m = (0, verticals_ts_1.detectModel)(explicitModel, input);
+    // A services firm whose name holds the word "software" (Sonata Software) sells services, not a subscription, unless its own words say so.
+    if (v && v.id === 'ites' && m.model === 'saas' && m.how === 'read' && !/\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i.test(sellerText))
+        m = { model: 'services', how: 'sector' };
+    const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
+    // A seller that manages money is not sold like software for a finance team: the investment notes replace the sector's.
+    if (v && m.model === 'investment')
+        v = { ...v, ...answers_ts_1.INVESTMENT_OVERLAY, name: `${v.name}, investment management` };
     const sector = v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
     const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
     return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
+// A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).
+function proofOf(v) { return lowerFirstIfCommon(v.proofShape).replace(/[.]+$/, ''); }
 // Sector notes: the buying committee, what the sector measures and its usual objections (no figures, rule B82).
 function sectorNotes(v, what = 'all') {
     if (!v)
@@ -1011,6 +1043,18 @@ function answerFor(text, v) {
         return 'Offer evidence the buyer can check: an evaluation on their own data, and references they can call.';
     return 'Ask what lies behind it and what would change their mind, then answer with evidence from a similar customer only if you have it.';
 }
+// Run 20 round 1b (D92): the account plan reads every contact (one row each, with the role the user stated), answers the objections
+// the user typed, turns each competitive threat into a question to ask, and builds the 90 days from the contacts, the sector notes
+// and the parts of the solution. The tier and expansion rules are unchanged (D80).
+const THREAT_HELP = [
+    { re: /\b(?:built for (?:a |one )?(?:single|one)|single (?:model|motion|type)|one model|cannot change|rigid|fixed)\b/i, ask: 'What do you have to change in this system when your pricing or process changes, and how long does that take?', confirm: 'which of those changes the product handles without custom work, shown on one real example' },
+    { re: /\b(?:manual\w*|spreadsheets?|excel|diar(?:y|ies)|paper|by hand)\b/i, ask: 'What does the manual way cost your team each week in hours, errors and delays?', confirm: 'which of those steps the product takes over, from your own documentation' },
+    { re: /\b(?:legacy|on-?prem\w*|old |existing|incumbent|traditional|conventional)\b/i, ask: 'What does the current system still do well, and what does it not do today?', confirm: 'what the product covers that the current system does not, and what the current system covers that the product does not' },
+    { re: /\b(?:point (?:tools?|solutions?)|separate|siloed|isolated|disconnected|multiple|several|silos?)\b/i, ask: 'How many separate tools or consoles does the team work in, and who connects the findings or records between them by hand?', confirm: 'which of those tools the product replaces and which it connects to' },
+    { re: /\b(?:in-?house|build it|internal(?:ly)?)\b/i, ask: 'Who keeps the in-house version running, and what happens when they leave?', confirm: 'the cost and effort of keeping an in-house version, from the buyer\'s own figures' },
+    { re: /\b(?:feed|generic|keyword|static|periodic|scans?)\b/i, ask: 'How does the team decide which of today\'s findings matter, and how long does that take?', confirm: 'how the product ranks or validates findings, with a result on the buyer\'s own data' },
+];
+function threatHelp(t) { return THREAT_HELP.find((h) => h.re.test(t)) || { re: /./, ask: 'What do they use it for today, and what would they change about it?', confirm: 'what the product does that this option does not, and the reverse' }; }
 function executeAccountPlanBuilder(args) {
     const accountName = args.account_name || 'Target Account';
     const industry = args.industry || 'Technology';
@@ -1023,9 +1067,15 @@ function executeAccountPlanBuilder(args) {
     const accountNotes = args.account_notes || '';
     // Run 19 D80 (problems 3 and 8): contacts given are used, not asked for again; the sector's buying committee is named.
     const acctCtx = readContext(undefined, { seller: [yourSolution], context: [currentProducts, accountNotes, knownContacts], buyer: [industry === 'Technology' && !args.industry ? '' : industry] });
-    const contacts = splitItems(knownContacts);
-    const hasChampion = /champion/i.test(knownContacts);
-    const hasEconomicBuyer = /economic buyer|budget|cfo|ceo|coo/i.test(knownContacts);
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'your solution';
+    const v = acctCtx.v;
+    const investment = acctCtx.model === 'investment';
+    const bctx = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: acctCtx.model };
+    const contacts = (0, dealtext_ts_1.parseContacts)(knownContacts, investment);
+    const hasChampion = contacts.some((c) => (0, dealtext_ts_1.tagKind)(c.tag) === 'champion') || /champion/i.test(knownContacts);
+    const buyerContacts = contacts.filter((c) => ['buyer', 'economic'].includes((0, dealtext_ts_1.tagKind)(c.tag) || ''));
+    const hasEconomicBuyer = buyerContacts.length > 0 || /economic buyer|budget|cfo|ceo|coo/i.test(knownContacts);
     // Generate account tier based on ARR
     let accountTier = 'Prospect';
     let expansionPotential = 'High';
@@ -1045,126 +1095,160 @@ function executeAccountPlanBuilder(args) {
         accountTier = 'SMB';
         expansionPotential = 'Medium';
     }
-    // Parse contacts and generate power map
+    // ---- the people ----
+    const roleInDecision = (c) => {
+        const k = (0, dealtext_ts_1.tagKind)(c.tag);
+        if (k === 'champion')
+            return 'Champion (you said so)';
+        if (k === 'economic')
+            return 'Economic buyer (you said so)';
+        if (k === 'buyer')
+            return 'Buyer: the person who decides (you said so)';
+        if (k === 'blocker')
+            return 'Blocker (you said so)';
+        if (k === 'user')
+            return 'User (you said so)';
+        if (k === 'influencer')
+            return `Influencer or evaluator (you said ${c.tag})`;
+        if (c.level === 'group')
+            return 'A group of users or evaluators (read from the title)';
+        if (c.level === 'exec')
+            return 'Senior leader, probably able to sign off or block (read from the title)';
+        if (c.level === 'head')
+            return 'Head of a function, probably an influencer or evaluator (read from the title)';
+        return `${cap(answers_ts_1.ROLE_KNOWLEDGE[c.family].label)} (read from the title: confirm their part in the decision)`;
+    };
+    const nextStepFor = (c) => {
+        const k = (0, dealtext_ts_1.tagKind)(c.tag);
+        const rk = (0, answers_ts_1.roleFor)(c.title, investment);
+        if (k === 'champion')
+            return `Test their power and give them material to sell internally: they care about ${rk.cares}, so lead with ${rk.needs}`;
+        if (k === 'buyer' || k === 'economic')
+            return `${rk.nextStep}. They worry about ${rk.worry}`;
+        if (k === 'blocker')
+            return `Find out what they fear (${rk.worry}) and answer that before the proposal`;
+        return `${rk.nextStep}`;
+    };
+    const sig = (s) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ({ cfo: 'financial', coo: 'operating', cio: 'information', cto: 'technology', ciso: 'security' }[w] || w)).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director', 'team', 'teams'].includes(w));
+    const covered = new Set(contacts.flatMap((c) => sig(c.title)));
+    const uncovered = v ? v.buyerRoles.filter((role) => !sig(role).some((w) => covered.has(w))) : [];
     let powerMap = '';
-    if (knownContacts) {
+    if (contacts.length) {
         powerMap = `
 ### Known Stakeholders
 ${knownContacts}
 
 ### Power Map Analysis
-Based on the contacts provided, here's the stakeholder analysis:
+Each contact you gave is one row, with the role you stated for them. Where you stated none, the role is read from the title and marked as such.
 
 | Contact you gave | Likely role in the decision | Next step |
 |---|---|---|
-${contacts.map((c) => `| ${c} | ${/champion/i.test(c) ? 'Champion' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Economic buyer' : /it\b|cto|cio|engineer|technical|security/i.test(c) ? 'Technical influencer' : 'To confirm'} | ${/champion/i.test(c) ? 'Test their power and give them material to sell internally' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Agree the outcome they are measured on and get a meeting before the proposal' : 'Ask what they need from this decision'} |`).join('\n')}
+${contacts.map((c) => `| ${c.raw} | ${roleInDecision(c)} | ${nextStepFor(c)} |`).join('\n')}
 
-${hasChampion ? '' : `**Potential Champions:**
-- Who has the problem you solve?
-- Who's measured on outcomes you impact?
-`}${hasEconomicBuyer ? '' : `**Likely Decision Makers:**
-- Look for budget owners and P&L responsibility
-`}${acctCtx.v ? `
-**Usual buying committee in ${acctCtx.v.name}:** ${acctCtx.v.committee}
-` : ''}
-**Technical Influencers:**
-- Who evaluates solutions?
-- Who implements and maintains?
-
-**Potential Blockers:**
-- Who loses budget/headcount if you succeed?
-- Who owns competing solutions?`;
+${hasChampion ? '' : `**No champion named.** Look for the person who feels the problem and is measured on it${v ? ` (in ${v.name}, the usual champion is described as: ${v.committee.split(';').find((x) => /champion/i.test(x))?.trim() || 'the team lead who feels the problem'})` : ''}.
+`}${hasEconomicBuyer ? '' : `**No buyer named.** Ask who signs this off and who controls the budget.
+`}${v ? `
+**Usual buying committee in ${v.name}:** ${v.committee}
+${uncovered.length ? `\n**Roles this sector usually involves that none of your contacts cover:** ${(0, dealtext_ts_1.joinList)(uncovered.slice(0, 4))}. Ask who holds each part in this account.\n` : ''}` : ''}`;
     }
     else {
         powerMap = `
 ### Power Map (To Be Mapped)
 
-**Discovery Priorities:**
-1. Who owns the problem you solve?
-2. Who controls the budget?
-3. Who will use the solution daily?
-4. Who must approve the purchase?
+You gave no contacts. Start with these questions${v ? ` (written for ${v.name})` : ''}:
 
-**Typical Stakeholders (a general list${args.industry ? `, not specific to ${lowerFirstIfCommon(industry)}` : ''}):**
-- **Economic Buyer**: CFO, VP Operations, Business Unit Head
-- **Technical Buyer**: CTO, VP Engineering, IT Director
-- **User Buyer**: Department Head, Team Lead
-- **Champion**: Someone with the pain + influence`;
+1. Who owns the problem ${P} solves?${v ? ` In ${v.name} this is usually: ${v.committee.split(';')[1]?.trim() || v.committee}` : ''}
+2. Who controls the budget?${v ? ` ${v.committee.split(';')[0]}.` : ''}
+3. Who will use the solution daily?
+4. Who must approve the purchase, and what do they check?
+
+${v ? `**Roles to look for:** ${v.buyerRoles.join(', ')}.` : ''}`;
     }
-    // Generate whitespace analysis
+    // ---- whitespace ----
+    const partsHere = brief.parts;
     let whitespaceAnalysis = '';
     if (currentProducts) {
+        const used = currentProducts.trim();
         whitespaceAnalysis = `
 ### Current Footprint
-${currentProducts}
+${used}
 
 ### Whitespace Opportunities
-Based on current products, consider expansion into:
-1. **Adjacent use cases**: Who else has similar problems?
-2. **Deeper penetration**: More users, more features, more data
-3. **Cross-sell**: Complementary products they don't have
-4. **Upsell**: Premium tiers, enterprise features`;
+${partsHere.length ? `Your description of ${P} lists these parts: ${(0, dealtext_ts_1.joinList)(partsHere.map(dealtext_ts_1.partLabel))}. Confirm which of them this account uses today; the ones it does not use are the first whitespace to look at.` : `Confirm what exactly the account uses of ${P} today and what it still does by other means.`}
+
+1. **Adjacent use cases:** ${v ? `which other teams feel the same problem (${v.committee.split(';').slice(2, 4).map((x) => x.trim()).filter(Boolean).join('; ') || 'ask who else is affected'})` : 'which other teams feel the same problem'}
+2. **Deeper use:** where the teams you already serve still work around ${P}
+3. **Cross-sell:** ${partsHere.length ? 'the listed parts not yet in use' : 'complementary parts of your offer they do not have'}
+4. **Proof first:** show the result in the footprint you have (${v ? proofOf(v) : 'a before-and-after on one team'}) before asking for more`;
     }
     else {
         whitespaceAnalysis = `
 ### Whitespace Analysis
-**Full greenfield opportunity**: No current footprint
+**No current footprint given.** ${partsHere.length ? `Your description of ${P} lists these parts: ${(0, dealtext_ts_1.joinList)(partsHere.map(dealtext_ts_1.partLabel))}. Choose the one that answers the account's sharpest pain and land with that.` : `Choose the part of ${P} that answers the account's sharpest pain and land with that.`}
 
 **Land Strategy Recommendations:**
-1. Start with a specific pain point and team
-2. Prove value quickly (30-60 days) ${EXAMPLE}
-3. Build internal champions
-4. Expand from success`;
+1. Start with one specific pain and one team${v ? ` (in ${v.name}: ${(0, dealtext_ts_1.joinList)(v.metrics.slice(0, 3))} are what they will judge it on)` : ''}
+2. Agree a short proof with a measure fixed beforehand ${v ? `(${proofOf(v)})` : ''}
+3. Build internal champions from the team that sees the result
+4. Expand from that result`;
     }
-    // Generate competitive strategy
+    // ---- competition ----
+    const threats = splitItems(competitiveThreats);
     let competitiveStrategy = '';
-    if (competitiveThreats) {
+    if (threats.length) {
         competitiveStrategy = `
 ### Competitive Landscape
-${competitiveThreats}
+${threats.map((t) => `- ${t}`).join('\n')}
 
 ### Defensive/Offensive Strategy
 
-**Landmine Questions to Ask:**
-1. "How do they handle [your strength area]?"
-2. "What's their roadmap for [emerging requirement]?"
-3. "Can you talk to customers in your exact situation?"
+| What they use or fear | A question to ask | What to confirm before you position against it |
+|---|---|---|
+${threats.map((t) => { const h = threatHelp(t); return `| ${cap(t)} | "${h.ask}" | ${cap(h.confirm)} |`; }).join('\n')}
 
 **Evaluation Criteria to Establish:**
-1. Position your unique strengths as requirements
-2. Make their weaknesses visible through discovery
-3. Establish ROI framework that favors your approach`;
+1. Put the buyer's own problem first, in their words, before any feature
+2. Make the gap in each option above visible through their own test, not through your claim
+3. Agree the measure of success before the evaluation${v ? ` (${v.metrics.slice(0, 2).join(' and ')} are what this sector uses)` : ''}`;
     }
     else {
         competitiveStrategy = `
 ### Competitive Intelligence Needed
-- Who else are they evaluating?
-- Who are they using today?
-- What would make them switch?
-
-**Discovery Questions:**
-1. "Who else is solving this problem for you today?"
+No threats were given. Ask:
+1. "Who else is solving this problem for you today, including doing it by hand?"
 2. "What would need to change for you to consider alternatives?"
-3. "What's worked and not worked with current solutions?"`;
+3. "What has worked and not worked with the current way?"`;
     }
-    // Generate expansion opportunities
-    let expansionSection = '';
-    if (expansionOpportunities) {
-        expansionSection = `
+    // ---- expansion ----
+    const expItems = splitItems(expansionOpportunities);
+    const expansionSection = expItems.length ? `
 ### Identified Expansion Opportunities
-${expansionOpportunities}
+${expItems.map((e) => `- ${e}`).join('\n')}
 
 ### Expansion Playbook
-1. **Document current value**: Quantify ROI from existing usage
-2. **Identify expansion sponsors**: Who benefits from growth?
-3. **Map to business initiatives**: Tie to strategic priorities
-4. **Create urgency**: Why expand now vs later?`;
-    }
-    // Generate 90-day plan
+1. **Document current value:** the result in the footprint you already have
+2. **Identify expansion sponsors:** who benefits from each opportunity above
+3. **Map to business initiatives:** tie each to what the account has said it must achieve
+4. **Create urgency:** why expand now rather than later` : '';
+    // ---- objections from the notes ----
+    const noteObj = accountNotes.match(/objections?\s*:\s*([\s\S]*)$/i);
+    const objItems = noteObj ? splitItems(noteObj[1].replace(/[.]+\s*$/, '')) : [];
+    const objectionSection = objItems.length ? `
+## Objections and Open Questions
+
+${objItems.map((o, i) => `**${i + 1}. ${q(o)}**\n${(0, answers_ts_1.blockerLines)(o, bctx).join('\n')}`).join('\n\n')}
+
+---
+` : '';
+    const notesShown = accountNotes ? accountNotes.replace(/\s*All figures in this input are hypothetical[^.]*\.\s*/i, ' ').trim() : '';
+    // ---- 90-day plan ----
     const today = new Date();
-    const day30 = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const day60 = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
-    const day90 = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+    const day30 = (0, dealtext_ts_1.onOrBeforeWorkday)(new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000));
+    const day60 = (0, dealtext_ts_1.onOrBeforeWorkday)(new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000));
+    const day90 = (0, dealtext_ts_1.onOrBeforeWorkday)(new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000));
+    const champ = contacts.find((c) => (0, dealtext_ts_1.tagKind)(c.tag) === 'champion');
+    const buyer = buyerContacts[0];
+    const meet = contacts.filter((c) => c.level !== 'group').slice(0, 4);
     return `# Strategic Account Plan: ${accountName}
 
 ## Account Overview
@@ -1177,6 +1261,8 @@ ${expansionOpportunities}
 | **Current ARR** | ${hasValue(args.current_arr) ? money(currentArr) : NOT_SUPPLIED} |
 | **Expansion Potential** | ${expansionPotential} (set by this tool's rule from Current ARR, not from your notes) |
 | **Your Solution** | ${args.your_solution || NOT_SUPPLIED} |
+
+${acctCtx.line}
 
 ---
 
@@ -1195,64 +1281,63 @@ ${competitiveStrategy}
 ${expansionSection ? `---\n${expansionSection}` : ''}
 
 ---
-
+${objectionSection}
 ## 90-Day Account Plan
 
-### Days 1-30: ${currentArr > 0 ? 'Deepen the relationship' : 'Foundation'} (by ${day30.toISOString().split('T')[0]})
+### Days 1-30: ${currentArr > 0 ? 'Deepen the relationship' : 'Foundation'} (by ${(0, dealtext_ts_1.isoDate)(day30)})
 
 **Objectives:**
-- [ ] ${contacts.length ? `Confirm the role of each contact you named (${contacts.length}) and find who is missing` : 'Complete stakeholder mapping (all decision makers identified)'}
-- [ ] Understand current state and pain points${acctCtx.v ? ` (in ${acctCtx.v.name}, ask about ${acctCtx.v.metrics.slice(0, 3).join(', ')})` : ''}
-- [ ] ${hasChampion ? 'Equip your champion with a short business case' : 'Identify 2 or 3 potential champions'}
-- [ ] Document competitive landscape
+- [ ] ${contacts.length ? `Confirm the role of each of the ${contacts.length} contacts you named and find who is missing${uncovered.length ? ` (${(0, dealtext_ts_1.joinList)(uncovered.slice(0, 3))})` : ''}` : 'Complete stakeholder mapping (all decision makers identified)'}
+- [ ] Understand current state and pain points${v ? ` (in ${v.name}, ask about ${v.metrics.slice(0, 3).join(', ')})` : ''}
+- [ ] ${champ ? `Equip ${champ.title}, your champion, with a short business case for ${buyer ? buyer.title : 'the buyer'}` : 'Identify 2 or 3 potential champions'}
+- [ ] ${threats.length ? `Learn how they use ${(0, dealtext_ts_1.joinList)(threats.slice(0, 2))} today` : 'Document the competitive landscape, including doing it by hand'}
 
 **Key Activities:**
-1. Schedule discovery meetings with key stakeholders
-2. Research company news, earnings, initiatives
-3. Map org chart and reporting relationships
-4. Identify business triggers and priorities
+${meet.length ? meet.map((c, i) => `${i + 1}. Meet ${c.title}: ${(0, answers_ts_1.roleFor)(c.title, investment).questions[0]}`).join('\n') : '1. Schedule discovery meetings with the people who own the problem'}
+${meet.length + 1}. Map the org chart and reporting lines${v ? ` against the usual committee in ${v.name}` : ''}
+${meet.length + 2}. Identify the business trigger behind this account's priorities
 
 **Success Criteria:**
-- Champion identified and engaged
-- Pain points documented and quantified
+- ${champ ? `${champ.title} engaged and willing to bring ${buyer ? buyer.title : 'the buyer'} into a meeting` : 'A champion identified and engaged'}
+- Pain points documented and quantified in their numbers
 - Initial business case hypothesis
 
 ---
 
-### Days 31-60: Engagement (by ${day60.toISOString().split('T')[0]})
+### Days 31-60: Engagement (by ${(0, dealtext_ts_1.isoDate)(day60)})
 
 **Objectives:**
-- [ ] Demonstrate value to key stakeholders
-- [ ] Build business case with quantified ROI
-- [ ] Multi-thread across buying committee
-- [ ] Address technical and procurement requirements
+- [ ] ${buyer ? `Show ${buyer.title} the result they are measured on` : 'Demonstrate value to key stakeholders'}
+- [ ] Build the business case with the account's own figures (the roi_business_case_builder tool needs their cost or value figures)
+- [ ] Multi-thread across the buying committee${uncovered.length ? `, including ${(0, dealtext_ts_1.joinList)(uncovered.slice(0, 2))}` : ''}
+- [ ] ${objItems.length ? `Answer the ${objItems.length} open question${objItems.length === 1 ? '' : 's'} above in writing` : 'Address technical and procurement requirements'}
 
 **Key Activities:**
-1. Conduct demo/workshop with stakeholders
-2. Develop ROI model with customer data
-3. Connect champion with reference customers, if you have them
-4. Begin technical validation if needed
+1. Run a demo or working session on the account's own case
+2. Develop the ROI model with the account's data
+3. Connect the champion with reference customers, if you have them
+4. ${v ? `Agree a proof: ${proofOf(v)}` : 'Begin technical validation if needed'}
 
 **Success Criteria:**
-- Business case accepted by economic buyer
+- Business case accepted by ${buyer ? buyer.title : 'the economic buyer'}
 - Technical requirements validated
 - Procurement process understood
 
 ---
 
-### Days 61-90: Close/Expand (by ${day90.toISOString().split('T')[0]})
+### Days 61-90: Close/Expand (by ${(0, dealtext_ts_1.isoDate)(day90)})
 
 **Objectives:**
 - [ ] ${currentArr > 0 ? 'Close expansion deal' : 'Close initial deal'}
 - [ ] Establish success metrics and implementation plan
-- [ ] Set foundation for future expansion
+- [ ] Set foundation for future expansion${expItems.length ? ` (${(0, dealtext_ts_1.joinList)(expItems.slice(0, 2))})` : ''}
 - [ ] Document wins and learnings
 
 **Key Activities:**
 1. Finalize commercial terms
 2. Complete procurement process
 3. Kick off implementation planning
-4. Identify next expansion opportunity
+4. Identify the next expansion opportunity
 
 **Success Criteria:**
 - Contract signed
@@ -1263,17 +1348,15 @@ ${expansionSection ? `---\n${expansionSection}` : ''}
 
 ## Account Intelligence
 
-${accountNotes ? `### Additional Context\n${accountNotes}\n\n` : ''}### Research Checklist
-- [ ] Recent news and press releases
-- [ ] Earnings calls and investor presentations (if the company is public)
-- [ ] LinkedIn for org changes and hiring
-- [ ] Glassdoor for culture insights
-- [ ] G2/review sites for tech stack
-- [ ] Job postings for priorities
+${notesShown ? `### Additional Context\n${notesShown}\n\n` : ''}### What to Research
+- Recent news and press releases${v ? ` that touch ${v.metrics.slice(0, 2).join(' or ')}` : ''}
+- Earnings calls and investor presentations (if the company is public)
+- Hiring and org changes for the roles above
+- Job postings for priorities
 
 ### Key Questions to Answer
 1. What are their top 3 strategic priorities this year?
-2. How do they measure success?
+2. How do they measure success${v ? ` (is it ${v.metrics.slice(0, 2).join(' or ')}?)` : ''}?
 3. What's their budget cycle?
 4. Who has buying authority?
 5. What would prevent them from buying?
@@ -1284,15 +1367,15 @@ ${accountNotes ? `### Additional Context\n${accountNotes}\n\n` : ''}### Research
 
 | Priority | Action | Owner | Due Date |
 |----------|--------|-------|----------|
-| High | ${hasChampion ? 'Brief your champion and agree the next meeting' : 'Identify and engage a champion'} | AE | Week 1 |
-| High | Map decision-making process | AE | Week 2 |
-| Medium | Research competitive landscape | AE | Week 2 |
-| Medium | Build initial business case | AE + SE | Week 3 |
-| Low | Document account in CRM | AE | Ongoing |
+| High | ${champ ? `Brief ${champ.title} and agree the next meeting` : 'Identify and engage a champion'} | AE | Week 1 |
+| High | ${buyer ? `Get a meeting with ${buyer.title}` : 'Map the decision-making process'} | AE | Week 2 |
+| Medium | ${threats.length ? `Ask the competitive-table questions about ${(0, dealtext_ts_1.clip)(threats[0], 60)}` : 'Research the competitive landscape'} | AE | Week 2 |
+| Medium | Build the initial business case | AE + SE | Week 3 |
+| Low | Document the account in CRM | AE | Ongoing |
 
 ---
 
-*Account Plan Generated: ${today.toISOString().split('T')[0]}*
+*Account Plan Generated: ${(0, dealtext_ts_1.isoDate)(today)}*
 *Review and Update: Monthly*
 
 ${SUGGESTIONS_FOOTER}`;
@@ -1310,6 +1393,12 @@ function executeDealStrategyCoach(args) {
     const nextSteps = args.next_steps || '';
     const closeDate = args.close_date || '';
     const yourSolution = args.your_solution || 'your solution';
+    // Run 20 round 1b: the blockers are answered by their kind and the user's own words (src/answers.ts); the answer says what to confirm.
+    const dealCtx = readContext(undefined, { seller: [yourSolution], context: [blockers, competitors, nextSteps, dealName] });
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'your solution';
+    const bctx = { product: brief.short, sectorObjections: dealCtx.v?.objections, sectorName: dealCtx.v?.name, model: dealCtx.model };
+    const compItems = splitItems(competitors);
     // Calculate deal health
     let healthScore = 70; // Start at 70
     let healthFactors = [];
@@ -1456,7 +1545,7 @@ function executeDealStrategyCoach(args) {
 
 **Tactical Priorities:**
 1. **No surprises**: Proposal should confirm what's already discussed
-2. **Quantify value**: ROI > 3x investment ${EXAMPLE}
+2. **Quantify value**: put the value in the buyer's own numbers${dealCtx.v ? ` (this sector measures ${dealCtx.v.metrics.slice(0, 3).join(', ')})` : ''}
 3. **Differentiate**: Why you, not just why change
 4. **Create urgency**: Why now matters
 
@@ -1561,9 +1650,9 @@ function executeDealStrategyCoach(args) {
         specificRecs += `
 ### CRITICAL: Find Your Champion
 
-Without a champion, win rate drops 70%+ (example claim: keep it only if your data shows it). Immediate action required:
+Without a champion nobody sells for you when you are not in the room. Immediate action required:
 
-1. **Identify potential champions**: Who has the pain and influence?
+1. **Identify potential champions**: Who has the pain and influence?${dealCtx.v ? ` In ${dealCtx.v.name} the usual champion is: ${dealCtx.v.committee.split(';').find((x) => /champion/i.test(x))?.trim() || 'the team lead who feels the problem'}.` : ''}
 2. **Test for championship**: Will they:
    - Advocate internally when you're not there?
    - Share information about competition and process?
@@ -1579,7 +1668,7 @@ Without a champion, win rate drops 70%+ (example claim: keep it only if your dat
         specificRecs += `
 ### Note: Economic Buyer Unknown
 
-The economic buyer was not supplied. If you do not know who controls the budget:
+The economic buyer was not supplied.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}; check whether that holds here.` : ''} If you do not know who controls the budget:
 
 1. **Ask directly**: "Who has final approval on budget and vendor selection?"
 2. **Map the org**: Who does your champion report to?
@@ -1592,31 +1681,35 @@ The economic buyer was not supplied. If you do not know who controls the budget:
         specificRecs += `
 ### Competitive Strategy
 
-**Competitors:** ${competitors}
+${compItems.length > 1 ? 'Each competitor or alternative you named is a row:' : 'The competitor or alternative you named:'}
+
+| Competitor or alternative | A question to ask | What to confirm before you position against it |
+|---|---|---|
+${compItems.map((c) => { const h = threatHelp(c); return `| ${cap(c)} | "${h.ask}" | ${cap(h.confirm)} |`; }).join('\n')}
 
 **Tactics:**
-1. **Know their weaknesses**: Every competitor has gaps
-2. **Set traps**: Questions that expose their limitations
-3. **Don't go negative**: Let buyer discover issues
-4. **Change the criteria**: Make your strengths their requirements
+1. **Know their weaknesses**: take them from the buyer's own words, not from memory
+2. **Set traps**: questions that let the buyer test the gap themselves
+3. **Don't go negative**: let the buyer discover issues
+4. **Change the criteria**: make the buyer's real problem the first requirement
 
 **Landmine Questions to Suggest:**
 - "How will you test the scenario you care most about, with your own data?"
 - "What does each option cost over three years, including what is outside the quoted price?"
 - "Can each vendor show a customer like you, and can you call them?"
+${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : ''}
 
 `;
     }
-    // Run 19 D80 (problem 3): every blocker the user typed gets its own answer, from the sector's known objections where one matches.
-    const dealCtx = readContext(undefined, { seller: [yourSolution], context: [blockers, competitors, nextSteps, dealName] });
     if (blockers) {
         const items = splitItems(blockers);
         specificRecs += `
 ### Blocker Mitigation
 
+Each blocker you typed is answered on its own. Where the answer needs a fact about ${P}, it says what to confirm instead of stating one.
+
 ${items.map((b, i) => `**Blocker ${i + 1}: ${q(b)}**
-- What to do: ${answerFor(b, dealCtx.v)}
-- Ask first: "What would have to be true for this to stop being a concern?"`).join('\n\n')}
+${(0, answers_ts_1.blockerLines)(b, bctx).join('\n')}`).join('\n\n')}
 
 **For any blocker that is a person:** find out whether they are threatened by the change, own a competing option or have a fair concern; answer their concern too, and ask your champion or an executive sponsor for cover only after that.
 
@@ -1648,6 +1741,17 @@ ${sectorNotes(dealCtx.v)}
 **Health Factors:**
 ${healthFactors.map(f => `- ${f}`).join('\n')}
 
+### The shape of this deal
+
+${[
+        `- **Stage:** ${dealStage}${hasValue(args.days_in_stage) ? `, ${daysInStage} days in this stage` : ''}${hasValue(args.deal_value) ? `, worth ${money(dealValue)}` : ''}.`,
+        `- **Champion:** ${championStatus === 'no_champion' ? 'none yet. Finding one comes before anything else.' : championStatus === 'potential_champion' ? 'a potential champion. Test them: do they have access to the buyer and a reason to push?' : championStatus === 'confirmed_champion' ? 'confirmed. Give them the material to sell internally.' : 'several contacts engaged (multi-threaded). Keep each one informed.'}`,
+        `- **Economic buyer:** ${economicBuyer ? economicBuyer : `unknown.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}.` : ''}`}`,
+        compItems.length ? `- **Competition:** ${compItems.length} named (${(0, dealtext_ts_1.joinList)(compItems.map((c) => (0, dealtext_ts_1.clip)(c, 60)))}). Each is a row in the competitive table below.` : '- **Competition:** none named. Ask what they do today, including doing it by hand.',
+        blockers ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
+        dealCtx.v ? `- **How deals usually run in ${dealCtx.v.name}:** ${dealCtx.v.salesMotion}` : '',
+    ].filter(Boolean).join('\n')}
+
 ---
 
 ${stageStrategies[dealStage] || stageStrategies['discovery']}
@@ -1661,7 +1765,7 @@ ${specificRecs}
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
 ${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
-3. **Advance the deal**: ${nextSteps || 'Schedule next meeting with clear agenda'}
+3. **Advance the deal**: ${nextSteps || (blockers ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
 4. **Update CRM**: Document all new information
 
 ### This Week
@@ -1701,11 +1805,26 @@ function executeDiscoveryQuestionBank(args) {
     const gapsToFill = args.gaps_to_fill || '';
     // Run 19 D80 (problems 2, 3 and 8): gaps first, in the sector's language; "none" is never echoed back as if it were a metric.
     const ctx = readContext(undefined, { seller: [yourSolution], context: [knownPainPoints], role: [prospectRole], buyer: [prospectIndustry] });
+    // Run 20 round 1b (D92): no bracket placeholder where the input or the sector notes can supply the words; the pain the user typed is
+    // split into its separate pains instead of being quoted whole again and again; the prospect's role and the parts of the solution
+    // each get their own questions.
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'your solution';
+    const investment = ctx.model === 'investment';
+    const roleKnow = prospectRole ? (0, answers_ts_1.roleFor)(prospectRole, investment) : null;
+    const roleFam = prospectRole ? (0, dealtext_ts_1.familyOf)(prospectRole, investment) : 'other';
+    const pains = (0, dealtext_ts_1.painClauses)(knownPainPoints);
+    const painLead = pains[0] ? lowerFirstIfCommon(pains[0]) : '';
+    const signerClause = ctx.v ? lowerFirstIfCommon(ctx.v.committee.split(';')[0]).replace(/\s+signs?$/i, '') : '';
+    const signer = signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
+    const partNames = brief.parts.map(dealtext_ts_1.partLabel);
+    const critA = partNames[0] || (brief.kind ? lowerFirstIfCommon(brief.kind) : P);
+    const critB = partNames[1] || ctx.v?.metrics[0] || 'the outcome you care about';
     const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics.trim());
     const firstMetric = ctx.v ? ctx.v.metrics[0] : 'the number this problem moves';
     const metricsFollowUp = !knownMetrics ? '' : noMetrics
         ? `**Not known yet:** no metrics shared so far. Ask for a baseline first:\n- "How do you measure ${firstMetric} today, and who owns that number?"`
-        : `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${q(lowerFirstIfCommon(knownMetrics))}. How are you measuring that today, and how often?"`;
+        : `**Already Known:** ${knownMetrics}\n**Follow-up:** "You mentioned ${q(lowerFirstIfCommon((0, dealtext_ts_1.clip)(knownMetrics, 120)))}. How are you measuring that today, and how often?"`;
     const GAP_QUESTIONS = [
         [/economic buyer|budget owner|sign/i, 'Economic buyer', '"Who signs off a decision like this, and have they seen this problem first-hand?"'],
         [/decision process|process|approval/i, 'Decision process', '"What steps does a purchase like this go through here, and who is involved at each step?"'],
@@ -1720,7 +1839,12 @@ function executeDiscoveryQuestionBank(args) {
     const gaps = splitItems(gapsToFill);
     const gapRows = gaps.map((g) => { const m = GAP_QUESTIONS.find(([re]) => re.test(g)); return `- **${cap(g)}:** ${m ? m[2] : `"Can you walk me through ${lowerFirstIfCommon(g)}?"`}`; });
     const gapSection = gaps.length ? `## Gaps to fill first\n\nYou said these are still open, so ask about them before anything else:\n${gapRows.join('\n')}\n\n---\n\n` : '';
-    const sectorSection = ctx.v ? `## Questions in the language of ${ctx.v.name}\n\n${ctx.v.discovery.map((x) => `- "${x}"`).join('\n')}\n\n${sectorNotes(ctx.v, 'committee')}\n\n---\n\n` : '';
+    // A SaaS company's own activation and expansion questions do not suit a finance, security or IT leader who is buying from it.
+    const sectorFits = !(ctx.v && ctx.v.id === 'saas' && ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam));
+    const roleSection = roleKnow ? `## Questions for ${prospectRole}\n\nA ${roleKnow.label} cares about ${roleKnow.cares}, and worries about ${roleKnow.worry}. Open with their concern, not with your product.\n\n${roleKnow.questions.map((x) => `- "${x}"`).join('\n')}\n\n**What they need to see before they say yes:** ${roleKnow.needs}.\n\n---\n\n` : '';
+    const sectorSection = ctx.v ? `## Questions in the language of ${ctx.v.name}\n\n${sectorFits ? ctx.v.discovery.map((x) => `- "${x}"`).join('\n') : `The usual ${ctx.v.name} questions are about the prospect's own customers (activation, expansion). They do not fit a ${roleKnow ? roleKnow.label : 'buyer in this role'}, so use the questions above and below.`}\n\n${sectorNotes(ctx.v, 'committee')}\n\n---\n\n` : '';
+    const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${pains.map((p) => `- On ${q(lowerFirstIfCommon(p))}: how often does it happen, who deals with it, and what does it cost in time, money or risk?`).join('\n')}${pains.length ? '\n' : ''}- Of the pains in the context line above, which hurts most, and which one would the people who sign this off pick?\n- What have you already tried for it, and why did it not hold?\n\n---\n\n` : '';
+    const partSection = partNames.length ? `## Questions on what ${P} covers\n\nOne question for each part you listed. Use only the ones that touch the pain above.\n\n${partNames.slice(0, 6).map((n) => `- ${cap(n)}: "How do you handle this today, who owns it, and what breaks?"`).join('\n')}\n\n---\n\n` : '';
     // MEDDPICC Questions
     const meddpiccQuestions = `
 ## MEDDPICC Framework Questions
@@ -1751,9 +1875,9 @@ ${metricsFollowUp}
 - "When you've made purchases like this before, who was involved?"
 
 **Engagement:**
-- "What would [Economic Buyer] need to see to move forward?"
-- "How is [Economic Buyer] thinking about this problem?"
-- "Can we include [Economic Buyer] in our next conversation?"
+- "What would ${signer} need to see to move forward?"
+- "How is ${signer} thinking about this problem?"
+- "Can we include ${signer} in our next conversation?"
 
 ---
 
@@ -1766,8 +1890,8 @@ ${metricsFollowUp}
 - "Are there must-haves vs nice-to-haves?"
 
 **Influencing:**
-- "Have you considered [your differentiator] as a criterion?"
-- "How important is [your strength] in your evaluation?"
+- "Have you considered ${critA} as a criterion?"
+- "How important is ${critB} in your evaluation?"
 - "What would cause you to eliminate a vendor?"
 
 ---
@@ -1811,7 +1935,7 @@ ${metricsFollowUp}
 - "If you do nothing, what happens?"
 
 **Deepening:**
-${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q(lowerFirstIfCommon(knownPainPoints))}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
+${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "You mentioned ${q(painLead)}. Can you tell me more about the impact?"` : '- "What\'s the root cause of this problem?"\n- "How long has this been an issue?"'}
 - "Who else in the organization feels this pain?"
 
 ---
@@ -1825,7 +1949,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 - "Who's driven similar changes before?"
 
 **Testing:**
-- "If I gave you a compelling business case, would you share it with [stakeholder]?"
+- "If I gave you a compelling business case, would you share it with ${signer}?"
 - "What obstacles do you see, and would you help me address them?"
 - "Can you help me understand the internal dynamics?"
 
@@ -1840,8 +1964,8 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 - "What's the option of doing nothing?"
 
 **Positioning:**
-- "What do you like about [competitor]?"
-- "What concerns do you have about [competitor]?"
+- "What do you like about the way you handle this today?"
+- "What concerns do you have about the options you are looking at?"
 - "How are you thinking about the differences between options?"`;
     // BANT Questions
     const bantQuestions = `
@@ -1872,7 +1996,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 
 **Navigating:**
 - "Can you help me understand the approval chain?"
-- "Would it make sense to include [decision maker] in our conversation?"
+- "Would it make sense to include ${signer} in our conversation?"
 - "What would you need to recommend us internally?"
 
 ---
@@ -1932,7 +2056,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 - "Where do things break down?"
 
 **Impact:**
-${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q(lowerFirstIfCommon(knownPainPoints))}. How does that affect your team's performance?"` : '- "How is this problem affecting your team?"'}
+${knownPainPoints ? `**Already Known:** ${pains.length ? pains.join('; ') : 'the pain in the context above'}\n- "You mentioned ${q(painLead)}. How does that affect your team's performance?"` : '- "How is this problem affecting your team?"'}
 - "What's the ripple effect of this issue?"
 - "How much time/money does this cost?"
 
@@ -1943,7 +2067,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 
 **Quantifying:**
 - "If you could solve this, what would improve?"
-- "What would success look like in 12 months?" ${EXAMPLE}
+- "What would success look like in a year?"
 - "How would you measure the impact?"
 
 **Expanding:**
@@ -1959,7 +2083,7 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 **Identifying:**
 - "What's happening that makes this important now?"
 - "Is there a deadline or event driving this?"
-- "What happens if this isn't solved by [date]?"
+- "What happens if this isn't solved by the end of the quarter?"
 
 **Leveraging:**
 - "What would the impact be of missing that deadline?"
@@ -1992,25 +2116,25 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 - "Are there any deal-breakers we should know about?"
 
 **Influencing:**
-- "How important is [your differentiator] to you?"
-- "Have you considered [evaluation criteria]?"
+- "How important is ${critA} to you?"
+- "Have you considered ${ctx.v ? ctx.v.metrics[0] : 'the measure you will judge the result by'} as a criterion?"
 - "What's the weighting between price and value?"`;
     // Challenger Questions
     const challengerQuestions = `
 ## Challenger Sale Framework Questions
 
 ### Teach: Share Insights
-*Lead with provocative insights about their business*
+*Lead with something the buyer had not seen about their own business*
 
 **Reframe Questions:**
-- "Have you considered that [surprising insight about their industry]?"
-- "What if the problem isn't [obvious issue] but actually [hidden issue]?"
-- "[Only if true and provable: We've seen companies like yours [unexpected finding].] Have you experienced that?"
+${painLead ? `- "You described ${q(painLead)}. Where does it start: before the work reaches your team, inside it, or at the handover?"` : '- "Where does the problem start: before the work reaches your team, inside it, or at the handover?"'}
+- "Which of the numbers you track${ctx.v ? ` (${ctx.v.metrics.slice(0, 3).join(', ')})` : ''} would move first if this were fixed?"
+- "What would you have to believe for this not to be worth fixing this year?"
 
-**Insight Starters:**
-- "[Only if true and provable: Most companies we talk to think [common belief], but the data shows [surprising reality].]"
-- "[Only if true and provable: There's a hidden cost in your current approach: [the cost].]"
-- "[Only if true and provable: The best-performing teams in your industry are doing [what they do differently].]"
+**Insight starters (use only what you can show):**
+- If you hold data on ${ctx.v ? ctx.v.metrics[0] : 'the measure that matters'} across your customers, open with the pattern it shows, with its source and period.
+- If a customer's before-and-after exists${ctx.v ? ` (${proofOf(ctx.v)})` : ''}, tell it in two sentences and name what changed.
+- If you cannot show an insight, ask the question instead of stating one.
 
 ---
 
@@ -2023,8 +2147,8 @@ ${knownPainPoints ? `**Already Known:** ${knownPainPoints}\n- "You mentioned ${q
 - "What would this mean for your specific goals?"
 
 **Personalization:**
-- "Given your role, where do you see the biggest impact?"
-- "How would your CEO/board react to this insight?"
+- "Given your role${prospectRole ? ` as ${prospectRole}` : ''}, where do you see the biggest impact?"
+- "How would ${signer} react to this insight?"
 - "What's unique about your situation that we should factor in?"
 
 ---
@@ -2118,7 +2242,7 @@ ${ctx.line}
 
 ---
 
-${gapSection}${sectorSection}`;
+${gapSection}${roleSection}${sectorSection}${painSection}${partSection}`;
     if (framework === 'meddpicc' || framework === 'all') {
         output += meddpiccQuestions + '\n\n---\n\n';
     }
@@ -2135,6 +2259,7 @@ ${gapSection}${sectorSection}`;
         output += gapSellingQuestions + '\n\n---\n\n';
     }
     // Stage-specific recommendations
+    const area = painLead || (brief.kind ? lowerFirstIfCommon(brief.kind) : 'this area');
     const stageRecommendations = {
         first_call: `
 ## First Call Recommendations
@@ -2147,21 +2272,21 @@ ${gapSection}${sectorSection}`;
 
 **Questions to Prioritize:**
 - "What prompted you to take this meeting?"
-- "What's your biggest challenge in [area]?"
+- "What's your biggest challenge in ${area}?"
 - "If you could wave a magic wand, what would change?"
 
 **Avoid:**
 - Pitching too early
 - Yes/no questions
-- Talking more than 40% of the time ${EXAMPLE}`,
+- Talking more than the buyer does`,
         discovery: `
 ## Discovery Stage Recommendations
 
 **Focus Areas:**
-1. Deep-dive into pain and impact
-2. Identify all stakeholders
+1. Deep-dive into pain and impact${painLead ? ` (start with ${q(painLead)})` : ''}
+2. Identify all stakeholders${ctx.v ? ` (${ctx.v.buyerRoles.slice(0, 4).join(', ')} are the usual ones in ${ctx.v.name})` : ''}
 3. Understand buying process
-4. Quantify business case
+4. Quantify business case${ctx.v ? ` (${ctx.v.metrics.slice(0, 3).join(', ')})` : ''}
 
 **Questions to Prioritize:**
 - Pain quantification questions
@@ -2850,7 +2975,33 @@ ${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [
 *This is a living document. Please update as things change.*
 *Last Updated: ${formatDate(today)}*`;
 }
-// Tool 6: Win/Loss Analyzer
+const ALT_KINDS = [
+    { re: /\b(?:manual|spreadsheets?|excel|diar(?:y|ies)|paper|by hand|whatsapp|email threads?)\b/i, label: 'a manual process', why: 'it costs nothing extra and nobody has to learn a new way of working', check: 'What did the manual way cost the buyer in hours, errors and delays, and did anyone ever put a number on it?', win: 'when the buyer saw what the manual way cost them and the work was taken off their people' },
+    { re: /\b(?:legacy|on-?prem\w*|old |existing|incumbent|traditional|conventional|mainframe|in the 90s|already (?:have|use))\b/i, label: 'an incumbent or legacy system', why: 'it is already paid for, integrated and approved', check: 'What did the buyer say the current system still does well, and what would switching have disturbed (data, integrations, retraining)?', win: 'when the buyer\'s problem was something the current system could not do' },
+    { re: /\b(?:point (?:tools?|solutions?)|multiple|several|separate|disconnected|siloed|best-of-breed|third-party|each function|one firm|another builds|different (?:vendors|tools))\b/i, label: 'a set of separate tools or vendors', why: 'each piece is familiar and can be replaced one at a time', check: 'Did the buyer see the cost of connecting the pieces, or only the price of each one?', win: 'when connecting the separate pieces was costing the buyer more than the pieces themselves' },
+    { re: /\b(?:in-?house|build it|built internally|own team|diy|internal(?:ly)?)\b/i, label: 'an in-house build or process', why: 'their own team controls it and there is no licence to buy', check: 'What does the in-house option cost to keep running, and who owns it if its builder leaves?', win: 'when the buyer counted what the in-house option costs to keep running' },
+    { re: /\b(?:cards?|cash|advances?|debit|credit|bank|banks)\b/i, label: 'an existing financial instrument or provider', why: 'it is already in use and the buyer understands it', check: 'What did the buyer like about it, and what did it fail to give them (control, visibility, speed)?', win: 'when the buyer wanted control or visibility that the existing provider does not give' },
+];
+function altRead(text, named) {
+    const k = ALT_KINDS.find((x) => x.re.test(text));
+    if (named)
+        return { text, label: 'a competitor you named', why: 'the buyer chose it, or you expect them to', check: 'What did it do better, in the buyer\'s own words, and at which stage did it pull ahead?', win: 'where the buyer valued what you do that it does not', named };
+    return k ? { text, label: k.label, why: k.why, check: k.check, win: k.win, named } : { text, label: 'another option the buyer used or considered', why: 'it was the option the buyer already understood', check: 'What did the buyer like about it, and what did it fail to give them?', win: 'where the buyer found it fell short of what they needed', named };
+}
+// The alternatives the user described: after "alternatives ... are described as", "competing with", "versus", "incumbent" and similar.
+function alternativesIn(details, competitorWon) {
+    const out = [];
+    const seen = new Set();
+    const add = (t, named) => { const k = t.toLowerCase().replace(/\W+/g, ' ').trim(); if (k && !seen.has(k)) {
+        seen.add(k);
+        out.push(altRead(t.trim(), named));
+    } };
+    splitItems(competitorWon).forEach((c) => add(c, true));
+    const m = details.match(/(?:alternatives?(?:\s+(?:buyers|they|customers|the buyers?)\s+use)?\s+(?:are|is|include)(?:\s+described\s+as)?|competing\s+(?:with|against)|competitors?\s*(?:are|is|include[sd]?|:)|\bversus\b|\bvs\.?|incumbents?\s*(?:is|are|:)?|compared\s+(?:with|to))\s*:?\s*(.+?)(?:\.\s+[A-Z]|\.$|$)/i);
+    if (m)
+        splitItems(m[1].replace(/\.$/, '')).forEach((a) => add(a, false));
+    return out;
+}
 function executeWinLossAnalyzer(args) {
     const analysisType = args.analysis_type || 'single_deal';
     const dealOutcome = args.deal_outcome || '';
@@ -2863,13 +3014,19 @@ function executeWinLossAnalyzer(args) {
     const yourSolution = args.your_solution || 'your solution';
     const multipleDeals = args.multiple_deals || '';
     // Run 19 D80 (problem 3): the stated reason and the stakeholders are read, not only echoed.
-    const wlCtx = readContext(undefined, { seller: [yourSolution], context: [dealDetails, lossReason, stakeholdersInvolved] });
+    const wlCtx = readContext(undefined, { seller: [yourSolution], context: [dealDetails, lossReason, stakeholdersInvolved, multipleDeals] });
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'your solution';
+    const bctx = { product: brief.short, sectorObjections: wlCtx.v?.objections, sectorName: wlCtx.v?.name, model: wlCtx.model };
+    const investment = wlCtx.model === 'investment';
+    const contacts = (0, dealtext_ts_1.parseContacts)(stakeholdersInvolved, investment);
+    const alts = alternativesIn(dealDetails, competitorWon);
     const people = splitItems(stakeholdersInvolved).map((x) => {
         const m = x.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
         return m ? { who: m[1].trim(), stance: m[2].trim().toLowerCase() } : { who: x.trim(), stance: '' };
     });
-    const against = people.filter((p) => /against|blocker|opposed|detractor|negative/.test(p.stance));
-    const support = people.filter((p) => /support|champion|sponsor|for\b|positive/.test(p.stance));
+    const against = contacts.filter((p) => (0, dealtext_ts_1.tagKind)(p.tag) === 'blocker');
+    const support = contacts.filter((p) => (0, dealtext_ts_1.tagKind)(p.tag) === 'champion');
     const r = lossReason.toLowerCase();
     const readings = [];
     if (/bundle|one vendor|single vendor|suite|together|all-in-one/.test(r))
@@ -2885,63 +3042,97 @@ function executeWinLossAnalyzer(args) {
     if (/relationship|incumbent|existing|renew|stayed/.test(r))
         readings.push('**Incumbent advantage:** the buyer stayed with what they know. Ask what the incumbent fixed or promised during your evaluation.');
     const readingBlock = lossReason ? `### What the Stated Reason Points To\n\n${readings.length ? readings.join('\n\n') : `The stated reason (${q(lossReason)}) matches none of the usual patterns: ask the buyer what sat behind it.`}\n\n` : '';
-    const peopleBlock = people.length ? `### Who Stood Where\n\n| Stakeholder | Position you recorded | What to learn |\n|---|---|---|\n${people.map((p) => `| ${p.who} | ${p.stance || 'not recorded'} | ${/against|blocker|opposed/.test(p.stance) ? 'What did they need that we did not give them, and when did they turn against us?' : /support|champion|sponsor/.test(p.stance) ? 'Did they have the power and the material to sell this internally?' : 'What would have moved them to support us?'} |`).join('\n')}\n` : '';
+    const execNamed = contacts.some((p) => p.level === 'exec' || p.level === 'head');
+    const ebNamed = contacts.some((p) => ['economic', 'buyer'].includes((0, dealtext_ts_1.tagKind)(p.tag) || '') || /\b(cfo|ceo|coo|cio|cto|ciso|chief|economic buyer|budget)\b/i.test(p.title));
     const yesNo = (v, why) => (v === null ? `Not known from your input: check (${why})` : v ? `Yes (from your input: ${why})` : `No (from your input: ${why})`);
-    const execNamed = people.some((p) => /\b(ceo|cfo|coo|cio|cto|ciso|chief|vp|vice president|managing director|head)\b/i.test(p.who));
-    const ebNamed = people.some((p) => /\b(cfo|ceo|coo|economic buyer|budget)\b/i.test(p.who + ' ' + p.stance));
+    // ---- sections shared by every analysis type ----
+    const gave = [
+        `| **Solution** | ${args.your_solution ? `${brief.short}${brief.kind ? `, ${brief.kind}` : ''}` : NOT_SUPPLIED} |`,
+        `| **Deal Value** | ${hasValue(args.deal_value) ? money(dealValue) : NOT_SUPPLIED} |`,
+        `| **Sales Cycle** | ${hasValue(args.sales_cycle_days) ? `${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}` : NOT_SUPPLIED} |`,
+        `| **Outcome** | ${dealOutcome ? (0, dealtext_ts_1.upperFirst)(dealOutcome.replace(/_/g, ' ')) : 'not given'} |`,
+        `| **Stated reason** | ${lossReason ? cap(lossReason) : 'not given'} |`,
+        `| **Competitor who won** | ${competitorWon ? cap(competitorWon) : 'not given'} |`,
+        `| **Stakeholders** | ${contacts.length ? contacts.map((c) => c.raw).join('; ') : 'not given'} |`,
+    ].join('\n');
+    const detailsBlock = dealDetails ? `\n**Deal details as you gave them:**\n\n> ${dealDetails.replace(/\n+/g, '\n> ')}\n` : '';
+    const wholeProduct = args.your_solution && yourSolution.trim().length > P.length + 3 ? `\n**What you sell, as you described it:** ${yourSolution.trim()}\n` : '';
+    const missing = [];
+    if (!dealOutcome)
+        missing.push('`deal_outcome`: won, lost or no_decision. This decides which analysis applies, so it is the first thing to add.');
+    if (dealOutcome !== 'won' && !lossReason)
+        missing.push('`loss_reason`: the reason the buyer gave, in the buyer\'s own words, and who said it. For a win, put the reason they gave for choosing you in `deal_details`.');
+    if (!competitorWon)
+        missing.push(`\`competitor_won\`: which alternative the buyer chose${alts.length ? ` (you described ${(0, dealtext_ts_1.joinList)(alts.map((a) => `"${a.text}"`))})` : ''}, or "no decision" if they chose none.`);
+    if (contacts.length && !contacts.some((c) => c.tag))
+        missing.push('The position of each stakeholder in brackets after the name, for example "' + `${contacts[0].title} (supporter)` + '" or "(against)".');
+    if (!contacts.length)
+        missing.push('`stakeholders_involved`: who took part, with a position for each in brackets, for example "CFO (neutral)".');
+    if (!hasValue(args.sales_cycle_days))
+        missing.push('`sales_cycle_days`: how long the deal ran, and in `deal_details` the stage where it was decided.');
+    const asks = missing.length ? `## What to add to finish the analysis\n\n${missing.map((m, i) => `${i + 1}. ${m}`).join('\n')}\n\nThen run the tool again with \`analysis_type\` set to \`single_deal\`.\n\n` : '';
+    const altBlock = alts.length ? `## The alternatives in this deal\n\nThese come from your ${competitorWon ? 'competitor_won and ' : ''}deal details. None of them is called a winner here: you have not said which one the buyer chose.\n\n| Alternative | What kind it is | Why a buyer keeps it | What to find out in the review |\n|---|---|---|---|\n${alts.map((a) => `| ${cap(a.text)} | ${a.label} | ${cap(a.why)} | ${a.check} |`).join('\n')}\n\n` : '';
+    const reasonRows = wlCtx.v ? wlCtx.v.objections.map((o) => `| ${o.objection} | ${o.response} |`).join('\n') : '';
+    const sectorBlock = wlCtx.v ? `## Why deals like this are usually lost in ${wlCtx.v.name}\n\nThese are the objections this sector most often raises (from the sector notes in this tool, not from your deal). Check each against the deal: was it raised, by whom, and was it answered before the proposal?\n\n| Usual reason | Pattern of a good answer |\n|---|---|\n${reasonRows}\n\n**How deals usually run:** ${wlCtx.v.salesMotion}\n\n**What this sector measures** (ask which of these the buyer used to judge the result): ${wlCtx.v.metrics.join(', ')}.\n\n` : '';
+    const learn = (c) => {
+        const k = (0, dealtext_ts_1.tagKind)(c.tag);
+        if (k === 'blocker')
+            return 'What did they need that you did not give them, and when did they turn against you?';
+        if (k === 'champion')
+            return 'Did they have the power and the material to sell this internally, and what did they say when the decision was made?';
+        if (k === 'economic' || k === 'buyer')
+            return 'Did they ever hear your case from you directly, or only through someone else?';
+        return (0, answers_ts_1.roleFor)(c.title, investment).questions[0];
+    };
+    const peopleBlock = contacts.length ? `## Who was involved\n\n| Stakeholder | Position you recorded | What to learn in the review |\n|---|---|---|\n${contacts.map((c) => `| ${cap(c.title)} | ${c.tag ? cap(c.tag) : 'not recorded'} | ${learn(c)} |`).join('\n')}\n\n${(() => {
+        const note = [];
+        if (!support.length)
+            note.push('No champion is recorded. If there was none, that is a finding in itself; if there was one, name them.');
+        if (against.length)
+            note.push(`Against you: ${against.map((p) => p.title).join(', ')}. Their view is the first thing to learn in the loss review.`);
+        if (wlCtx.v) {
+            const ACR = { cfo: 'financial', coo: 'operating', cio: 'information', cto: 'technology', ciso: 'security', cmo: 'marketing', cro: 'revenue' };
+            const sig = (s) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ACR[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director'].includes(w));
+            const given = new Set(contacts.flatMap((c) => sig(c.title)));
+            const notNamed = wlCtx.v.buyerRoles.filter((role) => !sig(role).some((w) => given.has(w)));
+            if (notNamed.length)
+                note.push(`Roles this sector usually involves that you did not list: ${(0, dealtext_ts_1.joinList)(notNamed.slice(0, 4))}. Were they part of the deal, and what did they think?`);
+        }
+        return note.length ? note.map((n) => `- ${n}`).join('\n') + '\n\n' : '';
+    })()}` : '';
+    const engagement = contacts.length ? `### Engagement Assessment\n| Question | Check |\n|----------|-------|\n| Did we have an executive sponsor? | ${execNamed ? `Possibly: a senior role is named (${contacts.filter((p) => p.level === 'exec' || p.level === 'head').map((p) => p.title).join(', ')}); confirm they sponsored the deal` : 'Not known from your input: no senior role named'} |\n| Was economic buyer engaged? | ${ebNamed ? 'Possibly: a buyer is named in your input; confirm how often they were met' : 'Not known from your input: no economic buyer named'} |\n| Did we multi-thread? | ${yesNo(contacts.length >= 3 ? true : contacts.length ? false : null, `${contacts.length} stakeholder${contacts.length === 1 ? '' : 's'} named`)} |\n| Was there a true champion? | ${support.length ? `Possibly: ${support.map((p) => p.title).join(', ')} recorded as champion; test whether they had power and material` : 'Not known from your input: nobody recorded as supporter or champion'} |\n\n` : '';
+    const intro = (title) => `# ${title}: ${P}\n\n## What you gave\n\n| Item | Value |\n|---|---|\n${gave}\n${detailsBlock}${wholeProduct}\n${wlCtx.line}\n\n`;
+    const reviewQs = (extra = []) => {
+        const qs = [...extra];
+        if (hasValue(args.sales_cycle_days))
+            qs.push(`The deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}: which stage took longest, and was that the buyer's process or a stall you could have moved?`);
+        if (hasValue(args.deal_value))
+            qs.push(`The deal was worth ${money(dealValue)}: did the price or the size of the commitment come up as a reason, and who raised it?`);
+        if (wlCtx.v)
+            qs.push(`Did the buyer judge the result on ${wlCtx.v.metrics.slice(0, 3).join(', ')} or on something else?`);
+        qs.push('What was the real reason (not only the stated one), and when did the deal actually turn?');
+        return qs.map((x, i) => `${i + 1}. ${x}`).join('\n');
+    };
     if (analysisType === 'single_deal') {
-        // Single deal analysis
-        let analysis = `# Win/Loss Analysis: Single Deal
-
-## Deal Overview
-
-| Attribute | Value |
-|-----------|-------|
-| **Outcome** | ${dealOutcome ? dealOutcome.charAt(0).toUpperCase() + dealOutcome.slice(1) : 'Not specified'} |
-| **Deal Value** | ${hasValue(args.deal_value) ? money(dealValue) : 'Not specified'} |
-| **Sales Cycle** | ${hasValue(args.sales_cycle_days) ? salesCycleDays.toLocaleString('en-US') + (salesCycleDays === 1 ? ' day' : ' days') : 'Not specified'} |
-| **Solution** | ${args.your_solution || 'Not specified'} |
-${competitorWon ? `| **Competitor Won** | ${competitorWon} |` : ''}
-${lossReason ? `| **Stated Reason** | ${lossReason} |` : ''}
-
----
-
-`;
+        let analysis = `${intro('Win/Loss Analysis: Single Deal')}${dealOutcome ? '' : `## What this analysis can and cannot say yet\n\nYou gave the deal context but not the outcome, so nothing below says why the deal was won or lost. It is the structure for the review, built from what you gave. Add the inputs listed at the end and run it again.\n\n`}---\n\n`;
         if (dealOutcome === 'won') {
             analysis += `## Win Analysis
 
-### Why We Won (Hypothesis)
+### Evidence in your inputs
+${[
+                contacts.length ? `- Stakeholders engaged: ${contacts.map((c) => c.raw).join('; ')}` : '- No stakeholders were given, so engagement cannot be judged.',
+                competitorWon ? `- Beat: ${competitorWon}` : '',
+                hasValue(args.sales_cycle_days) ? `- The deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'}.` : '',
+            ].filter(Boolean).join('\n')}
 
-Possible success factors (not from your input: keep only those your deal notes support):
-
-**Value Proposition Alignment**
-- Strong fit between solution and customer needs
-- Clear ROI communicated and understood
-- Differentiation vs alternatives was clear
-
-**Sales Execution**
-- ${stakeholdersInvolved ? `Stakeholders engaged: ${stakeholdersInvolved}` : 'Multiple stakeholders likely engaged'}
-- Discovery uncovered real pain points
-- Champion enabled to sell internally
-
-**Competitive Positioning**
-- Positioned on strengths vs competitor weaknesses
-- Evaluation criteria favored our approach
-${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
-
-### What to Replicate
-
-*Example (not from your input): replace with what worked in this deal.*
-
-| Factor | What Worked | How to Replicate |
-|--------|-------------|------------------|
-| **Discovery** | Deep understanding of needs | Standardize discovery framework |
-| **Multi-threading** | Multiple stakeholder relationships | Mandate 3+ contacts per deal ${EXAMPLE} |
-| **Value Selling** | Quantified business impact | ROI calculator for all deals |
-| **Champion** | Strong internal advocate | Champion testing questions |
+### What to replicate
+Ask the buyer which of these decided it, and write down their words:
+- The discovery that found the pain (${wlCtx.v ? `did it cover ${wlCtx.v.metrics.slice(0, 2).join(' and ')}?` : 'which questions mattered?'})
+- The people who backed you and what each of them gained
+- The proof that landed (${wlCtx.v ? proofOf(wlCtx.v) : 'which evidence did they quote back to you?'})
 
 ### Questions for Win Review
-1. Why did they choose us over alternatives?
+1. Why did they choose us over the alternatives${alts.length ? ` (${(0, dealtext_ts_1.joinList)(alts.map((a) => a.text))})` : ''}?
 2. What was the tipping point in the decision?
 3. What almost derailed the deal?
 4. What would they tell others considering us?
@@ -2957,40 +3148,27 @@ ${competitorWon ? `- Beat ${competitorWon} through differentiation` : ''}
 ${lossReason ? `**Stated Reason:** ${lossReason}` : '**Stated Reason:** Not provided'}
 
 **Common Root Causes to Investigate:**
-${[/price/, /feature|product/, /timing|priority/].some((re) => re.test((lossReason || '').toLowerCase())) || competitorWon ? '' : '\n- [No stated reason or competitor matches a common cause: add the causes your loss review finds]\n'}
-${lossReason?.toLowerCase().includes('price') ? `
-#### Pricing/Budget Issues
+${wlCtx.v ? wlCtx.v.objections.map((o) => `- ${o.objection}`).join('\n') : '- Price or budget\n- A gap in fit or product\n- Timing or priority\n- A champion who could not carry the decision\n- An incumbent the buyer knew better'}
+
+${readingBlock}${competitorWon ? `#### Competitive Loss\n- Why did ${competitorWon} win?\n- What did they offer that we didn't?\n- Did we position against their strengths?\n- Were evaluation criteria stacked against us?\n\n` : ''}${/price|cost|budget|expensive|cheaper|discount/.test(r) ? `#### Pricing/Budget Issues
 - Was the business case strong enough to justify investment?
 - Did we understand their budget constraints upfront?
 - Could we have structured the deal differently?
-- Did competitor offer better terms or discount?
-` : ''}
+- Did a competitor offer better terms or a discount?
 
-${lossReason?.toLowerCase().includes('feature') || lossReason?.toLowerCase().includes('product') ? `
-#### Product/Feature Gap
+` : ''}${/feature|product|capabilit|missing|gap/.test(r) ? `#### Product/Feature Gap
 - Was this a real gap or perception issue?
 - Did we fail to demonstrate capability?
 - Was the evaluation criteria set against us?
 - Could we have changed the requirements?
-` : ''}
 
-${competitorWon ? `
-#### Competitive Loss
-- Why did ${competitorWon} win?
-- What did they offer that we didn't?
-- Did we position against their strengths?
-- Were evaluation criteria stacked against us?
-` : ''}
-
-${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().includes('priority') ? `
-#### Timing/Priority Issues
+` : ''}${/timing|priority/.test(r) ? `#### Timing/Priority Issues
 - Was there a real compelling event?
 - Did priorities shift during the evaluation?
 - Could we have created more urgency?
 - Was the status quo acceptable to them?
-` : ''}
 
-${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Against you:** ${against.map((p) => p.who).join(', ')}. Their view is the first thing to learn in the loss review.\n\n` : ''}${wlCtx.v ? sectorNotes(wlCtx.v, 'committee') + '\n\n' : ''}### Loss Categories
+` : ''}### Loss Categories
 
 *Check first: set by this tool's rule (High when no stakeholders were given for Champion Failure, or when a competitor won for Competitive Loss; otherwise Medium). It is not a finding about your deal.*
 
@@ -2998,16 +3176,9 @@ ${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Aga
 |----------|------------|---------------------|
 | **Champion Failure** | ${stakeholdersInvolved ? 'Medium' : 'High'} | Did we have a true champion? |
 | **Value Not Proven** | Medium | Was ROI quantified and believed? |
-| **Competitive Loss** | ${competitorWon ? 'High' : 'Medium'} | What did competitor do better? |
+| **Competitive Loss** | ${competitorWon ? 'High' : 'Medium'} | What did the competitor do better? |
 | **Product Gap** | Medium | Was this real or perceived? |
 | **Sales Execution** | Medium | Did we run the right process? |
-
-### Questions for Loss Review
-1. What was the real reason (not just stated reason)?
-2. When did we actually lose the deal?
-3. What would have changed the outcome?
-4. Who did they go with and why?
-5. What should we have done differently?
 
 ### Recovery Opportunity
 
@@ -3026,11 +3197,11 @@ ${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Aga
 ### Why No Decision Happened
 
 **Common Causes:**
-1. **No compelling event**: Status quo was acceptable
-2. **Champion failure**: No one willing to drive change
+1. **No compelling event**: Status quo was acceptable${alts.length ? ` (the buyer's status quo in your details: ${(0, dealtext_ts_1.joinList)(alts.map((a) => a.text))})` : ''}
+2. **Champion failure**: No one willing to drive change${support.length ? `; you recorded ${(0, dealtext_ts_1.joinList)(support.map((s) => s.title))} as champion, so ask what stopped them` : ''}
 3. **Budget reallocation**: Priorities shifted
 4. **Risk aversion**: Fear of change or failure
-5. **Evaluation fatigue**: Too long, lost momentum
+5. **Evaluation fatigue**: Too long, lost momentum${hasValue(args.sales_cycle_days) ? ` (the deal ran ${salesCycleDays.toLocaleString('en-US')} ${salesCycleDays === 1 ? 'day' : 'days'})` : ''}
 
 ### Investigation Framework
 
@@ -3053,179 +3224,37 @@ ${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Aga
 
 `;
         }
-        analysis += `${['won', 'lost', 'no_decision'].includes(dealOutcome) ? '\n---\n\n' : ''}## Deal Details Analysis
-
-${dealDetails ? `### Provided Context
-${dealDetails}
-
-### Pattern Recognition
-Based on the details provided, key factors to investigate:
-- Sales process adherence
-- Stakeholder engagement depth
-- Competitive positioning
-- Value communication
-- Timeline management` : '### No Details Provided\n\nTo improve analysis, provide:\n- CRM notes or deal history\n- Emails and meeting notes\n- Competitor information\n- Stakeholder feedback'}
-
----
-
-## Stakeholder Analysis
-
-${stakeholdersInvolved ? `### Involved Stakeholders
-${stakeholdersInvolved}
-
-### Engagement Assessment
-| Question | Check |
-|----------|-------|
-| Did we have an executive sponsor? | ${execNamed ? `Possibly: a senior role is named (${people.filter((p) => /\b(ceo|cfo|coo|cio|cto|ciso|chief|vp|vice president|managing director|head)\b/i.test(p.who)).map((p) => p.who).join(', ')}); confirm they sponsored the deal` : 'Not known from your input: no senior role named'} |
-| Was economic buyer engaged? | ${ebNamed ? 'Possibly: the economic buyer is named in your input; confirm how often they were met' : 'Not known from your input: no economic buyer named'} |
-| Did we multi-thread? | ${yesNo(people.length >= 3 ? true : people.length ? false : null, `${people.length} stakeholder${people.length === 1 ? '' : 's'} named`)} |
-| Was there a true champion? | ${support.length ? `Possibly: ${support.map((p) => p.who).join(', ')} recorded as supporter; test whether they had power and material` : 'Not known from your input: nobody recorded as supporter or champion'} |` : '### Stakeholder Information Needed\n\nFor better analysis, provide:\n- Names and titles\n- Their positions on the deal\n- Engagement level\n- Who we didn\'t reach'}
-
----
-
-## Action Items
-
-### Immediate
-- [ ] Schedule win/loss review call with buyer
-- [ ] Document lessons learned in CRM
-- [ ] Share insights with team
-
-### Process Improvements
-- [ ] Update qualification criteria based on learnings
-- [ ] Refine discovery questions
-- [ ] Adjust competitive positioning if needed
-
----
-
-*For best results, combine this analysis with direct buyer feedback*
-
-${SUGGESTIONS_FOOTER}`;
+        else if (dealOutcome === 'mixed') {
+            analysis += `## Mixed Outcome\n\nYou marked the outcome as mixed. Split the deals into won, lost and no_decision and run the tool for each, or use \`deal_portfolio\` with a summary in \`multiple_deals\`. The sections below apply to whichever deal you review first.\n\n`;
+        }
+        analysis += `${altBlock}${sectorBlock}${peopleBlock}${engagement}## Questions for the review call\n\n${reviewQs()}\n\n${asks}---\n\n*For best results, combine this analysis with direct buyer feedback.*\n\n${SUGGESTIONS_FOOTER}`;
         return analysis;
     }
-    else if (analysisType === 'deal_portfolio' || analysisType === 'loss_pattern') {
-        // Portfolio analysis
-        return `# Deal Portfolio Analysis
+    if (analysisType === 'deal_portfolio' || analysisType === 'loss_pattern') {
+        return `${intro(analysisType === 'loss_pattern' ? 'Loss Pattern Analysis' : 'Deal Portfolio Analysis')}${multipleDeals ? `### Deals you gave\n\n${multipleDeals}\n\n` : `## What to give me\n\nA list of deals, one per line, with the outcome and the reason, for example in the form: deal name, outcome (won, lost or no_decision), value, days, reason, who won. Write your own deals: the form is the only thing to copy. Put them in \`multiple_deals\`.\n\n`}## What the analysis will look at
 
-## Analysis Type: ${analysisType.replace(/_/g, ' ')}
+1. **Win rate** overall, by deal size, by segment and by competitor, using your own deals.
+2. **Loss reasons**: the most common reasons, the stage where deals are lost and who you lose to.
+3. **No-decision**: the share that ends with no decision, and how long before deals go quiet.
+4. **Sales cycle**: the length by deal size and by outcome, and where deals stall.
 
-### Input Required
+No benchmark is shown: compare your own quarters with each other, and your segments with each other.
 
-To analyze your deal portfolio, please provide:
+${altBlock}${sectorBlock}${peopleBlock}## Questions for the portfolio review
 
-${multipleDeals ? `### Provided Data
-${multipleDeals}` : `
-**Option 1: Structured Data**
-${EXAMPLES}
-\`\`\`
-Deal Name, Outcome, Value, Days, Loss Reason, Competitor
-Deal 1, won, 50000, 45, -, -
-Deal 2, lost, 75000, 60, price, Competitor A
-Deal 3, no_decision, 30000, 90, priorities, -
-\`\`\`
-
-**Option 2: Narrative Summary**
-Describe your last 10-20 deals ${EXAMPLE}, including:
-- Win/loss/no-decision split
-- Common loss reasons
-- Average deal size and cycle time
-- Key competitors`}
-
----
-
-## Analysis Framework
-
-### 1. Win Rate Analysis
-- Overall win rate vs a benchmark, for example 25-35% ${EXAMPLE}
-- Win rate by deal size
-- Win rate by competitor
-- Win rate by segment
-
-### 2. Loss Pattern Detection
-- Most common loss reasons
-- When deals are lost (stage)
-- Who we lose to most
-- Characteristics of lost deals
-
-### 3. No-Decision Analysis
-- % going to no-decision vs a benchmark, for example 25-40% ${EXAMPLE}
-- How long before going dark
-- Common characteristics
-- Recoverability
-
-### 4. Sales Cycle Analysis
-- Average cycle length
-- Cycle by deal size
-- Cycle by outcome
-- Stage where deals stall
-
----
-
-## Common Patterns to Investigate
-
-### Red Flags in Your Pipeline
-${EXAMPLES}
-| Pattern | Warning Sign | Action |
-|---------|--------------|--------|
-| High no-decision rate | >40% no-decision | Improve qualification |
-| Long cycles | >2x industry avg | Better discovery, urgency |
-| Late-stage losses | Losing at proposal/negotiation | Earlier differentiation |
-| Single-threaded | Only 1 contact | Mandate multi-threading |
-| Price losses | >30% cite price | Better value communication |
-
-### Questions for Analysis
-1. What do won deals have in common?
+1. What do won deals have in common that lost deals lack${wlCtx.v ? ` (for example the roles involved: ${wlCtx.v.buyerRoles.slice(0, 3).join(', ')})` : ''}?
 2. Where do deals stall in the process?
-3. Which competitors beat us most?
-4. What's the profile of our best customers?
-5. When do we know we're going to lose?
+3. Which alternatives beat you most often?
+4. What is the profile of your best customers?
+5. When do you know you are going to lose?
 
----
-
-*Provide deal data for specific pattern analysis*
+${asks}---
 
 ${SUGGESTIONS_FOOTER}`;
     }
-    else {
-        // Competitor analysis
-        return `# Competitive Win/Loss Analysis
-
-## Competitor: ${competitorWon || 'Not specified'}
-
-### Head-to-Head Analysis Framework
-
-| Dimension | Questions to Answer |
-|-----------|---------------------|
-| **Win Rate** | What's our win rate against this competitor? |
-| **Where We Win** | In what situations do we beat them? |
-| **Where We Lose** | In what situations do they beat us? |
-| **Their Strengths** | What do buyers like about them? |
-| **Their Weaknesses** | Where do they fall short? |
-
-### Competitive Intelligence Gathering
-
-**From Won Deals:**
-- Why did you choose us over [competitor]?
-- What were they missing?
-- How did they position against us?
-
-**From Lost Deals:**
-- What did [competitor] do better?
-- What would have changed your decision?
-- How did they address your concerns?
-
-### Battle Card Elements
-
-| Element | Content Needed |
-|---------|----------------|
-| **Positioning** | How to differentiate |
-| **Landmines** | Questions that expose weaknesses |
-| **Objection Handling** | Responses to their claims |
-| **Proof Points** | Evidence of our superiority |
-
----
-
-*Provide win/loss data against this competitor for specific analysis*`;
-    }
+    // competitor_analysis
+    const headToHead = alts.length ? `## Head-to-head by alternative\n\n${alts.map((a) => `### ${cap(a.text)}\n\n- **What it is:** ${a.label}.\n- **Where you tend to win** (confirm from your won deals): ${a.win}.\n- **Where you tend to lose** (confirm from your lost deals): when ${a.why}.\n- **Ask the buyer:** ${a.check}`).join('\n\n')}\n\n` : `## Head-to-head\n\nNo alternative was named in your deal details or in \`competitor_won\`. Name the alternatives the buyer used (the current way of working counts as one), one per line, to get a section for each.\n\n`;
+    return `${intro('Competitive Win/Loss Analysis')}## What this analysis can and cannot say yet\n\n${dealOutcome ? '' : 'You gave the deal context but not the outcome or the reason, so nothing below says who won or why. '}It is the structure for the review, built from what you gave. Add the inputs listed at the end and run it again.\n\n---\n\n${altBlock ? '' : ''}${headToHead}${sectorBlock}${peopleBlock}## Questions for the review call\n\n${reviewQs(alts.length ? [`Which of the alternatives did the buyer give the most weight, and what did they say about ${alts[0].text}?`] : [])}\n\n## Battle card, once the outcome is known\n\n| Element | What to write | From your inputs |\n|---|---|---|\n| **Positioning** | The one thing that made the buyer pick, or not pick, ${P} | ${brief.kind ? cap(brief.kind) : 'your solution description'} |\n| **Landmines** | Questions that bring out the gap the buyer felt | The alternatives above and the sector's usual reasons |\n| **Objection handling** | The pattern of an answer for each usual reason | ${wlCtx.v ? `${wlCtx.v.objections.length} usual reasons in ${wlCtx.v.name} above` : 'the sector reasons, once the sector is clear'} |\n| **Proof points** | Evidence the buyer accepted | ${wlCtx.v ? wlCtx.v.proofShape : 'a customer result you can show'} |\n\n${asks}---\n\n${SUGGESTIONS_FOOTER}`;
 }
 // Placeholder for tools 7-12 - will be completed in next part
 function executeTool(name, args) {

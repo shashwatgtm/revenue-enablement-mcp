@@ -431,5 +431,5 @@ export function splitFeatureList(text: string): ListItem[] {
 
 /** Run 21c round 3: "our solution", "the solution" and the like stand in for a name that was not clearly given; at the start of a sentence they take a capital. */
 export function capitaliseSolutionPhrase(text: string): string {
-  return text.replace(/(^|[.!?]\s+|\n)((?:[-*]\s+|#+\s+)?)(our|your|the|this) (solution|product)\b/g, (_m, pre: string, mark: string, w: string, n: string) => `${pre}${mark}${w.charAt(0).toUpperCase()}${w.slice(1)} ${n}`);
+  return text.replace(/(^|[.!?]\*{0,2}\s+|\n)((?:[-*]\s+|#+\s+)?)(our|your|the|this) (solution|product)\b/g, (_m, pre: string, mark: string, w: string, n: string) => `${pre}${mark}${w.charAt(0).toUpperCase()}${w.slice(1)} ${n}`);
 }

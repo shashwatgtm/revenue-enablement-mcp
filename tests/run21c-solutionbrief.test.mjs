@@ -111,3 +111,10 @@ test("demo_script_builder: one stated pain is spelled out once per use, not in e
   const n = out.split(pain).length - 1;
   assert.ok(n <= 6, `the pain sentence appears ${n} times`);
 });
+
+// Run 21c round 4 (test first): "**The deal.** the solution was in this deal." began in lower case after a bold label.
+test("the solution phrase takes a capital after a bold label too", async () => {
+  const out = await call("win_loss_analyzer", { analysis_type: "competitor_analysis", your_solution: "software that tracks every load across carriers and modes for shippers and brokers with many lanes", deal_details: "A national shipper chose us after a pilot.", deal_value: 400000, sales_cycle_days: 180 });
+  assert.doesNotMatch(out, /\*\*\s+(?:our|your|the|this) (?:solution|product)\b/);
+  assert.doesNotMatch(out, /\*\*\s+(?:our|your|the|this) (?:solution|product)\b/);
+});

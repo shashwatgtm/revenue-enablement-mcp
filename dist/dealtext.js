@@ -130,7 +130,8 @@ function isClearName(name) {
         return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]);
     if (!/^[A-Z0-9]/.test(toks[0]) || NAME_JOINERS.test(toks[toks.length - 1]))
         return false;
-    return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name);
+    // a head that holds a preposition other than "from/by/of" is the start of a description ("CRM for sales, marketing and service teams"), not a name
+    return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name) && !toks.slice(1).some((t) => /^(?:for|to|with|in|on|at|and|or|into|across)$/.test(t));
 }
 function solutionBrief(input) {
     const full = (input || '').trim().replace(/\s+/g, ' ');
@@ -175,6 +176,8 @@ function solutionBrief(input) {
         partsSrc = kindSrc.slice(colonAt + 2);
         kindSrc = kindSrc.slice(0, colonAt);
     }
+    // run 21c A2: a list of parts ends where its sentence ends; a pasted paragraph goes on with other sentences
+    partsSrc = partsSrc.split(/\.\s+(?=[A-Z])/)[0];
     const made = kindSrc.search(/\s+made (?:of|up of)\s+/i);
     if (made >= 0) {
         partsSrc = partsSrc || kindSrc.slice(made).replace(/^\s+made (?:of|up of)\s+/i, '');
@@ -217,7 +220,7 @@ function solutionBrief(input) {
 }
 /** The name of a part without its bracket: "prepaid cards (petty cash, fleet)" -> "prepaid cards". */
 function partLabel(part) {
-    return part.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim().replace(/^(?:a|an|the)\s+/i, '');
+    return part.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+([.,;:!?])/g, '$1').replace(/\s+/g, ' ').trim().replace(/^(?:a|an|the)\s+/i, '');
 }
 const FAMILY_RULES = [
     ['investment', /\b(?:portfolio manager|chief investment|investment (?:committee|officer|team)|allocators?)/i],

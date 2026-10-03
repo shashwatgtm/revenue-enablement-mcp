@@ -112,7 +112,8 @@ function isClearName(name: string): boolean {
   if (/^(?:our|your|the|a|an|we|this|that|my)$/i.test(toks[0])) return false;
   if (toks.length === 1) return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]);
   if (!/^[A-Z0-9]/.test(toks[0]) || NAME_JOINERS.test(toks[toks.length - 1])) return false;
-  return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name);
+  // a head that holds a preposition other than "from/by/of" is the start of a description ("CRM for sales, marketing and service teams"), not a name
+  return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name) && !toks.slice(1).some((t) => /^(?:for|to|with|in|on|at|and|or|into|across)$/.test(t));
 }
 
 export function solutionBrief(input: string): SolutionBrief {
@@ -152,6 +153,8 @@ export function solutionBrief(input: string): SolutionBrief {
   const colonAt = kindSrc.indexOf(': ');
   let partsSrc = '';
   if (colonAt >= 0) { partsSrc = kindSrc.slice(colonAt + 2); kindSrc = kindSrc.slice(0, colonAt); }
+  // run 21c A2: a list of parts ends where its sentence ends; a pasted paragraph goes on with other sentences
+  partsSrc = partsSrc.split(/\.\s+(?=[A-Z])/)[0];
   const made = kindSrc.search(/\s+made (?:of|up of)\s+/i);
   if (made >= 0) { partsSrc = partsSrc || kindSrc.slice(made).replace(/^\s+made (?:of|up of)\s+/i, ''); kindSrc = kindSrc.slice(0, made); }
   const cutAt = kindSrc.search(/\s+(?:that|which|where)\s+|\s+[-\u2013\u2014]\s+/i);
@@ -183,7 +186,7 @@ export function solutionBrief(input: string): SolutionBrief {
 
 /** The name of a part without its bracket: "prepaid cards (petty cash, fleet)" -> "prepaid cards". */
 export function partLabel(part: string): string {
-  return part.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim().replace(/^(?:a|an|the)\s+/i, '');
+  return part.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+([.,;:!?])/g, '$1').replace(/\s+/g, ' ').trim().replace(/^(?:a|an|the)\s+/i, '');
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------

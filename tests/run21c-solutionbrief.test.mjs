@@ -52,7 +52,7 @@ const call = async (name, args) => {
   return j.result.content.map((c) => c.text).join("\n");
 };
 const base = (sol) => ({
-  account_plan_builder: { account_name: "Northwind Cargo", your_solution: sol },
+  account_plan_builder: { account_name: "Northwind Cargo", your_solution: sol, current_products: sol },
   deal_strategy_coach: { deal_name: "Northwind deal", deal_stage: "evaluation", your_solution: sol, competitors: "Rival Systems" },
   discovery_question_bank: { framework: "meddpicc", your_solution: sol },
   roi_business_case_builder: { your_solution: sol, primary_value_driver: "cost_reduction" },
@@ -79,4 +79,17 @@ test("no Revenue tool answer carries a name cut to one word", async () => {
 test("a clear name is still used by the tools", async () => {
   const out = await call("win_loss_analyzer", base("Lanehop, a route planning platform for delivery fleets").win_loss_analyzer);
   assert.match(out, /Lanehop/);
+});
+
+// Run 21c A2 (E11): a long pasted paragraph with a colon list, a bracket note and several sentences gave " ." (a space before a full stop) in eight tools.
+test("a pasted paragraph with a colon list and a bracket note gives no space before a full stop", async () => {
+  const para = "CRM for sales, marketing and service teams: lead capture, task routing, a mobile app for site visits, and a service desk. Built for sales and service teams that manage leads, including field staff. No single view of customers across sales and service, and dependence on outside tools (implied by the page's promise of one view and fewer outside tools). One view of customers, fewer outside tools and lower costs, with faster ticket resolution.";
+  for (const [tool, args] of Object.entries(base(para))) {
+    const out = await call(tool, args);
+    const m = out.match(/(?<=\w)[ \t]+\.(?=\s|$)/);
+    assert.ok(!m, `${tool}: ${m && out.slice(Math.max(0, m.index - 60), m.index + 40)}`);
+  }
+  const b = solutionBrief(para);
+  assert.equal(b.short, "");
+  for (const p of b.parts) assert.doesNotMatch(p, /\.\s+[A-Z]/, p);
 });

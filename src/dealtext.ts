@@ -128,7 +128,7 @@ export function solutionBrief(input: string): SolutionBrief {
   if (colonAt >= 0) { partsSrc = kindSrc.slice(colonAt + 2); kindSrc = kindSrc.slice(0, colonAt); }
   const made = kindSrc.search(/\s+made (?:of|up of)\s+/i);
   if (made >= 0) { partsSrc = partsSrc || kindSrc.slice(made).replace(/^\s+made (?:of|up of)\s+/i, ''); kindSrc = kindSrc.slice(0, made); }
-  const cutAt = kindSrc.search(/\s+(?:that|which|where)\s+|\s+[-–—]\s+/i);
+  const cutAt = kindSrc.search(/\s+(?:that|which|where)\s+|\s+[-\u2013\u2014]\s+/i);
   if (cutAt > 0) kindSrc = kindSrc.slice(0, cutAt);
   const kind = clip(kindSrc.replace(/[.;]+$/, ''), 150);
   let parts: string[] = [];
@@ -231,7 +231,7 @@ export function parseContacts(text: string, investmentBuyer = false): Contact[] 
     const title = (m ? m[1] : raw).trim();
     let tag = m ? m[2].trim().toLowerCase() : null;
     if (!tag) {
-      const asM = raw.match(/^(.*?)\s*[-–:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|user|influencer|evaluator)\s*$/i);
+      const asM = raw.match(/^(.*?)\s*[-\u2013:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|user|influencer|evaluator)\s*$/i);
       if (asM) return { raw, title: asM[1].trim(), tag: asM[2].toLowerCase(), family: familyOf(asM[1], investmentBuyer), level: levelOf(asM[1]) } as Contact;
     }
     return { raw, title, tag, family: familyOf(title, investmentBuyer), level: levelOf(title) } as Contact;

@@ -210,7 +210,7 @@ const tools: Record<string, Tool> = {
   // Tool 1: Account Plan Builder
   account_plan_builder: {
     name: 'account_plan_builder',
-    description: 'Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.',
+    description: 'Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -365,7 +365,7 @@ const tools: Record<string, Tool> = {
   // Tool 4: ROI Business Case Builder
   roi_business_case_builder: {
     name: 'roi_business_case_builder',
-    description: 'Build an ROI business case from your inputs: the annual value comes from the buyer\'s own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary.',
+    description: 'Build an ROI business case from the buyer\'s own figures: annual_value_estimate, or current_annual_cost with expected_improvement_percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -375,7 +375,7 @@ const tools: Record<string, Tool> = {
         },
         industry: {
           type: 'string',
-          description: 'Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology'
+          description: 'The customer\'s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer\'s own figures (annual_value_estimate, or current_annual_cost with expected_improvement_percent)'
         },
         company_size: {
           type: 'string',
@@ -385,12 +385,12 @@ const tools: Record<string, Tool> = {
         annual_revenue: {
           type: 'number',
           minimum: 0,
-          description: 'Customer annual revenue'
+          description: 'Customer annual revenue. Shown as your input; it is not turned into a value'
         },
         employee_count: {
           type: 'number',
           minimum: 0,
-          description: 'Number of employees'
+          description: 'Number of employees. Shown as your input; it is not turned into a value'
         },
         your_solution: {
           type: 'string',
@@ -408,7 +408,7 @@ const tools: Record<string, Tool> = {
         },
         known_metrics: {
           type: 'string',
-          description: 'Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate'
+          description: 'Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer\'s figures; to turn the buyer\'s figures into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate'
         },
         current_annual_cost: {
           type: 'number',
@@ -428,7 +428,7 @@ const tools: Record<string, Tool> = {
         },
         current_process: {
           type: 'string',
-          description: 'How they do it today. Shown in the output; not used in the calculation'
+          description: 'How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation'
         },
         implementation_timeline: {
           type: 'string',
@@ -752,7 +752,7 @@ const tools: Record<string, Tool> = {
         },
         your_solution: {
           type: 'string',
-          description: 'Accepted but not used yet by this tool'
+          description: 'Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge'
         },
         competitor_price: {
           type: 'string',
@@ -760,7 +760,7 @@ const tools: Record<string, Tool> = {
         },
         value_delivered: {
           type: 'string',
-          description: 'Quantified value your solution delivers. Shown in the output; the value example does not use it'
+          description: 'Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own'
         },
         buyer_leverage: {
           type: 'string',
@@ -4596,7 +4596,7 @@ These questions let the buyer find ${compPoss} gaps through their own evaluation
 - "What other options are you evaluating, and what criteria are you using?"
 - "What's most important to you in making this decision?"
 - "Have you defined must-haves versus nice-to-haves?"
-${buyerPriorities ? `- "You said ${q(lowerFirstIfCommon(clip(buyerPriorities, 140)))}. How would you judge that each option delivers it?"\n` : ''}${sectorQ}
+${buyerPriorities ? `- "You told me what matters most: ${q(lowerFirstIfCommon(buyerPriorities.length <= 170 ? buyerPriorities.trim().replace(/[.]+$/, '') : (painClauses(buyerPriorities)[0] || buyerPriorities.trim().split(/[;,]/)[0])))}. How would you judge that each option delivers it?"\n` : ''}${sectorQ}
 ${personaQ}
 
 ### Capability Landmines

@@ -42,10 +42,10 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 
 | # | Tool | Title | What it does |
 |---|---|---|---|
-| 1 | `account_plan_builder` | Account Plan Builder | Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. |
+| 1 | `account_plan_builder` | Account Plan Builder | Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up. |
 | 2 | `deal_strategy_coach` | Deal Strategy Coach | Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. |
 | 3 | `discovery_question_bank` | Discovery Question Bank | Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect. |
-| 4 | `roi_business_case_builder` | ROI Business Case Builder | Build an ROI business case from your inputs: the annual value comes from the buyer's own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary. |
+| 4 | `roi_business_case_builder` | ROI Business Case Builder | Build an ROI business case from the buyer's own figures: annual_value_estimate, or current_annual_cost with expected_improvement_percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). |
 | 5 | `mutual_action_plan_generator` | Mutual Action Plan Generator | Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. |
 | 6 | `win_loss_analyzer` | Win/Loss Analyzer | Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate. |
 | 7 | `proposal_section_writer` | Proposal Section Writer | Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more. |
@@ -107,16 +107,16 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `your_solution` | Yes | string | Your product/solution |
 | `primary_value_driver` | Yes | one of: `revenue_increase`, `cost_reduction`, `productivity`, `risk_mitigation`, `multiple` | Primary value category |
 | `customer_name` | No | string | Customer/prospect name |
-| `industry` | No | string | Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology |
+| `industry` | No | string | The customer's industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer's own figures (annual_value_estimate, or current_annual_cost with expected_improvement_percent) |
 | `company_size` | No | one of: `startup`, `smb`, `mid_market`, `enterprise` | Company size tier |
-| `annual_revenue` | No | number (0 or more) | Customer annual revenue |
-| `employee_count` | No | number (0 or more) | Number of employees |
+| `annual_revenue` | No | number (0 or more) | Customer annual revenue. Shown as your input; it is not turned into a value |
+| `employee_count` | No | number (0 or more) | Number of employees. Shown as your input; it is not turned into a value |
 | `solution_price` | No | number (0 or more) | Annual cost of your solution |
-| `known_metrics` | No | string | Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate |
+| `known_metrics` | No | string | Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer's figures; to turn the buyer's figures into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate |
 | `current_annual_cost` | No | number (0 or more) | Optional: what the problem or the current process costs the buyer a year, in dollars (their figure) |
 | `expected_improvement_percent` | No | number (0 to 100) | Optional: the share of that annual cost the buyer expects to save, in percent (their figure) |
 | `annual_value_estimate` | No | number (0 or more) | Optional: the buyer's own estimate of the annual value in dollars; used as the value when given |
-| `current_process` | No | string | How they do it today. Shown in the output; not used in the calculation |
+| `current_process` | No | string | How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation |
 | `implementation_timeline` | No | string | Expected implementation time. Shown in the output; not used in the calculation |
 
 #### 5. Mutual Action Plan Generator (`mutual_action_plan_generator`)
@@ -158,7 +158,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `your_solution` | Yes | string | Your product/solution |
 | `customer_name` | No | string | Customer name |
 | `customer_industry` | No | string | Customer industry |
-| `primary_audience` | No | one of: `c_suite`, `vp_level`, `director`, `manager`, `technical`, `procurement` | Accepted but not used yet: the text is the same for every audience |
+| `primary_audience` | No | one of: `c_suite`, `vp_level`, `director`, `manager`, `technical`, `procurement` | Adds a one-line note at the top of the executive summary on what this audience looks for |
 | `customer_challenges` | No | string | Key challenges identified |
 | `key_differentiators` | No | string | Why you vs alternatives |
 | `pricing` | No | string | Pricing details if relevant |
@@ -205,9 +205,9 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `scenario` | Yes | one of: `discount_request`, `budget_objection`, `competitor_pricing`, `procurement_pressure`, `multi_year_negotiation`, `enterprise_agreement`, `renewal_negotiation` | Negotiation scenario |
 | `deal_value` | No | number (0 or more) | Current deal value |
 | `discount_requested` | No | number (0 or more) | Discount percentage requested |
-| `your_solution` | No | string | Accepted but not used yet by this tool |
+| `your_solution` | No | string | Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge |
 | `competitor_price` | No | string | Competitor pricing if known |
-| `value_delivered` | No | string | Quantified value your solution delivers. Shown in the output; the value example does not use it |
+| `value_delivered` | No | string | Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own |
 | `buyer_leverage` | No | string | Buyer leverage points (size, reference potential, etc.) |
 | `your_leverage` | No | string | Your leverage points (unique features, timeline, etc.) |
 | `decision_timeline` | No | string | When decision needs to be made |

@@ -213,7 +213,7 @@ const tools = {
     // Tool 1: Account Plan Builder
     account_plan_builder: {
         name: 'account_plan_builder',
-        description: 'Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence.',
+        description: 'Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -365,7 +365,7 @@ const tools = {
     // Tool 4: ROI Business Case Builder
     roi_business_case_builder: {
         name: 'roi_business_case_builder',
-        description: 'Build an ROI business case from your inputs: the annual value comes from the buyer\'s own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary.',
+        description: 'Build an ROI business case from the buyer\'s own figures: annual_value_estimate, or current_annual_cost with expected_improvement_percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -375,7 +375,7 @@ const tools = {
                 },
                 industry: {
                     type: 'string',
-                    description: 'Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology'
+                    description: 'The customer\'s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer\'s own figures (annual_value_estimate, or current_annual_cost with expected_improvement_percent)'
                 },
                 company_size: {
                     type: 'string',
@@ -385,12 +385,12 @@ const tools = {
                 annual_revenue: {
                     type: 'number',
                     minimum: 0,
-                    description: 'Customer annual revenue'
+                    description: 'Customer annual revenue. Shown as your input; it is not turned into a value'
                 },
                 employee_count: {
                     type: 'number',
                     minimum: 0,
-                    description: 'Number of employees'
+                    description: 'Number of employees. Shown as your input; it is not turned into a value'
                 },
                 your_solution: {
                     type: 'string',
@@ -408,7 +408,7 @@ const tools = {
                 },
                 known_metrics: {
                     type: 'string',
-                    description: 'Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate'
+                    description: 'Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer\'s figures; to turn the buyer\'s figures into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate'
                 },
                 current_annual_cost: {
                     type: 'number',
@@ -428,7 +428,7 @@ const tools = {
                 },
                 current_process: {
                     type: 'string',
-                    description: 'How they do it today. Shown in the output; not used in the calculation'
+                    description: 'How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation'
                 },
                 implementation_timeline: {
                     type: 'string',
@@ -746,7 +746,7 @@ const tools = {
                 },
                 your_solution: {
                     type: 'string',
-                    description: 'Accepted but not used yet by this tool'
+                    description: 'Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge'
                 },
                 competitor_price: {
                     type: 'string',
@@ -754,7 +754,7 @@ const tools = {
                 },
                 value_delivered: {
                     type: 'string',
-                    description: 'Quantified value your solution delivers. Shown in the output; the value example does not use it'
+                    description: 'Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own'
                 },
                 buyer_leverage: {
                     type: 'string',
@@ -948,7 +948,10 @@ function splitItems(s) {
     // a plain comma list of short items (each 1 to 6 words, no verb-like comma clause) is split too
     if (parts.length === 1 && /,/.test(parts[0])) {
         const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
-        if (c.length > 1 && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x)))
+        // a sentence with a comma ("the first and only X, built to replace Y") is not a list: a first fragment that opens with an article and runs
+        // to four words or more, or a fragment that opens with a participle or a linking word, makes it one item
+        const sentenceLike = /^(?:the|a|an)\s/i.test(c[0] || '') && (c[0] || '').split(/\s+/).length >= 4;
+        if (c.length > 1 && !sentenceLike && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x)))
             return c;
     }
     return parts;
@@ -988,6 +991,9 @@ function readContext(explicitModel, input) {
         }
     }
     let m = (0, verticals_ts_1.detectModel)(explicitModel, input);
+    // the usual model of the sector that was finally chosen (the reader's assumption was made for the sector it first read)
+    if (v && v !== read.vertical && m.how === 'sector')
+        m = { model: verticals_ts_1.SECTOR_MODEL[v.id], how: 'sector' };
     // A services firm whose name holds the word "software" (Sonata Software) sells services, not a subscription, unless its own words say so.
     if (v && v.id === 'ites' && m.model === 'saas' && m.how === 'read' && !/\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i.test(sellerText))
         m = { model: 'services', how: 'sector' };
@@ -3988,10 +3994,14 @@ Enterprise deals often have multiple vendors. Position on value, not price:
     return `${withDeal}${pricingSector}`;
 }
 // Tool 11: Champion Enablement Kit
+// Run 20 round 1b (D92): no bracket is left where the inputs or the sector notes can supply the words; the product is named once in
+// full and by its short name after that; the objections are answered by their kind (src/answers.ts) and say what to confirm; the
+// target stakeholder's own concerns (src/answers.ts role notes) shape each asset; no figure is made up: the returns table asks for the
+// buyer's own numbers and points to roi_business_case_builder.
 function executeChampionEnablementKit(args) {
     const assetType = args.asset_type || 'executive_brief';
-    const championName = args.champion_name || '[Champion name]';
     const championRole = args.champion_role || '';
+    const championName = args.champion_name || championRole || 'the champion';
     const targetStakeholder = args.target_stakeholder || 'leadership';
     const yourSolution = args.your_solution || 'our solution';
     const keyValuePoints = args.key_value_points || '';
@@ -4002,241 +4012,179 @@ function executeChampionEnablementKit(args) {
     const championWins = args.champion_wins || '';
     // Run 19 D80 (problems 3 and 8): every objection the user typed gets an answer; value points fill the returns table;
     // no placeholder percentage or dollar figure is printed; sector notes say who else will read the case.
-    const champCtx = readContext(undefined, { seller: [yourSolution, keyValuePoints], context: [knownObjections, competitiveContext], role: [targetStakeholder, championRole] });
-    const valueItems = splitItems(keyValuePoints);
+    const champCtx = readContext(undefined, { seller: [yourSolution], context: [keyValuePoints, knownObjections, competitiveContext], role: [targetStakeholder, championRole] });
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'the solution';
+    const v = champCtx.v;
+    const investment = champCtx.model === 'investment';
+    const bctx = { product: brief.short, sectorObjections: v?.objections, sectorName: v?.name, model: champCtx.model };
+    const modelKey = investment ? 'investment' : v ? v.id : '';
+    const valueItems = splitItems(keyValuePoints).map((x) => (0, dealtext_ts_1.parseProof)(x)[0] || { text: x, label: '', kind: 'story' });
+    const valueText = valueItems.map((x) => cleanClaim(x.label ? `${x.text} (${x.label})` : x.text));
+    const valueFirst = valueItems[0] ? valueItems[0].text.replace(/[.]+$/, '') : '';
     const objectionItems = splitItems(knownObjections);
+    const alts = splitItems(competitiveContext);
+    const target = (0, answers_ts_1.roleFor)(targetStakeholder, investment);
+    const sameRole = championRole && targetStakeholder && championRole.trim().toLowerCase() === targetStakeholder.trim().toLowerCase();
+    const solLine = args.your_solution ? `**Solution:** ${yourSolution.trim()}\n\n` : '';
+    const sameNote = solLine + (sameRole ? `> You named the same role (${championRole}) as the champion and as the person to convince. If ${championRole} is your champion, name the person above them who must approve, and write this for that person.\n\n` : '');
+    const who = `${championName}${championRole && championName !== championRole ? `, ${championRole}` : ''}`;
+    const kindLine = brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)(brief)}.` : `${P} is the solution this document recommends.`;
+    const partsLine = '';
+    const needsLine = `${cap(targetStakeholder)} is ${(0, dealtext_ts_1.aAn)(target.label)}: they care about ${target.cares}, and worry about ${target.worry}. They will want to see ${target.needs}.`;
+    const metricsLine = v ? `In ${v.name} the case is usually judged on ${(0, dealtext_ts_1.joinList)(v.metrics.slice(0, 4))}.` : '';
+    const valueBullets = valueText.length ? valueText.map((x) => `- ${x}`).join('\n') : `- No value points were given. Add key_value_points: the two or three results ${targetStakeholder} should expect.`;
+    const budgetLine = budgetContext ? budgetContext : 'Not given. Add budget_context (the budget situation and the price) to put it here.';
+    const objBlock = objectionItems.length ? objectionItems.map((o) => `### Objection: ${q(o)}\n\n${(0, answers_ts_1.blockerLines)(o, bctx).join('\n')}\n\n**If they push back:** acknowledge the concern, answer with evidence, and ask what would settle it.\n`).join('\n') : '';
+    const altsLine = alts.length ? `We looked at: ${(0, dealtext_ts_1.joinList)(alts)}.` : 'No alternatives were given (competitive_context). Name the options that were considered, including doing nothing.';
+    const pilotSteps = (MAP_EVAL[modelKey] || []).slice(0, 4);
+    const implRows = pilotSteps.length ? pilotSteps.map((s, i) => `| Step ${i + 1} | ${s.m} |`).join('\n') : `| Step 1 | Agree the scope, the owner on each side and the measure of success |\n| Step 2 | Run a first phase with one team |\n| Step 3 | Review the result and decide the wider rollout |`;
+    const risks = v ? v.objections.map((o) => `| ${o.objection} | ${o.response} |`).join('\n') : '| Implementation delay | Phased approach |\n| User adoption | Pilot with the people who will use it |\n| Integration | Technical validation before signing |';
+    const whyNow = urgencyDrivers ? `**Why Now:** ${urgencyDrivers}` : 'Why now: no urgency driver was given (urgency_drivers). Name the date, renewal, audit or target that sets the timing.';
     const assetGenerators = {
         executive_brief: () => `# Executive Brief for ${cap(targetStakeholder)}
 
-## Prepared for: ${championName}${championRole ? ` (${championRole})` : ''}
-## Topic: ${yourSolution}
+## Prepared for: ${who}
+## Topic: ${P}
 
----
+${sameNote}---
 
 ### The Opportunity
 
-[1-2 sentence summary of what this enables for the business]
+${kindLine} ${partsLine}
 
-${keyValuePoints ? `**Key Benefits:**\n${valueItems.map(p => `- ${p.trim()}`).join('\n')}` : '**Key Benefits:**\n- [Benefits from your key value points]'}
+**Key Benefits:**
+${valueBullets}
 
 ### The Business Case
 
-**Problem:**
-[Current state challenges: what's not working]
+**What happens today:** ${alts.length ? `The work is handled with ${(0, dealtext_ts_1.joinList)(alts)}.` : 'No current way of working was given (competitive_context).'}
 
-**Impact:**
-[Quantified impact of the problem]
+**What it costs:** put it in the buyer's own numbers${v ? `; ${metricsLine}` : ''} The roi_business_case_builder tool turns their cost figures into a return.
 
-**Solution:**
-${yourSolution} addresses this by [how it solves the problem].
+**Solution:** ${P} for this case: ${valueFirst ? lowerFirstIfCommon(valueFirst) : 'add the result it delivers (key_value_points)'}.
 
-**Expected Results:**
-- [Result 1]
-- [Result 2]  
-- [Result 3]
+**What ${target.label}s look for:** ${target.needs}.
 
 ### Investment & Return
 
-${budgetContext ? budgetContext : 'Investment: $X\nExpected ROI: X:1\nPayback: X months'}
+${budgetLine}
 
 ### Recommendation
 
-Proceed with ${yourSolution} to [achieve outcome].
+Proceed with ${P}${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}.
 
-${urgencyDrivers ? `**Why Now:** ${urgencyDrivers}` : ''}
+${whyNow}
 
+${objectionItems.length ? `### Questions to expect\n\n${objectionItems.map((o) => `- ${q(o)}: ${(0, answers_ts_1.blockerShort)(o, bctx)}`).join('\n')}\n` : ''}
 ---
 
-*[${args.champion_name || 'Champion'} to present to ${targetStakeholder}]*`,
+*${who} to present to ${targetStakeholder}*`,
         internal_business_case: () => `# Internal Business Case
 
-## ${yourSolution} Investment Proposal
+## ${P} Investment Proposal
 
-### Submitted by: ${championName}${championRole ? `, ${championRole}` : ''}
+### Submitted by: ${who}
 ### For: ${targetStakeholder}
 
----
+${sameNote}---
 
 ## Executive Summary
 
-This document presents the business case for investing in ${yourSolution} to address [challenge] and achieve [outcome].
+This document presents the business case for investing in ${P}${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}. ${needsLine}
 
-${keyValuePoints ? `\n**Value Summary:**\n${valueItems.map(p => `- ${p.trim()}`).join('\n')}\n` : ''}
-
+${valueText.length ? `**Value Summary:**\n${valueText.map((x) => `- ${x}`).join('\n')}\n` : ''}
 ---
 
 ## Current State
 
-### Challenges
-- [Challenge 1: describe current pain]
-- [Challenge 2: describe current pain]
-- [Challenge 3: describe current pain]
+### How the work is done today
+${alts.length ? alts.map((a) => `- ${cap(a)}`).join('\n') : 'No current way of working was given (competitive_context). Describe it in one or two lines, including any workaround.'}
 
 ### Impact
-- Time: [Hours/FTEs spent on workarounds]
-- Cost: [$ impact of current state]
-- Risk: [What we're exposed to]
-- Opportunity: [What we're missing]
 
+Put a number from your own data against each row.
+
+| Area | What to measure |
+|------|-----------------|
+| Time | Hours spent on the workaround or the manual step each week |
+| Cost | What the current way costs in a year |
+| Risk | What one failure costs, and how often it happens |
+| Opportunity | What the current way stops us doing |
+${v ? `\n${metricsLine}\n` : ''}
 ---
 
 ## Proposed Solution
 
 ### Overview
-${yourSolution} provides [brief description].
+${kindLine} ${partsLine}
 
-### How It Works
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+### How it would start
+| Step | What happens |
+|------|--------------|
+${implRows}
 
-### Why This Solution
-${competitiveContext ? `We evaluated alternatives including ${competitiveContext}. We recommend ${yourSolution} because [reasons].` : '[Why this option over the alternatives]'}
+### Why this solution
+${altsLine}${valueText.length ? ` We recommend ${P} because: ${(0, dealtext_ts_1.joinList)(valueText.map((x) => lowerFirstIfCommon(x)))}.` : ''}
 
 ---
 
 ## Financial Analysis
 
 ### Investment Required
-${budgetContext ? budgetContext : `
-| Item | Cost |
-|------|------|
-| Software | $XX,XXX/year |
-| Implementation | $XX,XXX |
-| Training | $X,XXX |
-| **Total Year 1** | $XX,XXX |
-| **Annual Recurring** | $XX,XXX |`}
+${budgetLine}
 
 ### Expected Returns
-| Benefit | Annual Value |
+| Benefit | Annual value |
 |---------|--------------|
-${valueItems.length ? valueItems.map((v) => `| ${cap(v)} | [annual value, in the buyer's own numbers] |`).join('\n') : '| [Benefit 1] | [annual value, in the buyer\'s own numbers] |\n| [Benefit 2] | [annual value, in the buyer\'s own numbers] |'}
-| **Total Annual Value** | [sum of the rows above] |
+${valueItems.length ? valueItems.map((x) => `| ${cap((0, dealtext_ts_1.clip)(x.text, 180))} | The buyer's own number: enter it from the finance team's data |`).join('\n') : '| No value points given | Add key_value_points |'}
 
 ### ROI Analysis
-- **ROI, payback and 3-year net value:** [from your ROI business case in the buyer's own numbers (the roi_business_case_builder tool can build it); leave them out rather than guess]
-
----
-
-## Implementation Plan
-
-| Phase | Timeline | Activities |
-|-------|----------|------------|
-| Phase 1 | Weeks 1-4 | Discovery & Setup |
-| Phase 2 | Weeks 5-8 | Configuration |
-| Phase 3 | Weeks 9-12 | Pilot & Training |
-| Phase 4 | Weeks 13+ | Full Deployment |
+- **ROI, payback and three-year net value:** from your ROI business case in the buyer's own numbers (the roi_business_case_builder tool builds it); leave them out rather than guess.
 
 ---
 
 ## Risk Assessment
 
+${v ? `The risks buyers in ${v.name} usually raise, with a way to answer each:` : ''}
+
 | Risk | Mitigation |
 |------|------------|
-| Implementation delay | Phased approach |
-| User adoption | Change management |
-| Integration | Technical validation |
+${risks}
 
 ---
 
-${objectionItems.length ? `## Objections to Answer Before the Meeting
+${objectionItems.length ? `## Objections to Answer Before the Meeting\n\n${objBlock}\n---\n\n` : ''}${v ? `${sectorNotes(v, 'committee')}\n\n---\n\n` : ''}## Recommendation
 
-${objectionItems.map((o) => `- **${cap(o)}:** ${answerFor(o, champCtx.v)}`).join('\n')}
+Based on this analysis, I recommend approving the investment in ${P}.
 
----
-
-` : ''}${champCtx.v ? `${sectorNotes(champCtx.v, 'committee')}
-
----
-
-` : ''}## Recommendation
-
-Based on this analysis, I recommend approving the investment in ${yourSolution}.
-
-${urgencyDrivers ? `\n**Timing:** ${urgencyDrivers}` : ''}
+${whyNow}
 
 ---
 
 ## Next Steps
 
-1. Approve investment
-2. Finalize contract
+1. Approve the investment
+2. Agree the contract and the first step: ${pilotSteps[0] ? lowerFirstIfCommon(pilotSteps[0].m) : 'the scope, the owners and the measure'}
 3. Begin implementation
-4. [Additional steps]
 
 ---
 
-*Prepared by ${championName}*
+*Prepared by ${who}*
 *Date: ${new Date().toISOString().split('T')[0]}*
 
 ${SUGGESTIONS_FOOTER}`,
         objection_responses: () => `# Objection Response Guide
 
-## For: ${championName}
-## Situation: Selling ${yourSolution} internally
+## For: ${who}
+## Situation: Selling ${P} internally
 
----
+${sameNote}---
 
-${knownObjections ? `## Anticipated Objections\n\n${objectionItems.map(obj => `
-### Objection: "${obj.trim()}"
+${objectionItems.length ? `## Anticipated Objections\n\n${objBlock}` : `## Common Objections${v ? ` in ${v.name}` : ''}\n\n${v ? v.objections.map((o) => `### "${o.objection}"\n\n**Pattern of an answer:** ${o.response}\n`).join('\n') : ['We do not have budget for this.', 'We have tried something similar before.', 'This is not a priority right now.'].map((o) => `### "${o}"\n\n${(0, answers_ts_1.blockerLines)(o, bctx).join('\n')}\n`).join('\n')}`}
 
-**Response:**
-${answerFor(obj, champCtx.v)}
-
-**Supporting Evidence:**
-- [Proof point 1]
-- [Proof point 2]
-
-**If They Push Back:**
-"I understand the concern. Let me address it this way..."
-
----
-`).join('')}` : `## Common Objections
-
-### "We don't have budget for this."
-
-**Response:**
-"I understand budget is tight. However, the cost of NOT solving this is $X per [period]. The investment pays for itself in [timeframe]."
-
-**Supporting Evidence:**
-- ROI analysis showing payback
-- Cost of current state
-
----
-
-### "We've tried similar solutions before."
-
-**Response:**
-"I appreciate that concern. Can you tell me what didn't work? ${yourSolution} is different because [differentiators]. I've also validated that [proof point]."
-
-**Supporting Evidence:**
-- How this is different
-- Reference customer stories (only if you have them)
-
----
-
-### "This isn't a priority right now."
-
-**Response:**
-"I understand there are competing priorities. Help me understand where this ranks. If we don't address this, [consequence]. ${urgencyDrivers ? urgencyDrivers : 'Is there a trigger that would make this a priority?'}"
-
-**Supporting Evidence:**
-- Cost of delay
-- Urgency drivers
-
----
-
-### "Let's revisit this next quarter."
-
-**Response:**
-"I want to respect your timeline. Can we do the preparation work now so we're ready to move quickly? What would need to happen for this to be prioritized sooner?"
-
-**Supporting Evidence:**
-- Work that can be done now
-- Benefits of early start
-
----`}
-
+${urgencyDrivers ? `### "This isn't a priority right now."\n\n**Your reason to act now:** ${urgencyDrivers}\n` : ''}
+${valueText.length ? `## Value points to lean on\n\nWhatever the objection, come back to what ${P} is meant to deliver:\n${valueText.map((x) => `- ${x}`).join('\n')}\n` : ''}
 ## General Tips for ${championName}
 
 1. **Listen first**: Understand the real concern
@@ -4250,18 +4198,15 @@ ${answerFor(obj, champCtx.v)}
 ${championWins ? `## Your Personal Stake\n\nWhen this succeeds, you get:\n${championWins}\n\nRemember this when pushing through objections.` : ''}`,
         presentation_talking_points: () => `# Presentation Talking Points
 
-## For: ${championName} presenting to ${targetStakeholder}
-## Topic: ${yourSolution}
+## For: ${who} presenting to ${targetStakeholder}
+## Topic: ${P}
 
----
+${sameNote}---
 
 ## Opening (2 minutes)
 
 **Hook:**
-"[Attention-grabbing statement about the problem/opportunity]"
-
-**Credibility:**
-"I've been working on this for [time period] and believe we have an opportunity to [outcome]."
+"${valueFirst ? `What if we could ${lowerFirstIfCommon(valueFirst)}?` : 'Here is a problem that costs us every week, and a way to fix it.'}"
 
 **Agenda Preview:**
 "In the next 15 minutes, I'll cover: the problem, the solution, the business case, and my recommendation."
@@ -4271,9 +4216,8 @@ ${championWins ? `## Your Personal Stake\n\nWhen this succeeds, you get:\n${cham
 ## The Problem (3 minutes)
 
 **Key Points:**
-1. Current state: "[Describe pain point]"
-2. Impact: "[Quantify the cost]"
-3. Trend: "[Only if true: This is getting worse because [reason].]"
+1. How we do it today: ${alts.length ? (0, dealtext_ts_1.joinList)(alts) : 'describe the current way of working'}
+2. What it costs: ${v ? `${(0, dealtext_ts_1.joinList)(v.metrics.slice(0, 3))} are the numbers to quote, from our own data` : 'the number, from our own data'}
 
 **Transition:**
 "Here is the solution I recommend."
@@ -4283,12 +4227,12 @@ ${championWins ? `## Your Personal Stake\n\nWhen this succeeds, you get:\n${cham
 ## The Solution (4 minutes)
 
 **Introduction:**
-"${yourSolution} helps us [primary benefit]."
+"${kindLine}"
 
 **Key Capabilities:**
-${keyValuePoints ? valueItems.map((p, i) => `${i + 1}. ${p.trim()}`).join('\n') : '1. [Capability 1]\n2. [Capability 2]\n3. [Capability 3]'}
+${valueText.length ? valueText.map((p, i) => `${i + 1}. ${p}`).join('\n') : '1. Add key_value_points to list the capabilities that matter here.'}
 
-${competitiveContext ? `\n**Why This Solution:**\n"We looked at alternatives including ${competitiveContext}. This is the best fit because [reasons]."` : ''}
+${alts.length ? `\n**Why This Solution:**\n"We looked at ${(0, dealtext_ts_1.joinList)(alts)}. ${P} is the best fit because ${valueText.length ? lowerFirstIfCommon(valueText[0]) : 'of the points above'}."` : ''}
 
 **Transition:**
 "Let me show you the numbers."
@@ -4298,38 +4242,35 @@ ${competitiveContext ? `\n**Why This Solution:**\n"We looked at alternatives inc
 ## The Business Case (4 minutes)
 
 **Investment:**
-${budgetContext ? budgetContext : '"The investment is $X."'}
+${budgetContext ? budgetContext : 'Not given (budget_context).'}
 
 **Return:**
-"The expected return is $X, which is [X]x ROI."
-
-**Payback:**
-"We break even in [X months]."
+Quote the return from our own ROI case (the roi_business_case_builder tool), not from this page.
 
 **Risk:**
-"The risk of NOT doing this is [consequence]."
+"The risk of not doing this is the cost we just discussed."
 
 ---
 
 ## Recommendation (2 minutes)
 
 **The Ask:**
-"My recommendation is to proceed with ${yourSolution}."
+"My recommendation is to proceed with ${P}."
 
 ${urgencyDrivers ? `\n**Timing:**\n"We should move now because ${urgencyDrivers}."` : ''}
 
 **Next Steps:**
 "If you approve, next steps are:
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]"
+1. ${pilotSteps[0] ? cap(pilotSteps[0].m) : 'Agree the scope and the owners'}
+2. ${pilotSteps[1] ? cap(pilotSteps[1].m) : 'Run a first phase with one team'}
+3. Review the result and decide the wider rollout"
 
 ---
 
 ## Q&A Prep
 
 **Expected Questions:**
-${knownObjections ? objectionItems.map(o => `- "${o.trim()}" → ${answerFor(o, champCtx.v)}`).join('\n') : '- Budget questions → Point to ROI\n- Timeline questions → Show implementation plan\n- Risk questions → Discuss mitigation'}
+${objectionItems.length ? objectionItems.map((o) => `- ${q(o)}: ${(0, answers_ts_1.blockerShort)(o, bctx)}`).join('\n') : (v ? v.objections.map((o) => `- "${o.objection}": ${o.response}`).join('\n') : '- Budget questions: point to the ROI case\n- Timeline questions: show the implementation steps\n- Risk questions: discuss mitigation')}
 
 ---
 
@@ -4338,37 +4279,33 @@ ${championWins ? `## Personal Note\n\nRemember: ${championWins}\n\n` : ''}${SUGG
 
 ## From: ${championName}
 ## Subject Options:
-- Recommendation: ${yourSolution} for [objective]
-- Investment opportunity: [Brief description]
-- Proposal for your review: [Topic]
+- Recommendation: ${P}${valueFirst ? ` to ${lowerFirstIfCommon((0, dealtext_ts_1.clip)(valueFirst, 70))}` : ''}
+- A proposal for your review: ${P}
+- A 15-minute decision on ${P}
 
 ---
 
 ## Email Body
 
-Hi [Name],
+Hi,
 
-I wanted to bring a recommendation to your attention regarding [challenge we're facing].
-
-**The Situation:**
-[1-2 sentences describing the current problem and its impact]
+I wanted to bring a recommendation to your attention.
 
 **The Opportunity:**
-${yourSolution} can help us [key benefit]. Based on my analysis:
-${keyValuePoints ? valueItems.map(p => `- ${p.trim()}`).join('\n') : '- [Benefit 1]\n- [Benefit 2]\n- [Benefit 3]'}
+${kindLine} Based on my analysis:
+${valueBullets}
 
 **The Investment:**
-${budgetContext ? budgetContext : '[Brief investment summary]'}
+${budgetContext ? budgetContext : 'The investment is not given here (budget_context). State it in one line.'}
 
 **The Return:**
-Expected ROI of X:1, with payback in X months.
+The return should come from our own ROI case, in our own numbers. Do not send a ratio you cannot show.
 
 ${urgencyDrivers ? `**Why Now:**\n${urgencyDrivers}\n` : ''}
-
 **My Recommendation:**
-Proceed with ${yourSolution}.
+Proceed with ${P}.
 
-Would you be available for a 15-minute discussion this week? I can walk you through the details and answer any questions. ${EXAMPLE}
+Would you be available for a 15-minute discussion this week? I can walk you through the details and answer any questions.
 
 Thanks,
 ${championName}
@@ -4377,183 +4314,129 @@ ${championName}
 
 ## Alternative: Brief Version
 
-Hi [Name],
+Hi,
 
-Quick question: Would you be open to a 15-minute discussion about [solving X problem]? ${EXAMPLE}
-
-I've found a solution that could save us [$ or time] and I'd like your input before we proceed.
+Would you be open to a 15-minute discussion about ${P}? I believe it can ${valueFirst ? lowerFirstIfCommon(valueFirst) : 'help us with a problem we both know'}, and I would like your input before we proceed.
 
 Let me know what works for your schedule.
 
 ${championName}`,
-        roi_one_pager: () => `# ROI One-Pager: ${yourSolution}
+        roi_one_pager: () => `# ROI One-Pager: ${P}
 
-## For: ${targetStakeholder} | Prepared by: ${championName}
+## For: ${targetStakeholder} | Prepared by: ${who}
 
----
+${sameNote}---
 
 ### The Opportunity
 
-**Problem:** [Current challenge in one sentence]
+**Problem:** ${alts.length ? `Today the work is handled with ${(0, dealtext_ts_1.joinList)(alts)}.` : 'Describe the current challenge in one sentence (competitive_context holds the current way of working).'}
 
-**Solution:** ${yourSolution}
+**Solution:** ${P}
 
-**Impact:** [Key metric improvement]
+**Impact:** ${valueFirst ? valueFirst : 'Add key_value_points.'}
 
 ---
 
 ### Investment Summary
 
-| Category | Amount |
-|----------|--------|
-| Year 1 Investment | $XX,XXX |
-| Annual Recurring | $XX,XXX |
-| Implementation | [Included, or its cost] |
+${budgetLine}
 
 ---
 
 ### Value Creation
 
-| Benefit | Annual Value | Source |
+| Benefit | Annual value | Source |
 |---------|--------------|--------|
-${keyValuePoints ? valueItems.map(p => `| ${p.trim()} | $XX,XXX | [Source] |`).join('\n') : '| Efficiency gains | $XX,XXX | Time savings |\n| Cost reduction | $XX,XXX | Eliminated spend |\n| Revenue impact | $XX,XXX | Improved outcomes |'}
-| **Total Value** | **$XXX,XXX** | - |
+${valueItems.length ? valueItems.map((x) => `| ${cap((0, dealtext_ts_1.clip)(x.text, 180))} | The buyer's own number | ${x.label ? (0, dealtext_ts_1.proofSource)(x) : 'To be confirmed with the buyer'} |`).join('\n') : '| No value points given | Add key_value_points | |'}
 
 ---
 
 ### ROI Analysis
 
-| Metric | Value |
-|--------|-------|
-| **ROI** | [from your ROI business case] |
-| **Payback** | X months |
-| **3-Year NPV** | $X.XM |
+Run the roi_business_case_builder tool with the buyer's cost or value figures. It calculates the return, the payback and the three-year value; none is made up here.
 
 ---
 
 ### Why Now
 
-${urgencyDrivers ? urgencyDrivers : '- [Why now: the deadline or event that sets the timing]\n- Cost of delay: $X/month'}
+${urgencyDrivers ? urgencyDrivers : 'No urgency driver was given (urgency_drivers).'}
 
 ---
 
 ### Recommendation
 
-**Approve investment in ${yourSolution}**
+**Approve investment in ${P}**
 
 ---
 
-*Contact: ${championName}${championRole ? `, ${championRole}` : ''}*`,
+*Contact: ${who}*`,
         competitive_comparison: () => `# Competitive Comparison
 
-## ${yourSolution} vs Alternatives
+## ${P} vs Alternatives
 
 ### Prepared for: ${targetStakeholder}
-### By: ${championName}
+### By: ${who}
 
----
+${sameNote}---
 
 ## Evaluation Summary
 
-${competitiveContext ? `We evaluated: ${competitiveContext}` : 'We evaluated: [the alternatives you looked at]'}
+${altsLine}
 
-**Recommendation:** ${yourSolution}
+**Recommendation:** ${P}
 
 ---
 
 ## Comparison Matrix
 
-*Example ratings (not from your input): replace every rating with the results of your own evaluation.*
+Rate each cell from your own evaluation. The tool does not rate anyone.
 
-| Criteria | ${yourSolution} | Alternative A | Alternative B |
-|----------|-----------------|---------------|---------------|
-| **Capability Fit** | Full | Partial | Partial |
-| **Integration** | Easy | Complex | Complex |
-| **Implementation** | Fast | Slow | Very slow |
-| **Support** | Premium | Standard | Limited |
-| **Total Cost (3yr)** | $XXX,XXX | $XXX,XXX | $XXX,XXX |
-| **Risk** | Low | Medium | High |
+| Criteria | ${P} | ${alts.length ? alts.map((a) => cap((0, dealtext_ts_1.clip)(a, 40))).join(' | ') : 'Alternative'} |
+|----------|------|${(alts.length ? alts : ['x']).map(() => '------').join('|')}|
+${['Fit with what we need', 'Integration with our systems', 'Time to start', 'Support', 'Total cost over three years', 'Risk'].map((c) => `| **${c}** | Rate it | ${(alts.length ? alts : ['x']).map(() => 'Rate it').join(' | ')} |`).join('\n')}
 
 ---
 
-## Why ${yourSolution}
+## Why ${P}
 
-${keyValuePoints ? `### Key Advantages:\n${valueItems.map(p => `- ${p.trim()}`).join('\n')}` : '### Key Advantages:\n- [Benefits from your key value points]'}
+${valueText.length ? `### Key Advantages:\n${valueText.map((p) => `- ${p}`).join('\n')}` : '### Key Advantages:\nAdd key_value_points.'}
 
 ---
 
-## What Others Are Missing
+## What the others leave to us
 
-[Alternative A]: Missing [key capability]
-[Alternative B]: Missing [key capability]
+${alts.length ? alts.map((a) => `- ${cap(a)}: what does it leave undone, and what does that cost?`).join('\n') : 'Name the alternatives (competitive_context) and ask the same question of each.'}
 
 ---
 
 ## Recommendation
 
-Based on [your evaluation], ${yourSolution} is the best choice for [our organization].
+Based on our evaluation, ${P} is the best choice${valueFirst ? ` to ${lowerFirstIfCommon(valueFirst)}` : ''}.
 
 ---
 
-*Analysis by ${championName}*`,
-        risk_assessment: () => `# Risk Assessment: ${yourSolution}
+*Analysis by ${who}*`,
+        risk_assessment: () => `# Risk Assessment: ${P}
 
 ## For: ${targetStakeholder}
-## Prepared by: ${championName}
+## Prepared by: ${who}
 
----
+${sameNote}---
 
 ## Executive Summary
 
-This assessment evaluates risks associated with implementing ${yourSolution} and our mitigation strategies.
-
-*Example assessment (not from your input): replace every rating and mitigation below with your own findings.*
-
-**Overall Risk Level:** [your assessment, for example LOW to MEDIUM]
+This assessment lists the risks of introducing ${P} and how each would be handled. ${needsLine}
+${valueText.length ? `\nThe investment is meant to deliver:\n${valueText.map((x) => `- ${x}`).join('\n')}\n` : ''}
+*Ratings below are not from your input: set each one from your own assessment.*
 
 ---
 
 ## Risk Assessment Matrix
 
-| Risk | Likelihood | Impact | Mitigation | Residual Risk |
-|------|------------|--------|------------|---------------|
-| Implementation delay | Medium | Medium | Phased approach | Low |
-| User adoption | Medium | High | Change management | Medium |
-| Integration issues | Low | High | Technical validation | Low |
-| Vendor viability | Low | High | Due diligence done | Low |
-| Budget overrun | Low | Medium | Fixed pricing | Low |
-
----
-
-## Risk Details
-
-### Risk 1: Implementation Delay
-
-**Likelihood:** Medium
-**Impact:** Delayed value realization
-**Mitigation:** 
-- Phased implementation approach
-- Dedicated project resources
-- Regular status reviews
-
-### Risk 2: User Adoption
-
-**Likelihood:** Medium
-**Impact:** Reduced value capture
-**Mitigation:**
-- Comprehensive training plan
-- Executive sponsorship
-- Change management program
-- Early wins communication
-
-### Risk 3: Integration Complexity
-
-**Likelihood:** Low
-**Impact:** Technical challenges
-**Mitigation:**
-- Technical validation completed
-- Proven integration patterns
-- Vendor support commitment
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+${v ? v.objections.map((o) => `| ${o.objection} | Rate it | Rate it | ${o.response} |`).join('\n') : '| Implementation delay | Rate it | Rate it | Phased approach |\n| User adoption | Rate it | Rate it | Pilot with the people who will use it |\n| Integration | Rate it | Rate it | Technical validation first |'}
+${objectionItems.map((o) => `| ${cap(o)} | Rate it | Rate it | ${(0, answers_ts_1.blockerShort)(o, bctx)} |`).join('\n')}
 
 ---
 
@@ -4561,27 +4444,43 @@ This assessment evaluates risks associated with implementing ${yourSolution} and
 
 | Factor | Impact |
 |--------|--------|
-| Continued inefficiency | $X/year |
-| Competitive disadvantage | Market share at risk |
-| Employee productivity | X hours/week wasted |
-| Opportunity cost | $X in missed growth |
-
-**[Your conclusion: does the risk of inaction exceed the risk of action?]**
+| The current way of working${alts.length ? ` (${(0, dealtext_ts_1.joinList)(alts)})` : ''} | What it costs a year, from our own data |
+${v ? v.metrics.slice(0, 3).map((m) => `| ${cap(m)} | What it costs us today |`).join('\n') : ''}
 
 ---
 
 ## Conclusion
 
-[Your conclusion from the assessment above, for example: While implementation has some risks, all are manageable with proper planning. The risk of NOT proceeding is higher than proceeding.]
+Compare the cost of acting with the cost of waiting, in our own numbers, and write the conclusion here. ${whyNow}
 
 ---
 
-*Assessment by ${championName}*`
+*Assessment by ${who}*`,
     };
     const generator = assetGenerators[assetType] || assetGenerators['executive_brief'];
     return generator();
 }
 // Tool 12: Competitive Trap Setter
+// Run 20 round 1b (D92): a strengths sentence stays whole (a comma inside a sentence is not a list); credentials and recognition are
+// mentioned, never turned into something to demo live; a competitor that is a way of working (manual routing, an in-house build,
+// disconnected tools) is not asked about a contract, references or support; each weakness becomes a question about its own topic;
+// the buyer's persona and priorities shape the questions; no bracket is left.
+const TRAP_TOPICS = [
+    { re: /setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/i, topic: 'the time from signing to the first real result', q: 'How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?' },
+    { re: /manual|human[- ]judged|judg|by hand|spreadsheet|modules and platforms/i, topic: 'which decisions are made by the system and which wait for a person', q: 'Which decisions does each option make by itself and which wait for a person, and how long does each take?' },
+    { re: /periodic|batch|scans?|delay|lag|stale|refresh|overnight|real[- ]time/i, topic: 'how soon each option sees a change', q: 'How soon after something changes does each option show it, and what happens in between?' },
+    { re: /validat|false positive|theoretical|live entry|real exposure|noise/i, topic: 'telling a real problem from a theoretical one', q: 'How does each option tell a real problem from a theoretical one, and can it show that on your own data?' },
+    { re: /financial impact|quantif|cost of a finding|business impact/i, topic: 'putting a cost on a finding', q: 'Can each option express a finding in terms of what it would cost you, and how is that worked out?' },
+    { re: /isolated|silo|not connected|point tools?|do not share|disconnected|several consoles|correlat/i, topic: 'whether findings or records connect', q: 'Can each option show how the pieces connect, or does your team join them by hand?' },
+    { re: /drift|source of truth|governance|bypass|gates?/i, topic: 'keeping everything in step and enforcing the rules', q: 'How does each option keep specs, documents and tests in step, and where is a rule enforced?' },
+    { re: /address|data|integrat|erp|tms|siem|import|sync/i, topic: 'the handling of your own data and the systems it must connect to', q: 'How does each option handle your own data and the systems it must connect to? Could each show it live?' },
+    { re: /price|cost|expensive|fee|overage|charge/i, topic: 'the full cost over three years', q: 'What does each option cost over three years, including everything outside the quoted price?' },
+    { re: /support|sla|service|response|uptime|outage|repair/i, topic: 'the response to an urgent issue', q: 'What happens in each option when something urgent breaks: who answers, how fast, and what does the contract promise?' },
+    { re: /opaque|black box|explain|transparen|report/i, topic: 'how each option explains its decisions', q: 'How does each option explain its decisions and report results you can check yourself?' },
+    { re: /scale|volume|slow|performance|latency/i, topic: 'performance at your real volumes', q: 'How does each option perform at your real volumes, and can it show that on your data?' },
+    { re: /adopt|use|app|interface|ux|training/i, topic: 'everyday use by the people who will rely on it', q: 'Who uses each option every day, and what do they need to learn before it works for them?' },
+];
+const CRED_RE = /\b(?:named|leader|award|recogni\w+|analyst|quadrant|backed by|inner circle|launch partner|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|partners? with|partnerships?|trusted by|\d[\d,.+]*\s*(?:years|customers|companies|countries|engineers))\b/i;
 function executeCompetitiveTrapSetter(args) {
     const competitor = args.competitor || 'Competitor';
     const competitorWeaknesses = args.competitor_weaknesses || '';
@@ -4591,33 +4490,30 @@ function executeCompetitiveTrapSetter(args) {
     const buyerPriorities = args.buyer_priorities || '';
     const trapType = args.trap_type || 'all';
     // Run 19 D80: the sector and business model are read from the inputs (problems 4 and 8).
-    const ctx = readContext(args.business_model, { seller: [yourSolution, yourStrengths], context: [competitorWeaknesses, buyerPriorities, competitor], role: [args.buyer_persona] });
+    const ctx = readContext(args.business_model, { seller: [yourSolution], context: [yourStrengths, competitorWeaknesses, buyerPriorities, competitor], role: [args.buyer_persona] });
     const model = ctx.model;
     const software = model === null || model === 'saas' || model === 'hardware_software';
+    const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
+    const P = brief.short || 'our solution';
+    const v = ctx.v;
+    const investment = model === 'investment';
+    const persona = args.buyer_persona ? (0, answers_ts_1.roleFor)(args.buyer_persona, investment) : null;
+    // A competitor that is a way of working (a manual process, an in-house build, disconnected tools, a legacy system) has no contract,
+    // no reference customers and no support desk to ask about.
+    const isWay = ALT_KINDS.some((k) => k.re.test(competitor)) || competitor.split(/\s+/).length > 6;
+    const compLabel = isWay ? 'the current approach' : competitor;
+    const compPoss = isWay ? 'the current approach\'s' : `${competitor}'s`;
     // Run 19 D80 (problem 2): a weakness is the seller's own note. It is never read out to the buyer inside a question; the
     // question asks the buyer to test the topic the weakness is about. The competitor's name is taken off the front of the note.
     const strip = (w) => w.trim().replace(new RegExp('^' + competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i'), (m) => m.replace(competitor, '').trimStart() ? m.replace(new RegExp(competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trimStart() : '');
     const weaknesses = splitItems(competitorWeaknesses);
-    const strengths = splitItems(yourStrengths);
-    const topicOf = (w) => {
-        const t = w.toLowerCase();
-        if (/setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/.test(t))
-            return 'the time from signing to the first real result';
-        if (/address|data|integrat|erp|tms|siem|import|sync/.test(t))
-            return 'the handling of your own data and the systems it must connect to';
-        if (/price|cost|expensive|fee|overage|charge/.test(t))
-            return 'the full cost over three years, including everything outside the quoted price';
-        if (/support|sla|service|response|uptime|outage|repair/.test(t))
-            return 'the response to an urgent issue: who answers, how fast, and what the contract promises';
-        if (/opaque|black box|explain|judg|transparen|report/.test(t))
-            return 'the way each option explains its decisions and reports results you can check';
-        if (/scale|volume|slow|performance|latency/.test(t))
-            return 'performance at your real volumes';
-        if (/adopt|use|app|interface|ux|training|manual/.test(t))
-            return 'everyday use by the people who will rely on it';
-        return 'the scenario you care most about';
-    };
-    const sectorQ = ctx.v ? ctx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+    const allStrengths = splitItems(yourStrengths);
+    const credentials = allStrengths.filter((s) => CRED_RE.test(s));
+    const strengths = allStrengths.filter((s) => !CRED_RE.test(s));
+    const claimsHere = claimsIn(yourStrengths);
+    const topicOf = (w) => TRAP_TOPICS.find((t) => t.re.test(w)) || { topic: 'the scenario you care most about', q: 'How will you test the scenario you care most about in each option? Could each vendor show it live, with your own data?' };
+    const sectorQ = v ? v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+    const personaQ = persona ? persona.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
     const implementationLabel = model === 'investment' ? 'Onboarding and Mandate Landmines' : model === 'services' ? 'Transition Landmines' : model === 'connectivity' ? 'Rollout Landmines' : 'Implementation Landmines';
     const implementationQs = model === 'investment' ? [
         '"How long from signing to the first allocation, and what do you need from us?"', '"What reporting will you receive each month, and who explains a bad month?"', '"What are the full fees, including performance fees and minimums?"',
@@ -4628,79 +4524,79 @@ function executeCompetitiveTrapSetter(args) {
     ] : [
         '"What is their typical implementation timeline? Have you talked to customers about actual versus promised?"', '"Who from their team will be involved in implementation?"', '"What is included in the price and what costs extra?"',
     ];
+    const wayQs = [
+        '"Who keeps it running today, and what happens when they are away?"', '"What does it cost you in a year, in people\'s time and in fees?"', '"What breaks when your volumes or your plans change?"',
+    ];
     const sections = {
         discovery_questions: `## Discovery Questions (Landmines)
 
-These questions let the buyer find ${competitor}'s gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.
+These questions let the buyer find ${compPoss} gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.
 
 ### General Competitive Discovery
 - "What other options are you evaluating, and what criteria are you using?"
 - "What's most important to you in making this decision?"
 - "Have you defined must-haves versus nice-to-haves?"
-${sectorQ}
+${buyerPriorities ? `- "You told me what matters most: ${q(lowerFirstIfCommon(buyerPriorities.length <= 170 ? buyerPriorities.trim().replace(/[.]+$/, '') : ((0, dealtext_ts_1.painClauses)(buyerPriorities)[0] || buyerPriorities.trim().split(/[;,]/)[0])))}. How would you judge that each option delivers it?"\n` : ''}${sectorQ}
+${personaQ}
 
 ### Capability Landmines
 ${weaknesses.length ? weaknesses.map((w) => `
 **Their weak point (your note, not for the buyer):** ${cap(strip(w))}
-**Landmine Question:** "How will you test ${topicOf(w)} in each option? Could each vendor show it live, with your own data?"
-**Why It Works:** The buyer tests the area themselves, so the gap shows up in their own evaluation.
+**Landmine Question:** "${topicOf(w).q}"
+**Why It Works:** The buyer tests ${topicOf(w).topic} themselves, so the gap shows up in their own evaluation.
 `).join('\n') : `
-- "Can you walk me through how you would handle [a scenario where they are weak]?"
-- "What happens when [an edge case they cannot handle]?"`}
+No weak points were given (competitor_weaknesses). Add what you know about ${compLabel} and each one becomes a question here. Until then, ask: "How will you test the scenario you care most about in each option?"`}
 
-### ${implementationLabel}
-${implementationQs.map((x) => `- ${x}`).join('\n')}
-
+### ${isWay ? 'Questions about the current approach' : implementationLabel}
+${(isWay ? wayQs : implementationQs).map((x) => `- ${x}`).join('\n')}
+${isWay ? '' : `
 ### Support Landmines
 - "What level of support is included? What happens when you have an urgent issue?"
-- "Can you talk to customers who've been through their support process?"`,
+- "Can you talk to customers who've been through their support process?"`}`,
         evaluation_criteria: `## Evaluation Criteria Positioning
 
 ### Criteria to Establish Early
 
-${strengths.length ? `Based on your strengths, suggest these as requirements (only where you can prove them):\n${strengths.map((s) => `- **${cap(s)}**: "How will you test this in each option? Is it on your evaluation list?"`).join('\n')}` : `
-- "[Your differentiating capability]": "[Why this matters, only if you can show it]. Is this on your list?"
-- "Customer references in your industry": "Will you be talking to customers like you?"`}
-
+${strengths.length ? `Based on your strengths, suggest these as requirements (only where you can prove them):\n${strengths.map((s) => `- **${cap(s)}**: "Which of the options can show this on our own scenario? Is it on your evaluation list?"`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live, and each becomes a criterion here.`}
+${credentials.length ? `\n### Credentials (mention them, do not make them criteria)\n\nThese cannot be demonstrated in an evaluation. Say them in a sentence when they answer a concern:\n${credentials.map((s) => `- ${cap(s)}`).join('\n')}\n` : ''}${claimsHere.length ? `\n### Claims to source\n\nThe buyer will ask for the source of: ${(0, dealtext_ts_1.joinList)(claimsHere.map((c) => q((0, dealtext_ts_1.clip)(c, 90))))}. Have it ready, or soften the wording.\n` : ''}
 ### How to Suggest Criteria
 
 "Before you evaluate anyone, it helps to agree the criteria. ${strengths.length ? `I'd suggest these: ${strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; ')}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared questions to ask every vendor?"`,
         reference_questions: `## Reference Call Questions
 
-Suggest the buyer ask these questions when speaking with ${competitor}'s references:
+${isWay ? `Suggest the buyer ask these of people who live with ${compLabel} today (their own team, or peers who work the same way):` : `Suggest the buyer ask these questions when speaking with ${compPoss} references:`}
 
 ### General Questions
-- "How long have you been using it?"
-- "How does the actual experience compare to what was promised during sales?"
+- "${isWay ? 'How long have you worked this way?' : 'How long have you been using it?'}"
+- "How does the actual experience compare to what you expected?"
 - "What surprised you after you started?"
 
 ### Capability Questions
-${weaknesses.length ? weaknesses.map((w) => `- "Tell me about ${topicOf(w)}. What did you see in practice?"`).join('\n') : `- "What limitations have you run into?"
+${weaknesses.length ? weaknesses.map((w) => `- "Tell me about ${topicOf(w).topic}. What did you see in practice?"`).join('\n') : `- "What limitations have you run into?"
 - "What workarounds have you had to build?"`}
 
 ### The Killer Question
-- **"Knowing what you know now, would you choose them again?"**`,
+- **"${isWay ? 'Knowing what you know now, would you keep working this way?' : 'Knowing what you know now, would you choose them again?'}"**`,
         technical_requirements: `## ${software ? 'Technical Requirements' : 'Requirements'} (Traps)
 
 ### RFP or Requirements Document
 
-${strengths.length ? `Requirements built on your strengths (keep only what you can demonstrate):\n${strengths.map((s, i) => `${i + 1}. **${cap(s)}**: "The vendor must demonstrate this live, on our own data, during the evaluation."`).join('\n')}` : `1. "Solution must support [your unique capability]"
-2. "Solution must demonstrate [your differentiator] in the evaluation"`}
+${strengths.length ? `Requirements built on your strengths (keep only what you can demonstrate):\n${strengths.map((s, i) => `${i + 1}. **${cap(s)}**: "The vendor must demonstrate this live, on our own data, during the evaluation."`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live and each becomes a requirement here.`}
 
 ### Evaluation Scenarios
 
-${weaknesses.length ? weaknesses.map((w, i) => `**Scenario ${i + 1}:** ${cap(topicOf(w))}, tested live on the buyer's own data
+${weaknesses.length ? weaknesses.map((w, i) => `**Scenario ${i + 1}:** ${cap(topicOf(w).topic)}, tested live on the buyer's own data
 - Your note (not for the buyer): ${strip(w)}
-- Success criteria: agree a measurable outcome with the buyer before the test`).join('\n\n') : `1. "[Scenario you handle well]": test the core capability
-2. "[Scale scenario]": test performance`}`,
+- Success criteria: agree a measurable outcome with the buyer before the test`).join('\n\n') : `1. The scenario the buyer cares most about${buyerPriorities ? ` (${buyerPriorities})` : ''}: test the core capability on their own data
+2. A scale scenario: test performance at their real volumes`}`,
         commercial_terms: `## Commercial Terms (Positioning)
 
-### Pricing Comparisons
+### ${isWay ? 'Cost Comparison' : 'Pricing Comparisons'}
 
-When they compare prices, make sure they compare:
-${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}
+${isWay ? `When they compare ${P} with ${compLabel}, make sure they compare:\n- What ${compLabel} costs a year in people's time, fees and the cost of its failures\n- What ${P} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare prices, make sure they compare:
+${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}`}
 
-**Questions to Ask ${competitor}:**
+${isWay ? '' : `**Questions to Ask ${competitor}:**
 - "What is NOT included in the quoted price?"
 - "What do years 2 and 3 cost?"
 - "How are price increases decided?"
@@ -4712,30 +4608,31 @@ Ask these about ${competitor}'s contract (nothing here says ${competitor} has th
 - What are the termination rights and notice periods?
 - Are there fees outside the quoted price?
 
-### Your Own Terms
+`}### Your Own Terms
 
-Offer only the terms you actually have, in your own words: [for example, your payment options and contract length]. Promise nothing you cannot put in the contract.`,
+Offer only the terms you actually have (payment options, contract length), in your own words. Promise nothing you cannot put in the contract.`,
     };
-    let output = `# Competitive Positioning: vs ${competitor}
+    let output = `# Competitive Positioning: vs ${isWay ? 'the current approach' : competitor}
 
 ## Situation
-- **Competitor:** ${competitor}
-- **Your Solution:** ${yourSolution}
+- **Competitor:** ${competitor}${isWay ? ' (a way of working, not a vendor: no contract or references are assumed)' : ''}
+- **Your Solution:** ${args.your_solution || NOT_SUPPLIED}
 - **Evaluation Stage:** ${evaluationStage}${args.evaluation_stage ? '' : ' (default)'}
 - **Buyer Persona:** ${args.buyer_persona || NOT_SUPPLIED}
 ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 
 ${ctx.line}
 
+${persona ? `**Who is evaluating:** ${(0, dealtext_ts_1.aAn)(persona.label)}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : ''}
 ---
 
 ## Competitive Intelligence
 
 ### Your Strengths
-${strengths.length ? strengths.map((s) => `- ${s}`).join('\n') : '- [Define your key differentiators]'}
+${allStrengths.length ? allStrengths.map((s) => `- ${s}`).join('\n') : '- None given (your_strengths). Add your differentiators.'}
 
-### ${competitor}: Weak Points (your notes, never read out to the buyer)
-${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- [Research competitor weaknesses]'}
+### ${isWay ? 'The current approach' : competitor}: Weak Points (your notes, never read out to the buyer)
+${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- None given (competitor_weaknesses).'}
 
 ${sectorNotes(ctx.v, 'committee')}
 
@@ -4744,7 +4641,7 @@ ${sectorNotes(ctx.v, 'committee')}
 ## Positioning Strategy
 
 ### Golden Rule
-**Never go negative.** Let the buyer discover competitor weaknesses through their own evaluation.
+**Never go negative.** Let the buyer discover ${compPoss} weaknesses through their own evaluation.
 
 ---
 
@@ -4768,7 +4665,7 @@ ${evaluationStage === 'early' ? `
 - Offer to help them structure the evaluation` : ''}${evaluationStage === 'mid' ? `
 - Make sure your differentiators are being tested
 - Provide proof points and references
-- Surface competitor limitations through the buyer's own tests` : ''}${evaluationStage === 'late' ? `
+- Surface ${compPoss} limitations through the buyer's own tests` : ''}${evaluationStage === 'late' ? `
 - Address any lingering concerns
 - Make sure the decision criteria are the ones agreed
 - Help your champion make the case internally` : ''}${evaluationStage === 'finalist' ? `

@@ -965,9 +965,13 @@ function q(s: string): string {
   return `"${s.trim().replace(/^"|"$/g, '').replace(/[.]$/, '')}"`;
 }
 // The sector and the business model read from the inputs (src/verticals.ts), with one line saying how they were read.
-function readContext(explicitModel: unknown, ...texts: unknown[]): { v: Vertical | null; model: BusinessModel | null; line: string } {
-  const v = detectVertical(...texts);
-  const m = detectModel(explicitModel, ...texts);
+// Run 20 (D92): `seller` is what the seller wrote about its own product (your_solution, category, value points, strengths);
+// `buyer` is everything about the buyer or the deal (industry, role, pain points, blockers, notes). The seller's words are read
+// first; the buyer's words only when the seller's name no sector. A security tool sold to banks is cybersecurity.
+function readContext(explicitModel: unknown, seller: unknown[], buyer: unknown[]): { v: Vertical | null; model: BusinessModel | null; line: string } {
+  const input = { seller, buyer };
+  const v = detectVertical(input);
+  const m = detectModel(explicitModel, input);
   const sector = v ? `read from your inputs as ${v.name}` : 'not clear from your inputs (name the industry for sector notes)';
   const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
   return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
@@ -1013,7 +1017,7 @@ function executeAccountPlanBuilder(args: Record<string, unknown>): string {
   const yourSolution = (args.your_solution as string) || 'your solution';
   const accountNotes = (args.account_notes as string) || '';
   // Run 19 D80 (problems 3 and 8): contacts given are used, not asked for again; the sector's buying committee is named.
-  const acctCtx = readContext(undefined, industry === 'Technology' && !args.industry ? '' : industry, yourSolution, currentProducts, accountNotes, knownContacts);
+  const acctCtx = readContext(undefined, [yourSolution], [industry === 'Technology' && !args.industry ? '' : industry, currentProducts, accountNotes, knownContacts]);
   const contacts = splitItems(knownContacts);
   const hasChampion = /champion/i.test(knownContacts);
   const hasEconomicBuyer = /economic buyer|budget|cfo|ceo|coo/i.test(knownContacts);
@@ -1614,7 +1618,7 @@ The economic buyer was not supplied. If you do not know who controls the budget:
   }
 
   // Run 19 D80 (problem 3): every blocker the user typed gets its own answer, from the sector's known objections where one matches.
-  const dealCtx = readContext(undefined, yourSolution, blockers, competitors, nextSteps, dealName);
+  const dealCtx = readContext(undefined, [yourSolution], [blockers, competitors, nextSteps, dealName]);
   if (blockers) {
     const items = splitItems(blockers);
     specificRecs += `
@@ -1708,7 +1712,7 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
   const yourSolution = (args.your_solution as string) || 'your solution';
   const gapsToFill = (args.gaps_to_fill as string) || '';
   // Run 19 D80 (problems 2, 3 and 8): gaps first, in the sector's language; "none" is never echoed back as if it were a metric.
-  const ctx = readContext(undefined, prospectIndustry, prospectRole, knownPainPoints, yourSolution);
+  const ctx = readContext(undefined, [yourSolution], [prospectIndustry, prospectRole, knownPainPoints]);
   const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics.trim());
   const firstMetric = ctx.v ? ctx.v.metrics[0] : 'the number this problem moves';
   const metricsFollowUp = !knownMetrics ? '' : noMetrics
@@ -2678,7 +2682,7 @@ ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 *Confidence: ${confidenceLevel.toLowerCase()}. ${exampleOnly ? 'The value figures rest on example assumptions until you replace them with customer-provided metrics.' : 'The value comes from the figures you supplied; confirm them with the buyer before sharing.'}*
 
-${(() => { const c = readContext(undefined, yourSolution, customerName, knownMetrics, currentProcess, args.industry); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
+${(() => { const c = readContext(undefined, [yourSolution], [customerName, knownMetrics, currentProcess, args.industry]); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
 }
 
 // Tool 5: Mutual Action Plan Generator
@@ -2799,7 +2803,7 @@ ${knownRequirements ? knownRequirements : `
 | Priority | Criterion | Status |
 |----------|-----------|--------|
 ${(() => { const reqs = splitItems(knownRequirements); return reqs.length ? reqs.map((r, i) => `| ${i < 2 ? 'High' : 'Medium'} (agree with the buyer) | ${cap(r)} | To be tested in the evaluation |`).join('\n') : '| High | [Core requirement] | Pending |\n| High | [Core requirement] | Pending |\n| Medium | [Important feature] | Pending |\n| Low | [Nice to have] | Pending |'; })()}
-${(() => { const c = readContext(undefined, yourSolution, knownRequirements, technicalEvaluators, dealName); return c.v ? `\n${sectorNotes(c.v, 'metrics')}\n` : ''; })()}
+${(() => { const c = readContext(undefined, [yourSolution], [knownRequirements, technicalEvaluators, dealName]); return c.v ? `\n${sectorNotes(c.v, 'metrics')}\n` : ''; })()}
 
 ---
 
@@ -2873,7 +2877,7 @@ ${blockers}
 **Mitigation Plan:**
 | Blocker | Mitigation | Owner | Status |
 |---------|------------|-------|--------|
-${(() => { const c = readContext(undefined, yourSolution, blockers, knownRequirements); return splitItems(blockers).map((b) => `| ${cap(b)} | ${answerFor(b, c.v)} | Agree an owner on each side | Open |`).join('\n'); })()}
+${(() => { const c = readContext(undefined, [yourSolution], [blockers, knownRequirements]); return splitItems(blockers).map((b) => `| ${cap(b)} | ${answerFor(b, c.v)} | Agree an owner on each side | Open |`).join('\n'); })()}
 ` : '### Potential Risks\n- Budget timing/availability\n- Competing priorities\n- Stakeholder alignment\n- Technical integration complexity'}
 
 ### Risk Assessment
@@ -2940,7 +2944,7 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
   const yourSolution = (args.your_solution as string) || 'your solution';
   const multipleDeals = (args.multiple_deals as string) || '';
   // Run 19 D80 (problem 3): the stated reason and the stakeholders are read, not only echoed.
-  const wlCtx = readContext(undefined, yourSolution, dealDetails, lossReason, stakeholdersInvolved);
+  const wlCtx = readContext(undefined, [yourSolution], [dealDetails, lossReason, stakeholdersInvolved]);
   const people = splitItems(stakeholdersInvolved).map((x) => {
     const m = x.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
     return m ? { who: m[1].trim(), stance: m[2].trim().toLowerCase() } : { who: x.trim(), stance: '' };
@@ -3346,7 +3350,7 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const decisionTimeline = (args.decision_timeline as string) || '';
   const approvalAuthority = (args.approval_authority as string) || '';
   // Run 19 D80 (problems 4 and 6): the trades follow the business model; the competitor gap and the value are the user's own.
-  const ctx = readContext(args.business_model, yourSolution, valueDelivered, yourLeverage, buyerLeverage, competitorPrice);
+  const ctx = readContext(args.business_model, [yourSolution, valueDelivered, yourLeverage], [buyerLeverage, competitorPrice]);
   const trades = MODEL_TRADES[ctx.model || 'unknown'];
   const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
   const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is [X]% cheaper"`;
@@ -3877,7 +3881,7 @@ function executeChampionEnablementKit(args: Record<string, unknown>): string {
   const championWins = (args.champion_wins as string) || '';
   // Run 19 D80 (problems 3 and 8): every objection the user typed gets an answer; value points fill the returns table;
   // no placeholder percentage or dollar figure is printed; sector notes say who else will read the case.
-  const champCtx = readContext(undefined, yourSolution, keyValuePoints, knownObjections, competitiveContext, targetStakeholder, championRole);
+  const champCtx = readContext(undefined, [yourSolution, keyValuePoints], [knownObjections, competitiveContext, targetStakeholder, championRole]);
   const valueItems = splitItems(keyValuePoints);
   const objectionItems = splitItems(knownObjections);
 
@@ -4476,7 +4480,7 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const buyerPriorities = (args.buyer_priorities as string) || '';
   const trapType = (args.trap_type as string) || 'all';
   // Run 19 D80: the sector and business model are read from the inputs (problems 4 and 8).
-  const ctx = readContext(args.business_model, yourSolution, yourStrengths, competitorWeaknesses, buyerPriorities, args.buyer_persona, competitor);
+  const ctx = readContext(args.business_model, [yourSolution, yourStrengths], [competitorWeaknesses, buyerPriorities, args.buyer_persona, competitor]);
   const model = ctx.model;
   const software = model === null || model === 'saas' || model === 'hardware_software';
   // Run 19 D80 (problem 2): a weakness is the seller's own note. It is never read out to the buyer inside a question; the
@@ -4682,7 +4686,7 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const tone = (args.tone as string) || 'consultative';
   // Run 19 D80 (problems 2, 3 and 8): lists are split by line or semicolon only, so a phrase is never cut at a comma into a
   // fragment; the implementation approach is used; sector notes say what evidence lands in this buyer's sector.
-  const propCtx = readContext(undefined, yourSolution, customerIndustry, customerChallenges, keyDifferentiators);
+  const propCtx = readContext(undefined, [yourSolution, keyDifferentiators], [customerIndustry, customerChallenges]);
 
   // Tone adjustments
   const toneStyles: Record<string, { opening: string; language: string }> = {
@@ -5284,7 +5288,7 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const tone = (args.tone as string) || 'professional';
   const senderContext = (args.sender_context as string) || '';
   // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
-  const ctx = readContext(undefined, yourSolution, targetIndustry, targetPersona, specificPainPoint, keyValueProp);
+  const ctx = readContext(undefined, [yourSolution, keyValueProp], [targetIndustry, targetPersona, specificPainPoint]);
   const cta = callToAction.trim().replace(/[.?!]$/, '');
   const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
     : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
@@ -5757,7 +5761,7 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
   const mustShowFeatures = (args.must_show_features as string) || '';
   const knownObjections = (args.known_objections as string) || '';
   const desiredOutcome = (args.desired_outcome as string) || 'advance the deal';
-  const demoCtx = readContext(undefined, yourSolution, customerIndustry, keyPainPoints, mustShowFeatures, primaryAudience, attendees);
+  const demoCtx = readContext(undefined, [yourSolution, mustShowFeatures], [customerIndustry, keyPainPoints, primaryAudience, attendees]);
 
   // Calculate time allocations (same shares: 15% opening, 15% discovery, 50% demo, 15% discussion, 5% close).
   // Text and arithmetic only (run 9): the smaller parts round down and the demo takes the rest, so the parts

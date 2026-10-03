@@ -263,3 +263,41 @@ test("a SaaS product bought by IT leaders stays plain SaaS, and IT asset managem
   assert.equal(detectVertical("Asset management firm for pension funds")?.id, "fintech");
   assert.equal(detectModel(undefined, "Asset management firm for pension funds").model, "investment");
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Run 20 round 2c: the two guards that lived in Revenue's readContext now live in the shared reader.
+// (1) "AI-native", "GenAI", "AI agents" and similar are a way of building; when they are the only AI words and the seller's text
+//     also names a trade, the trade decides. (2) The sector's usual business model is that of the sector finally chosen.
+// ---------------------------------------------------------------------------------------------------------------------------
+test("a marketing AI label beside a trade word: the trade decides the sector, and the usual model follows the new sector", () => {
+  const cases = [["GenAI business services", "ites", "services"], ["AI-native security platform", "cybersecurity", "saas"], ["GenAI testing cloud", "software", "saas"],
+    ["AI-native sales force automation", "vertical-saas", "saas"], ["AI-native payments platform", "fintech", "transactions"], ["AI-native billing", "saas", "saas"], ["AI-first freight forwarding", "logistics-tech", "saas"]];
+  for (const [t, sector, model] of cases) {
+    assert.equal(detectVertical(t)?.id, sector, t);
+    assert.equal(detectModel(undefined, t).model, model, t);
+    const x = mod.explainSector(t);
+    assert.equal(x.source, "seller");
+    assert.ok(!x.strong.every((w) => /^(?:ai|ai[- ]native|ai[- ]first|genai)$/.test(w)), `the words that decided it name the trade: ${JSON.stringify(x.strong)}`);
+  }
+  // the usual model of the final sector, not of AI native: nothing in the text names a model
+  assert.deepEqual(detectModel(undefined, "AI-native outsourcing"), { model: "services", how: "read" });
+  assert.equal(detectModel(undefined, { seller: ["our solution"], buyer: [] }).model, null);
+  assert.deepEqual(detectModel(undefined, "GenAI back-office"), { model: "services", how: "sector" });
+  // ITeS sold on a platform is still services unless the seller says subscription, SaaS, per seat or licence
+  assert.equal(detectModel(undefined, "GenAI business services delivered on a digital platform").model, "services");
+  assert.equal(detectModel(undefined, "GenAI business services sold as a SaaS subscription").model, "saas");
+});
+
+test("AI words that are not only a label, support automation, and AI native investment sellers stay AI native", () => {
+  for (const t of ["AI platform that scans cloud accounts for risk", "AI models that rank leads", "AI agents that resolve customer support tickets", "AI agents that handle contact centre calls", "AI-native contract review", "AI-native platform"]) assert.equal(detectVertical(t)?.id, "ai-native", t);
+  assert.equal(detectVertical("AI agents that triage security alerts")?.id, "ai-native", "AI agents are the product, not a label");
+  for (const t of ["Investment strategies for asset allocators powered by AI", "AI-driven investment strategies for asset allocators", "AI-native investment strategies company"]) {
+    assert.equal(detectVertical(t)?.id, "ai-native", t);
+    assert.equal(detectModel(undefined, t).model, "investment", t);
+    assert.equal(aiUseCase(t), "investment", t);
+  }
+  assert.equal(detectVertical("Wealth management firm that manages client portfolios and charges a fee on assets under management").id, "fintech");
+  assert.equal(detectVertical("Systematic investment strategies for pension funds").id, "fintech");
+  // buyer words alone never turn an AI label into a trade
+  assert.equal(detectVertical({ seller: ["AI-native platform"], buyer: ["Banks"] })?.id, "ai-native");
+});

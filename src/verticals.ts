@@ -208,7 +208,7 @@ export const VERTICALS: Vertical[] = [
   },
   {
     id: 'software', name: 'software',
-    match: /\b(developers?|api (?:testing|tests?|platform|management|gateway|monitoring|design|development)|devops|devsecops|dev tools|ci\/cd|ci pipelines?|observability|databases?|open[- ]source|engineering teams?|qa|test(?:ing|s)? (?:platform|automation|tools?)|test automation|software testing|unit tests?|source code|version control|git|kubernetes|microservices|sdlc|feature flags?|low-code|infrastructure as code|apm|backend)\b/i,
+    match: /\b(developers?|api (?:testing|tests?|platform|management|gateway|monitoring|design|development)|devops|devsecops|dev tools|ci\/cd|ci pipelines?|observability|databases?|open[- ]source|engineering teams?|qa|test(?:ing|s)? (?:platform|automation|tools?)|test automation|software testing|(?:testing|test|device|browser) clouds?|cloud testing|cross-browser|browser testing|unit tests?|source code|version control|git|kubernetes|microservices|sdlc|feature flags?|low-code|infrastructure as code|apm|backend)\b/i,
     weak: /\b(apis?|sdks?|code|release|releases|deploy\w*|testing|tests?|debug\w*|logging)\b/i,
     vocabulary: ['CI pipeline', 'developer experience', 'test coverage', 'release frequency', 'API', 'SDK', 'technical debt', 'open-source alternative', 'mean time to recovery'],
     buyerRoles: ['VP Engineering', 'Chief Technology Officer', 'Head of QA', 'Platform Engineering Lead', 'Engineering Manager', 'Security Lead'],
@@ -349,6 +349,8 @@ const SECURITY_GENERIC = /^(?:security|firewalls?|zero trust|sase|cyber\w*|(?:cl
 const SERVICES_WORDS = /\b(?:business (?:process )?(?:services|management|outsourcing)|bpo|bpm|bpaas|kpo|managed (?:it |network |cloud )?services?|customer experience (?:management |services|outsourcing)|outsourc\w*|contact cent(?:re|er)s?|call cent(?:re|er)s?|back[- ]office|digital operations|shared services)\b/i;
 const PRODUCT_WORDS = /\b(?:software|saas|platforms?|apps?|apis?|tools?|subscriptions?|copilots?|assistants?|automat\w*|engines?)\b/i;
 const PEOPLE_WORDS = /\b(?:people|humans?|staff|fte|analysts|specialists|experts|teams?)\b/i;
+// Only labels count as marketing; "AI agents", "copilot" and "AI assistant" name the product itself.
+const AI_MARKETING = /^(?:ai|ai[- ]native|ai[- ]first|agentic|genai|gen ai|generative ai)$/;
 const AI_LABELS = /^(?:ai|ai[- ]native|ai[- ]first|ai (?:company|startup)|ai workforce)$/;
 // (c) A seller of billing, invoicing, revenue recognition, dunning or usage-based pricing is SaaS, not fintech, unless it also moves
 //     money (payment processing, payouts, lending, cards) or is a spend-management / accounts payable tool.
@@ -373,6 +375,15 @@ function adjust(text: string, best: Candidate, all: Candidate[]): Candidate {
   if (best.v.id === 'ai-native') {
     const ites = all.find((x) => x.v.id === 'ites');
     if (ites && SERVICES_WORDS.test(text) && !PRODUCT_WORDS.test(text) && (best.strong.every((w) => AI_LABELS.test(w)) || PEOPLE_WORDS.test(text))) return ites;
+    // (d) "AI-native", "GenAI", "AI agents" and the like say how a product is built, not what it sells. When they are the only AI
+    //     words and the seller's text also names a trade of its own (a security platform, a testing cloud, business services, billing,
+    //     sales force automation, payments), the trade decides. Support automation stays AI native, and so does a seller that manages
+    //     money (investment strategies): that is the AI native investment case.
+    if (best.strong.every((w) => AI_MARKETING.test(w)) && !SUPPORT_WORDS.test(text)) {
+      const money = modelFromSeller(text) === 'investment';
+      const trades = all.filter((x) => x.v.id !== 'ai-native' && (x.v.id !== 'saas' || BILLING_WORDS.test(text)) && !(x.v.id === 'fintech' && money));
+      if (trades.length) return trades.sort((a, b) => b.score - a.score || a.first - b.first || ORDER.indexOf(a.v.id) - ORDER.indexOf(b.v.id))[0];
+    }
   }
   return best;
 }
@@ -455,6 +466,7 @@ export const BILLING_PROFILE: SectorNotes = {
   ],
 };
 
+const AI_ANY = /\b(?:ai|a\.i\.|ai[- ](?:native|first|powered|led|driven|based|enabled)|genai|gen ai|generative ai|llms?|artificial intelligence|agentic)\b/i;
 const AI_NATIVE = VERTICALS.find((v) => v.id === 'ai-native')!;
 const SAAS_BASE = VERTICALS.find((v) => v.id === 'saas')!;
 const BILLING_SAAS: Vertical = { ...SAAS_BASE, ...BILLING_PROFILE, name: 'SaaS, billing and revenue operations' };
@@ -506,6 +518,12 @@ export function profileFor(v: Vertical | null, model: BusinessModel | null | und
 export function explainSector(...args: unknown[]): { vertical: Vertical | null; source: 'seller' | 'context' | 'role' | 'buyer' | null; strong: string[]; weak: string[] } {
   const { seller, buyer, context, role } = sides(args);
   const s = pick(seller);
+  // A seller that manages money (investment strategies, portfolios for allocators) and uses AI words of its own, anywhere in its
+  // description, is AI native with the investment model, not fintech (the model is read in detectModel).
+  if (s && s.v.id === 'fintech' && modelFromSeller(seller) === 'investment') {
+    const ai = scan(AI_ANY, sellerWhole(args));
+    if (ai.length) return { vertical: AI_NATIVE, source: 'seller', strong: ai, weak: s.weak };
+  }
   if (s) return { vertical: forUseCase(s.v, args), source: 'seller', strong: s.strong, weak: s.weak };
   const c = pick(context, 2);
   if (c) return { vertical: forUseCase(c.v, args), source: 'context', strong: c.strong, weak: c.weak };
@@ -540,7 +558,7 @@ const MODEL_MATCH: { model: BusinessModel; re: RegExp; not?: RegExp }[] = [
   { model: 'investment', re: /\b(?:investment strateg\w*|systematic strateg\w*|hedge funds?|mutual funds?|venture (?:fund|capital)|private equity|family offices?|aum|assets under management|(?:manages?|managing|runs|invests?|investing|allocates?)\b[^.;,]{0,40}\b(?:funds?|portfolios?|client money|capital|wealth|investments?))\b/i, not: /\b(?:software|saas)\b/i },
   { model: 'investment', re: /(?<!\bit )(?<!digital )(?<!software )(?<!infrastructure )(?<!network )(?<!cloud )(?<!media )(?<!brand )(?<!enterprise )\b(?:asset|wealth|fund|portfolio|investment) (?:management|managers?|advisory|advisors?)\b/i, not: /\b(?:software|saas|platform|apps?|apis?|analytics|tools?|dashboards?|systems?)\b/i },
   { model: 'connectivity', re: /\b(?:sd-?wan|mpls|leased lines?|connectivity|bandwidth|per site|per link|5g|business internet|internet access|broadband|isps?|voip|sip trunk\w*|managed network|wi-?fi|colocation|mobile network|(?:telecom\w*|network|mobile|wireless|fib(?:re|er)) (?:operator|provider|carrier|services?))\b/i, not: /\b(?:software|saas|subscriptions?|analytics|dashboards?|tools?|(?:cyber)?security (?:platform|software|vendor|company|product|tool)s?)\b/i },
-  { model: 'services', re: /\b(?:managed (?:(?:it|network|cloud|security) )?services?|managed (?:detection|security)|mdr|service desk|help ?desk|outsourc\w*|bpo|bpm|kpo|consulting|consultancy|per fte|per ticket|staff augmentation|it staffing|systems? integrators?|it services|statements? of work|contact cent(?:re|er)s?|call cent(?:re|er)s?|application maintenance|business (?:process )?services?|customer experience services?|cx services|dedicated (?:\w+ ){0,2}teams?)\b/i, not: /\b(?:software|saas|subscriptions?|platform|apps?|apis?|analytics|dashboards?|tools?)\b/i },
+  { model: 'services', re: /\b(?:managed (?:(?:it|network|cloud|security) )?services?|managed (?:detection|security)|mdr|service desk|help ?desk|outsourc\w*|bpo|bpm|kpo|consulting|consultancy|per fte|per ticket|staff augmentation|it staffing|systems? integrators?|it services|statements? of work|contact cent(?:re|er)s?|call cent(?:re|er)s?|application maintenance|business (?:process )?services?|customer experience services?|cx services|dedicated (?:\w+ ){0,2}teams?)\b/i, not: /\b(?:software|saas|subscriptions?|platform|apps?|apis?|analytics|dashboards?|tools?|ai agents?|agents that|agentic|copilots?|ai assistants?|ai models?|llms?)\b/i },
   { model: 'marketplace', re: /\b(?:marketplace|take rate|gmv|two-sided|takes? an? (?:commission|cut|percentage))\b/i, not: /\b(?:software|saas|analytics|tools?)\b/i },
   // payments sellers are paid per transaction or by volume
   { model: 'transactions', re: /(?:\b(?:per[- ]transaction|transaction fees?|payments? (?:apis?|gateways?|processing|processors?|platforms?|infrastructure|orchestration|rails|acquiring|providers?|companies|stack)|payouts?|checkout|interchange|remittances?|merchant acquiring|card issuing|upi)\b|(?:^|\n)\s*payments?\b)/i, not: /\b(?:software|saas|subscriptions?|analytics|dashboards?|tools?|reconcil\w*|security|fraud|risk|compliance|expense\w*|spend|travel|invoic\w*|billing|payroll)\b/i },
@@ -564,6 +582,10 @@ export function detectModel(explicit: unknown, ...args: unknown[]): { model: Bus
   if (typeof explicit === 'string' && (BUSINESS_MODELS as string[]).includes(explicit)) return { model: explicit as BusinessModel, how: 'input' };
   const { seller } = sides(args);   // the seller's words only: what the buyer's side says about its own money is not the seller's model
   const read = modelFromSeller(seller);
+  // The usual model is that of the sector finally chosen (after the AI label is set aside). A services firm that mentions a platform,
+  // an app or software ("Sonata Software", "business services on a digital platform") sells services unless its own words say
+  // subscription, SaaS, per seat, per user or licence.
+  if (read === 'saas' && !/\b(?:saas|subscriptions?|per seat|per user|licen[cs]es?)\b/i.test(seller) && detectVertical(...args)?.id === 'ites') return { model: 'services', how: 'sector' };
   if (read) return { model: read, how: 'read' };
   const v = detectVertical(...args);
   if (v) return { model: SECTOR_MODEL[v.id], how: 'sector' };

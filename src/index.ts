@@ -959,7 +959,10 @@ function splitItems(s: unknown): string[] {
   // a plain comma list of short items (each 1 to 6 words, no verb-like comma clause) is split too
   if (parts.length === 1 && /,/.test(parts[0])) {
     const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
-    if (c.length > 1 && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that)\b/i.test(x))) return c;
+    // a sentence with a comma ("the first and only X, built to replace Y") is not a list: a first fragment that opens with an article and runs
+    // to four words or more, or a fragment that opens with a participle or a linking word, makes it one item
+    const sentenceLike = /^(?:the|a|an)\s/i.test(c[0] || '') && (c[0] || '').split(/\s+/).length >= 4;
+    if (c.length > 1 && !sentenceLike && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x))) return c;
   }
   return parts;
 }
@@ -4518,6 +4521,26 @@ Compare the cost of acting with the cost of waiting, in our own numbers, and wri
 
 
 // Tool 12: Competitive Trap Setter
+// Run 20 round 1b (D92): a strengths sentence stays whole (a comma inside a sentence is not a list); credentials and recognition are
+// mentioned, never turned into something to demo live; a competitor that is a way of working (manual routing, an in-house build,
+// disconnected tools) is not asked about a contract, references or support; each weakness becomes a question about its own topic;
+// the buyer's persona and priorities shape the questions; no bracket is left.
+const TRAP_TOPICS: { re: RegExp; topic: string; q: string }[] = [
+  { re: /setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/i, topic: 'the time from signing to the first real result', q: 'How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?' },
+  { re: /manual|human[- ]judged|judg|by hand|spreadsheet|modules and platforms/i, topic: 'which decisions are made by the system and which wait for a person', q: 'Which decisions does each option make by itself and which wait for a person, and how long does each take?' },
+  { re: /periodic|batch|scans?|delay|lag|stale|refresh|overnight|real[- ]time/i, topic: 'how soon each option sees a change', q: 'How soon after something changes does each option show it, and what happens in between?' },
+  { re: /validat|false positive|theoretical|live entry|real exposure|noise/i, topic: 'telling a real problem from a theoretical one', q: 'How does each option tell a real problem from a theoretical one, and can it show that on your own data?' },
+  { re: /financial impact|quantif|cost of a finding|business impact/i, topic: 'putting a cost on a finding', q: 'Can each option express a finding in terms of what it would cost you, and how is that worked out?' },
+  { re: /isolated|silo|not connected|point tools?|do not share|disconnected|several consoles|correlat/i, topic: 'whether findings or records connect', q: 'Can each option show how the pieces connect, or does your team join them by hand?' },
+  { re: /drift|source of truth|governance|bypass|gates?/i, topic: 'keeping everything in step and enforcing the rules', q: 'How does each option keep specs, documents and tests in step, and where is a rule enforced?' },
+  { re: /address|data|integrat|erp|tms|siem|import|sync/i, topic: 'the handling of your own data and the systems it must connect to', q: 'How does each option handle your own data and the systems it must connect to? Could each show it live?' },
+  { re: /price|cost|expensive|fee|overage|charge/i, topic: 'the full cost over three years', q: 'What does each option cost over three years, including everything outside the quoted price?' },
+  { re: /support|sla|service|response|uptime|outage|repair/i, topic: 'the response to an urgent issue', q: 'What happens in each option when something urgent breaks: who answers, how fast, and what does the contract promise?' },
+  { re: /opaque|black box|explain|transparen|report/i, topic: 'how each option explains its decisions', q: 'How does each option explain its decisions and report results you can check yourself?' },
+  { re: /scale|volume|slow|performance|latency/i, topic: 'performance at your real volumes', q: 'How does each option perform at your real volumes, and can it show that on your data?' },
+  { re: /adopt|use|app|interface|ux|training/i, topic: 'everyday use by the people who will rely on it', q: 'Who uses each option every day, and what do they need to learn before it works for them?' },
+];
+const CRED_RE = /\b(?:named|leader|award|recogni\w+|analyst|quadrant|backed by|inner circle|launch partner|certified|certifications?|iso\s?\d{4,5}|soc ?2|pci|partners? with|partnerships?|trusted by|\d[\d,.+]*\s*(?:years|customers|companies|countries|engineers))\b/i;
 function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const competitor = (args.competitor as string) || 'Competitor';
   const competitorWeaknesses = (args.competitor_weaknesses as string) || '';
@@ -4527,26 +4550,30 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   const buyerPriorities = (args.buyer_priorities as string) || '';
   const trapType = (args.trap_type as string) || 'all';
   // Run 19 D80: the sector and business model are read from the inputs (problems 4 and 8).
-  const ctx = readContext(args.business_model, { seller: [yourSolution, yourStrengths], context: [competitorWeaknesses, buyerPriorities, competitor], role: [args.buyer_persona] });
+  const ctx = readContext(args.business_model, { seller: [yourSolution], context: [yourStrengths, competitorWeaknesses, buyerPriorities, competitor], role: [args.buyer_persona] });
   const model = ctx.model;
   const software = model === null || model === 'saas' || model === 'hardware_software';
+  const brief = solutionBrief(args.your_solution ? yourSolution : '');
+  const P = brief.short || 'our solution';
+  const v = ctx.v;
+  const investment = model === 'investment';
+  const persona = args.buyer_persona ? roleFor(args.buyer_persona as string, investment) : null;
+  // A competitor that is a way of working (a manual process, an in-house build, disconnected tools, a legacy system) has no contract,
+  // no reference customers and no support desk to ask about.
+  const isWay = ALT_KINDS.some((k) => k.re.test(competitor)) || competitor.split(/\s+/).length > 6;
+  const compLabel = isWay ? 'the current approach' : competitor;
+  const compPoss = isWay ? 'the current approach\'s' : `${competitor}'s`;
   // Run 19 D80 (problem 2): a weakness is the seller's own note. It is never read out to the buyer inside a question; the
   // question asks the buyer to test the topic the weakness is about. The competitor's name is taken off the front of the note.
   const strip = (w: string) => w.trim().replace(new RegExp('^' + competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i'), (m) => m.replace(competitor, '').trimStart() ? m.replace(new RegExp(competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trimStart() : '');
   const weaknesses = splitItems(competitorWeaknesses);
-  const strengths = splitItems(yourStrengths);
-  const topicOf = (w: string): string => {
-    const t = w.toLowerCase();
-    if (/setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/.test(t)) return 'the time from signing to the first real result';
-    if (/address|data|integrat|erp|tms|siem|import|sync/.test(t)) return 'the handling of your own data and the systems it must connect to';
-    if (/price|cost|expensive|fee|overage|charge/.test(t)) return 'the full cost over three years, including everything outside the quoted price';
-    if (/support|sla|service|response|uptime|outage|repair/.test(t)) return 'the response to an urgent issue: who answers, how fast, and what the contract promises';
-    if (/opaque|black box|explain|judg|transparen|report/.test(t)) return 'the way each option explains its decisions and reports results you can check';
-    if (/scale|volume|slow|performance|latency/.test(t)) return 'performance at your real volumes';
-    if (/adopt|use|app|interface|ux|training|manual/.test(t)) return 'everyday use by the people who will rely on it';
-    return 'the scenario you care most about';
-  };
-  const sectorQ = ctx.v ? ctx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+  const allStrengths = splitItems(yourStrengths);
+  const credentials = allStrengths.filter((s) => CRED_RE.test(s));
+  const strengths = allStrengths.filter((s) => !CRED_RE.test(s));
+  const claimsHere = claimsIn(yourStrengths);
+  const topicOf = (w: string): { topic: string; q: string } => TRAP_TOPICS.find((t) => t.re.test(w)) || { topic: 'the scenario you care most about', q: 'How will you test the scenario you care most about in each option? Could each vendor show it live, with your own data?' };
+  const sectorQ = v ? v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+  const personaQ = persona ? persona.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
   const implementationLabel = model === 'investment' ? 'Onboarding and Mandate Landmines' : model === 'services' ? 'Transition Landmines' : model === 'connectivity' ? 'Rollout Landmines' : 'Implementation Landmines';
   const implementationQs = model === 'investment' ? [
     '"How long from signing to the first allocation, and what do you need from us?"', '"What reporting will you receive each month, and who explains a bad month?"', '"What are the full fees, including performance fees and minimums?"',
@@ -4557,83 +4584,83 @@ function executeCompetitiveTrapSetter(args: Record<string, unknown>): string {
   ] : [
     '"What is their typical implementation timeline? Have you talked to customers about actual versus promised?"', '"Who from their team will be involved in implementation?"', '"What is included in the price and what costs extra?"',
   ];
+  const wayQs = [
+    '"Who keeps it running today, and what happens when they are away?"', '"What does it cost you in a year, in people\'s time and in fees?"', '"What breaks when your volumes or your plans change?"',
+  ];
   const sections: Record<string, string> = {
     discovery_questions: `## Discovery Questions (Landmines)
 
-These questions let the buyer find ${competitor}'s gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.
+These questions let the buyer find ${compPoss} gaps through their own evaluation. The weak points below are your own notes: never read one out to the buyer.
 
 ### General Competitive Discovery
 - "What other options are you evaluating, and what criteria are you using?"
 - "What's most important to you in making this decision?"
 - "Have you defined must-haves versus nice-to-haves?"
-${sectorQ}
+${buyerPriorities ? `- "You said ${q(lowerFirstIfCommon(clip(buyerPriorities, 140)))}. How would you judge that each option delivers it?"\n` : ''}${sectorQ}
+${personaQ}
 
 ### Capability Landmines
 ${weaknesses.length ? weaknesses.map((w) => `
 **Their weak point (your note, not for the buyer):** ${cap(strip(w))}
-**Landmine Question:** "How will you test ${topicOf(w)} in each option? Could each vendor show it live, with your own data?"
-**Why It Works:** The buyer tests the area themselves, so the gap shows up in their own evaluation.
+**Landmine Question:** "${topicOf(w).q}"
+**Why It Works:** The buyer tests ${topicOf(w).topic} themselves, so the gap shows up in their own evaluation.
 `).join('\n') : `
-- "Can you walk me through how you would handle [a scenario where they are weak]?"
-- "What happens when [an edge case they cannot handle]?"`}
+No weak points were given (competitor_weaknesses). Add what you know about ${compLabel} and each one becomes a question here. Until then, ask: "How will you test the scenario you care most about in each option?"`}
 
-### ${implementationLabel}
-${implementationQs.map((x) => `- ${x}`).join('\n')}
-
+### ${isWay ? 'Questions about the current approach' : implementationLabel}
+${(isWay ? wayQs : implementationQs).map((x) => `- ${x}`).join('\n')}
+${isWay ? '' : `
 ### Support Landmines
 - "What level of support is included? What happens when you have an urgent issue?"
-- "Can you talk to customers who've been through their support process?"`,
+- "Can you talk to customers who've been through their support process?"`}`,
 
     evaluation_criteria: `## Evaluation Criteria Positioning
 
 ### Criteria to Establish Early
 
-${strengths.length ? `Based on your strengths, suggest these as requirements (only where you can prove them):\n${strengths.map((s) => `- **${cap(s)}**: "How will you test this in each option? Is it on your evaluation list?"`).join('\n')}` : `
-- "[Your differentiating capability]": "[Why this matters, only if you can show it]. Is this on your list?"
-- "Customer references in your industry": "Will you be talking to customers like you?"`}
-
+${strengths.length ? `Based on your strengths, suggest these as requirements (only where you can prove them):\n${strengths.map((s) => `- **${cap(s)}**: "Which of the options can show this on our own scenario? Is it on your evaluation list?"`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live, and each becomes a criterion here.`}
+${credentials.length ? `\n### Credentials (mention them, do not make them criteria)\n\nThese cannot be demonstrated in an evaluation. Say them in a sentence when they answer a concern:\n${credentials.map((s) => `- ${cap(s)}`).join('\n')}\n` : ''}${claimsHere.length ? `\n### Claims to source\n\nThe buyer will ask for the source of: ${joinList(claimsHere.map((c) => q(clip(c, 90))))}. Have it ready, or soften the wording.\n` : ''}
 ### How to Suggest Criteria
 
 "Before you evaluate anyone, it helps to agree the criteria. ${strengths.length ? `I'd suggest these: ${strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; ')}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared questions to ask every vendor?"`,
 
     reference_questions: `## Reference Call Questions
 
-Suggest the buyer ask these questions when speaking with ${competitor}'s references:
+${isWay ? `Suggest the buyer ask these of people who live with ${compLabel} today (their own team, or peers who work the same way):` : `Suggest the buyer ask these questions when speaking with ${compPoss} references:`}
 
 ### General Questions
-- "How long have you been using it?"
-- "How does the actual experience compare to what was promised during sales?"
+- "${isWay ? 'How long have you worked this way?' : 'How long have you been using it?'}"
+- "How does the actual experience compare to what you expected?"
 - "What surprised you after you started?"
 
 ### Capability Questions
-${weaknesses.length ? weaknesses.map((w) => `- "Tell me about ${topicOf(w)}. What did you see in practice?"`).join('\n') : `- "What limitations have you run into?"
+${weaknesses.length ? weaknesses.map((w) => `- "Tell me about ${topicOf(w).topic}. What did you see in practice?"`).join('\n') : `- "What limitations have you run into?"
 - "What workarounds have you had to build?"`}
 
 ### The Killer Question
-- **"Knowing what you know now, would you choose them again?"**`,
+- **"${isWay ? 'Knowing what you know now, would you keep working this way?' : 'Knowing what you know now, would you choose them again?'}"**`,
 
     technical_requirements: `## ${software ? 'Technical Requirements' : 'Requirements'} (Traps)
 
 ### RFP or Requirements Document
 
-${strengths.length ? `Requirements built on your strengths (keep only what you can demonstrate):\n${strengths.map((s, i) => `${i + 1}. **${cap(s)}**: "The vendor must demonstrate this live, on our own data, during the evaluation."`).join('\n')}` : `1. "Solution must support [your unique capability]"
-2. "Solution must demonstrate [your differentiator] in the evaluation"`}
+${strengths.length ? `Requirements built on your strengths (keep only what you can demonstrate):\n${strengths.map((s, i) => `${i + 1}. **${cap(s)}**: "The vendor must demonstrate this live, on our own data, during the evaluation."`).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${P} can show live and each becomes a requirement here.`}
 
 ### Evaluation Scenarios
 
-${weaknesses.length ? weaknesses.map((w, i) => `**Scenario ${i + 1}:** ${cap(topicOf(w))}, tested live on the buyer's own data
+${weaknesses.length ? weaknesses.map((w, i) => `**Scenario ${i + 1}:** ${cap(topicOf(w).topic)}, tested live on the buyer's own data
 - Your note (not for the buyer): ${strip(w)}
-- Success criteria: agree a measurable outcome with the buyer before the test`).join('\n\n') : `1. "[Scenario you handle well]": test the core capability
-2. "[Scale scenario]": test performance`}`,
+- Success criteria: agree a measurable outcome with the buyer before the test`).join('\n\n') : `1. The scenario the buyer cares most about${buyerPriorities ? ` (${buyerPriorities})` : ''}: test the core capability on their own data
+2. A scale scenario: test performance at their real volumes`}`,
 
     commercial_terms: `## Commercial Terms (Positioning)
 
-### Pricing Comparisons
+### ${isWay ? 'Cost Comparison' : 'Pricing Comparisons'}
 
-When they compare prices, make sure they compare:
-${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}
+${isWay ? `When they compare ${P} with ${compLabel}, make sure they compare:\n- What ${compLabel} costs a year in people's time, fees and the cost of its failures\n- What ${P} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare prices, make sure they compare:
+${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}`}
 
-**Questions to Ask ${competitor}:**
+${isWay ? '' : `**Questions to Ask ${competitor}:**
 - "What is NOT included in the quoted price?"
 - "What do years 2 and 3 cost?"
 - "How are price increases decided?"
@@ -4645,31 +4672,32 @@ Ask these about ${competitor}'s contract (nothing here says ${competitor} has th
 - What are the termination rights and notice periods?
 - Are there fees outside the quoted price?
 
-### Your Own Terms
+`}### Your Own Terms
 
-Offer only the terms you actually have, in your own words: [for example, your payment options and contract length]. Promise nothing you cannot put in the contract.`,
+Offer only the terms you actually have (payment options, contract length), in your own words. Promise nothing you cannot put in the contract.`,
   };
 
-  let output = `# Competitive Positioning: vs ${competitor}
+  let output = `# Competitive Positioning: vs ${isWay ? 'the current approach' : competitor}
 
 ## Situation
-- **Competitor:** ${competitor}
-- **Your Solution:** ${yourSolution}
+- **Competitor:** ${competitor}${isWay ? ' (a way of working, not a vendor: no contract or references are assumed)' : ''}
+- **Your Solution:** ${(args.your_solution as string) || NOT_SUPPLIED}
 - **Evaluation Stage:** ${evaluationStage}${args.evaluation_stage ? '' : ' (default)'}
 - **Buyer Persona:** ${(args.buyer_persona as string) || NOT_SUPPLIED}
 ${buyerPriorities ? `- **Buyer Priorities:** ${buyerPriorities}` : ''}
 
 ${ctx.line}
 
+${persona ? `**Who is evaluating:** ${aAn(persona.label)}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : ''}
 ---
 
 ## Competitive Intelligence
 
 ### Your Strengths
-${strengths.length ? strengths.map((s) => `- ${s}`).join('\n') : '- [Define your key differentiators]'}
+${allStrengths.length ? allStrengths.map((s) => `- ${s}`).join('\n') : '- None given (your_strengths). Add your differentiators.'}
 
-### ${competitor}: Weak Points (your notes, never read out to the buyer)
-${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- [Research competitor weaknesses]'}
+### ${isWay ? 'The current approach' : competitor}: Weak Points (your notes, never read out to the buyer)
+${weaknesses.length ? weaknesses.map((w) => `- ${w}`).join('\n') : '- None given (competitor_weaknesses).'}
 
 ${sectorNotes(ctx.v, 'committee')}
 
@@ -4678,7 +4706,7 @@ ${sectorNotes(ctx.v, 'committee')}
 ## Positioning Strategy
 
 ### Golden Rule
-**Never go negative.** Let the buyer discover competitor weaknesses through their own evaluation.
+**Never go negative.** Let the buyer discover ${compPoss} weaknesses through their own evaluation.
 
 ---
 
@@ -4703,7 +4731,7 @@ ${evaluationStage === 'early' ? `
 - Offer to help them structure the evaluation` : ''}${evaluationStage === 'mid' ? `
 - Make sure your differentiators are being tested
 - Provide proof points and references
-- Surface competitor limitations through the buyer's own tests` : ''}${evaluationStage === 'late' ? `
+- Surface ${compPoss} limitations through the buyer's own tests` : ''}${evaluationStage === 'late' ? `
 - Address any lingering concerns
 - Make sure the decision criteria are the ones agreed
 - Help your champion make the case internally` : ''}${evaluationStage === 'finalist' ? `
@@ -4717,6 +4745,7 @@ ${evaluationStage === 'early' ? `
 
   return output;
 }
+
 
 // Tool 7: Proposal Section Writer
 // Run 20 round 1b (D92): the product description is used once and then the short name; a statement the user made that needs a source

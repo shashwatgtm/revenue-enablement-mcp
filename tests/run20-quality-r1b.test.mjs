@@ -456,3 +456,50 @@ test("champion_enablement_kit: every asset type is free of placeholders and made
     assert.match(r.text, /fewer outages across branch sites/i, asset_type);
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// competitive_trap_setter: a strengths sentence split at its commas, a status quo treated as a vendor with a contract and references,
+// credentials turned into live-demo requirements, a bracket at the end
+// ---------------------------------------------------------------------------------------------------------------------------
+test("competitive_trap_setter: a strengths sentence stays whole, credentials are not requirements, no bracket", async () => {
+  const r = await call("competitive_trap_setter", { competitor: "Routeline", competitor_weaknesses: "legacy tools plan once a day with manual, human judged decisions; periodic scans miss changes between runs",
+    your_solution: LANEHOP, your_strengths: "the world's first agentic routing platform, built so humans govern and agents act; named a Leader in the 2026 Analyst Quadrant for Last Mile Delivery",
+    evaluation_stage: "mid", buyer_priorities: "plan routes faster and keep every delivery promise", buyer_persona: "Chief Operating Officer", trap_type: "all" });
+  assert.equal(r.isError, false);
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.match(r.text, /the world's first agentic routing platform, built so humans govern and agents act/);   // one item, not three fragments
+  assert.doesNotMatch(r.text, /"Built so humans govern/i);
+  // the analyst recognition is a credential, not a criterion to demo live
+  const crit = r.text.split("## Evaluation Criteria Positioning")[1].split("## Reference Call Questions")[0];
+  assert.match(crit, /Credentials/i);
+  assert.doesNotMatch(crit.split(/Credentials/i)[0], /Quadrant/);
+  // each weakness gets its own question about its topic, none quotes the note
+  const qs = [...r.text.matchAll(/\*\*Landmine Question:\*\* "([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(qs.length, 2);
+  assert.notEqual(qs[0], qs[1]);
+  assert.match(qs.join(" "), /how soon|decisions|person/i);
+  for (const qq of qs) assert.doesNotMatch(qq, /human judged|periodic scans/i);
+  assert.match(r.text, /Chief Operating Officer/);
+  assert.match(r.text, /plan routes faster and keep every delivery promise/);
+});
+test("competitive_trap_setter: a status quo competitor is not asked about a contract, references or support", async () => {
+  const r = await call("competitive_trap_setter", { competitor: "manual spreadsheet routing that only handles a few variables", competitor_weaknesses: "it breaks when orders change after the vehicles have left",
+    your_solution: LANEHOP, your_strengths: "live re-planning when an order changes", evaluation_stage: "early", buyer_persona: "Head of Last-mile", trap_type: "all" });
+  assert.doesNotMatch(r.text, BRACKET);
+  assert.doesNotMatch(r.text, /customers who've been through their support|contract of|renew automatically|termination rights/i);
+  assert.doesNotMatch(r.text, /Ask these about manual spreadsheet routing/i);
+  assert.match(r.text, /current approach|current way/i);
+  assert.match(r.text, /Who keeps it running/i);
+  assert.match(r.text, /live re-planning when an order changes/);
+  assert.match(r.text, /manual spreadsheet routing that only handles a few variables/);
+});
+test("competitive_trap_setter: every trap type has no bracket", async () => {
+  const tools = (await rpc("tools/list", {})).result.tools;
+  const types = tools.find((t) => t.name === "competitive_trap_setter").inputSchema.properties.trap_type.enum;
+  for (const trap_type of types) {
+    for (const competitor of ["Routeline", "disconnected tools for design, build and test"]) {
+      const r = await call("competitive_trap_setter", { competitor, your_solution: SPENDRILL, trap_type });
+      assert.doesNotMatch(r.text, BRACKET, `${trap_type} ${competitor}`);
+    }
+  }
+});

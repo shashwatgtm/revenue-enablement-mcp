@@ -26,6 +26,7 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import { neutraliseDeep } from './echo-safe.ts';
 import { explainSector, detectModel, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
@@ -6183,12 +6184,17 @@ export function createServer(): Server {
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const problem = checkRequiredInputs(request.params.name, request.params.arguments as Record<string, unknown> | undefined);
+    // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
+    // has its text arguments made inert once, before any tool reads them. The words stay; markup, tracking images, script
+    // links, hidden characters and fake chat markers do not stay live (src/echo-safe.ts).
+    const safeArgs = neutraliseDeep(request.params.arguments) as Record<string, unknown> | undefined;
+    const problem = checkRequiredInputs(request.params.name, safeArgs);
     if (problem) {
       return { content: [{ type: 'text', text: problem }], isError: true };
     }
-    const { name, arguments: args } = request.params;
-  
+    const { name } = request.params;
+    const args = safeArgs;
+
     try {
       const result = executeTool(name, args as Record<string, unknown>);
       return {

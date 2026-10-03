@@ -24,6 +24,7 @@ exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const echo_safe_ts_1 = require("./echo-safe.js");
 const verticals_ts_1 = require("./verticals.js");
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
 // ("Fewer failed deliveries" becomes "fewer failed deliveries"). Any other capitalised word is kept as typed, because it may be a
@@ -6077,11 +6078,16 @@ function createServer() {
         tools: Object.values(tools).map((tool) => withMeta(tool)),
     }));
     server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
-        const problem = checkRequiredInputs(request.params.name, request.params.arguments);
+        // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
+        // has its text arguments made inert once, before any tool reads them. The words stay; markup, tracking images, script
+        // links, hidden characters and fake chat markers do not stay live (src/echo-safe.ts).
+        const safeArgs = (0, echo_safe_ts_1.neutraliseDeep)(request.params.arguments);
+        const problem = checkRequiredInputs(request.params.name, safeArgs);
         if (problem) {
             return { content: [{ type: 'text', text: problem }], isError: true };
         }
-        const { name, arguments: args } = request.params;
+        const { name } = request.params;
+        const args = safeArgs;
         try {
             const result = executeTool(name, args);
             return {

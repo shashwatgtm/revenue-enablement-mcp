@@ -33,8 +33,8 @@ test("a plain description gives no one-word short name", () => {
 test("a clear name before a comma or colon stays the short name", () => {
   assert.equal(solutionBrief("Lanehop, a route planning platform for delivery fleets").short, "Lanehop");
   assert.equal(solutionBrief("Acme CRM: a pipeline tool for sales teams").short, "Acme CRM");
-  assert.equal(solutionBrief("Sarvam from Sarvam AI, an API platform for building and using APIs").short, "Sarvam");
-  assert.equal(solutionBrief("Chargebee Billing, subscription billing and revenue operations").short, "Chargebee Billing");
+  assert.equal(solutionBrief("Brightwell from Brightwell Labs, an API platform for building and using APIs").short, "Brightwell");
+  assert.equal(solutionBrief("Ledgerly Billing, subscription billing and revenue operations").short, "Ledgerly Billing");
   assert.equal(solutionBrief("monday.com: a work operating system").short, "monday.com");
   assert.equal(solutionBrief("Lanehop, a route planning platform for delivery fleets").kind, "a route planning platform for delivery fleets");
 });
@@ -96,7 +96,7 @@ test("a pasted paragraph with a colon list and a bracket note gives no space bef
 
 // Run 21c round 3: with no clear name the text says "our solution", and it began sentences in lower case ("our solution is our answer").
 test("a sentence that begins with the solution phrase starts with a capital", async () => {
-  const sol = "Firstsource customer experience and collections services on Kairos, AI-native business operations: it designs, builds and runs customer experience, collections and back office under one contract";
+  const sol = "Northvale customer experience and collections services on Quillon, AI-native business operations: it designs, builds and runs customer experience, collections and back office under one contract";
   for (const tool of ["proposal_section_writer", "email_sequence_generator", "champion_enablement_kit", "win_loss_analyzer", "demo_script_builder", "competitive_trap_setter"]) {
     const out = await call(tool, base(sol)[tool]);
     const m = out.match(/(?:^|[.!?]\s+|\n)(?:[-*]\s+|#+\s+)?(?:our|your|the|this) (?:solution|product)\b/);

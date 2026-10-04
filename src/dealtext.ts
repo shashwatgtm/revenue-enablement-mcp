@@ -82,9 +82,9 @@ export const upperFirst = (s: string): string => s.charAt(0).toUpperCase() + s.s
 // ---------------------------------------------------------------------------------------------------------------------------
 
 export interface SolutionBrief {
-  /** the product as typed before its description ("Happay", "Chargebee Billing", "Sarvam from Sarvam AI") */
+  /** the product as typed before its description ("Lanehop", "Ledgerly Billing", "Brightwell from Brightwell Labs") */
   name: string;
-  /** the short name used in running text ("Sarvam") */
+  /** the short name used in running text ("Brightwell") */
   short: string;
   /** what it is, in the user's words ("an API platform for building and using APIs"); '' when the text gives none */
   kind: string;

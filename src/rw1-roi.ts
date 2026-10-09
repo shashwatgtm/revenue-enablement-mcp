@@ -4,7 +4,7 @@
 // measure, and the questions for the driver chosen, worded for the buyer's industry and the seller's business model. What is missing is listed once, at the end.
 import { clip, describeWith, joinList, solutionBrief, parseProof, proofPhrase, proofSource, upperFirst } from './dealtext.ts';
 import { buyerContextFor } from './verticals.ts';
-import { briefOf, shared, usageLine, usageUnit, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
+import { briefOf, readModel, shared, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
 
 export interface RoiStructureInput {
   customerName: string; industry: string; companySize: string; yourSolution: string; primaryValueDriver: string;
@@ -52,6 +52,7 @@ function measureOf(text: string, metrics: string[] = []): string {
   if (/audit|certif|complian|governance|access review/.test(t)) return 'the hours and outside fees the buyer spends on audit and compliance work today';
   if (/manual|automation|automat/.test(t)) return 'the hours of manual work in the process today, and what an hour costs';
   if (/csat|satisf|resolution|contain|deflect|tickets?|inquir/.test(t)) return 'the cases handled each month, the handling time per case, and the cost of one case';
+  if (/data usage|data used|usage|bandwidth/.test(t)) return 'the data or other usage the buyer pays for in a year, and the share of it that is idle or wasted';
   if (/adoption|users?|customers?/.test(t)) return 'how much of the buyer\'s own work would run through it, and what the work around it costs today';
   let best = ''; let n = 0;
   for (const m of metrics) { const sc = shared(text, m); if (sc > n) { n = sc; best = m; } }
@@ -73,12 +74,11 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   const parts = partsOf(brief);
   const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
   const v = ctx.v;
-  const usage = usageUnit(i.yourSolution, i.currentProcess, i.knownMetrics);
-  const model = usage && (ctx.model === 'saas' || !ctx.model) ? ('transactions' as const) : ctx.model;
-  const ctxLine = usage && model !== ctx.model ? usageLine(ctx.line, usage) : ctx.line;
+  const mr = readModel(ctx.model, ctx.line, i.yourSolution, [i.currentProcess, i.knownMetrics]);
+  const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const mw = modelWords(model, i.yourSolution, usage || undefined);
   // the way the product is priced is stated only when the user's words or inputs show it, not when the sector's usual model was assumed
-  const statedModel = !/assumed/.test(ctx.line) || !!usage;
+  const statedModel = mr.stated && model !== 'sim';
   const industryWords = cleanIndustry(args.industry) || cleanIndustry(industryFromTitle(args.customer_name));
   const buyerCtx = buyerContextFor(args.industry, industryFromTitle(args.customer_name));
   const proof = parseProof(i.knownMetrics);
@@ -104,6 +104,13 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   }
   if (i.revenueGiven || i.employeesGiven) out.push(`\`annual_revenue\` and \`employee_count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
 
+  const flags: string[] = [];
+  const smallWords = /\b(?:smb|small|micro|d2c|startups?)\b/i.test(`${i.customerName} ${args.industry || ''}`);
+  if (args.company_size === 'enterprise' && smallWords) flags.push('You set company_size to enterprise, but the customer is described as SMB or small in its name; check which is right, because the size changes who reviews the case and what price is realistic.');
+  if (args.company_size === 'smb' && /\b(?:enterprise|large|global)\b/i.test(i.customerName)) flags.push('You set company_size to SMB, but the customer is described as large or enterprise in its name; check which is right, because the size changes who reviews the case.');
+  if (/\bIndia(?:n)?\b|\brupees?\b|\bINR\b|\blakhs?\b|\bcrores?\b/i.test(`${i.yourSolution} ${i.customerName} ${i.knownMetrics} ${i.currentProcess}`)) flags.push('Your inputs mention India; the price field is in dollars, so if your price is in rupees, convert it first.');
+  if (flags.length) out.push(`## Inputs to check\n\n${flags.join(' ')}`);
+
   // ---- the cost lines ----
   const bestPart = (text: string): string => { let best = ''; let n = 0; for (const p of parts) { const sc = shared(text, p); if (sc > n) { n = sc; best = p; } } return best; };
   const partUse = new Set<string>();
@@ -122,12 +129,23 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   // ---- the quoted results ----
   const credibility = (p: { text: string }): boolean => /\bseries [a-e]\b|valuation|funding|\braised\b|\bround\b|\bipo\b|acquir\w+/i.test(p.text);
   const usedMeasure = new Map<string, string>();
-  const results = proof.filter((p) => (p.kind === 'result' || p.kind === 'quote' || p.kind === 'story') && !credibility(p));
-  const others = proof.filter((p) => p.kind === 'recognition' || p.kind === 'scale' || credibility(p));
+  // a quoted change ("from three days to 10 minutes", "lowered its data usage by more than 50%") is a result even when the sentence also holds a word the reader takes for a recognition or a scale ("a customer named", "more than")
+  const CHANGE = /\b(?:lower\w*|dropp?\w*|cut|reduc\w+|decreas\w+|saved?|faster|shorter|increas\w+|improv\w+|grew|grow\w*|doubl\w+|halv\w+)\b|\bfrom\b.{2,40}\bto\b|\btook\b.{1,40}\b(?:days?|hours?|minutes?|weeks?)\b/i;
+  const asResult = (p: { kind: string; text: string }): boolean => (p.kind === 'recognition' || p.kind === 'scale') && CHANGE.test(p.text) && /\d/.test(p.text) && !/\b(?:leader|visionary|award|quadrant|certified|recogni[sz]ed)\b/i.test(p.text);
+  const results = proof.filter((p) => (p.kind === 'result' || p.kind === 'quote' || p.kind === 'story' || asResult(p)) && !credibility(p));
+  const others = proof.filter((p) => !results.includes(p));
   if (proof.length) {
     out.push(`## Results you quoted\n\n${results.length ? `These are reference points, not this buyer's figures. Each is another organisation's result, from ${proof.some((p) => p.label) ? 'the source you labelled' : 'your notes'}; they show the buyer what to measure, and none should be entered as the buyer's own number.\n\n| Result you quoted | What it tells you to measure |${parts.length ? ` Part of ${P} it relates to |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${results.map((p) => { const m = measureOf(p.text, v ? v.metrics : []); const part = bestPart(p.text); if (part) partUse.add(part); const prev = usedMeasure.get(m); if (!prev) usedMeasure.set(m, proofPhrase(p)); return `| ${proofPhrase(p)}${p.label ? ` (${proofSource(p)})` : ''} | ${prev ? `As for ${quoted(clip(prev, 40))}: ${m}` : upperFirst(m)} |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`; }).join('\n')}\n` : ''}${others.length ? `\nNot value figures, so not used in the calculation: ${others.map((p) => proofPhrase(p)).join('; ')}. Keep them for the proposal as credibility.\n` : ''}`);
   } else if (i.knownMetrics) {
     out.push(`## Results you quoted\n\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers named at the end.`);
+  }
+
+  // ---- the case written out, from the inputs only ----
+  const lineParts = lines.map((l) => ({ line: lowerStart(stripEnd(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: bestPart(l.text) }));
+  const answered = lineParts.filter((x) => x.part).slice(0, 3);
+  const measured = [...new Set(results.slice(0, 3).map((p) => measureOf(p.text, v ? v.metrics : [])))].slice(0, 2);
+  if (costLines.length) {
+    out.push(`## The case in words\n\n${upperFirst(who === 'the buyer' ? customer : who)} handles it today like this: ${joinList(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${joinList(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${joinList(measured.map(lowerStart))}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);
   }
 
   const placed = parts.filter((x) => !partUse.has(x));

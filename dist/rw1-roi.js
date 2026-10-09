@@ -61,6 +61,8 @@ function measureOf(text, metrics = []) {
         return 'the hours of manual work in the process today, and what an hour costs';
     if (/csat|satisf|resolution|contain|deflect|tickets?|inquir/.test(t))
         return 'the cases handled each month, the handling time per case, and the cost of one case';
+    if (/data usage|data used|usage|bandwidth/.test(t))
+        return 'the data or other usage the buyer pays for in a year, and the share of it that is idle or wasted';
     if (/adoption|users?|customers?/.test(t))
         return 'how much of the buyer\'s own work would run through it, and what the work around it costs today';
     let best = '';
@@ -90,12 +92,13 @@ function buildRoiStructure(args, i, d) {
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
     const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
     const v = ctx.v;
-    const usage = (0, rw1_common_ts_1.usageUnit)(i.yourSolution, i.currentProcess, i.knownMetrics);
-    const model = usage && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
-    const ctxLine = usage && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, i.yourSolution, [i.currentProcess, i.knownMetrics]);
+    const usage = mr.unit;
+    const model = mr.model;
+    const ctxLine = mr.line;
     const mw = (0, rw1_common_ts_1.modelWords)(model, i.yourSolution, usage || undefined);
     // the way the product is priced is stated only when the user's words or inputs show it, not when the sector's usual model was assumed
-    const statedModel = !/assumed/.test(ctx.line) || !!usage;
+    const statedModel = mr.stated && model !== 'sim';
     const industryWords = (0, rw1_common_ts_1.cleanIndustry)(args.industry) || (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(args.industry, (0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
     const proof = (0, dealtext_ts_1.parseProof)(i.knownMetrics);
@@ -117,6 +120,16 @@ function buildRoiStructure(args, i, d) {
     }
     if (i.revenueGiven || i.employeesGiven)
         out.push(`\`annual_revenue\` and \`employee_count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
+    const flags = [];
+    const smallWords = /\b(?:smb|small|micro|d2c|startups?)\b/i.test(`${i.customerName} ${args.industry || ''}`);
+    if (args.company_size === 'enterprise' && smallWords)
+        flags.push('You set company_size to enterprise, but the customer is described as SMB or small in its name; check which is right, because the size changes who reviews the case and what price is realistic.');
+    if (args.company_size === 'smb' && /\b(?:enterprise|large|global)\b/i.test(i.customerName))
+        flags.push('You set company_size to SMB, but the customer is described as large or enterprise in its name; check which is right, because the size changes who reviews the case.');
+    if (/\bIndia(?:n)?\b|\brupees?\b|\bINR\b|\blakhs?\b|\bcrores?\b/i.test(`${i.yourSolution} ${i.customerName} ${i.knownMetrics} ${i.currentProcess}`))
+        flags.push('Your inputs mention India; the price field is in dollars, so if your price is in rupees, convert it first.');
+    if (flags.length)
+        out.push(`## Inputs to check\n\n${flags.join(' ')}`);
     // ---- the cost lines ----
     const bestPart = (text) => { let best = ''; let n = 0; for (const p of parts) {
         const sc = (0, rw1_common_ts_1.shared)(text, p);
@@ -142,8 +155,11 @@ function buildRoiStructure(args, i, d) {
     // ---- the quoted results ----
     const credibility = (p) => /\bseries [a-e]\b|valuation|funding|\braised\b|\bround\b|\bipo\b|acquir\w+/i.test(p.text);
     const usedMeasure = new Map();
-    const results = proof.filter((p) => (p.kind === 'result' || p.kind === 'quote' || p.kind === 'story') && !credibility(p));
-    const others = proof.filter((p) => p.kind === 'recognition' || p.kind === 'scale' || credibility(p));
+    // a quoted change ("from three days to 10 minutes", "lowered its data usage by more than 50%") is a result even when the sentence also holds a word the reader takes for a recognition or a scale ("a customer named", "more than")
+    const CHANGE = /\b(?:lower\w*|dropp?\w*|cut|reduc\w+|decreas\w+|saved?|faster|shorter|increas\w+|improv\w+|grew|grow\w*|doubl\w+|halv\w+)\b|\bfrom\b.{2,40}\bto\b|\btook\b.{1,40}\b(?:days?|hours?|minutes?|weeks?)\b/i;
+    const asResult = (p) => (p.kind === 'recognition' || p.kind === 'scale') && CHANGE.test(p.text) && /\d/.test(p.text) && !/\b(?:leader|visionary|award|quadrant|certified|recogni[sz]ed)\b/i.test(p.text);
+    const results = proof.filter((p) => (p.kind === 'result' || p.kind === 'quote' || p.kind === 'story' || asResult(p)) && !credibility(p));
+    const others = proof.filter((p) => !results.includes(p));
     if (proof.length) {
         out.push(`## Results you quoted\n\n${results.length ? `These are reference points, not this buyer's figures. Each is another organisation's result, from ${proof.some((p) => p.label) ? 'the source you labelled' : 'your notes'}; they show the buyer what to measure, and none should be entered as the buyer's own number.\n\n| Result you quoted | What it tells you to measure |${parts.length ? ` Part of ${P} it relates to |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${results.map((p) => { const m = measureOf(p.text, v ? v.metrics : []); const part = bestPart(p.text); if (part)
             partUse.add(part); const prev = usedMeasure.get(m); if (!prev)
@@ -151,6 +167,13 @@ function buildRoiStructure(args, i, d) {
     }
     else if (i.knownMetrics) {
         out.push(`## Results you quoted\n\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers named at the end.`);
+    }
+    // ---- the case written out, from the inputs only ----
+    const lineParts = lines.map((l) => ({ line: (0, rw1_common_ts_1.lowerStart)((0, rw1_common_ts_1.stripEnd)(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: bestPart(l.text) }));
+    const answered = lineParts.filter((x) => x.part).slice(0, 3);
+    const measured = [...new Set(results.slice(0, 3).map((p) => measureOf(p.text, v ? v.metrics : [])))].slice(0, 2);
+    if (costLines.length) {
+        out.push(`## The case in words\n\n${(0, dealtext_ts_1.upperFirst)(who === 'the buyer' ? customer : who)} handles it today like this: ${(0, dealtext_ts_1.joinList)(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${(0, dealtext_ts_1.joinList)(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${(0, dealtext_ts_1.joinList)(measured.map(rw1_common_ts_1.lowerStart))}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);
     }
     const placed = parts.filter((x) => !partUse.has(x));
     if (parts.length && placed.length)

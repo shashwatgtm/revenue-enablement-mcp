@@ -30,15 +30,18 @@ function buildAccountPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
-    const unit = (0, rw1_common_ts_1.usageUnit)(solutionIn, notesIn, threatsIn);
-    const model = unit && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
-    const ctxLine = unit && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, unit) : ctx.line;
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [notesIn, threatsIn, productsIn]);
+    const unit = mr.unit;
+    const model = mr.model;
+    const ctxLine = mr.line;
     const P = brief.short || 'your solution';
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
     const shortParts = parts.filter((p) => p.split(/\s+/).length <= 6);
     const industry = (0, rw1_common_ts_1.cleanIndustry)(industryIn) || (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(accountName));
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(industryIn, (0, rw1_common_ts_1.industryFromTitle)(accountName));
     const mw = (0, rw1_common_ts_1.modelWords)(model, solutionIn, unit || undefined);
+    // when the user's words changed the model read from the sector (usage or SIMs instead of fixed sites and links), the proof is the one for that model, not the sector's site pilot
+    const proofText = v ? (model !== ctx.model ? (0, rw1_common_ts_1.lowerStart)(mw.proof) : (0, rw1_common_ts_1.lowerStart)(v.proofShape).replace(/[.]+$/, '')) : '';
     const contacts = (0, dealtext_ts_1.parseContacts)(contactsText, investment).map((c) => ({ ...c, raw: c.raw.replace(/^(?:and|or)\s+/i, ''), title: c.title.replace(/^(?:and|or)\s+/i, '') }));
     const metric = v ? v.metrics[0] : '';
     // ---- the tier rule on ARR (unchanged, D80) ----
@@ -196,7 +199,7 @@ function buildAccountPlan(args, d) {
             return `- **${(0, dealtext_ts_1.upperFirst)((0, rw1_common_ts_1.stripEnd)(e))}**: ${s ? `the likely sponsor is ${s.title}` : 'ask the champion who would sponsor it'}${part && !e.toLowerCase().includes(part.toLowerCase()) ? `; it draws on ${part}` : ''}.`;
         }).join('\n')}`);
     }
-    grow.push(v ? `Prove the first step before you ask for the next. In ${v.name}, buyers trust this form of proof: ${(0, rw1_common_ts_1.lowerStart)(v.proofShape).replace(/[.]+$/, '')}.` : `Prove the first step before you ask for the next: a before and after on one team, measured on a number the account already tracks.`);
+    grow.push(v ? `Prove the first step before you ask for the next. In ${v.name}, buyers trust this form of proof: ${proofText}.` : `Prove the first step before you ask for the next: a before and after on one team, measured on a number the account already tracks.`);
     out.push(grow.join('\n\n'));
     // ---- alternatives ----
     const comp = ['## Alternatives and competition'];
@@ -240,7 +243,7 @@ function buildAccountPlan(args, d) {
         ...(noteLines.length ? [`Check the dates in this plan against your own note above.`] : []),
     ];
     const p2 = [
-        `Agree a proof${focus ? ` that centres on ${focus}` : ''}${v ? `, in the form buyers in ${v.name} trust: ${(0, rw1_common_ts_1.lowerStart)(v.proofShape).replace(/[.]+$/, '')}` : ', with one team and a measure fixed beforehand'}.`,
+        `Agree a proof${focus ? ` that centres on ${focus}` : ''}${v ? `, in the form buyers in ${v.name} trust: ${proofText}` : ', with one team and a measure fixed beforehand'}.`,
         ...(answers.length ? [`Send written answers to the ${answers.length === 1 ? 'objection' : `${answers.length} objections`} above${answers.length > 3 ? `, starting with ${answers.slice(0, 3).map((a) => (0, rw1_common_ts_1.quoted)(a.text)).join(', ')}` : `: ${(0, dealtext_ts_1.joinList)(answers.map((a) => (0, rw1_common_ts_1.quoted)(a.text)))}`}.`] : []),
         `Build the business case in the account's own figures: the roi_business_case_builder tool needs their cost or value figures, so ask finance for them now.`,
         buyer ? `Show ${buyer.title} the result they are measured on, using the baseline from the first 30 days.` : `Put the baseline and the proof result in front of whoever signs.`,

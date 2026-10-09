@@ -63,7 +63,7 @@ function buildMutualActionPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn]);
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [], [(0, rw1_common_ts_1.sellerOffers)(reqIn, blockersIn)]); // the seller's own words, and of the requirements and blockers only a question from its price page; the buyer's comparisons are not the seller's pricing
     const usage = mr.unit;
     const model = mr.model;
     const ctxLine = mr.line;

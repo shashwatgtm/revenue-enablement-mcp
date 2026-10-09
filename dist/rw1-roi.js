@@ -19,7 +19,7 @@ const COST_Q = {
     guess: 'What does a wrong plan cost when it happens (idle time, overtime, expedites), and how often does it happen in a year?',
     oneByOne: 'How many people work with each partner or channel, how many hours a week does that take, and what does a change of rates or rules cost each time?',
     limited: 'What does the work around the gap cost each month, in people and in the tools bought to fill it?',
-    cost: 'What did the last twelve months of charges add up to, including the ones that are not in the headline price?',
+    cost: 'What did the last twelve months of fees and costs add up to, including the ones that are not in the headline price?',
     slow: 'How many days does a request wait, and what does a day of waiting cost in people or in lost business?',
     general: 'What does it cost a year in money and in people\'s time, and what do its failures cost on top?',
 };
@@ -50,7 +50,7 @@ function measureOf(text, metrics = []) {
     if (/regression|release|deploy|test(?:ing|s)?\b|build time|merge/.test(t))
         return 'the time from a change to a release today, and what a late or failed release costs';
     if (/detention|demurrage|dwell|gate wait|expedit/.test(t))
-        return 'the detention, wait or expedite charges the buyer pays in a year, and what causes them';
+        return 'the detention, wait or expedite costs the buyer pays in a year, and what causes them';
     if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t))
         return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
     if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t))

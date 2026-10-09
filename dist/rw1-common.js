@@ -17,6 +17,8 @@ exports.dedupeAnswers = dedupeAnswers;
 exports.briefOf = briefOf;
 exports.usageUnit = usageUnit;
 exports.usageLine = usageLine;
+exports.sellerOffers = sellerOffers;
+exports.plainModelLine = plainModelLine;
 exports.readModel = readModel;
 // Run 22 (rewrite of account_plan_builder, mutual_action_plan_generator and roi_business_case_builder): helpers the three rewritten tools share.
 // Pure text functions: no network, no figures, no file access (rule 8, B82). They read what the user typed and the sector notes in verticals.ts;
@@ -196,7 +198,7 @@ const THREAT_KINDS = [
     { id: 'reactive', re: /\b(?:reactive|cannot detect|can't detect|after the fact|stop at|visibility only|too late|in time to react|only suggest|deflect)\b/i, tells: 'it tells the buyer after the cost has been incurred, or stops before the action', asks: ['How early does it warn you, and what can your people still do in the time between the warning and the cost?', 'Who acts on what it shows, and how often is the action taken too late?'], prove: 'Replay one past incident and show what would have been visible, and when' },
     { id: 'oneByOne', re: /\b(?:one by one|one at a time|many separate (?:channels|partners)|each partner|separately|channels and partners)\b/i, tells: 'every partner or channel is handled on its own, so the work and the risk multiply', asks: ['How many partners or channels do your people deal with separately, and what do they re-enter or reconcile between them?', 'What happens when one of them changes its rules or its rates?'], prove: 'Show one case that today touches several partners, handled through one connection' },
     { id: 'limited', re: /\b(?:limited|cloud only|one (?:model )?provider|tied to|few connectors|beta|narrow|optimi[sz]ed for)\b/i, tells: 'it covers part of the need, and the rest is worked around', asks: ['Which of your systems, cases or rules does it not cover today, and what do you do for those?', 'What would you need it to cover before you would rely on it for everything?'], prove: 'List the buyer\'s cases and mark which are covered, which need set-up and which are not covered, for each option' },
-    { id: 'cost', re: /\b(?:fees?|charges?|per seat|hidden|cost more|confusing rates|processing)\b/i, tells: 'the price on the page is not the price paid, so the real cost is hard to compare', asks: ['What do you pay in a typical month in total, including the charges that are not in the headline price?', 'Which line on the invoice surprised you most, and how often?'], prove: 'Price the same month of the buyer\'s own activity under both, line by line' },
+    { id: 'cost', re: /\b(?:fees?|charges?|per seat|hidden|cost more|confusing rates|processing)\b/i, tells: 'the price on the page is not the price paid, so the real cost is hard to compare', asks: ['What do you pay in a typical month in total, including the fees and costs that are not in the headline price?', 'Which line on the invoice surprised you most, and how often?'], prove: 'Price the same month of the buyer\'s own activity under both, line by line' },
     { id: 'slow', re: /\b(?:slow|paperwork|takes? days|delays?|confusing|poor)\b/i, tells: 'steps wait for people or paper, so time is lost between them', asks: ['How long does it take from the request to the first use, and which steps in between are waiting?', 'Where does a customer or colleague notice the wait?'], prove: 'Time the same request end to end, the old way and the new way' },
 ];
 const GENERAL_THREAT = { id: 'general', re: /./, tells: 'it is what the buyer does today, so the product has to be better on something they already measure', asks: ['What do you use it for today, what works, and what would you change?', 'What would have to be true for you to move away from it?'], prove: 'Agree the measure first, then compare the two on the buyer\'s own case' };
@@ -491,44 +493,81 @@ function usageUnit(...texts) {
 function usageLine(line, unit) {
     return line.replace(/Business model: [^]*?\.\*$/, `Business model: usage priced, paid per ${unit} (read from your wording about price; the sector read is unchanged).*`);
 }
+/** The sentences of the deal text (objections, notes, blockers, requirements) in which the seller's own offer of usage pricing shows: a question taken from its price page
+ *  such as "What is available on pay as you go?". A sentence that compares with something else ("Is pay as you go cheaper?", "Why not keep paying per transaction?", "lower fees than ...") is the buyer's. */
+const BUYER_COMPARES = /\b(?:cheaper|cheapest|less expensive|than|instead|versus|vs\.?|keep(?:ing)? paying|why not|rather than|currently|today|already|alternatives?|competitors?|switch(?:ing)? from|banks?|incumbents?|we pay|we use)\b/i;
+function sellerOffers(...texts) {
+    return texts.join(' . ').split(/[?;\n]|\.(?=\s|$)/).map((x) => x.trim()).filter((x) => x && STRONG_USAGE.test(x) && !BUYER_COMPARES.test(x)).join(' . ');
+}
 const FIXED_LINK_WORDS = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site survey|managed network|branch(?:es)? (?:network|sites?)|wi-?fi|broadband|bandwidth|wan\b)\b/i;
 // the seller's own pricing words: a single product noun (API, SIM, volume) is never one
 const STRONG_USAGE = /\bpay[- ]as[- ]you[- ]go\b|\busage[- ]based\b|\bmetered\b|\bprepaid\b|\brate card\b|\bpriced (?:by|on) usage\b|\bpay only for\b|\bper[- ](?:message|sms|call|minute|gb|mb|gigabyte|transaction|api call|request|verification|sim|shipment|label|lookup|check)\b/i;
+// words of a people-delivered service: a seller that uses them is never flipped to usage priced by a unit price such as "per call" or "per ticket"
+const SERVICE_WORDS = /\b(?:outsourc\w*|bpo\b|managed (?:services?|operations|detection)|consult\w*|staffing|fte\b|retainer|time and materials|statement of work|(?:contact|call) cent(?:re|er)s?|service desk|professional services|dedicated teams?)\b/i;
+// the shared reader can read "software subscription" from a company name such as "Analytics"; when the seller's own words describe a firm that does projects and name no software, the read is not stated
+const SOFTWARE_CUES = /\b(?:software|saas|platforms?|apps?|apis?|tools?|dashboards?|subscriptions?|licen[cs]es?|per seat|per user|cloud|portal|systems?|crm|erp|workflow|automation|engine|plug-?ins?|sdk)\b/i;
+const FIRM_CUES = /\b(?:firm|agency|consultanc\w*|advisory|projects|engagements|retainer)\b/i;
 const SEAT_WORDS = /\bper[- ](?:seat|user|agent|member|employee|licen[cs]e|month|year)\b|\bmonthly (?:plan|fee|subscription)\b|\bseats?\b|\blicen[cs]es?\b|\bsubscriptions?\b|\bannual (?:plan|subscription|licen[cs]e)\b|\bflat fee\b/i;
-/** The business model, read from the user's own words as well as from the sector reader. It changes the sector read only on the seller's own words:
+/** The business model line of a context line, said only as far as the seller's own words show it (run 22 follow-up 2, rule E8: a sentence that names a business model
+ *  must state the seller's own model, or none). The shared sector reader gives a model in three ways: from the seller's words ("read from your inputs"), as the usual model
+ *  of the sector ("assumed"), or not at all. Only the first is stated here. An assumed model is not named, because the sector's usual model is wrong for a services firm
+ *  in a software sector or a software seller in a services sector; the wording of the plan still follows it, and the line says so. The line also no longer tells the user to
+ *  set business_model, which these three tools do not take. */
+const MODEL_LINE = /Business model: [^]*?\.\*$/;
+const ASSUMED_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
+const MIXED_LINE = 'Business model: your words point to both a subscription and usage pricing, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
+function plainModelLine(line) {
+    if (!MODEL_LINE.test(line))
+        return line;
+    const m = line.match(MODEL_LINE)[0];
+    if (/assumed/.test(m) && !/read from the product description|read from your wording/.test(m))
+        return line.replace(MODEL_LINE, ASSUMED_LINE);
+    if (/^Business model: not clear from your inputs/.test(m))
+        return line.replace(MODEL_LINE, 'Business model: not clear from your inputs; say how you are paid in your_solution for advice that fits it.*');
+    return line.replace(/; set business_model to change it\)/, ')');
+}
+/** The business model, read from the seller's own words as well as from the sector reader. `sellerText` is what the seller wrote about its own product (your_solution) and `others`
+ *  more of the seller's own words (the products the account already buys from it); never the buyer's objections, requirements, blockers, notes or alternatives, which are the
+ *  buyer's words ("is pay as you go cheaper?"). It changes the sector read only on the seller's own words:
  *  (a) a connectivity seller whose description names SIMs two ways (SIM and eSIM, SoftSIM, IoT connectivity) or opens with them, and names no sites or links, is a SIM seller;
  *  (b) a seller whose own pricing words say pay as you go, usage based, metered, prepaid, a rate card or "per message" (and no seat, per user or subscription words) is usage priced.
- *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing, and words about the buyer's current alternatives or results are not passed in.
- *  When the seller's words point both ways, the sector model stays and the line says it is assumed. */
-function readModel(ctxModel, ctxLine, sellerText, others) {
-    const all = [sellerText, ...others].join(' . ');
-    const unit = usageUnit(sellerText, ...others);
+ *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing.
+ *  When the seller's words point both ways, the sector model stays and the line says to check it. */
+function readModel(ctxModel, ctxLine, sellerText, others, offers = []) {
+    // `offers` (see sellerOffers) are questions from the deal text that come from the seller's price page; they count only for a seller that describes software ("a platform", "APIs"), never for a firm that does operations
+    const evidence = SOFTWARE_CUES.test(sellerText) ? [...others, ...offers] : others;
+    const all = [sellerText, ...evidence].join(' . ');
+    const unit = usageUnit(sellerText, ...evidence);
     const assumed = /assumed/.test(ctxLine);
     const fixed = FIXED_LINK_WORDS.test(all);
     const usageStrong = STRONG_USAGE.test(all);
     const seatWords = SEAT_WORDS.test(all);
+    const serviceWords = SERVICE_WORDS.test(all);
     let model = ctxModel;
     let line = ctxLine;
     let changed = false;
+    if (ctxModel === 'saas' && !assumed && (FIRM_CUES.test(sellerText) || SERVICE_WORDS.test(sellerText)) && !SOFTWARE_CUES.test(sellerText)) {
+        // the seller describes a firm that does projects and names no software: the subscription read is not stated, and the wording stays neutral
+        return { model: null, unit: '', line: ctxLine.replace(MODEL_LINE, ASSUMED_LINE), stated: false };
+    }
     const simTerms = new Set((sellerText.match(/\b(?:sims?|esims?|softsims?|iot connectivity)\b/gi) || []).map((x) => x.toLowerCase().replace(/s$/, '')));
     const simSeller = ctxModel === 'connectivity' && !fixed && (simTerms.size >= 2 || /\b(?:sims?|esims?|softsims?|iot connectivity)\b/i.test(sellerText.slice(0, 60)));
     if (simSeller) {
         model = 'sim';
         changed = true;
-        line = line.replace(/Business model: [^]*?\.\*$/, 'Business model: connectivity for devices through SIMs (read from the product description, assumed; not fixed sites or links; set business_model to change it).*');
+        line = line.replace(MODEL_LINE, 'Business model: connectivity sold through SIMs (read from the product description; not fixed sites or links; say how you are paid in your_solution to change it).*');
         return { model, unit, line, stated: false };
     }
-    if (usageStrong && seatWords && !fixed) {
-        // mixed evidence: the sector model stays, and it is said to be assumed
-        if (!assumed)
-            line = line.replace(/\((?:read from your inputs)[^)]*\)/, '(the usual model in this sector, assumed; your words also point to usage pricing, so check it; set business_model to change it)');
-        return { model, unit: '', line, stated: false };
+    if (usageStrong && (seatWords || serviceWords) && !fixed) {
+        // mixed evidence: the sector model stays for the wording, it is not named, and the line says to check how the seller is paid
+        return { model, unit: '', line: ctxLine.replace(MODEL_LINE, MIXED_LINE), stated: false };
     }
-    if (usageStrong && !fixed && (ctxModel === 'connectivity' || ctxModel === 'saas' || ctxModel === null)) {
+    if (usageStrong && !fixed && (ctxModel === 'connectivity' || ctxModel === 'saas' || ctxModel === 'transactions' || ctxModel === null)) {
         model = 'transactions';
         changed = true;
-        line = unit ? usageLine(ctxLine, unit) : line.replace(/Business model: [^]*?\.\*$/, 'Business model: usage priced (pay as you go), read from your wording about price.*');
+        line = unit ? usageLine(ctxLine, unit) : line.replace(MODEL_LINE, 'Business model: usage priced (pay as you go), read from your wording about price.*');
+        return { model, unit: seatWords ? '' : unit, line, stated: true };
     }
-    return { model, unit: seatWords ? '' : unit, line, stated: changed || !assumed };
+    return { model, unit: seatWords ? '' : unit, line: plainModelLine(line), stated: changed || !assumed };
 }
 //# sourceMappingURL=rw1-common.js.map

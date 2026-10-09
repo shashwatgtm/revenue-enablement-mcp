@@ -52,6 +52,12 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     if (fromParts.length >= 2) product = { kind: product.kind, caps: fromParts };
   }
   const low = d.lowerFirstIfCommon;
+  // a check that starts with the product's own name or a name written in capitals keeps its capital
+  const lcCheck = (t: string): string => {
+    const w = (t.split(/\s+/)[0] || '').replace(/['\u2019]s?$/, '');
+    const own = (P || '').toLowerCase().split(/\s+/).includes(w.toLowerCase());
+    return own || /^[A-Z]{2,}|[a-z][A-Z]|\d/.test(w) ? t : `${t.charAt(0).toLowerCase()}${t.slice(1)}`;
+  };
   const sameRole = !!championRole && !!targetGiven && championRole.toLowerCase() === targetGiven.toLowerCase();
   const who = [championName, championRole].filter(Boolean).join(', ');
   const fromLine = sameRole && !championName ? '' : sameRole ? championName : who;
@@ -65,7 +71,9 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     const text = (label ? m![1] : raw).replace(/[.]+$/, '').trim();
     const colon = text.indexOf(': ');
     const subs = colon > 0 ? splitTopLevel(text.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
-    return { text, label, head: outcomeHead(text), subs: subs.length >= 2 ? subs : [] };
+    // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
+    const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 8);
+    return { text, label, head: outcomeHead(text), subs: plain ? subs : [] };
   });
   const outClaims: Item[] = outs.filter((o) => o.label || isStat(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));
   const claimy = outClaims.length > 0;
@@ -112,7 +120,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     const risksSeen = new Set<string>();
     return [
       ...answers.map((x) => {
-        const chk = `${x.a.check.charAt(0).toLowerCase()}${x.a.check.slice(1)}`;
+        const chk = lcCheck(x.a.check);
         const settle = settled.has(chk) ? '' : ` To settle it, confirm: ${chk}.`;
         settled.add(chk);
         const risk = risksSeen.has(x.a.risk) ? '' : x.a.risk;
@@ -256,7 +264,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
         const settled = new Set<string>(), risksSeen = new Set<string>();
         return [
           ...answers.map((x) => {
-            const chk = `${x.a.check.charAt(0).toLowerCase()}${x.a.check.slice(1)}`;
+            const chk = lcCheck(x.a.check);
             const settle = settled.has(chk) ? '' : `\n\nTo settle it, confirm: ${chk}.`;
             settled.add(chk);
             const risk = risksSeen.has(x.a.risk) ? 'The same kind of risk as one above, on a different point.' : x.a.risk;

@@ -29,7 +29,7 @@ export declare function splitNotes(text: string): {
     notes: string[];
 };
 /** How a pain is named after it has been played back: its own words in quotes when it is short, else "the first problem you described". */
-export declare function painRef(p: string, i: number): string;
+export declare function painRef(p: string, i: number, headClause?: boolean): string;
 export type PainType = 'speed' | 'risk' | 'manual' | 'experience' | 'cost' | 'compliance' | 'visibility' | 'general';
 export declare function painType(p: string): PainType;
 /** How to show a pain of this type: what the presenter puts on screen, what is said about it, and what is asked (a way of showing, never a claim about the

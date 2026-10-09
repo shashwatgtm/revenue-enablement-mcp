@@ -195,8 +195,9 @@ test("discovery_question_bank: no placeholder, the pains are split, role and par
   assert.match(r.text, /On "a 60 day reimbursement cycle"/);
   assert.match(r.text, /Questions on what Spendrill covers/);
   assert.match(r.text, /Receipt capture: .*\?/); // run 21c: draft rewrite: each part has its own question built from the pain, not the old stock wording
-  // the long pain is quoted whole only once (the context line)
-  assert.equal((r.text.match(/manual expense capture and bill checking, a 60 day reimbursement cycle/g) || []).length, 1);
+  // run 22: the long pain is listed as separate numbered problems in the context and never pasted again as one lump
+  assert.equal((r.text.match(/manual expense capture and bill checking, a 60 day reimbursement cycle/g) || []).length, 0);
+  assert.match(r.text, /\n\s+1\. manual expense capture and bill checking\n\s+2\. a 60 day reimbursement cycle\n\s+3\. policy violations and cash leakage\n\s+4\. teams stuck on legacy systems\n/);
 });
 test("discovery_question_bank: a finance buyer of a SaaS-sector product is not asked about onboarding and drop-off", async () => {
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_industry: "B2B SaaS and software", prospect_role: "CFO", your_solution: "Billwise, a billing platform for subscription companies: invoicing, subscription management, revenue recognition and collections",

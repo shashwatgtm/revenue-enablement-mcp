@@ -99,7 +99,7 @@ const VERBS = new Set(('is are was were be been being am can cannot could will w
   'rely relies lock locks force forces cause causes create creates cost costs rise rises grew grow grows struggle struggles manage manages handle handles run runs end ends wait waits abandon abandons drift drifts drop drops spend spends waste wastes miss misses lack lacks remain remains ' +
   'stay stays become becomes build builds work works react reacts depend depends mean means bring brings require requires expect expects want wants face faces report reports pay pays charge charges vary varies differ differs travel travels render renders drive drives push pushes ' +
   'pull pulls hit hits fall falls settle settles repeat repeats return returns compete competes trust trusts sell sells buy buys leak leaks sprawl sprawls duplicate duplicates stop stops block blocks pile piles lag lags ' +
-  'hold holds chase chases wander wanders fragment fragments confuse confuses delay delays suffer suffers default defaults escape escapes outgrow outgrows slip slips queue queues expire expires hide hides ' +
+  'hold holds follow follows chase chases wander wanders fragment fragments confuse confuses delay delays suffer suffers default defaults escape escapes outgrow outgrows slip slips queue queues expire expires hide hides ' +
   'retype retypes copy copies paste pastes forget forgets ignore ignores overload overloads overwhelm overwhelms wrestle wrestles juggle juggles scramble scrambles guess guesses rework reworks escalate escalates bounce bounces ' +
   'bottleneck clog clogs vanish vanishes disappear disappears mismatch mismatches conflict conflicts disagree disagrees crash crashes hurt hurts harm harms linger lingers fight fights hunt hunts scroll scrolls click clicks log logs type types ' +
   'export exports import imports upload uploads download downloads reconcile reconciles approve approves reject rejects remind reminds rekey rekeys enter enters chase lag lags exceed exceeds trail trails arrive pile struggle ' +
@@ -123,14 +123,14 @@ export function readPains(text: string): PainSet {
     const colonAt = chunk.indexOf(': ');
     if (colonAt > 0 && chunk.slice(0, colonAt).trim().split(/\s+/).length >= 3) { out.push(chunk); continue; }
     // a list after "across", "between" or "among" stays inside its statement
-    const guarded = chunk.replace(/\b(across|between|among)\s+([^,;]+(?:,\s+[^,;]+)*?),?\s+(and|or)\s+([^,;]+)/gi, (m) => m.replace(/,/g, '\u0001'));
+    const guarded = chunk.replace(/\b(across|between|among)\s+([^,;]+(?:,\s+[^,;]+)*?),?\s+(and|or)\s+([^,;]+)/gi, (m, _k: string, _first: string, _c: string, last: string) => (last.trim().split(/\s+/).length <= 4 && !hasVerb(last) ? m.replace(/,/g, '\u0001') : m));
     const pieces = splitTopLevel(guarded).map((x) => x.replace(/\u0001/g, ','));
     const clauses: string[] = [];
     let afterSo = false;
     // a chunk with no verb at all is a list of problems typed as noun phrases: each phrase is one problem
     if (!hasVerb(chunk) && !pieces.some((x) => gerundStart(x)) && pieces.length > 1) {
       for (const p0 of pieces) {
-        const p = p0.replace(/^(?:and|but|plus|also)\s+/i, '').trim();
+        const p = p0.replace(/^(?:and|but|plus|also|with)\s+/i, '').trim();
         if (!p) continue;
         if (p.split(/\s+/).length < 2 && out.length) { out[out.length - 1] += `, ${p}`; continue; }
         out.push(p);
@@ -138,7 +138,7 @@ export function readPains(text: string): PainSet {
       continue;
     }
     for (const p0 of pieces) {
-      const lead = /^(and|but|so|while|which means|because)\s+/i.exec(p0);
+      const lead = p0.match(/^(and|but|so|while|which means|because)\s+/i);
       const p = p0.replace(/^(?:and|but|so|while|which means|because|with|plus|also)\s+/i, '').trim();
       if (!p) continue;
       const prev = clauses[clauses.length - 1];
@@ -183,10 +183,21 @@ export function splitNotes(text: string): { text: string; notes: string[] } {
 }
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
 /** How a pain is named after it has been played back: its own words in quotes when it is short, else "the first problem you described". */
-export function painRef(p: string, i: number): string {
+export function painRef(p: string, i: number, headClause = false): string {
   const t = p.replace(/\s+/g, ' ').trim();
   const words = t.split(/\s+/).length;
   if (words <= 14) return `"${t.replace(/"/g, "'")}"`;
+  // a long statement made of two clauses is named by its first clause, when that clause is a whole statement on its own
+  if (headClause) {
+    const w = t.split(' ');
+    for (let n = 4; n <= 14 && n < w.length - 3; n++) {
+      if (!/^(?:and|but|while|so)$/i.test(w[n])) continue;
+      // an "and" that closes a comma list ("a, b, c and d") is not the start of a second statement
+      if (/^and$/i.test(w[n]) && /,/.test(w.slice(0, n).join(' ').replace(/,$/, '')) && !/,$/.test(w[n - 1])) continue;
+      if (hasVerb(w.slice(n + 1).join(' ')) && !/^(?:and|but|while|so)$/i.test(w[n + 1]) && (/^(?:the|a|an|our|their|its|his|her|we|they|it|he|she|this|that|these|those|each|every|some|most|many|all|no)$/i.test(w[n + 1]) || verbEarly(w.slice(n + 1).join(' '))))
+        return `"${w.slice(0, n).join(' ').replace(/[,;]+$/, '').replace(/"/g, "'")}"`;
+    }
+  }
   // a statement that explains itself after a colon is named by what comes before it
   const head = t.indexOf(': ') > 0 ? t.slice(0, t.indexOf(': ')).trim() : '';
   if (head && head.split(/\s+/).length >= 4 && head.split(/\s+/).length <= 14) return `"${head.replace(/"/g, "'")}"`;
@@ -267,7 +278,7 @@ export function productName(brief: SolutionBrief, full: string): string {
   return first && first.split(/\s+/).length <= 6 ? first : '';
 }
 function cleanItem(raw: string): string { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
-const NOT_CAP_START = /^(?:on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;
+const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;
 export function toCapability(raw: string, product = ''): Capability | null {
   let s = cleanItem(raw);
   if (!s || NOT_CAP_START.test(s) || s.replace(/\([^()]*\)/g, ' ').trim().split(/\s+/).length > 10) return null;
@@ -275,7 +286,7 @@ export function toCapability(raw: string, product = ''): Capability | null {
   const br = s.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
   if (br && br[1].trim()) { s = br[1].trim(); desc = br[2].trim(); }
   s = s.replace(/^(?:a|an|the)\s+/i, '');
-  if (isStat(s) && /^\s*\d/.test(s)) { const m = s.match(/^([\d,.]+\+?[kKmMbB]?\+?)\s+(.*)$/); return m ? { name: m[2], desc: '', stat: s } : null; }
+  if (isStat(s) && /^\s*\d[\d,.]*\+?[kKmMbB]?\+?(?:\s|%|$)/.test(s)) { const m = s.match(/^([\d,.]+\+?[kKmMbB]?\+?)\s+(.*)$/); return m ? { name: m[2], desc: '', stat: s } : null; }
   const that = s.match(/^(.+?)\s+(?:that|which)\s+(.+)$/i);
   if (that) { s = that[1].trim(); desc = desc || `that ${that[2].trim()}`; }
   const forAs = s.match(/^([A-Z][\w.+&'-]*(?:\s+[A-Z][\w.+&'-]*){0,3})\s+(for|as)\s+(.+)$/);
@@ -294,8 +305,20 @@ function splitAtTopAnd(text: string): [string, string] | null {
   }
   return null;
 }
+const outsideWords = (x: string): number => x.replace(/\([^()]*\)/g, ' ').trim().split(/\s+/).length;
+/** Where a product runs is not one of its parts: "hosted in the cloud", "deployed on premise". */
+const MODE_PART = /^(?:hosted|deployed|available|running|delivered|offered)\s+(?:in|on|as|via|from|through)\b/i;
+const SCOPE_WORD = /\b(?:for|in|across|to|from)\s+(?:local|regional|global|national|international|domestic|cross-border|mobile|digital|online|enterprise|retail|corporate|small|large|public|private)$/i;
 function splitCapList(src: string, product = ''): Capability[] {
-  const segs = splitTopLevel(src.replace(/[.]+$/, ''));
+  const raw = splitTopLevel(src.replace(/[.]+$/, ''));
+  // "one setup for local, regional and global payment methods": a short run of adjectives is not three parts
+  const segs: string[] = [];
+  for (let k = 0; k < raw.length; k++) {
+    if (segs.length && SCOPE_WORD.test(segs[segs.length - 1]) && /^[a-z]+\s+and\s+[a-z-]+\s+[a-z]/.test(raw[k]) && !/^(?:and|plus|with)\s/i.test(raw[k])) {
+      const joined = `${segs[segs.length - 1]}, ${raw[k]}`, w = joined.split(/\s+with\s+/i);
+      if (joined.split(/\s+/).length > 10 && w.length === 2) segs.splice(segs.length - 1, 1, w[0], w[1]); else segs[segs.length - 1] = joined;
+    } else segs.push(raw[k]);
+  }
   const out: Capability[] = [];
   let thatOpen = false;
   segs.forEach((seg, i) => {
@@ -304,12 +327,16 @@ function splitCapList(src: string, product = ''): Capability[] {
     const prev = out[out.length - 1];
     if (prev && prev.desc && thatOpen && !/^(?:with|plus|and)\s/i.test(seg)) { prev.desc = `${prev.desc}, ${one}`; return; }
     const parts: string[] = [];
-    const sp = splitAtTopAnd(one);
-    const m = sp ? [one, sp[0], sp[1]] : null;
+    // a "that ..." clause belongs to the last item: split the "and" before it
+    const tm = one.match(/^(.*?)(\s+(?:that|which)\s+.+)$/i);
+    const headOne = tm && !/\([^)]*$/.test(tm[1]) ? tm[1] : one;
+    const tail = tm && headOne !== one ? tm[2] : '';
+    const sp = splitAtTopAnd(headOne);
+    const m = sp ? [one, sp[0], `${sp[1]}${tail}`] : null;
     const last = i === segs.length - 1 || /^(?:and|plus)\s/i.test(seg);
     if (m && last && /^[A-Z]/.test(m[2]) && /[A-Z]/.test(m[1].split(/\s+/)[0] || '') && m[1].split(/\s+/).length <= 8) parts.push(m[1], m[2]);
-    else if (m && last && i > 0 && m[1].split(/\s+/).length <= 3 && m[2].split(/\s+/).length <= 5 && !/^(?:analytics|monitoring|reporting)$/i.test(m[2])) parts.push(m[1], m[2]);
-    else if (m && /^[A-Z]/.test(m[2]) && m[1].split(/\s+/).length <= 6 && m[2].split(/\s+/).length <= 6 && (m[1].split(/\s+/)[0] === m[2].split(/\s+/)[0] || /\)$/.test(m[1]))) parts.push(m[1], m[2]);
+    else if (m && sp && last && i > 0 && m[1].split(/\s+/).length <= 3 && sp[1].split(/\s+/).length <= 5 && !/^(?:analytics|monitoring|reporting)$/i.test(sp[1])) parts.push(m[1], m[2]);
+    else if (m && /^[A-Z]/.test(m[2]) && outsideWords(m[1]) <= 6 && outsideWords(m[2]) <= 6 && (m[1].split(/\s+/)[0] === m[2].split(/\s+/)[0] || /\)$/.test(m[1]))) parts.push(m[1], m[2]);
     else parts.push(one);
     thatOpen = false;
     for (const p of parts) { const c = toCapability(p, product); if (c) { out.push(c); thatOpen = /\b(?:that|which)\s/i.test(p.replace(/\([^)]*\)/g, '')); } }
@@ -326,6 +353,12 @@ export function readProduct(full: string, name: string): { kind: string; caps: C
   rest = rest.replace(/^\s*[,:]\s*/, '').trim();
   const dup = rest.match(/^([A-Za-z0-9.+&'-]+(?:\s+[A-Za-z0-9.+&'-]+){0,3}),\s+(.*)$/);
   if (dup && name && name.toLowerCase().includes(dup[1].toLowerCase())) rest = dup[2];
+  // a name followed at once by a bracket that lists the parts: "X (a, b, c), a platform that ..."
+  const firstBracket = rest.match(/^\(([^()]*(?:\([^()]*\)[^()]*)*)\)/);
+  if (firstBracket) {
+    const caps = splitCapList(firstBracket[1].replace(/,?\s+delivered (?:with|through|by)\s+.*$/i, ''));
+    if (caps.length >= 2) return { kind: shortKindOf(rest.slice(firstBracket[0].length).replace(/^[\s,]+/, '').replace(/\([^)]*\)/g, ' ').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ')), caps };
+  }
   // the part list may follow a sentence about the company ("X designs, builds and runs a, b and c")
   const attempts: { re: RegExp; kindEnd: boolean }[] = [
     { re: /:\s+/, kindEnd: true },
@@ -335,16 +368,19 @@ export function readProduct(full: string, name: string): { kind: string; caps: C
     { re: /,\s+(?:with|plus)\s+/i, kindEnd: true },
   ];
   for (const a of attempts) {
-    const m = a.re.exec(rest);
+    const m = rest.match(a.re);
     if (!m) continue;
-    let kind = rest.slice(0, m.index).trim();
-    let list = rest.slice(m.index + m[0].length);
+    const at = m.index ?? 0;
+    let kind = rest.slice(0, at).trim();
+    let list = rest.slice(at + m[0].length);
     list = list.split(/\.\s+(?=[A-Z])/)[0];
     const run = list.match(/^[A-Z][\w.+&'-]*(?:\s+[A-Z][\w.+&'-]*)?\s+(?:designs?,?\s+builds?\s+and\s+runs?|builds?\s+and\s+runs?|runs?|builds?|provides?|offers?|delivers?|covers?)\s+(.+)$/);
     if (run) list = run[1].replace(/\s+under\s+one\s+contract.*$/i, '').replace(/,\s+on\s+its\s+.*$/i, '');
-    const caps = splitCapList(list, name);
+    // "it connects a, b and c in one platform (...)": the lead-in and the closing words are not parts
+    list = list.replace(/^(?:it|this|which|that)\s+(?:connects|covers|brings together|combines|unifies|includes|joins|handles)\s+/i, '').replace(/\s+in\s+(?:one|a single)\s+(?:[\w-]+\s+){0,3}(?:platform|system|suite|app|product|place)\s*(?:\(.*\))?\s*$/i, '');
+    const caps = splitCapList(list, name).filter((c) => !MODE_PART.test(c.name));
     if (caps.length >= 2) {
-      kind = kind.replace(/\([^)]*\)/g, ' ').replace(/\s+(?:that|which)\s*$/i, '').replace(/,\s*(?:the|its)\s+[A-Z].*$/, '').replace(/^[\s,]+/, '').trim();
+      kind = kind.replace(/\([^)]*\)/g, ' ').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').replace(/\s+(?:that|which)\s*$/i, '').replace(/,\s*(?:the|its)\s+[A-Z].*$/, '').replace(/^[\s,]+/, '').trim();
       return { kind: shortKindOf(kind), caps };
     }
   }
@@ -368,7 +404,7 @@ const SAY_VERB = /^(check|predict|send|confirm|route|draft|score|keep|screen|ver
 export function capSay(c: Capability): string {
   if (!c.desc) return c.name;
   if (/^(?:that|which|for|as)\s/i.test(c.desc)) return `${c.name} ${c.desc}`;
-  const m = SAY_VERB.exec(c.desc);
+  const m = c.desc.match(SAY_VERB);
   if (m) {
     const base = m[1].toLowerCase(), already = !!m[2];
     const third = already ? base + m[2].toLowerCase() : /(?:ch|sh|s|x|z)$/.test(base) ? `${base}es` : /[^aeiou]y$/.test(base) ? `${base.slice(0, -1)}ies` : `${base}s`;
@@ -465,6 +501,8 @@ const RISK: Record<string, string> = {
   timeline: 'The go-live date could slip.',
   offline: 'It may not work where our people lose signal.',
   accuracy: 'Its results may not be good enough on our own data.',
+  uptime: 'An outage could stop work that we depend on.',
+  mycase: 'The plan, price or limits for our case may differ from the ones we were shown.',
   adoption: 'People may not use it.',
   phased: 'A first phase may not be enough to show the result.',
   achieve: 'The result may not come without the side effect we want to avoid.',
@@ -486,9 +524,9 @@ export function objectionKind(t0: string, sectorLabels: string[] = []): string {
   if (/^how (?:do|can|could|would|should)\b[^?]*\b(?:reduce|lower|cut|improve|increase|raise|save|speed up|shorten|grow|avoid|prevent|keep|maintain)\b/i.test(t)) return 'achieve';
   if (/\b(?:more|less) secure|\bsafer\b|secure than/i.test(t)) return 'securecompare';
   if (/\bcheap(?:est|er)?\b|lowest (?:price|cost)|undercut/i.test(t)) return 'cheapest';
-  if (/overlap|\balready\b|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat/i.test(t) && !/\b(?:cost|price|fee)s?\b/i.test(t)) return 'overlap';
+  if (/overlap|\balready\b|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat|\bkeep (?:parts|some|using|my|our|the)\b[^?]*\b(?:current|existing|stack|tools|systems)|\b(?:parts|some) of (?:my|our) (?:current|existing)|(?:current|existing) (?:tech )?stack/i.test(t) && !/\b(?:cost|price|fee)s?\b/i.test(t)) return 'overlap';
   if (/\brefunds?|cancell?(?:ation)?s?|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|maintenance fee|annual fee|renewal|notice period|expire|expiry|roll ?over|carry over/i.test(t)) return 'terms';
-  if (/\b(?:suite|bundle|package|tier|edition|add-?ons?|licen[cs]es?|single (?:\w+ )?product|one product|sku)\b/i.test(t) || /\b(?:buy|purchase|pay for) (?:only|just|a single|one)\b/i.test(t)) return 'packaging';
+  if (/\b(?:suite|bundle|package|tier|edition|add-?ons?|licen[cs]es?|single (?:\w+ )?product|one product|sku)\b|\bneed (?:the |all |to (?:buy|take) )?(?:whole|entire|full|complete)\b|\bonly (?:part|some) of\b/i.test(t) || /\b(?:buy|purchase|pay for) (?:only|just|a single|one)\b/i.test(t)) return 'packaging';
   if (/\b(?:included|separate|extra|on top|hidden|additional)\b/i.test(t) && /\b(?:price|pricing|fees?|costs?|charges?)\b/i.test(t)) return 'included';
   if (/\b(?:based on|priced (?:per|by|on)|billed (?:per|by|on)|pricing model|pricing structure|per (?:seat|user|room|site|property|transaction|message|call|month))\b/i.test(t) && /\b(?:price|pricing|priced|billed|charged?)\b/i.test(t)) return 'pricebasis';
   if (/\bhow much\b|\bcosts?\b|\bprice|\bpricing|\bfees?\b|expensive|afford|\bbudget\b|\bcharges?\b/i.test(t) && !/^(?:why|how)\b.*\b(?:vary|differ)/i.test(t)) return 'howmuch';
@@ -500,6 +538,7 @@ export function objectionKind(t0: string, sectorLabels: string[] = []): string {
   if (/how long|timeline|implementation|go[- ]live|roll ?out|time to (?:value|live)|how soon|how quickly/i.test(t)) return 'timeline';
   if (/integrat|connect(?:s|ed)? (?:to|with)|work(?:s)? with|\bplug\b|\bapis?\b|\bsync|salesforce|netsuite|\bsap\b|oracle|\berp\b|\bcrm\b|existing (?:tools|systems)/i.test(t)) return 'integration';
   if (/\boffline|without (?:a )?(?:network|internet|signal)|no (?:internet|network|signal)|low connectivity/i.test(t)) return 'offline';
+  if (/uptime|downtime|outages?|availability|failover|\bsla\b|service levels?|reliab\w*\b.*\b(?:uptime|availability|outages?)|(?:uptime|availability|outages?)\b.*reliab/i.test(t)) return 'uptime';
   if (/accura|reliab|\bgps\b|precise|hallucinat|wrong answers?|false positives?/i.test(t)) return 'accuracy';
   if (/adopt|will (?:not|n't) use|training|resist|change management|learn(?:ing)? (?:and tune|curve)|time to learn|too complex|take time to learn/i.test(t)) return 'adoption';
   if (/\bsuitable|right for|good fit|fit for|good for|works? for|\benterprises?\b|large (?:companies|enterprises)|small (?:business|compan)/i.test(t)) return 'suitability';
@@ -507,6 +546,7 @@ export function objectionKind(t0: string, sectorLabels: string[] = []): string {
   if (/^(?:can|could|may)\b/i.test(t) || /^(?:do|does|will|would|is there|are there)\b/i.test(t) && /\b(?:use|bring|choose|run|import|export|customi[sz]e|configure|extend|support|handle|cover|choose|add|change|fit|match|speak|reach)\b/i.test(t)) return 'canuse';
   if (/^(?:what (?:is|are|does)|what's)\b/i.test(t) || /^how (?:do|does|is|are)\b[^?]*\b(?:translate|convert|map to|calculated?|work out|counted|measured)\b/i.test(t)) return 'define';
   if (/^why (?:do|does|is|are)\b/i.test(t)) return 'why';
+  if (/^what if (?:i|we) (?:am|are|'m|'re)\b/i.test(t)) return 'mycase';
   if (/^(?:what (?:should|do|happens|can)|what if|how (?:do|can|should) (?:i|we))\b/i.test(t)) return 'process';
   if (/proof|reference|case stud|track record|evidence|customers like/i.test(t)) return 'proof';
   if (/not now|next (?:year|quarter)|later|priority|timing|budget cycle|freeze/i.test(t)) return 'timing';
@@ -812,6 +852,21 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
         S(`If you tell me where your people lose signal, we can test it there.`, `The pilot should test it where our people actually lose signal.`),
       ], S('Where do your people lose signal, and what do they do then?', 'Where do our people lose signal, and what do they do then?'), `which functions work offline in ${P} and how data syncs when the connection returns`);
     }
+    case 'uptime': {
+      return done([
+        S(`Ask for the record, not a promise: the uptime of ${P} over the last twelve months, how outages were reported, and what happens to work already in flight when one occurs.`, `We should ask ${P} for the record, not a promise: its uptime over the last twelve months, how outages were reported, and what happens to work already in flight when one occurs.`),
+        S(`Then we put the service level, and what you receive if it is missed, in writing before you sign.`, `Then the service level, and what we receive if it is missed, goes in writing before we sign.`),
+      ], S('What would an hour of downtime cost you, and which of your flows could not wait?', 'What would an hour of downtime cost us, and which of our flows could not wait?'), `the uptime record of ${P} for the last twelve months, the service level it will commit to in writing and what it pays if that level is missed`);
+    }
+    case 'mycase': {
+      const sit = trimDot(t).replace(/^what if\s+/i, '');
+      const toYou = sit.replace(/^(?:i am|i'm|we are|we're)\b/i, 'you are').replace(/^(?:i|we)\b/i, 'you').replace(/\b(?:my|our)\b/gi, 'your');
+      const toWe = sit.replace(/^(?:i am|i'm)\b/i, 'we are').replace(/^i\b/i, 'we').replace(/\bmy\b/gi, 'our');
+      return done([
+        S(`If ${toYou}, the question is whether the same plan, price and limits apply to that case, or what changes. I will put the answer for that case in writing.`, `If ${toWe}, the question is whether the same plan, price and limits apply to our case, or what changes. We should ask ${P} to put the answer for that case in writing.`),
+        caps.length ? S(`The parts that would carry it are ${capsTxt(caps)}.`, `The parts that would carry it are ${capsTxt(caps)}.`) : '',
+      ], S('Is that your case today, or only a possibility?', 'Is that our case today, or only a possibility?'), `whether the plan, price and limits of ${P} are the same for this case, from the current terms`);
+    }
     case 'accuracy': {
       return done([
         S(`Do not take my word for it. Let us run ${P} on your own data${painCase ? `, on ${painCase}` : ''}, compare it with what you use today, and agree the measure and the pass mark before we start.`, `We should not take ${Ps} word for it. Run it on our own data${painCase ? `, on ${painCase}` : ''}, compare it with what we use today, and agree the measure and the pass mark first.`),
@@ -852,9 +907,10 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       ], S('What number would tell you it worked?', 'What number would tell us it worked?'), `the result ${P} has achieved on this question for a customer of our kind, and how it was measured`);
     }
     case 'define': {
-      const sub = /^(?:what (?:is|are|does)|what's)\s+/i.test(t) ? t.replace(/^(?:what (?:is|are|does)|what's)\s+(?:a |an |the )?/i, '') : `the rule for ${t.replace(/^how (?:do|does|is|are)\s+/i, 'how ')}`;
+      const conv = t.replace(/[?\s]+$/, '').match(/^how (?:do|does|is|are)\s+(.+?)\s+(?:translate|convert|map)\s+(?:to|into)\s+(.+)$/i);
+      const sub = conv ? `the conversion rule from ${conv[1]} to ${conv[2]}` : /^(?:what (?:is|are|does)|what's)\s+/i.test(t) ? t.replace(/^(?:what (?:is|are|does)|what's)\s+(?:a |an |the )?/i, '') : `the rule for ${t.replace(/^how (?:do|does|is|are)\s+/i, 'how ')}`;
       return done([
-        S(`Let me give you the definition of ${youify(sub)} in the vendor's own words, with one worked example on your numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`, `We should ask ${P} for the definition of ${sub} in its own words, with one worked example on our numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`),
+        S(`Let me give you ${conv ? '' : 'the definition of '}${youify(sub)} in the vendor's own words, with one worked example on your numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`, `We should ask ${P} for ${conv ? '' : 'the definition of '}${sub} in its own words, with one worked example on our numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`),
         pick([S(`If a term changes what you pay or what you get, I will show where it is written down.`, `If a term changes what we pay or what we get, we want to see where it is written down.`), S(`I will not leave a term to memory: it goes into the written quote.`, `A term is only real to us when it is in the written quote.`)]),
       ], S('Which term in the offer is least clear to you?', 'Which term in the offer is least clear to us?'), `the definition and a worked example for this term, from ${Ps} documentation`);
     }

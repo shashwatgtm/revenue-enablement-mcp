@@ -27,7 +27,7 @@ const verticals_ts_1 = require("./verticals.js");
 // ---------------------------------------------------------------------------------------------------------------------------
 // Small text helpers
 // ---------------------------------------------------------------------------------------------------------------------------
-const STEM_STOP = new Set(['that', 'this', 'with', 'from', 'your', 'have', 'their', 'they', 'them', 'will', 'which', 'what', 'when', 'where', 'into', 'over', 'than', 'then', 'about', 'more', 'most', 'some', 'such', 'each', 'only', 'also', 'were', 'been', 'does', 'make', 'makes', 'much', 'many', 'every', 'other', 'platform', 'solution', 'product', 'software', 'tools', 'tool', 'work', 'works', 'time', 'team', 'teams']);
+const STEM_STOP = new Set(['that', 'this', 'with', 'from', 'your', 'have', 'their', 'they', 'them', 'will', 'which', 'what', 'when', 'where', 'into', 'over', 'than', 'then', 'about', 'more', 'most', 'some', 'such', 'each', 'only', 'also', 'were', 'been', 'does', 'make', 'makes', 'much', 'many', 'every', 'other', 'platform', 'solution', 'product', 'software', 'tools', 'tool', 'work', 'works', 'time', 'team', 'teams', 'planning', 'plan', 'plans', 'management', 'manage', 'managed']);
 const stemsOf = (t) => new Set((t.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) || []).filter((w) => !STEM_STOP.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
 exports.stemsOf = stemsOf;
 // words that mean about the same thing in a buyer's pain and in a product's part (language only, no sector fact)
@@ -36,13 +36,13 @@ const SAME = [
     ['spreadsheet', 'manual', 'email', 'emails', 'workflow', 'automation', 'automate', 'automated', 'paper', 'hand', 'agents'],
     ['separate', 'disconnected', 'silo', 'siloed', 'silos', 'stitched', 'multiple', 'systems', 'tools', 'platform', 'unified', 'single', 'orchestration', 'connect', 'connected'],
     ['compliance', 'audit', 'regulation', 'governance', 'evidence', 'certification', 'controls'],
-    ['security', 'threat', 'risk', 'attack', 'breach', 'exposure', 'detection', 'protection'],
+    ['security', 'threat', 'risk', 'attack', 'breach', 'exposure', 'detection', 'protection', 'intelligence', 'feed', 'dark', 'leak', 'credential', 'credentials', 'phishing', 'takedown'],
     ['cost', 'fees', 'billing', 'invoice', 'invoicing', 'pricing', 'payments', 'payment', 'charges'],
-    ['planning', 'plan', 'forecast', 'guess', 'estimate', 'scheduling', 'optimisation', 'optimization'],
+    ['forecast', 'guess', 'estimate', 'scheduling', 'optimisation', 'optimization', 'dock', 'yard', 'labor', 'labour', 'gate', 'dwell', 'detention', 'appointment', 'trailer', 'capacity'],
     ['legacy', 'old', 'incumbent', 'modernization', 'modernisation', 'migration', 'migrate'],
     ['testing', 'test', 'quality', 'defects', 'release'],
 ];
-const groupOf = (w) => SAME.findIndex((g) => g.includes(w));
+const groupOf = (w) => { const i = SAME.findIndex((g) => g.includes(w)); return i >= 0 ? i : SAME.findIndex((g) => g.includes(w.replace(/(?:ies|es|s)$/, '')) || g.includes(w.replace(/s$/, ''))); };
 /** How many ideas two texts share: a shared word stem, or two words that mean about the same thing. */
 function shared(a, b) {
     const sa = (0, exports.stemsOf)(a);
@@ -94,10 +94,12 @@ function partsOf(brief) {
         return [];
     return clean(pieces).slice(0, 12);
 }
-function modelWords(model, sellerText, unit) {
-    const unitWord = unit || (/\b(?:messages?|sms|whatsapp|rcs)\b/i.test(sellerText) ? 'message' : 'transaction');
+function modelWords(model, _sellerText, unit) {
+    // the unit is the user's own (per SIM, per shipment, per message ...); without one the wording stays neutral and names no kind of product
+    const perUnit = unit ? `per ${unit}` : 'per unit of usage';
+    const units = unit ? `${unit}s` : 'volume';
     switch (model) {
-        case 'transactions': return { priced: `a rate per ${unitWord}, with volume tiers`, proof: `live test traffic on one product line, route or region, compared with the current provider on the same ${unitWord}s`, terms: `the rate card, the volume tiers and any committed monthly volume`, grow: 'more products, routes or regions on the same contract', setup: unitWord === 'message' ? 'the integration, the sender or account approvals and the first live messages' : `the integration, the account set-up and the first live ${unitWord}s` };
+        case 'transactions': return { priced: `a rate ${perUnit}, with volume tiers`, proof: `live test volume on one product line or region, compared with the current provider on the same volume`, terms: 'the rate card, the volume tiers and any committed monthly volume', grow: 'more products or regions on the same contract', setup: unit === 'message' ? 'the integration, the sender or account approvals and the first live messages' : unit ? `the integration, the account set-up and the first live ${units}` : 'the integration, the account set-up and the first live volume' };
         case 'services': return { priced: 'a fee for the service (per FTE, per ticket or a fixed fee)', proof: 'a transition plan with a parallel run and exit criteria for each stage', terms: 'the scope, the service levels with their credits, and the fee structure', grow: 'more services or locations under the same contract', setup: 'the knowledge transfer from the current provider and the governance calendar' };
         case 'connectivity': return { priced: 'a price per site or link on a term contract', proof: 'pilot sites brought live, worst served first, compared with the current operator on uptime and repair time', terms: 'the price per site, the term and the delivery time of each link', grow: 'more sites in waves, each with a fallback', setup: 'the site survey, the delivery time of each link and the cutover window' };
         case 'hardware_software': return { priced: 'devices plus a software term', proof: 'a pilot with the devices at one site, installed and read for a full cycle', terms: 'the device order, the installation and the software term', grow: 'more sites and devices', setup: 'the delivery and installation of the devices' };
@@ -110,34 +112,34 @@ const ROLE_PATTERNS = [
     { re: /\b(?:suppliers?|vendors?|carriers?|couriers?|partners?|distributors?|subcontractors?|auditors?|regulators?)\b/i, part: 'Outside the buying group', kind: 'outside',
         cares: 'how the change reaches them in their own work, and what evidence or data they will be asked for',
         step: (c) => `Do not sell to them; find out where ${c.P} touches their work and tell them early, so they do not become a surprise for the people who decide` },
-    { re: /\bdeveloper advocate|devrel|developer relations\b/i, part: 'Influencer: carries the developer view', kind: 'influencer',
+    { re: /\bdeveloper advocate|devrel|developer relations\b/i, part: 'Influencer: carries the developer view', ask: 'Which developer complaints reach you most often, and how do you pass what you learn to the platform team?', kind: 'influencer',
         cares: 'whether developers find the tools easy to learn and trust, and what they complain about most',
         step: (c) => `Ask which developer complaints reach them most often, then give them a working session on one of those cases with ${c.P}` },
-    { re: /\b(?:qa|quality assurance|test(?:er|ing)?|sdet)\b/i, part: 'Evaluator: tests the product', kind: 'influencer',
+    { re: /\b(?:qa|quality assurance|test(?:er|ing)?|sdet)\b/i, part: 'Evaluator: tests the product', ask: 'Where do test runs slow down or break most often, and what does that cost a release?', kind: 'influencer',
         cares: 'test coverage, slow or fragile test runs, and how fast a release is signed off',
         step: (c) => `Ask them to bring one slow or fragile test flow and run it through ${c.P} with you` },
-    { re: /\b(?:software developers?|developers?|engineers?|programmers?)\b/i, part: 'Daily user', kind: 'user',
+    { re: /\b(?:software developers?|developers?|engineers?|programmers?)\b/i, part: 'Daily user', kind: 'user', ask: 'Which part of your day-to-day work with the current tools costs you the most time?',
         cares: 'whether it fits the way they already work and saves time on a real task',
         step: (c) => `Pick a real task from their backlog, do it with ${c.P} alongside them, and write down what they say in their own words` },
-    { re: /\b(?:product (?:manager|owner|lead)|head of product|vp product)\b/i, part: 'Influencer: owns the requirements', kind: 'influencer',
+    { re: /\b(?:product (?:manager|owner|lead)|head of product|vp product)\b/i, part: 'Influencer: owns the requirements', ask: 'What takes longest between a request and a change going live, and who else has to approve it?', kind: 'influencer',
         cares: 'how fast a change reaches customers and how much of it waits for engineering',
         step: () => 'Walk through one real change from request to live and time it together' },
-    { re: /\b(?:ciso|chief information security|security|infosec|soc\b|threat|brand protection|cyber)\b/i, part: 'Security reviewer', kind: 'influencer',
+    { re: /\b(?:ciso|chief information security|security|infosec|soc\b|threat|brand protection|cyber)\b/i, part: 'Security reviewer', ask: 'What does your review need to see before a new tool is approved, and who signs it off?', kind: 'influencer',
         cares: 'where data is held and who can reach it, how findings are ranked, and the evidence they can show an auditor',
         step: (c) => `Send the security documents first, then agree a short proof of ${c.P} on their own environment with the measure written down` },
     { re: /\b(?:chief digital|cdo\b|head of digital|digital (?:officer|head|leader)|technology leaders?)\b/i, part: 'Technology and change sponsor', kind: 'influencer',
         cares: 'how the change fits the digital plan, the risk it brings and who runs it afterwards',
         step: (c) => `Agree the outcome they want from ${c.P} in one sentence, the risk team's checks, and a first small scope` },
-    { re: /\b(?:cto|chief technology|vp engineering|vice president,? engineering|head of engineering|engineering (?:head|manager|leader|lead)|platform (?:leader|lead|engineering))\b/i, part: 'Technical decision maker', kind: 'influencer',
+    { re: /\b(?:cto|chief technology|vp engineering|vice president,? engineering|head of engineering|engineering (?:head|manager|leader|lead)|platform (?:leader|lead|engineering))\b/i, part: 'Technical decision maker', ask: 'What would a platform standard have to prove to you, and who else must agree?', kind: 'influencer',
         cares: 'platform standards, developer time and the cost of tool sprawl',
         step: (c) => `Agree one real project for a trial of ${c.P}, the measure it will be judged on, and who on their side owns the result` },
-    { re: /\b(?:cio|chief information officer)\b/i, part: 'Technology decision maker', kind: 'influencer',
+    { re: /\b(?:cio|chief information officer)\b/i, part: 'Technology decision maker', ask: 'What outcome would make this worth your attention this year, and what has held similar projects back here before?', kind: 'influencer',
         cares: 'whether it fits the technology plan and the risk position, who runs it afterwards and what it costs in total',
         step: (c) => `Agree in one short meeting the outcome they want from ${c.P} and the risk review their team will run, and let their team make the technical case` },
-    { re: /\b(?:head of it|it (?:director|head|manager|leader|lead|team)|information technology|infrastructure)\b/i, part: 'Technical reviewer', kind: 'influencer',
+    { re: /\b(?:head of it|it (?:director|head|manager|leader|lead|team)|information technology|infrastructure)\b/i, part: 'Technical reviewer', ask: 'Which systems must this work with, and who owns each one?', kind: 'influencer',
         cares: 'fit with the systems they run, the security review and who supports it after go-live',
         step: (c) => `Hold a technical call on how ${c.P} connects to their systems and who supports it afterwards` },
-    { re: /\b(?:cfo|chief financial|finance|controller|treasur\w*|accounting)\b/i, part: 'Finance reviewer', kind: 'influencer',
+    { re: /\b(?:cfo|chief financial|finance|controller|treasur\w*|accounting)\b/i, part: 'Finance reviewer', ask: 'Which finance numbers are late or reworked each period, and what did the last review ask for on this topic?', kind: 'influencer',
         cares: 'the cost case, the audit trail and the effort at period end',
         step: (c) => `Agree the number they will check in the cost case${c.metric ? ` (for example ${c.metric})` : ''} and who gives you the figures` },
     { re: /\b(?:chief supply chain|supply chain (?:head|director|leader|manager)|head of (?:supply chain|logistics)|logistics (?:head|director|manager))\b/i, part: 'Operating decision maker', kind: 'influencer',
@@ -146,10 +148,10 @@ const ROLE_PATTERNS = [
     { re: /\b(?:coo|chief operating|operations (?:head|director|manager|leader|lead)|head of operations|director of operations|vp,? operations|svp of operations)\b/i, part: 'Operating decision maker', kind: 'influencer',
         cares: 'daily execution, service levels and the cost per unit of work',
         step: (c) => `Agree a pilot site and the before-and-after measure for ${c.P}, and who will use it` },
-    { re: /\b(?:dispatch\w*|planners?|drivers?|field crews?|project teams?|branch managers?|store managers?)\b/i, part: 'Daily user', kind: 'user',
+    { re: /\b(?:dispatch\w*|planners?|drivers?|field crews?|project teams?|branch managers?|store managers?)\b/i, part: 'Daily user', kind: 'user', ask: 'What does a busy day look like for you, and where does the current way slow you down?',
         cares: 'whether the new way is quicker than the old one on a busy day',
         step: (c) => `Shadow one shift or one day of their work, then let a few of them try ${c.P} on a live case` },
-    { re: /\b(?:customer (?:service|support|experience)|support (?:agents?|teams?)|agents|cx\b|service agents?)\b/i, part: 'Daily user', kind: 'user',
+    { re: /\b(?:customer (?:service|support|experience)|support (?:agents?|teams?)|agents|cx\b|service agents?)\b/i, part: 'Daily user', kind: 'user', ask: 'Which cases take the most time today, and what must a person always check?',
         cares: 'handling time, quality and a tool that does not slow the queue',
         step: (c) => `Run ${c.P} on a small share of real cases and let the agents judge it against a quality check` },
     { re: /\b(?:sales (?:head|leader|director|user|rep|team)s?|national sales|sales)\b/i, part: 'Daily user or sales leader', kind: 'user',
@@ -170,7 +172,7 @@ function readRole(c, kind, ctx, investment) {
     const part = hit ? hit.part : c.level === 'group' ? 'A group of users or evaluators' : c.level === 'exec' ? 'Senior leader' : (0, dealtext_ts_1.upperFirst)(base.label);
     const cares = hit ? hit.cares : base.cares;
     const step = hit ? hit.step(ctx) : base.nextStep;
-    return { part, cares, step, kind: kind ?? (hit ? hit.kind : null) };
+    return { part, cares, step, kind: kind ?? (hit ? hit.kind : null), ask: hit?.ask };
 }
 const THREAT_KINDS = [
     { id: 'scratch', re: /\bfrom scratch\b|\bbuild(?:ing)? (?:every|each|all|our own|their own|it|them)\b/i, tells: 'the buyer builds and keeps each piece itself, so the cost is people and time, not a purchase', asks: ['Which pieces has the team built by hand, who keeps each one running, and what has it not had time to build?', 'How long does it take to add one more, and what waits while it is built?'], prove: 'Count what one more piece takes to build and run, then show the same piece done with the product' },
@@ -214,10 +216,10 @@ const partFor = (text, parts) => {
 const unitFor = (text, ctx) => {
     if (ctx.unit && !/\bper\b/i.test(text))
         return `per ${ctx.unit}`;
-    const t = text.match(/\bper (?:message|sms|transaction|seat|user|site|link|device|ticket|fte|contact|call|check|verification|api call)\b/i);
+    const t = text.match(/\bper (?:message|sms|transaction|seat|user|site|link|device|ticket|fte|contact|call|check|verification|api call|shipment|order|sim|label|booking|request|session|minute)\b/i);
     if (t)
         return t[0].toLowerCase();
-    return { transactions: /\b(?:messages?|sms|whatsapp)\b/i.test(ctx.sellerText) ? 'per message' : 'per transaction', connectivity: 'per site', services: 'per FTE, per ticket or fixed', hardware_software: 'per device plus the software', marketplace: 'as a take rate', investment: 'as a fee on assets', saas: 'as a subscription' }[ctx.model || ''] || 'as a subscription';
+    return { transactions: 'per unit of usage', connectivity: 'per site', services: 'per FTE, per ticket or fixed', hardware_software: 'per device plus the software', marketplace: 'as a take rate', investment: 'as a fee on assets', saas: 'as a subscription' }[ctx.model || ''] || 'as a subscription';
 };
 /** Answers one objection or blocker. The answer says what to do and what to bring; it states no fact about the user's product. */
 function answerQuestion(raw, ctx) {
@@ -390,11 +392,11 @@ function dedupeAnswers(items) {
     const key = (x) => x.toLowerCase().replace(/\s+/g, ' ').trim();
     for (const it of items) {
         const sents = (0, dealtext_ts_1.sentences)(it.a.answer);
-        const kept = sents.map((x, i) => (seen.has(key(x)) ? (i === 0 ? `For ${(0, exports.quoted)((0, dealtext_ts_1.clip)(it.text, 60))}: ${(0, exports.lowerStart)(x)}` : '') : x)).filter(Boolean);
+        const kept = sents.map((x, i) => (seen.has(key(x)) ? (i === 0 ? `For ${(0, exports.quoted)(it.text.length > 140 ? (0, dealtext_ts_1.clip)(it.text, 140) : it.text)}: ${(0, exports.lowerStart)(x)}` : '') : x)).filter(Boolean);
         it.a.answer = kept.join(' ');
         sents.forEach((x) => seen.add(key(x)));
         if (seen.has(key(it.a.bring)))
-            it.a.bring = `for ${(0, exports.quoted)((0, dealtext_ts_1.clip)(it.text, 70))}: ${it.a.bring}`;
+            it.a.bring = `for ${(0, exports.quoted)(it.text.length > 140 ? (0, dealtext_ts_1.clip)(it.text, 140) : it.text)}: ${it.a.bring}`;
         seen.add(key(it.a.bring));
         if (seen.has(key(it.a.ask)))
             it.a.ask = '';
@@ -403,40 +405,62 @@ function dedupeAnswers(items) {
     }
     return items;
 }
-const GENERIC_FIRST = new Set(['the', 'our', 'your', 'this', 'that', 'cloud', 'route', 'enterprise', 'global', 'digital', 'smart', 'mobile', 'online', 'open', 'ai', 'api', 'saas', 'software', 'platform', 'automated', 'managed', 'integrated', 'unified', 'modern', 'secure', 'intelligent', 'connected', 'payment', 'payments', 'customer', 'business', 'data', 'ecommerce', 'e-commerce', 'multi', 'next', 'first']);
-/** The product brief of dealtext.ts; when it finds no clear name, a first word that is written like a name (capitalised, not a common word) and that the user's other inputs also use is taken as the name. */
-function briefOf(text, evidence) {
-    const base = (0, dealtext_ts_1.solutionBrief)(text);
-    if (base.short || !base.full)
-        return base;
-    const m = base.full.match(/^([A-Za-z][A-Za-z0-9.&'-]{2,})(?=[\s,:(]|$)/);
-    if (!m)
-        return base;
-    const tok = m[1];
-    if (GENERIC_FIRST.has(tok.toLowerCase()) || !(/^[A-Z]/.test(tok) || /^[a-z]+[A-Z]/.test(tok)))
-        return base;
-    const internal = /[a-z][A-Z]|\./.test(tok);
-    const ev = evidence.join(' ').toLowerCase();
-    if (!internal && !ev.includes(tok.toLowerCase()))
-        return base;
-    const rest = base.full.slice(tok.length).trim();
-    let kind = rest.split(/\s*[(:]/)[0].trim();
-    if (kind.split(/\s+/).length > 12)
-        kind = (kind.split(',')[0] || '').trim();
-    if (kind.split(/\s+/).length > 12)
-        kind = '';
-    return { ...base, name: tok, short: tok, kind: kind.replace(/[.,]+$/, '') };
+const NAME_STOP = new Set(['the', 'our', 'your', 'this', 'that', 'cloud', 'route', 'enterprise', 'global', 'digital', 'smart', 'mobile', 'online', 'open', 'ai', 'api', 'saas', 'software', 'platform', 'automated', 'managed', 'integrated', 'unified', 'modern', 'secure', 'intelligent', 'connected', 'payment', 'payments', 'customer', 'customers', 'business', 'data', 'ecommerce', 'multi', 'next', 'first', 'operations', 'operating', 'retail', 'product', 'products', 'financial', 'finance', 'runtime', 'fully', 'complete', 'end', 'all', 'single', 'voice', 'agentic', 'composable', 'unified', 'real', 'full', 'new', 'one', 'any', 'every', 'fast', 'simple', 'flexible', 'powerful', 'leading', 'trusted', 'human', 'machine', 'learning', 'security', 'identity', 'network', 'networks', 'service', 'services', 'solution', 'solutions', 'system', 'systems', 'tool', 'tools', 'application', 'applications', 'analytics', 'transportation', 'logistics', 'shipping', 'freight', 'banking', 'insurance', 'marketing', 'sales', 'support', 'engineering', 'technology', 'communications', 'communication', 'infrastructure', 'management', 'monitoring', 'testing', 'developer', 'developers']);
+const NOT_NAME_SUFFIX = /(?:ic|ive|al|ous|ing|ed|tions?|ments?|ness|ics|ity|able|ible|ful|less)$/;
+const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** True only for a word that is clearly a name: it has a capital inside or a digit or a dot (eClerx, GitLab, project44, Gnani.ai), or it is capitalised, is not a common word,
+ *  adjective or noun of the trade (no hyphen, no adjective ending), and the user also wrote it that way elsewhere or typed it as "Name, a description". */
+function nameLike(tok, evidence, namedByArticle) {
+    if (!tok || tok.length < 3)
+        return false;
+    if (/[a-z][A-Z]|\d|\./.test(tok))
+        return true;
+    if (!/^[A-Z]/.test(tok) || /-/.test(tok))
+        return false;
+    const lower = tok.toLowerCase().replace(/'s$/, '');
+    if (NAME_STOP.has(lower) || NOT_NAME_SUFFIX.test(lower))
+        return false;
+    return namedByArticle || new RegExp(`(?<![A-Za-z])${escapeRe(tok)}(?![A-Za-z])`).test(evidence);
 }
-/** The unit a usage priced deal is paid in, read from what the user typed ("pay only for active SIMs", "per message"); '' when the words show none or show seats or licences. */
+const capitals = (s) => s.split(/\s+/).filter((w) => /^[A-Z0-9]/.test(w)).length;
+/** The product brief of dealtext.ts. A name is used only when it is clearly a name (see nameLike; several words need two capitalised words or "from"/"by");
+ *  otherwise the brief carries no name and the tools say "your solution" and quote the description. When no name is found in the description, the product name given in
+ *  another field wins: "(Acme customer)" in an account or customer name. Never the first word of a description. */
+function briefOf(text, fields) {
+    const base = (0, dealtext_ts_1.solutionBrief)(text);
+    if (!base.full)
+        return base;
+    // a field that repeats the description (the user pasted the product into two inputs) is not evidence of a name
+    const own = base.full.slice(0, 30).toLowerCase();
+    fields = fields.filter((f) => typeof f === 'string' && f && !f.toLowerCase().includes(own));
+    const ev = fields.join(' \n ');
+    const wholeShort = base.short === base.full.replace(/[.]+$/, '');
+    if (base.short && (wholeShort || (base.short.split(/\s+/).length === 1 ? nameLike(base.short, ev, /^[^,:]{1,80}[,:]\s+(?:an?|the|our)\s/i.test(base.full)) : capitals(base.short) >= 2 || /\b(?:from|by)\b/.test(base.short))))
+        return base;
+    const first = base.full.match(/^([A-Za-z][A-Za-z0-9.&'-]{2,})(?=[\s,:(]|$)/);
+    const fieldName = fields.map((f) => f.match(/\(([A-Z][A-Za-z0-9.&' -]{1,40}?)\s+customer\)/)).find(Boolean);
+    const candidate = first && nameLike(first[1], ev, false) ? first[1] : fieldName && base.full.toLowerCase().startsWith(fieldName[1].trim().toLowerCase()) ? fieldName[1].trim() : '';
+    if (candidate) {
+        let kind = base.full.slice(candidate.length).replace(/^[\s,:]+/, '').split(/\s*[(:]/)[0].trim();
+        if (kind.split(/\s+/).length > 12)
+            kind = (kind.split(',')[0] || '').trim();
+        if (kind.split(/\s+/).length > 12)
+            kind = '';
+        return { ...base, name: candidate, short: candidate, kind: kind.replace(/[.,]+$/, '') };
+    }
+    return { ...base, name: '', short: '', kind: '', parts: base.parts };
+}
+/** The unit a usage priced deal is paid in, read from the user's own pricing words ("pay only for active SIMs", "per shipment", "per message"); '' when the words show none (the wording then stays neutral) or show seats or licences. */
+const UNITS = 'message|sms|sim|device|transaction|call|minute|check|verification|request|session|order|shipment|label|lookup|booking|payment|invoice|ticket|contact|api call';
 function usageUnit(...texts) {
     const t = texts.join(' . ');
     if (/\bper[- ](?:seat|user)s?\b|\blicen[cs]es?\b|\bseats?\b/i.test(t))
         return '';
-    const m = t.match(/\bper[- ](message|sms|sim|device|transaction|call|minute|check|verification|request|session|order|shipment|label|lookup)\b/i) || t.match(/\bpay(?:s|ing)? (?:only )?for (?:the |each |every )?(?:active |live |used )?([A-Za-z]{3,}?)s?\b(?! that)/i);
+    const m = t.match(new RegExp(`\\bper[- ](${UNITS})\\b`, 'i')) || t.match(new RegExp(`\\bpay(?:s|ing)? (?:only )?for (?:the |each |every )?(?:active |live |used )?(${UNITS})s?\\b`, 'i'));
     if (!m)
         return '';
     const w = m[1].toLowerCase();
-    return /^(?:what|only|the|your|them|it|more|less|that|this|everything|data|anything)$/.test(w) ? '' : /sim/.test(w) ? 'SIM' : w;
+    return w === 'sms' ? 'message' : w === 'sim' ? 'SIM' : w;
 }
 /** Replaces the business model sentence of a context line when the user's pricing words show a usage priced deal. */
 function usageLine(line, unit) {

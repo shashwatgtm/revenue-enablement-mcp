@@ -26,15 +26,18 @@ function clauses(text, split) {
     const body = text.includes(': ') ? text.slice(text.indexOf(': ') + 2) : text;
     const lead = text.includes(': ') ? text.slice(0, text.indexOf(': ')).trim() : '';
     const raw = split(body).map((x) => x.replace(/^(?:and|plus|then)\s+/i, '').trim()).filter(Boolean);
+    // a fragment opens a new criterion when it starts with a verb or a number; any other fragment ("not days", "from one platform for ...") belongs to the one before
     const out = [];
     for (const r of raw) {
-        const startsNew = VERB_START.test(r) || /^\d/.test(r) || /^(?:up to|an average|one|a |an |the )/i.test(r) || r.split(/\s+/).length > 3;
+        const startsNew = VERB_START.test(r) || /^\d/.test(r);
         if (out.length && !startsNew)
             out[out.length - 1] += `, ${r}`;
         else
             out.push(r);
     }
-    return lead && out.length ? [lead, ...out] : out.length ? out : [text];
+    // "X for A and Y for B" is two criteria
+    const spread = out.flatMap((c) => { const m = c.match(/^(.+? for [^,]+?) and ([a-z][^,]*? for .+)$/i); return m ? [m[1], m[2]] : [c]; });
+    return lead && spread.length ? [lead, ...spread] : spread.length ? spread : [text];
 }
 function buildMutualActionPlan(args, d) {
     const str = (k) => (typeof args[k] === 'string' ? args[k].trim() : '');
@@ -53,17 +56,19 @@ function buildMutualActionPlan(args, d) {
     if (isNaN(closeInput.getTime()))
         return `target_close_date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
     const today = new Date();
-    const daysUntilClose = Math.round((closeInput.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+    // whole calendar days between the two dates (the time of day is ignored: 2026-10-09 to 2026-12-15 is 67 days at any hour)
+    const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));
     const industryWords = (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(dealName));
     const ctx = d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] });
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-    const usage = ctx.model === 'saas' || !ctx.model ? (0, rw1_common_ts_1.usageUnit)(solutionIn, reqIn, blockersIn) : '';
-    const model = usage ? 'transactions' : ctx.model;
-    const ctxLine = usage ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
+    const usage = (0, rw1_common_ts_1.usageUnit)(solutionIn, reqIn, blockersIn);
+    const model = usage && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
+    const ctxLine = usage && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
     const P = brief.short || 'the solution';
     const mw = (0, rw1_common_ts_1.modelWords)(model, solutionIn, usage || undefined);
+    const statedModel = !/assumed/.test(ctx.line) || !!usage;
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)((0, rw1_common_ts_1.industryFromTitle)(dealName));
     // ---- the people ----
     const evaluators = (0, dealtext_ts_1.parseContacts)(evalIn, investment).map((c) => ({ ...c, raw: c.raw.replace(/^(?:and|or)\s+/i, ''), title: c.title.replace(/^(?:and|or)\s+/i, '') }));
@@ -129,7 +134,7 @@ function buildMutualActionPlan(args, d) {
         const lm = item.match(LABEL);
         const label = lm ? lm[1].trim() : '';
         const body = lm ? item.slice(0, lm.index).trim() : item;
-        const parts = clauses(body, (s) => d.splitItems(s.replace(/,\s+(?:and\s+)?/g, ';')));
+        const parts = clauses(body, (t) => d.splitItems(t.replace(/,\s+(?:and\s+)?/g, ';')));
         if (label)
             parts.forEach((p) => claims.push({ text: (0, rw1_common_ts_1.stripEnd)(p), label }));
         else if (body.includes(': ') && parts.length > 1) {
@@ -137,7 +142,7 @@ function buildMutualActionPlan(args, d) {
             criteria.push(...parts.slice(1).map(rw1_common_ts_1.stripEnd));
         }
         else
-            criteria.push(...(body.includes(': ') ? parts : [(0, rw1_common_ts_1.stripEnd)(body)]));
+            criteria.push(...parts.map(rw1_common_ts_1.stripEnd));
     }
     const evaluatorFor = (text) => {
         let best = '';
@@ -200,13 +205,13 @@ function buildMutualActionPlan(args, d) {
     const ownerFor = (id) => ({ it: `${itName} with Seller (solutions engineer)`, security: `${secName} with Seller`, price: `${ebName} with Seller`, champion: `${champName} with Seller`, se: `${champName} with Seller (solutions engineer)`, terms: `${procName} with ${ebName}`, seller: `Seller with ${champName}` }[(0, rw1_common_ts_1.ownerKind)(id)] || `Seller with ${champName}`);
     // ---- the steps of each phase ----
     const stock = d.stockEval(v, investment);
-    const unit = usage || (/\b(?:messages?|sms|whatsapp|rcs)\b/i.test(solutionIn) ? 'message' : 'transaction');
+    const unit = usage;
     const isMessage = unit === 'message';
     const modelEval = {
         transactions: [
-            { m: isMessage ? `Agree the test traffic: the message types, the destinations and the baseline to beat (the current provider's delivery rate, delivery report timing and price per message)` : `Agree the test volume: which ${unit}s and where they run, and the baseline to beat (the current provider's results and price per ${unit})`, who: 'both' },
-            { m: isMessage ? `Complete the account and sender approvals the traffic needs and connect to ${P} in a sandbox` : `Complete the account set-up the test needs and connect the test ${unit}s to ${P}`, who: 'it' },
-            { m: isMessage ? `Run test messages by destination for a full week and compare delivery, report timing and price per message with the current provider on the same traffic` : `Run the test on live ${unit}s for a full cycle and compare results and price per ${unit} with the current provider on the same volume`, who: 'champion' },
+            { m: isMessage ? `Agree the test traffic: the message types, the destinations and the baseline to beat (the current provider's delivery rate, delivery report timing and price per message), and how long the test runs` : `Agree the test volume: ${unit ? `which ${unit}s` : 'which kinds of use'} and where they run, and the baseline to beat (the current provider's results and price${unit ? ` per ${unit}` : ''}), and how long the test runs`, who: 'both' },
+            { m: isMessage ? `Complete the account and sender approvals the traffic needs and connect to ${P} in a sandbox` : `Complete the account set-up the test needs and connect the test volume to ${P}`, who: 'it' },
+            { m: isMessage ? `Run test messages by destination, for the test length agreed in step 1, and compare delivery, report timing and price per message with the current provider on the same traffic` : `Run the test on live volume, for the test length agreed in step 1, and compare results and price${unit ? ` per ${unit}` : ''} with the current provider on the same volume`, who: 'champion' },
             { m: isMessage ? 'Review the results against the baseline and agree the order in which routes and countries move' : 'Review the results against the baseline and agree the order in which the rest move', who: 'both' },
         ],
         services: [
@@ -241,7 +246,8 @@ function buildMutualActionPlan(args, d) {
     };
     const baseEval = [...(stock || modelEval[model || 'saas'] || modelEval.saas)];
     const critSteps = criteria.slice(0, 3).map((c) => ({ m: `Test the buyer's criterion ${(0, rw1_common_ts_1.quoted)(c)}: ${(0, rw1_common_ts_1.lowerStart)(testFor(c))}`, who: 'eval', owner: evaluatorFor(c) }));
-    const evalSteps = [...baseEval, ...critSteps, ...(processBy.evaluation || [])];
+    const claimStep = claims.length && !criteria.length ? [{ m: `Agree which of the seller's claims the buyer wants tested on its own data (${(0, dealtext_ts_1.joinList)(claims.slice(0, 2).map((c) => (0, rw1_common_ts_1.quoted)(c.text)))}${claims.length > 2 ? ' and the others' : ''}), and the pass mark for each`, who: 'both' }] : [];
+    const evalSteps = [...baseEval, ...claimStep, ...critSteps, ...(processBy.evaluation || [])];
     if (!securityCovered && !evalSteps.some((s) => /security|compliance|risk/i.test(s.m)))
         evalSteps.push({ m: 'Security and compliance review of the vendor and its data handling', who: 'security' });
     if (buyerCtx?.id === 'financial')
@@ -298,7 +304,7 @@ function buildMutualActionPlan(args, d) {
     const out = [];
     out.push(`# Mutual Action Plan: ${dealName}`);
     const stageText = currentStage.replace(/_/g, ' ');
-    out.push(`## Overview\n\nThis plan takes the deal ${(0, rw1_common_ts_1.quoted)(dealName)} from the ${stageText} stage to a signed contract on ${(0, dealtext_ts_1.isoDate)(closeInput)}${closeNote}: ${N} working days from ${(0, dealtext_ts_1.isoDate)(start)}, ${daysUntilClose} calendar days.${solutionIn ? (brief.short ? ` The seller is offering ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}${model ? `, bought as ${mw.priced}` : ''}.` : ` The seller is offering what it describes in its own words as ${(0, rw1_common_ts_1.sellerWords)(brief)}${model ? `, bought as ${mw.priced}` : ''}.`) : ''}${industryWords ? ` The buyer works in ${(0, rw1_common_ts_1.lowerStart)(industryWords)}, read from the deal name.` : ''}${buyerCtx ? ` ${buyerCtx.reviews} ${buyerCtx.buying}` : ''}\n\n${ctxLine}${tight}`);
+    out.push(`## Overview\n\nThis plan takes the deal ${(0, rw1_common_ts_1.quoted)(dealName)} from the ${stageText} stage to a signed contract on ${(0, dealtext_ts_1.isoDate)(closeInput)}${closeNote}: ${N} working days from ${(0, dealtext_ts_1.isoDate)(start)}, ${daysUntilClose} calendar days.${solutionIn ? (brief.short ? ` The seller is offering ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}${model && statedModel ? `, bought as ${mw.priced}` : ''}.` : ` The seller is offering what it describes in its own words as ${(0, rw1_common_ts_1.sellerWords)(brief)}${model && statedModel ? `, bought as ${mw.priced}` : ''}.`) : ''}${industryWords ? ` The buyer works in ${(0, rw1_common_ts_1.lowerStart)(industryWords)}, read from the deal name.` : ''}${buyerCtx ? ` ${buyerCtx.reviews} ${buyerCtx.buying}` : ''}\n\n${ctxLine}${tight}`);
     const people = [];
     if (champion)
         people.push(`| **Champion** | ${champion} | Keeps the plan alive on the buyer's side, gathers the evaluators and answers the open questions with us |`);

@@ -46,7 +46,7 @@ export interface ModelWords {
     /** what is set up before first use */
     setup: string;
 }
-export declare function modelWords(model: BusinessModel | null, sellerText: string, unit?: string): ModelWords;
+export declare function modelWords(model: BusinessModel | null, _sellerText: string, unit?: string): ModelWords;
 export type Part = 'champion' | 'buyer' | 'economic' | 'blocker' | 'user' | 'influencer' | 'outside' | 'group';
 export interface RoleCtx {
     P: string;
@@ -58,6 +58,7 @@ export interface RoleRead {
     cares: string;
     step: string;
     kind: Part | null;
+    ask?: string;
 }
 /** What a contact is for, from the title (and from the role the user wrote in brackets, which always wins). */
 export declare function readRole(c: Contact, kind: Part | null, ctx: RoleCtx, investment: boolean): RoleRead;
@@ -107,9 +108,10 @@ export declare function dedupeAnswers<T extends {
     text: string;
     a: QAnswer;
 }>(items: T[]): T[];
-/** The product brief of dealtext.ts; when it finds no clear name, a first word that is written like a name (capitalised, not a common word) and that the user's other inputs also use is taken as the name. */
-export declare function briefOf(text: string, evidence: string[]): SolutionBrief;
-/** The unit a usage priced deal is paid in, read from what the user typed ("pay only for active SIMs", "per message"); '' when the words show none or show seats or licences. */
+/** The product brief of dealtext.ts. A name is used only when it is clearly a name (see nameLike; several words need two capitalised words or "from"/"by");
+ *  otherwise the brief carries no name and the tools say "your solution" and quote the description. When no name is found in the description, the product name given in
+ *  another field wins: "(Acme customer)" in an account or customer name. Never the first word of a description. */
+export declare function briefOf(text: string, fields: string[]): SolutionBrief;
 export declare function usageUnit(...texts: string[]): string;
 /** Replaces the business model sentence of a context line when the user's pricing words show a usage priced deal. */
 export declare function usageLine(line: string, unit: string): string;

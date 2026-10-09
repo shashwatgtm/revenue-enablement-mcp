@@ -245,7 +245,7 @@ test("round 2: 'do I need the whole X' is a packaging question, 'what if I am ..
   assert.match(mine, /If we are building open-source/);
   assert.match(mine, /same plan, price and limits/);
   assert.doesNotMatch(mine, /the sequence, not a promise/);
-  assert.match(objBlock(round2, "How do Buildline credits translate to build minutes?"), /conversion rule from Buildline credits to build minutes/);
+  assert.match(objBlock(round2, "How do Buildline credits translate to build minutes?"), /rate from Buildline credits to build minutes/);
   const up = objBlock(round2, "Reliability and uptime");
   assert.match(up, /uptime of Buildline over the last twelve months|its uptime over the last twelve months/);
   assert.doesNotMatch(up, /accuracy or error/);
@@ -369,4 +369,40 @@ test("round 4: the specialist answer speaks of the domain, and the part answer n
   assert.doesNotMatch(spec, /with the gaps written down/);
   const part = objBlock(zl, "Why do enterprises choose Moveport over standard cloud migration tools and services?");
   assert.match(part, /\bdata\b[^.]*(?:adds|names|covers)|(?:adds|names|covers)[^.]*\bdata\b/i);
+});
+
+// ---- round 5: credit questions are answered from the text or with the missing fact and the question to put; the case states its gap and its figure ----
+const BUILDWELL = {
+  asset_type: "internal_business_case", champion_role: "platform engineers", target_stakeholder: "VP of Engineering",
+  your_solution: "Buildwell, a CI platform that validates, tests and ships every code change: hosted in the cloud, with self-hosted runners, build images, build optimization and autoscaling",
+  key_value_points: "ship faster with 97% faster test runs (page claim), and a 664% ROI (page claim)",
+  known_objections: "What are credits?; Do credits expire?; How do Buildwell credits translate to build minutes?; What are concurrent job runs?",
+  competitive_context: "self-managed CI servers where you maintain the servers; CI tools without test splitting", budget_context: "$25,000 a year (hypothetical annual cost)",
+};
+const buildwell = await call(BUILDWELL);
+test("round 5: a credit, expiry, conversion or concurrency question names the missing fact and the one question to put to the vendor", () => {
+  assert.match(objBlock(buildwell, "What are credits?"), /what one credit pays for/);
+  assert.match(objBlock(buildwell, "What are credits?"), /"What does one credit pay for, and how many does each plan include\?"/);
+  assert.match(objBlock(buildwell, "Do credits expire?"), /carry over/);
+  assert.match(objBlock(buildwell, "How do Buildwell credits translate to build minutes?"), /How many build minutes does one credit give/);
+  assert.match(objBlock(buildwell, "What are concurrent job runs?"), /at once/);
+  assert.doesNotMatch(buildwell, /in its own words/);
+});
+test("round 5: the case says what it wants instead of the options, and does not say no return was given next to a quoted return", () => {
+  assert.match(buildwell.split("## Where we are today")[1].split("##")[0], /What we want instead: ship faster/);
+  const cost = buildwell.split("## What it costs")[1].split("##")[0];
+  assert.doesNotMatch(cost, /because none was given/);
+  assert.match(cost, /664% ROI/);
+  assert.match(cost, /the vendor's figure/);
+});
+test("round 5: a modernisation case starts with the first application to modernise, not with SLA design, and a parts word is not pointed at an ERP question", async () => {
+  assert.match(gridforge.split("## Next steps")[1], /1\. [^\n]*moderni[sz]e/i);
+  const routeline = await call({ asset_type: "internal_business_case", champion_role: "Head of IT", target_stakeholder: "Sales Head",
+    your_solution: "Routeline, a retail platform for route to market: sales force automation, a distributor management system, a retailer ordering app, and AI agents such as Routeline Copilot and beat optimisation",
+    key_value_points: "measurable gains in sales productivity within weeks of deployment (page claim)", known_objections: "Can Routeline integrate with our ERP?", competitive_context: "sales force automation apps that capture orders", budget_context: "$30,000 a year (hypothetical annual cost)" });
+  assert.doesNotMatch(objBlock(routeline, "Can Routeline integrate with our ERP?"), /AI agents|Copilot/);
+});
+test("round 5: the sentence that says what the seller is described as appears once, not under every answer", () => {
+  const n = (gridforge.match(/is described as an engineering services firm/g) || []).length;
+  assert.ok(n <= 1, `the description sentence is repeated ${n} times`);
 });

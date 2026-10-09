@@ -419,3 +419,49 @@ test("round 4: a step built from a problem with no part to show says to the sell
   assert.ok(fromPain.length >= 1, "a step for a problem no part answers");
   for (const b of fromPain) assert.match(b, /Note for you, not for the room: [^\n]*no part of your_solution/);
 });
+
+// ---- round 5: titles are not pasted pains, market statements are not "what you told me", people see the part of their own work, credit questions are answered ----
+const ROOMLARK = {
+  demo_type: "first_look", primary_audience: "SVP Product", attendees: "Revenue Managers, Finance Teams, F&B Managers", customer_industry: "independent hotels",
+  your_solution: "Roomlark, the operating system built to power modern hotels: it connects reservations, payments, housekeeping, point of sale, revenue management and guest journeys in one cloud-native platform (property management system, POS, revenue management system and embedded payments)",
+  key_pain_points: "most hotels manage pricing, operations and performance in separate tools; separate distribution systems cause mistakes that lead to overbookings and disgruntled guests; manual work and payment reconciliation take staff time away from guests",
+  competitor_context: "separate point tools for pricing, operations, payments and distribution", demo_duration: 30,
+  must_show_features: "over 15,000 properties use it (page claims)",
+  known_objections: "What are credits?; Do credits expire?; Can I get a refund?",
+};
+const roomlark = await call(ROOMLARK);
+const titlesOf = (t) => (t.split("### Part 3")[1] || "").split("### Part 4")[0].split("\n").filter((l) => /^\*\*Step \d+:/.test(l));
+test("round 5: no step title is a pasted problem sentence, and a problem that states what hotels in general do is not 'what you told me'", () => {
+  for (const l of titlesOf(roomlark)) assert.doesNotMatch(l, /most hotels manage|separate distribution systems cause|manual work and payment reconciliation take/i, l);
+  assert.doesNotMatch(roomlark, /heard before today: first, most hotels/);
+  assert.doesNotMatch(roomlark, /You told me 'most hotels/);
+  assert.match(roomlark, /most hotels manage pricing, operations and performance in separate tools/);
+});
+test("round 5: a revenue manager is shown revenue management and an F&B manager point of sale, and one SVP is not a team", () => {
+  const steps = (roomlark.split("### Part 3")[1] || "").split("### Part 4")[0].split(/\n(?=\*\*Step )/).slice(1);
+  const rev = steps.find((b) => /^\*\*Step \d+: Revenue management/i.test(b)), pos = steps.find((b) => /^\*\*Step \d+: Point of sale/i.test(b));
+  assert.ok(rev && /Revenue Managers/.test(rev.split("\n").slice(0, 3).join(" ")), "a revenue management step for the revenue managers");
+  assert.ok(pos && /F&B Managers/.test(pos.split("\n").slice(0, 3).join(" ")), "a point of sale step for the F&B managers");
+  assert.doesNotMatch(roomlark, /SVP Product team/);
+});
+test("round 5: a credit question is answered with the fact to get and the question to put, with no circular 'definition in its own words' and no 'there is no refunds'", () => {
+  const b = (q) => { const i = roomlark.indexOf(`Buyer may ask: "${q}`); assert.ok(i >= 0, q); return roomlark.slice(i).split(/\nBuyer may ask:|\n---|\nSay: "What would be/)[0]; };
+  assert.match(b("What are credits"), /what one credit pays for/);
+  assert.doesNotMatch(roomlark, /definition of credits in the vendor's own words|in its own words/);
+  assert.match(b("Do credits expire"), /carry over/);
+  assert.doesNotMatch(roomlark, /there is no refunds|no refunds unless/i);
+});
+const ASKWELL = {
+  demo_type: "first_look", primary_audience: "CIO", attendees: "IT service management teams, customer service, people team", customer_industry: "financial services",
+  your_solution: "Askwell, an enterprise AI platform that connects to company tools and data: Askwell Search, Askwell Assistant (an AI coworker), Askwell Agents, and Askwell Protect for safe AI use",
+  key_pain_points: "company knowledge spreads across tools, teams and documents, so people cannot find what they need to do their jobs; AI without company context gives generic answers; AI costs rise faster than adoption",
+  demo_duration: 30,
+};
+const askwell = await call(ASKWELL);
+test("round 5: the search step works the finding problem, the assistant is not tied to the cost problem, and teams that do not own a cost are not asked about it", () => {
+  const steps = (askwell.split("### Part 3")[1] || "").split("### Part 4")[0].split(/\n(?=\*\*Step )/).slice(1);
+  const search = steps.find((b) => /^\*\*Step \d+: Askwell Search/.test(b)), assistant = steps.find((b) => /^\*\*Step \d+: Askwell Assistant/.test(b));
+  assert.ok(search && /cannot find what they need/.test(search), "the search step is for the finding problem");
+  if (assistant) assert.doesNotMatch(assistant, /AI costs rise faster than adoption/);
+  for (const who of ["customer service", "people team"]) { const l = askwell.split("\n").find((x) => x.startsWith(`Ask the ${who}`)); if (l) assert.doesNotMatch(l, /AI costs rise faster/, who); }
+});

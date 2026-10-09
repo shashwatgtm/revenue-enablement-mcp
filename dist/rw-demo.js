@@ -102,6 +102,11 @@ function buildDemoScript(args, d) {
         [/\bsales\b|\breps?\b|account executive|\bseller|\bbdr\b|\bsdr\b|field/i, 'lead opportunity pipeline field scoring prioriti'],
         [/\bmarketing\b|\bdemand\b|campaign|growth/i, 'campaign marketing automation scoring email journey audience nurture lead'],
         [/\badmin|administrator|\bops\b|operations|configur/i, 'custom configure workflow automation field admin permission integration'],
+        [/revenue|\bpricing\b|yield|rate manager/i, 'revenue management pricing rate forecast'],
+        [/f&b|food|beverage|restaurant|outlet|\bpos\b|\bbar\b|kitchen|cashier/i, 'point of sale pos'],
+        [/housekeep/i, 'housekeeping'],
+        [/front desk|reception/i, 'reservations front desk'],
+        [/\bfinance\b|account(?:s|ing|ant)/i, 'payments invoicing reconciliation billing'],
     ];
     const functionWords = (t) => FUNCTION_WORDS.filter(([re]) => re.test(t)).map(([, w]) => w).join(' ');
     const personText = (t) => `${t} ${(0, rw_kit_ts_1.lensFor)((0, dealtext_ts_1.familyOf)(t, investment))} ${functionWords(t)}`;
@@ -140,7 +145,7 @@ function buildDemoScript(args, d) {
         // each pain goes to the one step that answers it best (it must share a word with it); each person to the step or two that suit the role
         pains.forEach((p, pi) => {
             let best = -1, bs = 0;
-            steps.forEach((s, si) => { const f = stepFit(s, p); const key = (f.w >= 1 ? 100 : 0) + f.s; if ((f.w >= 1 || f.ng >= 1) && key > bs) {
+            steps.forEach((s, si) => { const f = stepFit(s, p); const key = (f.w >= 1 ? 100 : 0) + f.s; if ((f.w >= 1 || f.ng >= 1) && (key > bs || (key === bs && best >= 0 && steps[si].pains.length < steps[best].pains.length))) {
                 bs = key;
                 best = si;
             } });
@@ -149,6 +154,20 @@ function buildDemoScript(args, d) {
                 steps[best].painScore[pi] = bs;
             }
         });
+        // a step that no problem went to (its part is named but another step answered the problem first) is still tied to the problem it touches most, as a second step for it
+        for (const s of steps) {
+            if (s.pains.length || s.fromPain || !s.cap)
+                continue;
+            let bp = -1, bsc = 0;
+            pains.forEach((p, pi) => { const f = stepFit(s, p); if ((f.w >= 1 || f.ng >= 1) && f.s > bsc) {
+                bsc = f.s;
+                bp = pi;
+            } });
+            if (bp >= 0) {
+                s.pains.push(bp);
+                s.painScore[bp] = bsc;
+            }
+        }
         for (const s of steps)
             s.pains.sort((a, b) => (s.painScore[b] - s.painScore[a]) || a - b);
         people.forEach((pp, qi) => {
@@ -179,6 +198,8 @@ function buildDemoScript(args, d) {
                     if (f.s > cur)
                         g += 3 * (f.s - cur);
                 } // a better answer to a pain already covered
+                else if (f.ng >= 1 && steps.length < maxSteps && !ms.flows.length)
+                    g += 0.5; // room is left, and the part's own name is about the same kind of thing as a problem already covered
             });
             people.forEach((pp, qi) => { if (!covered('person', qi)) {
                 const f = stepFit(probe, personText(pp.title));
@@ -199,11 +220,11 @@ function buildDemoScript(args, d) {
     // a problem no part answers, with room left in the demo: a step that walks that problem live, so the room's own words are worked through
     // (only when the user named no flow of their own: the flows they asked to see are the steps they get)
     if (steps.length && steps.length < maxSteps && pains.length && !ms.flows.length) {
-        const left = pains.map((_p, i) => i).filter((i) => !steps.some((st) => st.pains.includes(i) && (st.painScore[i] ?? 0) >= 100));
+        const left = pains.map((_p, i) => i).filter((i) => !steps.some((st) => st.pains.includes(i)));
         for (const i of left) {
             if (steps.length >= maxSteps)
                 break;
-            const st = newStep(pains[i].split(/\s+/).length <= 10 ? `A live case of ${low(pains[i])}` : `A live case of the ${ORDINAL[i] || `number ${i + 1}`} problem you described`, null, null, pains[i]);
+            const st = newStep(`A live case of the ${ORDINAL[i] || `number ${i + 1}`} problem you described`, null, null, pains[i]);
             st.fromPain = true;
             st.painIdx = i;
             steps.push(st);
@@ -269,7 +290,7 @@ function buildDemoScript(args, d) {
     const objections = typed.length ? typed : fromSector ? v.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
     const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
     const secPerson = people.find((p) => p.contact && (p.contact.family === 'security' || p.contact.family === 'risk'))?.title || '';
-    const dsWho = (t0) => { const t = t0.replace(/^the\s+/i, ''); return (/\b(?:board|council|panel|manager|director|head|lead|leader|leaders|chief|officer|vp|vice|president|engineer|engineers|analyst|analysts|architect|owner|owners|founder|executive|executives|controller|counsel|team|teams|committee|group|auditors?|reviewers?|administrators?|admins?|developers?|users?|agents|staff|partners?|programs?)\b/i.test(t) || (/^[A-Z]{2,5}$/.test(t) && !/^(?:IT|HR|QA|PR|GTM|R&D)$/.test(t)) ? `the ${t}` : `the ${t} team`); };
+    const dsWho = (t0) => { const t = t0.replace(/^the\s+/i, ''); return (/\b(?:svp|evp|cio|cto|ciso|cfo|ceo|coo|cmo|cro|board|council|panel|manager|director|head|lead|leader|leaders|chief|officer|vp|vice|president|engineer|engineers|analyst|analysts|architect|owner|owners|founder|executive|executives|controller|counsel|team|teams|committee|group|auditors?|reviewers?|administrators?|admins?|developers?|users?|agents|staff|partners?|programs?)\b/i.test(t) || (/^[A-Z]{2,5}$/.test(t) && !/^(?:IT|HR|QA|PR|GTM|R&D)$/.test(t)) ? `the ${t}` : `the ${t} team`); };
     const altItems = d.splitItems(competitorContext).map((x) => x.replace(/[.]+$/, ''));
     const actx = {
         P, kind: product.kind, caps: product.caps, alts: altItems.length ? altItems : competitorContext ? [competitorContext] : [],
@@ -323,11 +344,16 @@ function buildDemoScript(args, d) {
     const stepsOf = (qi) => shown.map((s, si) => (s.people.includes(qi) ? si : -1)).filter((x) => x >= 0);
     const stepNames = shown.map(ref);
     // ---- the script ----
-    const playback = pains.length ? `${pains.map((p, i) => `${ORDINAL[i] || `number ${i + 1}`}, ${low(p)}`).join('; ')}.` : '';
+    // a statement about what organisations in general do ("most hotels manage pricing in separate tools") is not something the buyer told us: it is put to the room as a question
+    const isMarket = (p) => /^(?:most|many|some|typically|often|organi[sz]ations|enterprises|companies|businesses|teams|hotels|retailers|banks|brands|firms|today,?)\b/i.test(p.trim());
+    const ownPains = pains.map((_p, i) => i).filter((i) => !isMarket(pains[i])), marketPains = pains.map((_p, i) => i).filter((i) => isMarket(pains[i]));
+    const listOf = (idx) => `${idx.map((i, k) => `${ORDINAL[k] || `number ${k + 1}`}, ${low(pains[i])}`).join('; ')}.`;
+    const playback = pains.length ? listOf(ownPains) : '';
     const opening = [
         `Say: "Thanks for making the time. Over the next ${demoDuration} ${minutesWord} I will take you through ${P}${who ? `, with ${who} in the room` : ''}${customerIndustry ? `, with ${customerIndustry} in mind${lens ? `, so ${(0, dealtext_ts_1.joinList)(lens.words.slice(0, 3))} are the terms I will use` : ''}` : ''}."`,
         TYPE_OPEN[demoType] ? `Say: "${TYPE_OPEN[demoType]}"` : '',
-        keyPainPoints && pains.length ? `Say: "Here is what I heard before today: ${say(playback)}"` : '',
+        ownPains.length ? `Say: "Here is what I heard before today: ${say(playback)}"` : '',
+        marketPains.length ? `Say: "Here is what we see across ${customerIndustry || 'your market'}, so tell me which of it is true for you: ${say(listOf(marketPains))}"` : '',
         unattached.length ? `Say: "For context on who is talking: ${say(claimSay(unattached.slice(0, 3)))}" *(${claimLabels(unattached.slice(0, 3))}; have the source ready)*` : '',
         `Say: "${outcomeText ? `The outcome I am aiming for in this session: ${say(outcomeText)}.` : 'What I would like by the end of this session is a clear next step that we both agree.'}"`,
         `Say: "The plan: first I confirm that I have your problem right, then ${demo} ${demo === 1 ? 'minute' : 'minutes'} of demo in ${shown.length} step${shown.length === 1 ? '' : 's'} (${say((0, dealtext_ts_1.joinList)(stepNames))}), then your questions, then the next step."`,
@@ -344,7 +370,9 @@ function buildDemoScript(args, d) {
         // the step the person is asked about before is the one closest to their own work, not the first one they are in
         const sis = stepsOf(qi).slice().sort((a, b) => stepFit(shown[b], personText(pp.title)).s - stepFit(shown[a], personText(pp.title)).s || a - b);
         const s = sis.length ? shown[sis[0]] : null;
-        const pi = s && s.pains.length ? s.pains[0] : pains.length && !s ? 0 : -1;
+        // a team that does not carry the cost of the product is not asked about a cost problem
+        const owns = (pj) => (0, rw_kit_ts_1.painType)(pains[pj]) !== 'cost' || ['finance', 'it', 'executive', 'procurement', 'investment', 'other'].includes(fam) || ['exec', 'head'].includes(pp.contact ? pp.contact.level : (0, dealtext_ts_1.levelOf)(pp.title));
+        const pi = s && s.pains.length ? (s.pains.find(owns) ?? -1) : pains.length && !s ? 0 : -1;
         const pain = pi >= 0 ? pRef(pi) : '';
         const nth = pi >= 0 ? (painAsked[pi] = (painAsked[pi] ?? -1) + 1) : nth0;
         const tied = {
@@ -415,9 +443,9 @@ function buildDemoScript(args, d) {
             say: uniq(wording.say[vi % 3], (t) => `For ${ref(s)}, ${t}`),
             ask: uniq(wording.ask[vi % 3], (t) => `On ${ref(s)}: ${lowFirst(t)}`),
         };
-        const painNow = s.pains.map((pi) => { const again = seenPain.has(pi); seenPain.add(pi); return again ? `the same problem as before (${say(pRef(pi))})` : say(pRef(pi)); });
+        const painNow = s.pains.slice(0, 1).map((pi) => { const again = seenPain.has(pi); seenPain.add(pi); return again ? `the same problem as before (${say(pRef(pi))})` : say(pRef(pi)); });
         const head = `**Step ${i + 1}: ${s.title}** (about ${s.minutes} ${s.minutes === 1 ? 'minute' : 'minutes'})`;
-        const forLine = s.people.length ? `Step ${i + 1} is for ${(0, dealtext_ts_1.joinList)(s.people.map(personRef))}${painNow.length ? '' : `, whose work ${ref(s)} is closest to`}.` : '';
+        const forLine = s.people.length ? `Step ${i + 1} is for ${(0, dealtext_ts_1.joinList)(s.people.map(personRef))}${painNow.length ? '' : `, because ${ref(s)} is the part closest to their work`}.` : '';
         const what = s.fromPain ? `${P} on one real case of "${say(pains[main] ?? s.title)}"` : s.flow && s.cap ? (s.flow.text.toLowerCase().includes(s.cap.name.toLowerCase()) ? s.flow.text : `${s.flow.text}, in ${(0, rw_kit_ts_1.capText)(s.cap)}`) : s.cap ? (0, rw_kit_ts_1.capText)(s.cap) : s.flow ? s.flow.text : `${P} on one real case of "${say(pains[main] ?? s.title)}"`;
         const caseOf = (main >= 0 && !s.fromPain ? `, run on one real case of ${say(pRef(main))}${pRef(main).startsWith('"') ? '' : ` (${say(pains[main].split(/\s+/).length <= 24 ? low(pains[main]) : (0, rw_kit_ts_1.painShort)(low(pains[main])))})`}` : '') + (i === 0 && customerIndustry ? `${main >= 0 && !s.fromPain ? ', using' : ', using'} an example from ${customerIndustry}` : '');
         const screen = `On screen: ${what}${caseOf}. ${sh.screen}${s.flow && s.flow.label ? ` Run it only if it works live (${s.flow.label}).` : ''}`;
@@ -428,14 +456,20 @@ function buildDemoScript(args, d) {
             intro2 = `This is ${say((0, rw_kit_ts_1.capSay)(s.cap))}.`;
         else
             intro2 = `This one is for ${say(painNow[0] || 'the problems you named')}.`;
-        const told = s.fromPain ? ` ${sh.say}` : painNow.length ? (painNow[0].startsWith('the same') ? ' This is for the same problem.' : (painNow[0].startsWith('the ') ? ` Take ${say(painNow[0])}: ${sh.say}` : ` You told me ${say(painNow[0])}, so ${sh.say}`)) : ` ${sh.say}`;
+        const told = s.fromPain ? ` ${sh.say}` : main >= 0 && isMarket(pains[main]) && !painNow[0].startsWith('the same') ? ` On ${say(painNow[0])}, which is common across ${customerIndustry || 'the market'}: ${sh.say}` : painNow.length ? (painNow[0].startsWith('the same') ? ' This is for the same problem.' : (painNow[0].startsWith('the ') ? ` Take ${say(painNow[0])}: ${sh.say}` : ` You told me ${say(painNow[0])}, so ${lowFirst(sh.say)}`)) : ` ${sh.say}`;
         const lines = [head, ...(forLine ? [forLine] : []), screen, `Say: "${intro2}${told}"`];
+        // a second problem this step bears on is said too, so it is not only a name in the table
+        const second = s.pains[1];
+        if (second !== undefined && !seenPain.has(second) && !s.fromPain) {
+            seenPain.add(second);
+            lines.push(`Say: "It also bears on ${say(pRef(second))}."`);
+        }
         if (s.claims.length)
             lines.push(`Say: "For the record: ${say(claimSay(s.claims))}" *(${claimLabels(s.claims)}; have the source ready)*`);
         // what a step lacks is said to the seller, never to the room
         if (s.fromPain && shown.some((x) => !x.fromPain))
             lines.push(`*(Note for you, not for the room: no part of your_solution is tied to ${main >= 0 ? say(pRef(main)) : 'this problem'}, so the step walks the problem itself; decide before the call which part you will show.)*`);
-        else if (s.cap && !s.cap.desc && !s.flow && main < 0)
+        else if (s.cap && !s.cap.desc && !s.flow)
             lines.push(`*(Note for you, not for the room: your_solution gives only the name ${s.cap.name}, so the lines here do not say what it does.)*`);
         lines.push(`Ask: "${say(main >= 0 ? sh.ask : partAsk(s, i))}"`);
         for (const o of s.objections)

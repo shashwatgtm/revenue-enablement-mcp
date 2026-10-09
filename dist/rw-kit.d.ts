@@ -47,7 +47,6 @@ export interface Capability {
 export declare const isStat: (t: string) => boolean;
 /** A verb a presenter can act on: an item that starts with one is a flow to run, even when it holds a number ("send two messages"). */
 export declare const DEMO_VERB: RegExp;
-/** The name used for the product in running text, also when solutionBrief finds no clear name. */
 export declare function productName(brief: SolutionBrief, full: string): string;
 export declare function toCapability(raw: string, product?: string): Capability | null;
 /** What the product is, and its named parts, from the description the user typed. Several layouts are read: a list after a colon, after "across",

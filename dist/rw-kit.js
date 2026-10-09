@@ -34,7 +34,7 @@ const verticals_ts_1 = require("./verticals.js");
 // Words, stems and word groups (used only to decide which part of a product answers which pain or person)
 // ---------------------------------------------------------------------------------------------------------------------------
 const STOPW = new Set('without within during before after the and for are not too our have has does this will than with from your can use new own how what why who when where which you its any all is it do to of in on a an be or by at as if so my me they their there that these those should would could about into out up over under very more most some such each only also then them been being were was had get got one two via per through between across within using onto while'.split(' '));
-const GENERIC = new Set(['platform', 'solution', 'product', 'service', 'services', 'management', 'manage', 'system', 'systems', 'tool', 'tools', 'customer', 'customers', 'team', 'teams', 'data', 'business', 'company', 'enterprise', 'enterprises', 'work', 'works', 'make', 'makes', 'help', 'helps', 'need', 'needs', 'time', 'real', 'full', 'single', 'across', 'ones', 'part', 'parts', 'many', 'much', 'every', 'using', 'used', 'user', 'users']);
+const GENERIC = new Set(['ai', 'ml', 'platform', 'solution', 'product', 'service', 'services', 'management', 'manage', 'system', 'systems', 'tool', 'tools', 'customer', 'customers', 'team', 'teams', 'data', 'business', 'company', 'enterprise', 'enterprises', 'work', 'works', 'make', 'makes', 'help', 'helps', 'need', 'needs', 'time', 'real', 'full', 'single', 'across', 'ones', 'part', 'parts', 'many', 'much', 'every', 'using', 'used', 'user', 'users']);
 function norm(w) {
     let x = w.toLowerCase();
     if (x.length > 5)
@@ -83,6 +83,8 @@ const GROUPS = [
     // one record of the customer across the business: a "360 view" pain meets the CRM, the lead and the contact, not the field app
     ['record', /360|single view|one view|unified view|complete view|customer view|view of (?:the |your )?customers?|golden record|customer record|customer data|customer profile|\bcrm\b|lead and opportunit|opportunit|contact (?:management|record)|account management|lead entity|custom fields?|\bprofiles?\b/],
     ['operate', /aiops|\bsre\b|application (?:management|support|maintenance|operations)|incident|observab|uptime|maintenance|run and maintain|keep (?:the )?applications up|managed service/],
+    ['pricing', /pricing|revenue|\brates?\b|yield|forecast|\bprices?\b/],
+    ['voice', /voice|speech|spoken|conversation|multilingual|mixed.language|regional language|dialect|translat|\bcalls?\b/],
     ['ai', /\bai\b|artificial intelligence|machine learning|\bml\b|genai|\bllm|copilot|agentic|isolated use cases|beyond pilots/],
     ['delivery', /agile|sprint|\bproject|delivery|digital engineering|digital product|accelerat|roadmap|advisory|transformation|embark/],
     ['migration', /migrat|moderni[sz]|legacy|ageing|aging|inherited|technical debt|tech debt|replac|application management|re-?platform|lift and shift|transform|re-?architect|decommission|cloud/],
@@ -301,7 +303,7 @@ function painType(p) {
         return 'risk';
     if (/manual|spreadsheet|by hand|retype|rework|re-?enter|chase|email|paper|separate|silo|disconnect|fragment|isolat|multiple (?:tools|systems|consoles)|correlat/.test(t))
         return 'manual';
-    if (/abandon|drop out|dropout|experience|friction|confusing|login|log-?in|checkout/.test(t))
+    if (/abandon|drop out|dropout|(?<!customer )experience|friction|confusing|login|log-?in|checkout/.test(t))
         return 'experience';
     if (/\bcost|expens|spend|budget|price|waste|overrun/.test(t))
         return 'cost';
@@ -363,12 +365,15 @@ exports.isStat = isStat;
 exports.DEMO_VERB = /^(?:send|create|track|get|see|view|search|export|import|approve|submit|book|schedule|find|manage|monitor|ship|route|plan|scan|detect|block|assign|pick|upload|invite|set up|connect|measure|compare|build|report|run|capture|check|draft|score|pay|open|log|review|reconcile|raise|file|resolve|release|test|deploy|configure|customi[sz]e)\b/i;
 const ARCH_CLAIM = /^(?:cloud[- ]native|multi[- ]tenant|scalable|enterprise[- ]grade|secure|reliable|robust|flexible|api[- ]first|ai[- ]native|saas|offline[- ]first)$/i;
 /** The name used for the product in running text, also when solutionBrief finds no clear name. */
+/** "Capwise digital" is the name "Capwise" followed by a word that only says what kind of firm it is (digital, services, technologies, group). */
+const DESCRIPTOR = /^(?:digital|technology|technologies|tech|services|solutions|software|systems|group|global|labs|consulting|ventures|international|holdings|networks|platform|platforms|cloud|data|analytics)$/i;
+const trimDescriptor = (name) => { const w = name.trim().split(/\s+/); return w.length === 2 && /[A-Z]/.test(w[0]) && DESCRIPTOR.test(w[1]) && !(0, dealtext_ts_1.isGenericWord)(w[0]) ? w[0] : name; };
 function productName(brief, full) {
     if (brief.short)
-        return brief.short;
+        return trimDescriptor(brief.short);
     const first = full.split(/[,:(]/)[0].trim().replace(/\s+(?:from|by|on)\s+.*$/i, '');
     // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
-    return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && (0, dealtext_ts_1.isGenericWord)(first)) ? first : '';
+    return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && (0, dealtext_ts_1.isGenericWord)(first)) ? trimDescriptor(first) : '';
 }
 function cleanItem(raw) { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
 const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;
@@ -383,6 +388,10 @@ function toCapability(raw, product = '') {
         desc = br[2].trim();
     }
     s = s.replace(/^(?:a|an|the)\s+/i, '');
+    // "AI products such as Insightdesk": the part is the named one, the umbrella is what it is
+    const suchAs = s.match(/^(.+?)\s+such as\s+([A-Z][\w.+&'-]*(?:\s+[A-Z][\w.+&'-]*){0,2})$/);
+    if (suchAs)
+        return { name: suchAs[2], desc: `part of the ${suchAs[1]}`, stat: '' };
     if ((0, exports.isStat)(s) && /^\s*\d[\d,.]*\+?[kKmMbB]?\+?(?:\s|%|$)/.test(s)) {
         const m = s.match(/^([\d,.]+\+?[kKmMbB]?\+?)\s+(.*)$/);
         return m ? { name: m[2], desc: '', stat: s } : null;
@@ -458,6 +467,17 @@ function splitCapList(src, product = '') {
         const tm = one.match(/^(.*?)(\s+(?:that|which)\s+.+)$/i);
         const headOne = tm && !/\([^)]*$/.test(tm[1]) ? tm[1] : one;
         const tail = tm && headOne !== one ? tm[2] : '';
+        // "finance and accounting and digital marketing": three or more short pieces joined by "and" are separate parts
+        const andPieces = headOne.split(/\s+and\s+/);
+        if (!/[()]/.test(headOne) && andPieces.length >= 3 && andPieces.every((x) => x.trim().split(/\s+/).length <= 3)) {
+            const lastAnd = headOne.lastIndexOf(' and ');
+            for (const pc of [headOne.slice(0, lastAnd), headOne.slice(lastAnd + 5)]) {
+                const cc = toCapability(pc.trim(), product);
+                if (cc)
+                    out.push(cc);
+            }
+            return;
+        }
         const sp = splitAtTopAnd(headOne);
         const m = sp ? [one, sp[0], `${sp[1]}${tail}`] : null;
         const last = i === segs.length - 1 || /^(?:and|plus)\s/i.test(seg);
@@ -646,7 +666,7 @@ const RISK = {
     mycase: 'The plan, price or limits for our case may differ from the ones we were shown.',
     adoption: 'People may not use it.',
     phased: 'A first phase may not be enough to show the result.',
-    achieve: 'The result may not come without the side effect we want to avoid.',
+    achieve: 'The result we want may come with a cost that we want to avoid.',
     switch: 'The reasons others moved may not apply to us.',
     proof: 'We could decide without a proof on our own work.',
     timing: 'Waiting could cost us the date that matters.',
@@ -900,7 +920,7 @@ function answerObjection(o, c) {
         // the part: the one that fits the question; when none fits, what the description says the seller is and the parts it names (no link is made up)
         if (!hasPart)
             out.push(nearest ? S(`The nearest part in my description is ${(0, exports.capText)(nearest)}, so I would test the answer there.`, `The nearest part in the description is ${(0, exports.capText)(nearest)}, so that is where we should test the answer.`)
-                : kindOf ? S(`${upFirstK(kindOf)}${named.length ? `, with ${(0, dealtext_ts_1.joinList)(named)} among its parts` : ''}.`, `${upFirstK(kindOf)}${named.length ? `, with ${(0, dealtext_ts_1.joinList)(named)} among its parts` : ''}.`) : '');
+                : kindOf && c.seen && !(c.seen.kindUsed = (c.seen.kindUsed ?? 0) + 1, c.seen.kindUsed > 1) ? S(`${upFirstK(kindOf)}${named.length ? `, with ${(0, dealtext_ts_1.joinList)(named)} among its parts` : ''}.`, `${upFirstK(kindOf)}${named.length ? `, with ${(0, dealtext_ts_1.joinList)(named)} among its parts` : ''}.`) : '');
         // the value point: the one nearest the question, else the first
         if (!hasPoint) {
             const vp = point || heads[turn % Math.max(1, heads.length)] || '';
@@ -964,11 +984,18 @@ function answerObjection(o, c) {
             ], S('What result would you need to see in that test to say yes?', 'What result would we need to see in that test to say yes?'), `whether ${P} offers a free tier, sandbox or trial and what its limits are (your inputs do not say, so none is claimed)`);
         }
         case 'terms': {
+            const exp = t.match(/\b(?:do|does|will|can|would)\s+(?:my\s+|our\s+|the\s+|unused\s+)?(.+?)\s+(?:expire|lapse|roll ?over|carry over)\b/i);
+            if (exp) {
+                const X = exp[1].trim();
+                return done([
+                    S(`I will put in writing whether unused ${X} carry over and when they lapse, on one page.`, `The inputs do not say whether unused ${X} carry over, so that is the fact to get: whether unused ${X} carry over to the next period and when they lapse. Ask ${P}: "Do unused ${X} carry over, and when do they lapse?"`),
+                ], S(`Would you use ${X} evenly through the period, or in bursts?`, `Would we use ${X} evenly through the period, or in bursts?`), `${Ps} written terms on whether unused ${X} carry over and when they lapse`);
+            }
             const nouns = [...new Set((t.match(/set-?up fee|annual maintenance fee|maintenance fee|annual fee|refunds?|cancell?ations?|minimum[^,?]*?(?:volume|commitment|purchase amount|spend)|maximum[^,?]*?(?:amount|volume)|commitment|renewal|lock-?in|notice period|pay again(?: next month)?/gi) || []).map((x) => lowerFirst(x.trim())))];
             const list = nouns.length ? (0, dealtext_ts_1.joinList)(nouns) : 'the payment and exit terms';
             return done([
                 S(`On ${list}: I will put each in writing on one page, with whether it applies, when it is charged and how you end it.`, `On ${list}: I will ask ${P} to put each in writing on one page, with whether it applies, when it is charged and how we end it.`),
-                S(`I will not tell you there is no ${nouns[0] || 'catch'} unless the written terms say so.`, `I will not rely on anything about ${nouns[0] || 'the terms'} that the written terms do not say.`),
+                S(`I will not say "none" about ${nouns[0] || 'any of them'} unless the written terms say so.`, `I will not rely on anything about ${nouns[0] || 'the terms'} that the written terms do not say.`),
             ], pick([S('What would you need the terms to say for this to be an easy yes?', 'What would we need the terms to say for this to be an easy yes?'), S('Which of those would be a problem for you if it applied?', 'Which of those would be a problem for us if it applied?')]), `${Ps} written terms on ${list}; never say "none" or "fully refundable" unless they say so`);
         }
         case 'switchcost': {
@@ -1045,7 +1072,7 @@ function answerObjection(o, c) {
             const named = [...new Set((t.match(/\b(?:[A-Z][A-Za-z0-9]*(?:\s+(?:[A-Z][A-Za-z0-9]*|ERP|CRM))*)\b/g) || []).filter((x) => !/^(?:How|Does|Do|Can|Will|What|Why|Is|Are|Our|The|I|We|It|Existing)$/.test(x) && !(t.startsWith(x) && /^[A-Z][a-z]+(?:ion|ions|ment|ity|ing|ance|ence|ness|ics)$/.test(x)) && !new RegExp(esc(P), 'i').test(x) && !/^(?:API|APIs|SDK)$/i.test(x)))];
             const focus = (t.match(/\b(?:with|into|to|between)\s+(?:(?:our|my|your|the|existing)\s+)?(.+)$/i) || [])[1] || '';
             const sys = named.length ? named : focus && !/^(?:it|this|that)$/i.test(focus) ? [focus.trim()] : [];
-            const apiCaps = relCaps(`${t} integration api connector open`, c, 2);
+            const apiCaps = relCaps(`${t} integration api connector open`, c, 2).filter((x) => /\bapis?\b|integrat|connector|\bsync|import|export|\berp\b|\bcrm\b|\bdms\b|\bsdk|webhook|plugin|pipeline|open (?:api|platform)/i.test(`${x.name} ${x.desc}`));
             return done([
                 S(`Let us take it system by system${sys.length ? ` (${(0, dealtext_ts_1.joinList)(sys)})` : ''}: for each one I will say whether the link is built in, goes through an API or needs a file transfer, who builds it and who owns it on your side.`, `We should take it system by system${sys.length ? ` (${(0, dealtext_ts_1.joinList)(sys)})` : ''}: for each one, is the link built in, through an API or a file transfer, who builds it and who owns it on our side.`),
                 apiCaps.length ? S(`The parts of my description that bear on it: ${capsTxt(apiCaps)}.`, `The parts of the description that bear on it: ${capsTxt(apiCaps)}.`) : '',
@@ -1169,11 +1196,31 @@ function answerObjection(o, c) {
         }
         case 'define': {
             const conv = t.replace(/[?\s]+$/, '').match(/^how (?:do|does|is|are)\s+(.+?)\s+(?:translate|convert|map)\s+(?:to|into)\s+(.+)$/i);
-            const sub = conv ? `the conversion rule from ${conv[1]} to ${conv[2]}` : /^(?:what (?:is|are|does)|what's)\s+/i.test(t) ? t.replace(/^(?:what (?:is|are|does)|what's)\s+(?:a |an |the )?/i, '') : `the rule for ${t.replace(/^how (?:do|does|is|are)\s+/i, 'how ')}`;
+            const subj = /^(?:what (?:is|are|does)|what's)\s+/i.test(t) ? t.replace(/^(?:what (?:is|are|does)|what's)\s+(?:a |an |the )?/i, '').trim() : '';
+            const UNIT = /\b(?:credits?|seats?|licen[cs]es?|tokens?|minutes?|sessions?|quotas?|allowances?|units?|points?|calls?|requests?|messages?)\b/i;
+            const single = (x) => x.replace(/ies$/i, 'y').replace(/s$/i, '');
+            const CONC = /\b(?:concurrent|parallel|simultaneous)\b/i;
+            if (conv) {
+                const from = conv[1].trim(), to = conv[2].trim(), f1 = single(from.replace(/^.*\b(\w+ credits?|\w+ seats?)$/i, '$1').split(/\s+/).slice(-1)[0] || from);
+                return done([
+                    S(`I will put the rate from ${from} to ${to} in writing, for each plan, with one worked example.`, `The inputs do not give the rate from ${from} to ${to}, so that is the fact to get. Ask ${P}: "How many ${to} does one ${f1} give, for each plan?"`),
+                ], S(`Which plan would you start on?`, `Which plan would we start on?`), `the rate from ${from} to ${to} for each plan, from the current price list, with one worked example`);
+            }
+            if (subj && CONC.test(subj)) {
+                return done([
+                    S(`I will put in writing how many ${subj} each plan allows at once and what happens above that.`, `The inputs do not say how many ${subj} each plan allows, so that is the fact to get. Ask ${P}: "How many ${subj} does each plan allow at once, and what happens above that?"`),
+                ], S('How many would you need at your busiest hour?', 'How many would we need at our busiest hour?'), `how many ${subj} each plan allows at once and what happens above that, from the current price list`);
+            }
+            if (subj && UNIT.test(subj)) {
+                const u = single((subj.match(UNIT) || [subj])[0].toLowerCase());
+                return done([
+                    S(`I will put in writing what one ${u} pays for and how many each plan includes.`, `The inputs do not define ${subj}, so that is the fact to get: what one ${u} pays for and how many each plan includes. Ask ${P}: "What does one ${u} pay for, and how many does each plan include?"`),
+                ], S(`How many would you expect to use in a month?`, `How many would we expect to use in a month?`), `what one ${u} pays for and how many each plan includes, from the current price list`);
+            }
+            const sub = subj || `the rule for ${t.replace(/^how (?:do|does|is|are)\s+/i, 'how ')}`;
             return done([
-                S(`Let me give you ${conv ? '' : 'the definition of '}${youify(sub)} in the vendor's own words, with one worked example on your numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`, `We should ask ${P} for ${conv ? '' : 'the definition of '}${sub} in its own words, with one worked example on our numbers${caps.length ? `. The part it touches is ${capsTxt(caps)}` : ''}.`),
-                pick([S(`If a term changes what you pay or what you get, I will show where it is written down.`, `If a term changes what we pay or what we get, we want to see where it is written down.`), S(`I will not leave a term to memory: it goes into the written quote.`, `A term is only real to us when it is in the written quote.`)]),
-            ], S('Which term in the offer is least clear to you?', 'Which term in the offer is least clear to us?'), `the definition and a worked example for this term, from ${Ps} documentation`);
+                S(`I will say in one sentence what ${youify(sub)} means in this offer, and where the written terms use it.`, `The inputs do not define ${sub}. The fact to get is what it means in this offer and what it changes in the price or the service. Ask ${P}: "In one sentence, what is ${sub} in your offer, and what does it change?"`),
+            ], S('Which term in the offer is least clear to you?', 'Which term in the offer is least clear to us?'), `what ${sub} means in the offer and what it changes in the price or the service, from ${Ps} documentation`);
         }
         case 'why': {
             return done([

@@ -110,7 +110,7 @@ test("identify pain asks about each pain; the role section is built from the pai
   for (const p of QUILLBASE_PAINS) assert.ok(ip.toLowerCase().includes(p.toLowerCase().split(" ").slice(0, 4).join(" ")), `identify pain covers ${p}`);
   const role = part(out.Quillbase, "## Questions for CIO");
   assert.match(role, /Quillbase (?:Search|Assistant|Agents)/);
-  assert.match(role, /as a CIO|CIO/);
+  assert.match(role, /In your role|as a CIO/); // round 5: the questions are put to the person in the room, so they say "your role"
 });
 
 test("two kinds of company get different lists, and a services firm is asked in services words", () => {
@@ -250,4 +250,35 @@ test("round 4: two parts tied to the same problem are not asked the same sentenc
   assert.equal(new Set(qs).size, qs.length, qs.join(" | "));
   assert.doesNotMatch(tb, /If a model or rule decides something about a customer/);
   assert.match(out.Quillbase, /Questions for a buyer in financial services/);
+});
+
+// ---- round 5: the name is not cut, the buyer is spoken to in the second person, every problem has its own measure, parts follow the problems ----
+const CAPWISE = {
+  framework: "meddpicc", prospect_industry: "banking, financial services and insurance", prospect_role: "(not given)", deal_stage: "discovery",
+  your_solution: "Capwise digital, data and customer experience services and AI products (Insightdesk, Rulecheck), operations, data and customer experience services delivered with AI: customer experience, financial services operations, financial crime compliance, market intelligence, data and analytics, finance and accounting and digital marketing, plus AI products such as Insightdesk and Rulecheck",
+  known_pain_points: "customer experience management is the new battleground, with consumers demanding personalized interactions; capital markets are under constant strain from rising volumes, tighter regulations and the cost of financial risk management; fragmented data slows decisions",
+};
+const capwise = await call(CAPWISE);
+test("round 5: the offer is named by its name, the finance and marketing parts are two parts, and the compliance part is asked about the regulation problem", () => {
+  assert.doesNotMatch(questions(capwise).join("\n"), /Capwise digital/);
+  assert.match(capwise, /Parts: [^\n]*finance and accounting; digital marketing/);
+  const sec = part(capwise, "## Questions on what");
+  assert.match(sec, /Financial crime compliance: [^\n]*second problem/);
+  assert.doesNotMatch(sec, /Parts not asked about[^\n]*financial crime compliance/i);
+});
+test("round 5: the second problem has its own measure question, and a search problem is asked in its own words", async () => {
+  assert.match(capwise, /If the second problem were fixed, which of/);
+  const aw = await call({ framework: "meddpicc", prospect_industry: "financial services", prospect_role: "CIO", deal_stage: "discovery",
+    your_solution: "Askwell, an enterprise AI platform: Askwell Search, Askwell Assistant and Askwell Protect for safe AI use",
+    known_pain_points: "company knowledge spreads across tools and documents, so people cannot find what they need; AI costs rise faster than adoption" });
+  assert.match(part(aw, "## Questions on the pain"), /where do people look today, and how often do they not find it\?/);
+  assert.doesNotMatch(part(aw, "## Questions on what"), /Askwell Protect for safe AI use: [^\n]*second problem/);
+});
+test("round 5: the buyer in the room is spoken to as you, in questions and in the closing line, and the co-sponsor of a testing buyer is not a security lead", () => {
+  const q = questions(tb).join("\n");
+  assert.doesNotMatch(q, /\b(?:a|an) head of testing\b|As a head of testing/i);
+  const closing = part(tb, "## Closing the call");
+  assert.doesNotMatch(closing, /sits with a head of testing/);
+  assert.match(closing, /\byou\b/);
+  assert.doesNotMatch(q, /your security lead/i);
 });

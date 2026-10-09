@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upperFirst = exports.clip = exports.splitTopLevel = exports.isNotGiven = void 0;
+exports.upperFirst = exports.clip = exports.splitTopLevel = exports.isNotGiven = exports.PROVIDER = void 0;
 exports.readSector = readSector;
+exports.fitSector = fitSector;
 exports.productOf = productOf;
 exports.isKind = isKind;
 exports.partsIn = partsIn;
@@ -13,6 +14,7 @@ exports.sentenceCase = sentenceCase;
 exports.listItems = listItems;
 exports.andList = andList;
 exports.dropRepeats = dropRepeats;
+exports.doesLine = doesLine;
 // Run 22 (writer rev-w3): helpers shared by the rewritten email_sequence_generator, win_loss_analyzer and competitive_trap_setter.
 // Text only: no figure, no statistic, no named company (B82), no network, file or environment access. The functions that live in
 // src/index.ts (lowerFirstIfCommon, cap, isCommonWord, money) are handed in as Deps so that this file never imports index.ts.
@@ -20,7 +22,16 @@ const dealtext_ts_1 = require("./dealtext.js");
 Object.defineProperty(exports, "clip", { enumerable: true, get: function () { return dealtext_ts_1.clip; } });
 Object.defineProperty(exports, "upperFirst", { enumerable: true, get: function () { return dealtext_ts_1.upperFirst; } });
 Object.defineProperty(exports, "splitTopLevel", { enumerable: true, get: function () { return dealtext_ts_1.splitTopLevel; } });
+const rw1_common_ts_1 = require("./rw1-common.js");
 const verticals_ts_1 = require("./verticals.js");
+// Round 4: a business model is named only as far as the seller's own words show it (rule E8). The shared reader gives "connectivity (per site, per link ...)" to any seller
+// of voice or messaging APIs and "services (per FTE ...)" to a platform that moves freight; neither is stated by the inputs, so the line says the notes follow the usual shape
+// of the sector (assumed) and the wording stays neutral. Usage priced sellers and SIM sellers are read by the model read of src/rw1-common.ts.
+const FIXED_LINK = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site survey|managed network|branch(?:es)? (?:network|sites?)|wi-?fi|broadband|bandwidth|wan\b|cut-?over)\b/i;
+const SOFTWARE_CUES2 = /\b(?:software|saas|platforms?|apps?|apis?|tools?|dashboards?|subscriptions?|cloud|portal|systems?|crm|erp|engine|sdk)\b/i;
+const SERVICE_WORDS2 = /\b(?:outsourc\w*|bpo\b|managed (?:services?|operations|network|it)|consult\w*|staffing|fte\b|retainer|time and materials|statement of work|(?:contact|call) cent(?:re|er)s?|service desk|professional services|dedicated teams?|engineering services|business services)\b/i;
+const MODEL_LINE2 = /Business model: [^]*?\.\*$/;
+const NEUTRAL_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
 function readSector(explicitModel, input) {
     const read = (0, verticals_ts_1.explainSector)(input);
     const m = (0, verticals_ts_1.detectModel)(explicitModel, input);
@@ -28,7 +39,40 @@ function readSector(explicitModel, input) {
     const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     const sector = v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
     const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
-    return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
+    const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
+    const allText = [sellerText, ...(input.context || []).filter((x) => typeof x === 'string')].join(' . ');
+    let line = `*Sector: ${sector}. Business model: ${model}.*`;
+    let outModel = m.model;
+    if (m.how !== 'input') {
+        const rm = (0, rw1_common_ts_1.readModel)(m.model, line, sellerText, [], []);
+        line = rm.line;
+        outModel = rm.model === 'sim' ? null : rm.model;
+        const fixed = FIXED_LINK.test(allText);
+        if (outModel === 'connectivity' && !fixed && rm.model !== 'sim') {
+            outModel = null;
+            line = line.replace(MODEL_LINE2, NEUTRAL_LINE);
+        }
+        else if (outModel === 'services' && SOFTWARE_CUES2.test(sellerText) && !SERVICE_WORDS2.test(sellerText)) {
+            outModel = null;
+            line = line.replace(MODEL_LINE2, NEUTRAL_LINE);
+        }
+    }
+    return { v, model: outModel, line, fixedLink: FIXED_LINK.test(allText) };
+}
+/** Round 4: the notes of a plain telecom entry are written for operators who sell links to sites. For a seller that is not one (no sites, links or term contracts in the inputs) the lines that
+ *  name sites, links, repair time or a rollout wave are left out, so an API deal is not read through a network operator's frame. A sub-type entry is left as it is. */
+const LINK_LINE = /\b(?:wave plan|per site|per link|term contract|repair time|sites, routes or flows|a few sites|outage during the switch|service credits|rate card)\b/i;
+function fitSector(v, fixedLink, model) {
+    if (!v || v.id !== 'telecom' || v.subtype || fixedLink || model === 'connectivity')
+        return v;
+    return {
+        ...v,
+        objections: v.objections.filter((o) => !LINK_LINE.test(`${o.objection} ${o.response}`)),
+        metrics: v.metrics.filter((x) => !/repair|service credits|incidents/i.test(x)),
+        salesMotion: LINK_LINE.test(v.salesMotion) ? 'Developers and engineers evaluate first, on test traffic; a team or enterprise agreement follows.' : v.salesMotion,
+        committee: v.committee.replace(/\brate cards?\b/gi, 'prices'),
+        proofShape: v.proofShape.replace(/\(uptime, speed, repair time\)/i, '(uptime, speed, latency)').replace(/\brepair time\b/gi, 'latency').replace(/the same sites or traffic/i, 'the same traffic'),
+    };
 }
 const NOT_NAME = /^(?:the|a|an|our|your|my|this|that|we|it|ai|api|apis|sms|iot|b2b|b2c|saas|cloud|managed|digital|enterprise|voice|data|security|software|platform|tool|tools|service|services|solution|solutions|product|system|systems|network|mobile|global|smart|modern|open|unified|single|new|free|full|end|real|one|all|any|each|every|no|not|ignore|identity|freight|route|routing|developer|developers|messaging|payments?|billing|workflow|supply|fleet|delivery|testing|monitoring|analytics|learning|video|customer|sales|marketing|automation|intelligence|visibility|compliance|risk|fraud|access|document|documents|knowledge|search|code|devops|infrastructure|connectivity|logistics|warehouse|inventory|retail|banking|insurance|lending|expense|expenses|spend|invoice|invoicing|procurement|hr|payroll|recruiting|support|helpdesk|ticketing|crm|erp|cpaas|bpo|ites)$/i;
 const sectorWord = (w) => verticals_ts_1.VERTICALS.some((v) => v.match.test(w) || v.weak.test(w));
@@ -84,7 +128,17 @@ function productOf(solution, D) {
     const headNoun = head.replace(/^(?:our|your|my)\s+/i, '');
     const ref = name || (headNoun && headNoun.length > 2 && !/^[“"'(]/.test(headNoun) && /\b(?:software|platform|tool|app|apps|system|service|services|solution|suite|api|cloud|engine|assistant|agents?|network|product)$/i.test(headNoun) ? `the ${headNoun}` : 'the product');
     const kindBare = kind.replace(new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'i'), '').trim();
-    const joined = name ? (kindBare ? `${name}${/^(?:a|an|the)\s/i.test(kindBare) ? ',' : ''} ${kindBare}` : name) : '';
+    // "Gridweave Network Fabric, Network Fabric connects ...": a kind that opens with the last words of the name does not say them twice
+    const nameWords = name.split(/\s+/);
+    let kb = kindBare;
+    for (let n = Math.min(3, nameWords.length); n >= 1; n--) {
+        const tail = nameWords.slice(-n).join(' ');
+        if (kb.toLowerCase().startsWith(`${tail.toLowerCase()} `)) {
+            kb = kb.slice(tail.length).trim();
+            break;
+        }
+    }
+    const joined = name ? (kb ? `${name}${/^(?:a|an|the)\s/i.test(kb) ? ',' : ''} ${kb}` : name) : '';
     const label = name ? tidyEnd((0, dealtext_ts_1.clip)(joined, 140)) : (full.length <= 120 ? full : tidyEnd((0, dealtext_ts_1.clip)(kind || full, 140)));
     return { name, kind, parts: brief.parts, ref, label, full, brief };
 }
@@ -97,6 +151,15 @@ function isKind(p, D) {
     if (k.split(/\s+/).filter((w) => /^[A-Z][a-z]+$/.test(w)).length >= 3)
         k = k.replace(/\b([A-Z])([a-z]+)\b/g, (_m, a, b) => `${a.toLowerCase()}${b}`);
     // a description that already is a sentence ("Digital Fabric connects enterprises' network, cloud ...") is kept as it is
+    // "Gridweave Network Fabric, Network Fabric connects ...": the name is said once, in full
+    const nw = p.name.split(/\s+/);
+    for (let n = Math.min(3, nw.length - 1); n >= 1; n--) {
+        const tail = nw.slice(-n).join(' ');
+        if (k.toLowerCase().startsWith(`${tail.toLowerCase()} `)) {
+            k = `${p.name} ${k.slice(tail.length).trim()}`;
+            return k.replace(/[.]+$/, '');
+        }
+    }
     if (/^(?:\S+\s+){0,4}(?:connects?|runs?|builds?|helps?|lets?|gives?|offers?|provides?|delivers?|unifies|brings|enables?|powers?|turns?|makes?|designs?|covers?|automates?|protects?|detects?|identifies|manages|monitors|tracks|sends|routes|plans)\b/i.test(k) && !/^(?:a|an|the)\s/i.test(k))
         return k.replace(/[.]+$/, '');
     if (/^(?:a|an|the)\s/i.test(k))
@@ -116,8 +179,10 @@ function partsIn(p) {
     const listFrom = (src) => {
         const items = [];
         for (const raw of (0, dealtext_ts_1.splitTopLevel)(src.replace(/[.]+$/, ''))) {
-            const t = raw.replace(/^and\s+/i, '').trim();
-            if (!t || /\b(?:that|which|who|read|reads|delivered|built|powered|made|backed|plus)\b|(?:^|\band\s)with\b/i.test(t) || t.split(/\s+/).length > 6)
+            const t = raw.replace(/^and\s+/i, '').replace(/^on top of\s+/i, '').trim();
+            // the words inside brackets ("accept online and in-store payments (100+ payment methods)") are detail, not part of the length of the item
+            const bare = t.replace(/\s*\([^)]*\)/g, '').trim();
+            if (!bare || /\b(?:that|which|who|read|reads|delivered|built|powered|made|backed|plus)\b|(?:^|\band\s)with\b/i.test(bare) || bare.split(/\s+/).length > 6)
                 break;
             items.push((0, dealtext_ts_1.partLabel)(t));
         }
@@ -131,6 +196,13 @@ function partsIn(p) {
     const w = p.full.match(/,\s+with\s+(.+)$/i);
     if (w) {
         const items = listFrom(w[1]);
+        if (items.length >= 3)
+            return items.slice(0, 12);
+    }
+    // "Name, a kind of product: first part (detail), second part, third part, and fourth part"
+    const col = p.full.match(/^[^:(]{3,120}:\s+(.+)$/);
+    if (col) {
+        const items = listFrom(col[1]);
         if (items.length >= 3)
             return items.slice(0, 12);
     }
@@ -152,6 +224,9 @@ function partsIn(p) {
 const APPROACH = /\b(?:do(?:ing)? nothing|status quo|inertia|spreadsheets?|excel|manual(?:ly)?|by hand|paper|whatsapp|email threads?|in-?house|ourselves|yourself|yourselves|themselves|diy|own team|internally|hire more|hiring more|more (?:people|staff|headcount|dispatchers|analysts|agents|engineers)|add(?:ing)? (?:people|headcount|staff)|ad[- ]hoc|workarounds?|from scratch|country by country|one by one|current (?:process|way|approach|setup|set-up)|existing (?:process|way|approach|setup)|old model|buying and maintaining|stay with|keep using|no change|wait and see|nothing)\b/i;
 const GERUND_START = /^(?:the )?(?:buying|building|doing|hiring|using|keeping|running|managing|negotiating|dealing|relying|sticking|staying|waiting|maintaining|tracking|handling|working|stitching|collecting|copying|sending|reconciling|chasing|sourcing|patching|consolidating|entering|creating|writing|paying|operating|developing|training|reviewing|switching|self-managing|self-hosting)\b/i;
 const CATEGORY = /\b(?:systems?|tools?|solutions?|vendors?|providers?|platforms?|apps?|products?|suppliers?|software|services|firms?|forwarders?|banks?|scanners?|assistants?|bots?|databases?|carriers?|operators?|partners?|programs?|offerings?|packages?|stacks?|suites?|approaches|methods|pilots?|models?|frameworks?|networks?|gateways?|telcos?|integrators?|agencies|consultancies|competitors?|servers?|devices?|checks?)\b/i;
+// the existing providers a buyer already uses (banks, carriers, forwarders, firms) are people and institutions, not tools: no demo, no first look
+exports.PROVIDER = /\b(?:banks?|carriers?|forwarders?|firms?|agencies|agency|consultancies|consultants?|suppliers?|providers?|vendors?|operators?|telcos?|integrators?|partners?|insurers?|lenders?|couriers?|brokers?|outsourcers?|processors?)\b/i;
+const TOOLISH = /\b(?:systems?|tools?|software|platforms?|apps?|solutions?|products?|scanners?|assistants?|bots?|databases?|servers?|stacks?|suites?|frameworks?|apis?|gateways?|models?|portals?|engines?|devices?)\b/i;
 const ACRONYM = /^[A-Z][A-Z0-9/&-]{1,5}$/;
 function hasProperNoun(text, D) {
     const toks = text.replace(/\([^)]*\)/g, ' ').split(/[\s,;:]+/).filter(Boolean);
@@ -175,12 +250,12 @@ function handleOf(text) {
     const lead = t.match(/^(the (?:current|old|existing|usual|traditional|previous) (?:way|approach|process|model|setup|set-up|method))\b/i);
     if (lead)
         return lead[1];
-    const cut = t.search(/\s+(?:that|which|who|where|because|while|with|so|but|whose|tied|bound|locked|added|running|using|working|designed|focused|optimi[sz]ed|built|made|written|owned)\s+|,\s|;\s/i);
+    const cut = t.search(/\s+(?:that|which|who|where|because|while|with|so|but|whose|tied|bound|locked|added|running|using|working|designed|focused|optimi[sz]ed|built|made|written|owned)\s+|,\s+(?:each|which|so|but|with|where|because|while|whose|and then)\b|;\s/i);
     if (cut >= 3)
         t = t.slice(0, cut);
     const w = t.split(' ');
-    if (w.length > 7)
-        t = w.slice(0, 6).join(' ');
+    if (w.length > 11)
+        t = w.slice(0, 9).join(' ');
     return t.replace(/\s+(?:and|or|the|a|an|of|to|for|with|in|on|by|at)$/i, '').trim();
 }
 function readAlt(text, D, named = false) {
@@ -194,7 +269,7 @@ function readAlt(text, D, named = false) {
     else if (named && !CATEGORY.test(t))
         kind = 'vendor';
     else
-        kind = 'category';
+        kind = exports.PROVIDER.test(t) && !TOOLISH.test(t) ? 'provider' : 'category';
     return { text: t, kind, handle };
 }
 /** The kind of source a trailing label names, and the basis it gives ("from a 2025 customer survey"). */
@@ -270,5 +345,22 @@ function dropRepeats(paras, seen) {
             out.push(text);
     }
     return out;
+}
+/** "It unifies digital interactions across SMS, RCS and voice": the first "that <verb>s ..." clause of the description, in the user's words; '' when there is none. */
+function doesLine(p) {
+    const m = p.full.match(/\b(?:that|which)\s+((?:unif|connect|run|let|give|automat|help|enabl|power|deliver|provid|offer|detect|protect|manag|track|monitor|send|rout|plan|turn|bring|build|make|cover|handl|combin|replac|simplif|scan|test|assess|verif|secur|reconcil|collect|accept)\w*s)\s+(.{10,240}?)(?:,\s+(?:with|plus|built|powered|delivered)\b|;|\.(?=\s|$)|$)/i);
+    if (!m)
+        return '';
+    let rest = m[2].trim();
+    // a long clause is cut where its first detail begins (", as a physical SIM (2FF ...)"), and a bracket left open is dropped
+    if (rest.length > 120) {
+        const c = rest.search(/,\s+(?:as|in|via|using|through|delivering|offering|including|covering|giving)\b|\s+\(/);
+        if (c >= 30)
+            rest = rest.slice(0, c);
+    }
+    if ((rest.match(/\(/g) || []).length > (rest.match(/\)/g) || []).length)
+        rest = rest.slice(0, rest.lastIndexOf('(')).trim();
+    rest = rest.replace(/[\s,:;(-]+$/, '').replace(/\s+(?:and|or|the|a|an|of|to|for|with|in|on|by|at|from|as)$/i, '');
+    return rest.length >= 10 ? endSentence(`It ${m[1]} ${rest}`) : '';
 }
 //# sourceMappingURL=rw-common.js.map

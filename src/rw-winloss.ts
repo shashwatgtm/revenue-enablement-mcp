@@ -5,7 +5,7 @@
 // (B82). Text only: no network, file or environment access.
 import { parseContacts, tagKind, sentences, joinList, clip, upperFirst, splitTopLevel, type Contact } from './dealtext.ts';
 import type { Vertical } from './verticals.ts';
-import { readSector, productOf, isKind, partsIn, readAlt, endSentence, andList, type Deps, type Alt } from './rw-common.ts';
+import { readSector, fitSector, productOf, isKind, partsIn, readAlt, endSentence, andList, type Deps, type Alt } from './rw-common.ts';
 
 // the kinds of alternative and what a buyer sees in each (text about kinds of choice, not about any product)
 interface Kind { re: RegExp; label: string; why: string; check: string; win: string }
@@ -52,6 +52,15 @@ function wlContacts(text: string, investment: boolean): Contact[] {
 const STOPW = new Set(['their', 'there', 'about', 'which', 'would', 'these', 'those', 'being', 'other', 'still', 'because', 'should', 'could', 'where', 'while', 'using', 'every', 'first', 'built', 'billing', 'system', 'systems']);
 const wordsOf = (s: string): string[] => s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 5 && !STOPW.has(w)).map((w) => w.slice(0, 5));
 const shares = (a: string, b: string): number => { const wb = new Set(wordsOf(b)); return wordsOf(a).filter((w) => wb.has(w)).length; };
+// Round 4: two described alternatives are one only when one holds the other or they share two long word stems ("discovery" and "disconnected" start alike and are not the same thing)
+const stems6 = (s: string): string[] => s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 6 && !STOPW.has(w)).map((w) => w.slice(0, 6));
+const sameAlt = (a: string, b: string, named: boolean): boolean => {
+  const x = a.toLowerCase().replace(/\s+/g, ' ').trim(); const y = b.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (x === y || x.includes(y) || y.includes(x)) return true;
+  const sb = new Set(stems6(b));
+  if (stems6(a).filter((w, i, arr) => arr.indexOf(w) === i && sb.has(w)).length >= 2) return true;
+  return named && shares(a, b) >= 1;
+};
 
 export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
   const analysisType = (args.analysis_type as string) || 'single_deal';
@@ -68,7 +77,7 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
   const hasD = args.sales_cycle_days !== undefined && args.sales_cycle_days !== null && args.sales_cycle_days !== '';
 
   const ctx = readSector(undefined, { seller: [solution], context: [details, reason, stakeText, multiple] });
-  const v: Vertical | null = ctx.v;
+  const v: Vertical | null = fitSector(ctx.v, ctx.fixedLink, ctx.model);
   const investment = ctx.model === 'investment';
   const P = productOf(solution, D);
   const name = P.name || P.ref;
@@ -84,7 +93,7 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
   const backing = contacts.filter((p) => tagKind(p.tag) === 'champion' || /support/.test(p.tag || ''));
   const deciders = contacts.filter((p) => ['economic', 'buyer'].includes(tagKind(p.tag) || ''));
   const untagged = contacts.filter((p) => !p.tag);
-  const ROLE_WORD = /\b(?:manager|director|vp|head|lead|chief|officer|president|engineer|analyst|architect|developer|owner|controller|founder|cfo|ceo|coo|cio|cto|ciso|cmo|cro|it|hr|finance|operations|security|procurement|legal|team|support|sales|marketing|product|buyer|sponsor)\b/i;
+  const ROLE_WORD = /\b(?:manager|director|vp|head|lead|leader|chief|officer|president|engineer|analyst|architect|developer|owner|controller|founder|cfo|ceo|coo|cio|cto|ciso|cmo|cro|it|hr|finance|operations|security|procurement|legal|team|support|sales|marketing|product|buyer|sponsor)\b/i;
   const ref = (c: Contact): string => (/s$/i.test(c.title.trim()) && !/\b(?:vp|operations|sales|business|logistics)$/i.test(c.title.trim()) ? c.title : ROLE_WORD.test(c.title) ? `the ${lowerRole(c.title)}` : c.title);
   const refs = (cs: Contact[], word = 'and') => andList(cs.map(ref), word);
 
@@ -95,7 +104,7 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
   const addAlt = (t: string, isNamed: boolean, winner: boolean) => {
     const text = t.trim().replace(/[.]+$/, '');
     if (!text) return;
-    const dup = weighed.find((w) => w.text.toLowerCase() === text.toLowerCase() || shares(w.text, text) >= 1);
+    const dup = weighed.find((w) => sameAlt(w.text, text, isNamed));
     if (dup) { if (winner) dup.winner = true; return; }
     const a = readAlt(text, D, isNamed);
     weighed.push({ ...a, winner, k: a.kind === 'vendor' ? null : kindOf(a) });
@@ -152,7 +161,10 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
     else para.push(`**The deal.** ${solution ? `${name} was in this deal.` : 'No facts about the deal itself were given.'} ${sizeSentence}`.trim());
     // what was sold, and to whom
     const sold: string[] = [];
-    if (solution && solution.length <= 220) sold.push(`What was sold: ${solution.replace(/[.]+$/, '')}.`);
+    // a description that opens by saying its own name twice ("X Fabric, Fabric connects ...") is told through the kind and the parts instead
+    const tail2 = P.name.split(/\s+/).slice(-2).join(' ').toLowerCase();
+    const saysNameTwice = P.name.split(/\s+/).length >= 2 && solution.toLowerCase().split(tail2).length > 2;
+    if (solution && solution.length <= 220 && !(saysNameTwice && isKind(P, D))) sold.push(`What was sold: ${solution.replace(/[.]+$/, '')}.`);
     else {
       if (isKind(P, D)) sold.push(endSentence(isKind(P, D)));
       if (parts.length >= 2) sold.push(`The parts ${P.name || 'it'} lists are ${joinList(parts.slice(0, 8))}.`);
@@ -164,6 +176,7 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
     // what the buyer weighed
     if (weighed.length) {
       const kindsSeen = new Set<string>();
+      const alsoDone = new Set<string>();
       const headOf = (a: Weighed): string => {
         const rest = a.text.toLowerCase().startsWith(a.handle.toLowerCase()) ? a.text.slice(a.handle.length).replace(/^[\s:,-]+/, '') : '';
         return a.text.length <= 60 ? `**${a.text}**` : `**${a.handle}**${rest ? ` (${rest})` : ''}`;
@@ -175,7 +188,13 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
         const won = a.winner && outcome !== 'won' ? ' It is the option you named as the winner.' : '';
         if (a.kind === 'vendor') { each.push(`- ${head} is a competing vendor.${won} Ask the buyer what it did better, in their own words, and at which stage it pulled ahead.`); continue; }
         if (a.k) {
-          if (kindsSeen.has(a.k.label)) each.push(`- ${head} is also ${a.k.label}, so the same reading applies.${won} Ask the buyer how it differed from the other options of this kind.`);
+          if (kindsSeen.has(a.k.label)) {
+            // the alternatives of a kind already read are said together once, never one line each with the same words
+            if (alsoDone.has(a.k.label)) continue;
+            alsoDone.add(a.k.label);
+            const more = weighed.filter((w2, i2) => w2.k && w2.k.label === a.k!.label && i2 >= weighed.indexOf(a));
+            each.push(`- ${andList(more.map(headOf))} ${more.length === 1 ? 'is' : 'are'} also ${a.k.label}, so the same reading applies.${more.some((w2) => w2.winner && outcome !== 'won') ? ' One of them is the option you named as the winner.' : ''} Ask the buyer how ${more.length === 1 ? 'it' : 'each'} differed from the other options of this kind.`);
+          }
           else { kindsSeen.add(a.k.label); each.push(`- ${head} is ${a.k.label}${a.kind === 'category' ? ', a kind of option rather than one vendor' : ''}.${won} A buyer keeps it when ${a.k.why}. ${name} can win against it ${a.k.win}. Ask the buyer: ${a.k.check}`); }
           continue;
         }
@@ -186,8 +205,8 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
       }
       const lead = weighed.length === 1 ? `The buyer weighed ${name} against ${handles[0]}.` : `The buyer weighed ${name} against ${weighed.length} alternatives.`;
       para.push(`**What the buyer weighed.** ${lead}\n\n${each.join('\n')}`);
-    } else if (named) {
-      para.push(`**What the buyer weighed.** The buyer compared ${name} with ${named}. Ask the buyer what ${named} did better, in their own words, and at which stage it pulled ahead.`);
+    } else {
+      para.push(`**What the buyer weighed.** No alternative was named in your inputs, so there is no comparison to read yet. The first question below asks the buyer what else they were weighing${seg ? ` as a ${seg.replace(/^an? /i, '')} buyer` : ''}; write the answer into \`deal_details\` and the comparison will follow.`);
     }
     // the reason
     if (outcome === 'lost' && reason) {
@@ -255,8 +274,19 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
 
   // ---- the questions for the review call, each built from an input ----
   const qs: string[] = [];
-  if (handles.length >= 2) qs.push(`Which of ${andList(handles, 'or')} did the buyer take most seriously, and what did they say about each?`);
+  const longHandles = handles.some((h) => /,/.test(h) || h.split(/\s+/).length > 6);
+  if (handles.length >= 2) qs.push(longHandles ? `Which of the ${handles.length} alternatives above did the buyer take most seriously, and what did they say about each?` : `Which of ${andList(handles, 'or')} did the buyer take most seriously, and what did they say about each?`);
   else if (handles.length === 1) qs.push(`What did the buyer say about ${handles[0]}, and at which point did it become the real comparison?`);
+  else if (!isPortfolio) qs.push(`What else was the buyer weighing besides ${name}: another provider, the way they work today, doing nothing or building it themselves, and who first brought it up?`);
+  // the difference the user described between an alternative and the product is put to the buyer in the user's own words
+  const described = weighed.find((a) => a.text.length > a.handle.length + 8 && /^[,\s]*(?:that|which|who|where|with|each|whose|tied|bound|locked|using|running|working|built|designed|so)\b/i.test(a.text.slice(a.handle.length)) && a.text.length <= 170);
+  if (described) qs.push(`You described the alternative as ${q(described.text)}: did the buyer see that difference from ${name} for themselves, and what did ${contacts.length ? refs(contacts.slice(0, 2)) : 'the people involved'} say about it?`);
+  // a buyer that runs many sites is asked whether it chose for the whole or site by site
+  const siteWord = `${solution} ${details}`.match(/\b(plants?|sites?|branch(?:es)?|stores?|locations?|factories|warehouses?|regions?|countries|offices)\b/i);
+  if (siteWord && !isPortfolio) {
+    const one = siteWord[1].toLowerCase().replace(/ies$/, 'y').replace(/(?:ches)$/, 'ch').replace(/s$/, '');
+    qs.push(`${seg ? `Did the ${seg.toLowerCase()} buyer` : 'Did the buyer'} decide for the whole buyer or ${one} by ${one}, and who owned the choice for each?`);
+  }
   if (hasD) qs.push(`The deal ran ${days(cycle)}: which stage took longest, and was that the buyer's process or a stall you could have moved?`);
   if (hasV) qs.push(`The deal was worth ${D.money(dealValue)}: did the price or the size of the commitment come up as a reason, and who raised it?`);
   against.forEach((c) => qs.push(`What did ${ref(c)} need that you did not give them, and when did they turn against you?`));

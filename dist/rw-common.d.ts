@@ -10,6 +10,7 @@ export interface SectorRead {
     v: Vertical | null;
     model: BusinessModel | null;
     line: string;
+    fixedLink: boolean;
 }
 export declare function readSector(explicitModel: unknown, input: {
     seller: unknown[];
@@ -17,6 +18,7 @@ export declare function readSector(explicitModel: unknown, input: {
     role?: unknown[];
     buyer?: unknown[];
 }): SectorRead;
+export declare function fitSector(v: Vertical | null, fixedLink: boolean, model: BusinessModel | null): Vertical | null;
 export interface Product {
     /** the name as typed ("Routelark", "Harbor BPO", "iLoop"); '' when the text gives no name */
     name: string;
@@ -36,12 +38,13 @@ export declare function productOf(solution: string, D: Deps): Product;
 export declare function isKind(p: Product, D: Deps): string;
 /** The parts a description lists: after a colon, after "covering/including/spanning", after ", with", or in the first brackets. */
 export declare function partsIn(p: Product): string[];
-export type AltKind = 'vendor' | 'category' | 'approach';
+export type AltKind = 'vendor' | 'category' | 'provider' | 'approach';
 export interface Alt {
     text: string;
     kind: AltKind;
     handle: string;
 }
+export declare const PROVIDER: RegExp;
 export declare function handleOf(text: string): string;
 export declare function readAlt(text: string, D: Deps, named?: boolean): Alt;
 export interface Source {
@@ -62,4 +65,6 @@ export declare function andList(items: string[], word?: string): string;
 /** Removes whole sentences that were already said (case and punctuation ignored); keeps the first. Sentences under 25 characters are never removed. */
 export declare function dropRepeats(paras: string[], seen: Set<string>): string[];
 export { splitTopLevel, clip, upperFirst };
+/** "It unifies digital interactions across SMS, RCS and voice": the first "that <verb>s ..." clause of the description, in the user's words; '' when there is none. */
+export declare function doesLine(p: Product): string;
 //# sourceMappingURL=rw-common.d.ts.map

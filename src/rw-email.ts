@@ -125,7 +125,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const nextPain = (): string => atomsP[pi++] || '';
   // a clause with no verb of its own ("no single view of ...", "too many tools", "slow setup") is introduced, never used as an opening line
   const fragment = (a: string): boolean => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || /^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a);
-  const painStatement = (a: string): string => (fragment(a) ? endSentence(`The problem in short: ${a}`) : endSentence(sentenceCase(a)));
+  const painStatement = (a: string): string => (fragment(a) ? endSentence(`The problem in short${inInd ? ` for people${inInd}` : ''}: ${a}`) : endSentence(sentenceCase(a)));
   const painRef = (a: string): string => `“${clip(a, 110)}”`;
 
   // ---- the product ----
@@ -148,23 +148,29 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     const have = stemWords(text);
     let best = ''; let bestN = 0;
     for (const c of [...vv.vocabulary, ...vv.metrics]) {
-      const ws = (c.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.slice(0, 5));
+      const all = (c.toLowerCase().match(/[a-z]{3,}/g) || []).filter((w) => !/^(?:per|the|and|for|off)$/.test(w));
+      const ws = all.map((w) => w.slice(0, 5));
       if (!ws.length) continue;
       const hit = ws.filter((w) => have.has(w)).length;
-      if (hit / ws.length < 0.75 || hit === 0) continue;
+      if (hit === 0 || hit / ws.length < 0.75 || (ws.length >= 2 && hit < 2)) continue;
       const score = hit * 10 - c.length / 100;
       if (score > bestN) { bestN = score; best = c; }
     }
-    return best;
+    if (!best) return '';
+    // the user's own plural ("payouts") is kept when the sector word is the singular ("payout")
+    const last = (best.toLowerCase().match(/[a-z]+$/) || [''])[0];
+    const pl = last && text.toLowerCase().match(new RegExp(`\\b${last}(?:s|es)\\b`));
+    return pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
   };
   // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages")
   const painSubject = (): string => {
     const a = (painAtoms(painText)[0] || '').replace(/^(?:when|if|because|as|while|no|most|many|the|our|their)\s+/i, '');
     const m = a.match(VERB);
     const head = (m && m.index ? a.slice(0, m.index) : a).trim().split(/\s+/).slice(0, 5).join(' ').replace(/[,;:]+$/, '');
-    return head.length >= 5 && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
+    const generic = /^(?:processes|things|people|teams|companies|costs|businesses|organi[sz]ations|enterprises|customers|users|it|they|this|that|work|data|tools|systems)$/i.test(head);
+    return head.length >= 5 && (head.split(/\s+/).length >= 2 || head.length >= 7) && !generic && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
   };
-  const topic = vocabHit(painText) || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || painSubject() || measuresRanked[0] || 'this problem';
+  const topic = vocabHit(painText) || painSubject() || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
   const whatIs = isKind(P, D) ? endSentence(isKind(P, D)) : '';
   const covers = nearParts.length ? endSentence(`${whatIs ? 'It' : name} covers ${nearParts.length > 3 ? `${nearParts.slice(0, 3).join(', ')} and more` : joinList(nearParts)}`) : '';
 
@@ -238,15 +244,17 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const motionFit = (x: string): boolean => { const m = x.match(MOTION); return !m || new RegExp(`\\b${m[0].replace(/\w+$/, (w) => w.slice(0, Math.max(4, w.length - 2)))}`, 'i').test(ownWords); };
   const opsFit = fam !== 'operations' || !vv || ['logistics-tech', 'ites', 'vertical-saas'].includes(vv.id);
   let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x)) : [];
-  if (isUser) roleQs = roleQs.slice(0, 1);
   const sectorQs = vv ? vv.discovery.filter(motionFit) : roleQs;
   const qPool = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
   let qi = 0;
   const nextQ = (): string => qPool.length ? qPool[qi++ % qPool.length] : '';
+  const freshQ = (): string => (qi < qPool.length ? qPool[qi++] : '');
   const measures = vv ? vv.metrics.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${aim}`) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 3).map((o) => o.m) : [];
-  const careLine = persona && rk.label !== 'stakeholder' && opsFit && !isUser && !practitioner ? endSentence(`For ${anOf(rk.label)}, what usually matters is ${rk.cares}`) : '';
-  const measuresLine = measures.length ? endSentence(`The measures${inInd ? ` ${inInd.trim()}` : ''} that usually show whether this is working are ${joinList(measures)}`) : '';
   const personaPlain = D.lower(persona).replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  const careLine = isUser ? endSentence(`For someone who works in ${famWord} every day, the test of a change is whether it makes the day's work quicker and easier to record`)
+    : practitioner && personaPlain.length <= 80 ? endSentence(`For ${personaPlain}, the test of a change is whether it fits the tools and the work already in place`)
+    : persona && rk.label !== 'stakeholder' && opsFit ? endSentence(`For ${anOf(rk.label)}, what usually matters is ${rk.cares}`) : '';
+  const measuresLine = measures.length ? endSentence(`The measures${inInd ? ` ${inInd.trim()}` : ''} that usually show whether this is working are ${joinList(measures)}`) : '';
   const roleLead = isUser ? ` to someone who works in ${famWord} every day` : practitioner && personaPlain.length <= 80 ? ` to ${/s\b/i.test(personaPlain.split(/\s+/)[0]) || /s$/i.test(personaPlain.split(/\s+(?:who|that|at|in|of)\s+/)[0]) ? '' : 'a '}${personaPlain}` : persona && rk.label !== 'stakeholder' && opsFit ? ` to ${anOf(rk.label)}` : '';
   const qLead = (q: string): string => (q ? `The question that usually decides whether a change like this matters${roleLead} is this: ${q}` : '');
   const objs = vv ? vv.objections.slice(0, 2) : [];
@@ -313,13 +321,13 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
         nearParts[0] ? endSentence(`Within ${name}, the part that speaks to this is ${nearParts[0]}`) : '',
         ask(2)]);
       const roles = otherRoles.length ? andList(otherRoles.map((r) => `your ${r}`), 'or') : '';
-      mail('Day 12', senior ? 'Who else?' : 'Right person?', senior ? `Who should look at ${topic} with you?` : `Who owns ${topic}${inIndSubj}?`, [
+      mail('Day 12', senior ? 'Who else?' : 'Right person?', senior ? `Who should look at ${topic} with you?` : `Who looks after ${topic}${inIndSubj}?`, [
         `I have written a few times about ${atomsP[0] && atomsP[0].length <= 120 ? `“${atomsP[0]}”` : topic} and have not heard back, so I will ask plainly: ${senior ? `is there someone on your side${roles ? `, for example ${roles},` : ''} who should look at this with you, or is it better left for now?` : `is this yours, or does it sit with someone else${roles ? `, for example ${roles}` : ''}?`}`,
         `If the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.`]);
       const r5 = lateRecognition();
       const leftover = rest(3);
       mail('Day 17', 'Questions to keep', `Questions on ${topic}${inIndSubj}`, [
-        `This is my last note. Here are the questions to ask before changing how you handle ${topic}, useful even if we never speak:\n${[nextQ(), nextQ(), nextQ()].filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n')}`,
+        `This is my last note. Here are the questions to ask before changing how you handle ${topic}, useful even if we never speak:\n${(() => { const f = [freshQ(), freshQ(), freshQ()].filter(Boolean); if (!f.length) f.push(nextQ()); return f.filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n'); })()}`,
         r5.length ? facts(r5) : '', leftover,
         `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`]);
     },
@@ -399,7 +407,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
         a1 ? `It was good to meet you at the event. The problem I wanted to follow up on: ${a1}.` : `It was good to meet you at the event. I wanted to follow up on ${topic}.`,
         [whatIs, aimLine].filter(Boolean).join(' '), ask(0)]);
       const r2 = take(['result', 'scale', 'quote', 'story'], 2);
-      mail('Day 4', 'Follow-up', `Following the event: ${topic}`, [r2.length ? facts(r2) : endSentence(`A question for you: ${nextQ()}`), covers, !r2.length && nextPain() ? `The second part of the problem: ${atomsP[pi - 1]}.` : '']);
+      mail('Day 4', 'Follow-up', `Following the event: ${topic}`, [r2.length ? facts(r2) : [measuresLine, endSentence(`A question for you: ${nextQ()}`)].filter(Boolean).join(' '), covers, !r2.length && nextPain() ? `The second part of the problem: ${atomsP[pi - 1]}.` : careLine]);
       const r3 = take(['recognition'], 1);
       mail('Day 9', 'A direct ask', `Still worth ${ctaVerb ? 'a conversation' : ctaText}?`, [
         `I met a lot of people at the event and I would rather ask than guess: is ${topic} something you are working on?`, r3.length ? facts(r3) : '', rest(), ask(1)]);

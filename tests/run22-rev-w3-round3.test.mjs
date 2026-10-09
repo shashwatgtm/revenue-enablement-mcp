@@ -75,7 +75,7 @@ test("a sales user at an education buyer: no fragment opener, no sales leader, a
   assert.match(d, /works? in sales|every day|day to day|daily/i);
   const e1 = bodyOf(emails(t)[0]);
   assert.doesNotMatch(e1, /^Hello,\s+No single 360 view/i, "email 1 opens with a fragment");
-  assert.match(e1, /The problem in short: no single 360 view of customers/);
+  assert.match(e1, /The problem in short(?: for people in education)?: no single 360 view of customers/);
   assert.match(t, /Education|education/);
   assert.doesNotMatch(t, /implied by/i, "the label of the pain is not said to the buyer");
 });
@@ -166,7 +166,7 @@ test("pool: Q3, P7, H3 emails and Q6, T7 traps (real builders)", { skip: !havePo
   assert.doesNotMatch(draft(p7), /engineering or platform leader/i);
   const h3 = await run("email_sequence_generator", "H3");
   assert.doesNotMatch(draft(h3), /sales leader/i);
-  assert.match(bodyOf(emails(h3)[0]), /The problem in short: no single 360 view/);
+  assert.match(bodyOf(emails(h3)[0]), /The problem in short(?: for people in [^:]+)?: no single 360 view/);
   const q6 = await run("competitive_trap_setter", "Q6");
   assert.doesNotMatch(q6, /figures only|no aim to ask|what or how you charge/i);
   assert.match(q6, /self-serve answers without SQL/i);

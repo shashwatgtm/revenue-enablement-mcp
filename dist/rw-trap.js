@@ -10,6 +10,8 @@ exports.trapCriterion = trapCriterion;
 exports.trapIng = trapIng;
 exports.trapClauses = trapClauses;
 exports.trapQuestion = trapQuestion;
+exports.fineClauses = fineClauses;
+exports.joinLists = joinLists;
 exports.buildTrapSetter = buildTrapSetter;
 // Run 22 (writer rev-w3): competitive_trap_setter, rewritten. The competitor is read first: a named vendor, a kind of tool, or a way of working
 // ("do nothing", "spreadsheets", "hire more people", "buying and maintaining devices"). A way of working or a kind of tool never gets vendor
@@ -138,17 +140,26 @@ function trapQuestion(wRaw, comp) {
         return { q: `Where does each option leave you with ${m[1]}, and what does it take to get past ${/\band\b|s$/.test(m[1]) ? 'them' : 'it'}?`, topic: m[1] };
     if ((m = main.match(/^(?:.*?\s)?(?:limits?|restricts?|caps?)\s+(.+)$/i)))
         return { q: `What limits does each option put on ${m[1]}, and what does it cost to go past them?`, topic: m[1] };
+    if ((m = main.match(/\b(?:relies|rely|depends|depend)\s+on\s+.+?\s+((?:misses?|skips?|overlooks?)\s+.+)$/i)))
+        return trapQuestion(m[1], comp);
     if ((m = main.match(/^(?:.*?\s)?(?:relies on|rely on|depends on|depend on)\s+(.+)$/i)))
         return { q: `Which parts of each option rely on ${m[1]}, and what happens when that is missing?`, topic: m[1] };
     if ((m = main.match(/^(?:.*?\s)?(?:needs?|requires?)\s+(.+)$/i)))
         return { q: `What does each option need from you before it works (${m[1]}), who provides it, and what does that add to the time and the cost?`, topic: m[1] };
+    if (/^(?:look|looks|looking)\s+(?:only\s+)?(?:backward|backwards|back)\b/i.test(main))
+        return { q: 'Does each option show what is happening now, or only what already happened, and how old is the newest number?', topic: 'whether it shows the present or only the past' };
+    if ((m = main.match(/^only\s+(.+?)\s+(?:can|could)\s+(.+)$/i)))
+        return { q: `Who can ${m[2]} in each option: only ${m[1]}, or everyone who needs it?`, topic: m[2] };
     if ((m = main.match(/^(.+?)\s+(?:are|is|was|were)\s+(?:mostly\s+|only\s+|usually\s+)?trained\s+on\s+(.+?)(?:\s+(?:while|but|whereas)\b.*)?$/i)))
         return { q: `What was ${m[1].replace(/^(?:most|many|some)\s+/i, '')} in each option trained on (${m[2]}), and how does it perform on your own data?`, topic: m[1] };
     if ((m = main.match(/^(?:.*?\s)?struggles?\s+(?:with|to)\s+(.+)$/i)))
         return { q: `How does each option cope with ${m[1]}?${show}`, topic: m[1] };
-    if ((m = main.match(/^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to|has failed to|have failed to|does not|do not|doesn't|don't|never)\s+(?:have\s+|offer\s+|include\s+|support\s+|provide\s+)?(.+)$/i))) {
-        const had = /(?:have|offer|include|support|provide)\s/.test(main) && !/^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to)\s/i.test(main);
-        return had ? { q: `How does each option cover ${m[1]}? Ask for it working today, not on a roadmap.`, topic: m[1] } : { q: `Can each option ${m[1]}?${show}`, topic: m[1] };
+    if ((m = main.match(/^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to|has failed to|have failed to|does not|do not|doesn't|don't|never)\s+(have\s+|offer\s+|include\s+|support\s+|provide\s+)?(.+)$/i))) {
+        const verb = (m[1] || '').trim();
+        const negated = /^(?:.*?\s)?(?:cannot|can't|can not|could not|couldn't|unable to|fail(?:s|ed)? to)\s/i.test(main);
+        if (verb && !negated)
+            return { q: `How does each option cover ${m[2]}? Ask for it working today, not on a roadmap.`, topic: m[2] };
+        return { q: `Can each option ${verb ? `${verb} ` : ''}${m[2]}?${show}`, topic: m[2] };
     }
     if ((m = main.match(/^(?:no|without|missing|lacks?|has no|have no)\s+(.+)$/i)) || (m = main.match(/^.+?\s+(?:lacks?|has no|have no|is missing|are missing)\s+(.+)$/i)))
         return { q: `How does each option cover ${m[1]}? Ask for it working today, not on a roadmap.`, topic: m[1] };
@@ -247,6 +258,56 @@ function splitItems(s) {
 const q = (s) => `"${s.trim().replace(/^"|"$/g, '').replace(/[.]$/, '')}"`;
 const GERUND = { do: 'doing', hire: 'hiring', add: 'adding', keep: 'keeping', stay: 'staying', wait: 'waiting', use: 'using', build: 'building', buy: 'buying', stick: 'sticking', continue: 'continuing', outsource: 'outsourcing', manage: 'managing', negotiate: 'negotiating' };
 const CLAIM_WORDS = /\b(?:first and only|the only|only|world'?s (?:first|largest|leading|most)|first|largest|leading|best|most extensive|#1|number one|unique|fastest|cheapest)\b/i;
+// A note that holds several weak points is cut where a new clause opens: after ", so", after a semicolon, and at "and" when a subject and a verb follow.
+// A clause that ends in "it" or "them" takes the subject of the clause before ("insight arrives late and only analysts can get it").
+const FINE_VERB = '(?:look|looks|work|works|arrive|arrives|take|takes|cost|costs|fail|fails|break|breaks|need|needs|require|requires|lack|lacks|stop|stops|slow|slows|run|runs|get|gets|can|cannot|are|is|have|has|miss|misses|force|forces|leave|leaves|rely|relies|depend|depends|charge|charges|limit|limits|hide|hides|lock|locks|struggle|struggles|sit|sits|pile|piles|drift|drifts|go|goes|become|becomes|create|creates|cause|causes|wait|waits)';
+function fineClauses(w) {
+    const re = new RegExp(`,\\s+so\\s+|;\\s+|\\s+and\\s+(?!${FINE_VERB}\\b)(?=(?:\\S+\\s+){1,3}${FINE_VERB}\\b)`, 'gi');
+    const pieces = [];
+    let from = 0;
+    for (const m of w.matchAll(re)) {
+        const i = m.index ?? 0;
+        const left = w.slice(from, i);
+        // "and" inside a list ("SAST, DAST and API tools slows ...") or after a very short start is not a clause break
+        if (/^\s+and\s+/i.test(m[0]) && (/,\s+[^,]{1,25}$/.test(left) || left.split(/\s+/).length < 3))
+            continue;
+        pieces.push(left);
+        from = i + m[0].length;
+    }
+    pieces.push(w.slice(from));
+    const out = [];
+    for (const raw of pieces) {
+        const p = raw.trim().replace(/[.]+$/, '');
+        if (!p)
+            continue;
+        if (out.length && p.split(/\s+/).length < 3) {
+            out[out.length - 1] += ` and ${p}`;
+            continue;
+        }
+        out.push(p);
+    }
+    return out.map((c, i) => {
+        if (i > 0 && /\s(?:it|them)$/i.test(c)) {
+            const subj = out[i - 1].split(new RegExp(`\\s+(?:${FINE_VERB}|arrives?|comes?|lands?)\\b`, 'i'))[0].trim();
+            if (subj && subj.split(/\s+/).length <= 3)
+                return c.replace(/\s(?:it|them)$/i, ` ${subj}`);
+        }
+        return c;
+    });
+}
+// A clause with no verb of its own that follows another ("Azure and GCP", "governance and ongoing cloud operations") continues the list before it;
+// a clause that opens with "no", "without" or "lack" is a weak point of its own.
+function joinLists(cs) {
+    const out = [];
+    for (const c of cs) {
+        const verbless = !new RegExp(`\\b${FINE_VERB}\\b`, 'i').test(c) && !exports.TRAP_CLAUSE_VERB.test(c) && !/\b(?:when|if|where|while|because|that|which|lost|switches|switch)\b/i.test(c);
+        if (out.length && verbless && c.split(/\s+/).length <= 8 && !/^(?:no|not|without|lack|lacks|missing|never)\b/i.test(c))
+            out[out.length - 1] += `, ${c}`;
+        else
+            out.push(c);
+    }
+    return out;
+}
 function buildTrapSetter(args, D, footer, sectorBlock) {
     lf.lower = D.lower;
     lf.isCommon = D.isCommon;
@@ -282,8 +343,24 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
     void weaknessLabels;
     const allStrengths = splitItems(yourStrengths);
     const isCred = (x) => { const m = x.match(exports.CRED_RE); return !!m && (m.index || 0) <= 40; };
-    const credentials = allStrengths.filter(isCred);
-    const strengths = allStrengths.filter((x) => !isCred(x)).flatMap(trapClaims);
+    // a credential is found after a long strength is cut into claims too ("..., plus Inner Circle status for ...")
+    const credentials = [];
+    const strengths = [];
+    for (const item of allStrengths) {
+        if (isCred(item)) {
+            credentials.push(item);
+            continue;
+        }
+        for (const claim of trapClaims(item)) {
+            if (isCred(claim)) {
+                credentials.push(claim);
+                continue;
+            }
+            // a marketing claim ("a unique approach ... with embedded ethics, privacy and security") is sourced; what follows "with" is what the buyer can test
+            const tail = CLAIM_WORDS.test(claim) ? claim.match(/\s+(?:with|offering|including)\s+(.{12,})$/i) : null;
+            strengths.push(tail ? tail[1].trim() : claim);
+        }
+    }
     const claimsHere = allStrengths.filter((x) => CLAIM_WORDS.test(x));
     // ---- the buyer's priorities: aims (clauses) and figures with their own source label ----
     const startsWant = (x) => exports.TRAP_WANT_VERBS.test(x.replace(/^(?:and|to)\s+/i, ''));
@@ -294,9 +371,15 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
         const body = label ? item.slice(0, item.lastIndexOf(`(${label})`)).trim() : item.trim();
         let last = false;
         for (const f of (0, dealtext_ts_1.splitTopLevel)(body.replace(/[.]+$/, '')).map((x) => x.replace(/^(?:and|plus)\s+/i, '').trim()).filter(Boolean)) {
-            if (/\d/.test(f)) {
-                const whole = /^(?:can|could|will|would|has|have|is|are|with|that|which)\b/i.test(f);
-                const text = label && !/\(/.test(f) ? `${f} (${label})` : f;
+            let g = f;
+            // "an aim in words: a figure that backs it": the words before the colon are an aim, the rest is a figure with its own label
+            const ci = g.indexOf(': ');
+            if (/\d/.test(g) && ci > 0 && !/\d/.test(g.slice(0, ci)) && g.slice(0, ci).split(/\s+/).length >= 3) {
+                aims.push(g.slice(0, ci).trim());
+                g = g.slice(ci + 2).trim();
+            }
+            if (/\d/.test(g)) {
+                const text = label && !/\(/.test(g) ? `${g} (${label})` : g;
                 if (!figureItems.includes(text))
                     figureItems.push(text);
                 last = false;
@@ -325,7 +408,8 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
     // ---- each weakness, read by kind: a question on its own topic ----
     const usedQ = new Set();
     const read = weaknesses.map((w) => {
-        const cl = trapClauses(w);
+        const hEsc = alt.handle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cl = joinLists(trapClauses(w).flatMap(fineClauses)).map((c) => (alt.handle.length > 2 ? c.replace(new RegExp(`^${hEsc}\\s+`, 'i'), '') : c)).filter((c) => c.length > 2);
         const lit = v && v.id === 'logistics-tech' ? cl : cl.filter((c) => !exports.TRAP_METAPHOR.test(c));
         const qs = (lit.length ? lit : cl).map((c) => {
             const x = trapQuestion(c, competitor || alt.handle || 'the competitor');
@@ -351,8 +435,13 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
             best = a;
         }
     } return best; };
-    const sectorQ = v ? v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
-    const personaQ = persona ? persona.questions.slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+    // a role or sector question that names a way of charging, shipping or renewing only fits a seller whose own words use that way
+    const ownWords = `${yourSolution} ${yourStrengths} ${competitorWeaknesses} ${buyerPriorities} ${competitor}`;
+    const MOTION = /\b(?:charg\w+|pric\w+|billing|invoic\w+|ship\w*|subscription\w*|renewal\w*|before (?:they (?:get|see) )?value|sign-?up|free trial|paywall)\b/i;
+    const motionFit = (x) => { const m = x.match(MOTION); return !m || new RegExp(`\\b${m[0].slice(0, Math.max(4, m[0].length - 2))}`, 'i').test(ownWords); };
+    const opsFit = !persona || persona.label !== 'operations leader' || !v || ['logistics-tech', 'ites', 'vertical-saas'].includes(v.id);
+    const sectorQ = v ? v.discovery.filter(motionFit).slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
+    const personaQ = persona && opsFit ? persona.questions.filter((x) => motionFit(x) && !/\bthat\b/i.test(x)).slice(0, 2).map((x) => `- "${x}"`).join('\n') : '';
     const costWeak = read.filter((r) => /price|cost|fee|charge|seat|licen|overage|extra|bill/i.test(r.w));
     const supportMention = /\b(?:support|sla|24\/7|uptime|response)\b/i.test(`${yourStrengths} ${competitorWeaknesses}`);
     const shown = new Set();
@@ -377,6 +466,18 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
         `"Which tools of that kind have you tried or shortlisted, and what did the first demo not show?"`, `"What does keeping ${compLabel} running cost you in a year, in people's time and in fees?"`, `"What did you have to work around, and who does that work?"`,
     ];
     const implLabel = !isVendor ? `Questions about ${compLabel}` : model === 'investment' ? 'Onboarding and Mandate Landmines' : model === 'services' ? 'Transition Landmines' : model === 'connectivity' ? 'Rollout Landmines' : 'Implementation Landmines';
+    // one scenario for each clean topic; a topic that is a clause, or a long one, points to its weak point by number instead
+    const scenarioLines = () => {
+        const out = [];
+        read.forEach((r, wi) => {
+            const clean = r.qs.filter((x) => x.topic.length <= 70 && x.topic.split(/\s+/).length <= 9 && !/\b(?:is|are|was|were|has|have|had|does|do|can|cannot|will|would|not|make|makes)\b/i.test(x.topic));
+            const lines = clean.length ? clean.map((x) => `give each option the same case that tests ${/^(?:fully|easily|quickly|optimi[sz]e|leverage|manage|handle|get|see|keep|find|build|run|track|scale|change|connect|reach|cover|use|plan|ship|launch|reduce|improve|cut|move|show|answer|report|trust|know|stay|work|deploy|integrate|automate)\b/i.test(x.topic) ? `whether it can ${x.topic}` : x.topic}, and compare what each one does with it.`) : [`give each option the same case for weak point ${wi + 1}, and compare what each one does with it.`];
+            for (const l of lines)
+                if (!out.includes(l))
+                    out.push(l);
+        });
+        return out.slice(0, 6);
+    };
     const sections = {
         discovery_questions: () => `## Discovery Questions (Landmines)
 
@@ -418,7 +519,7 @@ ${strengths.length ? `Each requirement is accepted only if it is shown live and 
 
 ### Evaluation Scenarios
 
-${read.length ? `Agree the pass mark with the buyer before each test.\n\n${read.map((r, i) => `**Scenario ${i + 1}:** give each option the same case that tests ${r.topic.length <= 90 && !/\b(?:is|are|was|were|has|have|had|does|do|can|cannot|will|would|not)\b/i.test(r.topic) ? r.topic : `the situation in weak point ${i + 1}`}, and compare what each one does with it.`).join('\n\n')}` : `No weak points were given, so there is no scenario yet. ${aims.length ? (said.has(aims[0]) ? 'The first one to build is the test of the aim in the questions on what the buyer told you matters.' : `The first one to build is the test of what they want: ${lowerKeep(aims[0])}.`) : ''}`}`,
+${read.length ? `Agree the pass mark with the buyer before each test.\n\n${scenarioLines().map((l, i) => `**Scenario ${i + 1}:** ${l}`).join('\n\n')}` : `No weak points were given, so there is no scenario yet. ${aims.length ? (said.has(aims[0]) ? 'The first one to build is the test of the aim in the questions on what the buyer told you matters.' : `The first one to build is the test of what they want: ${lowerKeep(aims[0])}.`) : ''}`}`,
         commercial_terms: () => `## Commercial Terms (Positioning)
 
 ### ${isVendor ? 'Pricing Comparisons' : 'Cost Comparison'}

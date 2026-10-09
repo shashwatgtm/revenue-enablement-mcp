@@ -51,7 +51,9 @@ const section = (t, from, to) => t.split(from)[1].split(to)[0];
 
 test("every input value appears in the draft, in the user's words", () => {
   for (const [t, I] of [[a, A], [b, B]]) {
-    for (const v of [I.primary_audience, I.customer_industry, I.competitor_context, I.desired_outcome, I.your_solution]) assert.ok(t.toLowerCase().includes(v.toLowerCase()), v);
+    for (const v of [I.primary_audience, I.customer_industry, I.competitor_context, I.desired_outcome, I.your_solution.split(",")[0]]) assert.ok(t.toLowerCase().includes(v.toLowerCase()), v);
+    // run 22: the description is not pasted back as a block; its named parts are what the steps are built from
+    assert.ok(!t.includes(I.your_solution), "the whole description pasted");
     for (const part of I.attendees.split(", ")) assert.ok(t.toLowerCase().includes(part.toLowerCase()), part);
     const spoken = t.split("\n").filter((l) => /^Say: "/.test(l)).join("\n").toLowerCase();
     for (const part of I.key_pain_points.split(/, |; /)) assert.ok(spoken.includes(part.toLowerCase()), `spoken: ${part}`);
@@ -64,7 +66,7 @@ test("every input value appears in the draft, in the user's words", () => {
 test("a figure keeps its number and its source label, and is said in a spoken line", () => {
   assert.match(b, /99\.95% delivery uptime/);
   assert.match(b, /99\.95% delivery uptime[^\n]*page claims/);
-  assert.match(section(b, "### Part 3", "### Part 4"), /^Say: "[^\n]*99\.95% delivery uptime/m);
+  assert.match(b.split("## Demo Script")[1], /^Say: "[^\n]*99\.95% delivery uptime/m);
 });
 
 test("no placeholder, no filler, no dashes, no healthcare words", () => {
@@ -94,7 +96,7 @@ test("the artifact is a script: spoken lines and on-screen steps for every featu
 test("a credential or uptime claim is said, not shown", () => {
   const flowA = section(a, "### Part 3", "### Part 4");
   assert.doesNotMatch(flowA, /\*\*Step \d+: SOC 2/i);
-  assert.match(flowA, /SOC 2 Type 2 report/);
+  assert.match(a.split("## Demo Script")[1], /^Say: "[^\n]*SOC 2 Type 2 report/m);
   const flowB = section(b, "### Part 3", "### Part 4");
   assert.doesNotMatch(flowB, /\*\*Step \d+: 99\.95/);
 });
@@ -151,11 +153,12 @@ test("two different kinds of company get drafts whose lines differ almost entire
 
 test("a missing input is named once and the draft still reads whole", async () => {
   const t = await call({ demo_type: "executive_overview", your_solution: "Quarrywise, a construction management platform for general contractors: bid management, change orders, daily logs and subcontractor payments" });
-  assert.equal((t.match(/Not given:/g) || []).length, 1);
-  assert.match(t, /Not given:[^\n]*primary_audience/);
-  assert.match(t, /Not given:[^\n]*key_pain_points/);
-  assert.match(t, /Not given:[^\n]*must_show_features/);
-  assert.match(t, /Not given:[^\n]*desired_outcome/);
+  // run 22: what was not given is named once, at the end, as "To sharpen this, give: ..." with what each would change
+  assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
+  assert.match(t, /To sharpen this, give:[^\n]*primary_audience/);
+  assert.match(t, /To sharpen this, give:[^\n]*key_pain_points/);
+  assert.match(t, /To sharpen this, give:[^\n]*must_show_features/);
+  assert.match(t, /To sharpen this, give:[^\n]*desired_outcome/);
   assert.doesNotMatch(t, PLACEHOLDER);
   assert.doesNotMatch(t, /[–—]/);
   assert.match(t, /^On screen: /m);

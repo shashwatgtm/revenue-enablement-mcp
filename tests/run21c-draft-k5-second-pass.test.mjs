@@ -34,7 +34,7 @@ test("a credibility claim is not a demo step; the steps come from the parts of t
   const t = await call("demo_script_builder", DEVFLEET);
   const flow = section(t, "### Part 3", "### Part 4");
   assert.doesNotMatch(flow, /\*\*Step \d+: (?:Over 3 million|Trusted by|120\+|Round the clock)/i);
-  assert.match(flow, /over 3 million testers/);               // still said, in the said-not-shown line
+  assert.match(t.split("## Demo Script")[1], /^Say: "[^\n]*over 3 million testers/m);   // still said (run 22: beside the part it belongs to, or in the opening)
   assert.match(flow, /\*\*Step 1: (?:Automated tests|Visual checks|Accessibility checks|Test reports)/);
   assert.ok((flow.match(/^\*\*Step \d+: /gm) || []).length >= 3, "a 16 minute demo is not one long step");
 });

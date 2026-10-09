@@ -357,11 +357,13 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.equal(r.isError, false);
   assert.doesNotMatch(r.text, BRACKET);
   assert.doesNotMatch(r.text, /\[Your name\]/);
-  assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1, "description pasted more than once");
+  assert.ok((r.text.match(/route planning, live re-planning, driver app, proof of delivery/g) || []).length <= 1, "description pasted more than once");
+  assert.ok(!r.text.includes(LANEHOP), "the whole description pasted");
   assert.doesNotMatch(r.text, NO_ANSWER);
   // run 21c: draft rewrite. The objections now sit in the script where they come up (in a step, in the discussion or at the close), each with its spoken answer.
+  // run 22: what to confirm before saying each answer is one list at the end ("Check before you say it"), one line for each objection
   const obj = r.text.split("## Demo Script")[1].split("\n## ")[0];
-  assert.equal((obj.match(/Confirm before you say it/g) || []).length, 3);
+  assert.equal((r.text.split("## Check before you say it")[1].split("\n---")[0].match(/^- "/gm) || []).length, 3);
   assert.match(obj, /with no signal|low-signal/i);          // offline
   assert.match(obj, /system by system/i);                    // integration
   assert.match(obj, /dated plan/i);                          // set up
@@ -369,7 +371,7 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.match(r.text, /\*\*Step 1: Live re-planning\*\*/);
   assert.match(r.text, /\*\*Step 2: Driver app that works offline\*\*/);
   assert.match(r.text, /\*\*Step 3: Integration with an existing TMS or ERP in weeks\*\*/);
-  assert.match(r.text, /Claims to prove before you say them/);
+  assert.match(r.text, /## Claims to prove before you say them/);
   // the pains are separate, the audience and the room are used
   assert.match(r.text, /first, manual or outdated route planning/);   // run 21c: draft rewrite (the playback is one spoken line)
   assert.match(r.text, /Head of Last-mile/);

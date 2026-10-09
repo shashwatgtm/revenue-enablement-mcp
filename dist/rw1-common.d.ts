@@ -122,7 +122,10 @@ export interface ModelRead {
     line: string;
     stated: boolean;
 }
-/** The business model, read from the user's own words as well as from the sector reader. A connectivity sector read is for fixed sites and links; a seller of SIMs gets its own wording,
- *  and a seller of an API or of pay as you go usage gets usage wording, unless the user's words name sites, links or a managed network. */
+/** The business model, read from the user's own words as well as from the sector reader. It changes the sector read only on the seller's own words:
+ *  (a) a connectivity seller whose description names SIMs two ways (SIM and eSIM, SoftSIM, IoT connectivity) or opens with them, and names no sites or links, is a SIM seller;
+ *  (b) a seller whose own pricing words say pay as you go, usage based, metered, prepaid, a rate card or "per message" (and no seat, per user or subscription words) is usage priced.
+ *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing, and words about the buyer's current alternatives or results are not passed in.
+ *  When the seller's words point both ways, the sector model stays and the line says it is assumed. */
 export declare function readModel(ctxModel: BusinessModel | null, ctxLine: string, sellerText: string, others: string[]): ModelRead;
 //# sourceMappingURL=rw1-common.d.ts.map

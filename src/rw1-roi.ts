@@ -74,7 +74,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   const parts = partsOf(brief);
   const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
   const v = ctx.v;
-  const mr = readModel(ctx.model, ctx.line, i.yourSolution, [i.currentProcess, i.knownMetrics]);
+  const mr = readModel(ctx.model, ctx.line, i.yourSolution, []);   // the current process and the quoted results are about the buyer's alternatives and other customers, not this seller's pricing
   const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const mw = modelWords(model, i.yourSolution, usage || undefined);
   // the way the product is priced is stated only when the user's words or inputs show it, not when the sector's usual model was assumed

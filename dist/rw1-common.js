@@ -492,35 +492,43 @@ function usageLine(line, unit) {
     return line.replace(/Business model: [^]*?\.\*$/, `Business model: usage priced, paid per ${unit} (read from your wording about price; the sector read is unchanged).*`);
 }
 const FIXED_LINK_WORDS = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site survey|managed network|branch(?:es)? (?:network|sites?)|wi-?fi|broadband|bandwidth|wan\b)\b/i;
-const SIM_WORDS = /\b(?:sims?|esims?|softsims?|iot connectivity|iot sim)\b/i;
-const USAGE_WORDS = /\bpay[- ]as[- ]you[- ]go\b|\busage[- ]based\b|\bmetered\b|\bprepaid\b|\bspending limits?\b|\bvolume (?:discounts?|pricing|tiers?)\b|\brate card\b/i;
-/** The business model, read from the user's own words as well as from the sector reader. A connectivity sector read is for fixed sites and links; a seller of SIMs gets its own wording,
- *  and a seller of an API or of pay as you go usage gets usage wording, unless the user's words name sites, links or a managed network. */
+// the seller's own pricing words: a single product noun (API, SIM, volume) is never one
+const STRONG_USAGE = /\bpay[- ]as[- ]you[- ]go\b|\busage[- ]based\b|\bmetered\b|\bprepaid\b|\brate card\b|\bpriced (?:by|on) usage\b|\bpay only for\b|\bper[- ](?:message|sms|call|minute|gb|mb|gigabyte|transaction|api call|request|verification|sim|shipment|label|lookup|check)\b/i;
+const SEAT_WORDS = /\bper[- ](?:seat|user|agent|member|employee|licen[cs]e|month|year)\b|\bmonthly (?:plan|fee|subscription)\b|\bseats?\b|\blicen[cs]es?\b|\bsubscriptions?\b|\bannual (?:plan|subscription|licen[cs]e)\b|\bflat fee\b/i;
+/** The business model, read from the user's own words as well as from the sector reader. It changes the sector read only on the seller's own words:
+ *  (a) a connectivity seller whose description names SIMs two ways (SIM and eSIM, SoftSIM, IoT connectivity) or opens with them, and names no sites or links, is a SIM seller;
+ *  (b) a seller whose own pricing words say pay as you go, usage based, metered, prepaid, a rate card or "per message" (and no seat, per user or subscription words) is usage priced.
+ *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing, and words about the buyer's current alternatives or results are not passed in.
+ *  When the seller's words point both ways, the sector model stays and the line says it is assumed. */
 function readModel(ctxModel, ctxLine, sellerText, others) {
     const all = [sellerText, ...others].join(' . ');
     const unit = usageUnit(sellerText, ...others);
     const assumed = /assumed/.test(ctxLine);
+    const fixed = FIXED_LINK_WORDS.test(all);
+    const usageStrong = STRONG_USAGE.test(all);
+    const seatWords = SEAT_WORDS.test(all);
     let model = ctxModel;
     let line = ctxLine;
     let changed = false;
-    const fixed = FIXED_LINK_WORDS.test(all);
-    if (ctxModel === 'connectivity' || ctxModel === 'saas' || ctxModel === null || ctxModel === 'transactions') {
-        if (SIM_WORDS.test(sellerText) && !fixed) {
-            model = 'sim';
-            changed = true;
-            line = line.replace(/Business model: [^]*?\.\*$/, 'Business model: connectivity for devices, sold by SIM and data (read from your inputs; not fixed sites or links).*');
-        }
-        else if (ctxModel === 'connectivity' && !fixed && (unit || USAGE_WORDS.test(all) || /\bAPIs?\b/.test(sellerText))) {
-            model = 'transactions';
-            changed = true;
-            line = line.replace(/Business model: [^]*?\.\*$/, `Business model: usage priced${unit ? `, paid per ${unit}` : ' (pay as you go, volume tiers)'} (read from your wording about price and the API; the sector read is unchanged).*`);
-        }
-        else if ((ctxModel === 'saas' || ctxModel === null) && (unit || /\bpay[- ]as[- ]you[- ]go\b|\busage[- ]based\b/i.test(all)) && !fixed) {
-            model = 'transactions';
-            changed = true;
-            line = unit ? usageLine(ctxLine, unit) : line.replace(/Business model: [^]*?\.\*$/, 'Business model: usage priced (pay as you go), read from your wording.*');
-        }
+    const simTerms = new Set((sellerText.match(/\b(?:sims?|esims?|softsims?|iot connectivity)\b/gi) || []).map((x) => x.toLowerCase().replace(/s$/, '')));
+    const simSeller = ctxModel === 'connectivity' && !fixed && (simTerms.size >= 2 || /\b(?:sims?|esims?|softsims?|iot connectivity)\b/i.test(sellerText.slice(0, 60)));
+    if (simSeller) {
+        model = 'sim';
+        changed = true;
+        line = line.replace(/Business model: [^]*?\.\*$/, 'Business model: connectivity for devices through SIMs (read from the product description, assumed; not fixed sites or links; set business_model to change it).*');
+        return { model, unit, line, stated: false };
     }
-    return { model, unit, line, stated: changed || !assumed };
+    if (usageStrong && seatWords && !fixed) {
+        // mixed evidence: the sector model stays, and it is said to be assumed
+        if (!assumed)
+            line = line.replace(/\((?:read from your inputs)[^)]*\)/, '(the usual model in this sector, assumed; your words also point to usage pricing, so check it; set business_model to change it)');
+        return { model, unit: '', line, stated: false };
+    }
+    if (usageStrong && !fixed && (ctxModel === 'connectivity' || ctxModel === 'saas' || ctxModel === null)) {
+        model = 'transactions';
+        changed = true;
+        line = unit ? usageLine(ctxLine, unit) : line.replace(/Business model: [^]*?\.\*$/, 'Business model: usage priced (pay as you go), read from your wording about price.*');
+    }
+    return { model, unit: seatWords ? '' : unit, line, stated: changed || !assumed };
 }
 //# sourceMappingURL=rw1-common.js.map

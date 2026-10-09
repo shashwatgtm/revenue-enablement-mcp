@@ -63,7 +63,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-  const mr = readModel(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn, dealName]);
+  const mr = readModel(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn]);
   const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const P = brief.short || 'the solution';
   const mw = modelWords(model, solutionIn, usage || undefined);

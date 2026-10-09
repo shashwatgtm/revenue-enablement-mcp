@@ -63,7 +63,7 @@ function buildMutualActionPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn, dealName]);
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn]);
     const usage = mr.unit;
     const model = mr.model;
     const ctxLine = mr.line;

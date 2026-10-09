@@ -16,7 +16,7 @@ const call = async (name, args) => {
 const future = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const modelLine = (t) => (t.match(/Business model: [^\n]*/) || [""])[0];
 const USAGE_TEXT = /usage priced|pay as you go|rate per unit of usage|volume tiers|rate card|test volume/i;
-const SIM_TEXT = /test SIMs|connectivity for devices|sold by SIM|SIMs in the buyer's devices/i;
+const SIM_TEXT = /test SIMs|connectivity for devices|connectivity sold through SIMs|sold by SIM|SIMs in the buyer's devices/i;
 
 // three tools for one seller; the same seller text goes to each
 const run3 = async (sol, extra = {}) => ({
@@ -28,7 +28,7 @@ const run3 = async (sol, extra = {}) => ({
 test("a software subscription with an API and per seat pricing keeps its model", async () => {
   const r = await run3("Boardwise, a meeting management platform for operations teams with a REST API and webhooks, priced per seat per month");
   for (const [k, t] of Object.entries(r)) {
-    assert.doesNotMatch(modelLine(t), /usage priced|connectivity for devices/i, `${k}: ${modelLine(t)}`);
+    assert.doesNotMatch(modelLine(t), /usage priced|connectivity for devices|connectivity sold through SIMs/i, `${k}: ${modelLine(t)}`);
     assert.doesNotMatch(t, USAGE_TEXT, `${k} carries usage wording`);
     assert.doesNotMatch(t, SIM_TEXT, k);
   }
@@ -47,7 +47,7 @@ test("a seller that mentions SIM cards only as a customer's device is not a SIM 
   const r = await run3("Fleetpulse, vehicle tracking software for trucking companies; each tracker uses a SIM card that the customer supplies, and the dashboard shows every truck on a map");
   for (const [k, t] of Object.entries(r)) {
     assert.doesNotMatch(t, SIM_TEXT, `${k} treats the seller as a SIM seller`);
-    assert.doesNotMatch(modelLine(t), /connectivity for devices|SIM/i, `${k}: ${modelLine(t)}`);
+    assert.doesNotMatch(modelLine(t), /connectivity for devices|connectivity sold through SIMs|SIM/i, `${k}: ${modelLine(t)}`);
   }
 });
 
@@ -63,7 +63,7 @@ test("words about the buyer's current alternatives or customer results do not de
   const sol = "Boardwise, a meeting management platform for operations teams, sold as a yearly subscription";
   const r = await run3(sol, { threats: "paying per transaction fees to the bank; pay as you go phone credit", process: "today they handle it with a prepaid card and per message fees from several providers", roi: { known_metrics: "A customer cut its per transaction costs in half (page claim)" }, plan: { current_products: "a prepaid card programme" } });
   for (const [k, t] of Object.entries(r)) {
-    assert.doesNotMatch(modelLine(t), /usage priced|connectivity for devices/i, `${k}: ${modelLine(t)}`);
+    assert.doesNotMatch(modelLine(t), /usage priced|connectivity for devices|connectivity sold through SIMs/i, `${k}: ${modelLine(t)}`);
     assert.doesNotMatch(t, /rate per unit of usage|rate per transaction|test volume/i, k);
   }
 });

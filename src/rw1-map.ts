@@ -5,7 +5,7 @@
 import { addWorkdays, describeWith, isoDate, joinList, onOrAfterWorkday, onOrBeforeWorkday, parseContacts, solutionBrief, upperFirst, weekdayName, workdaysBetween, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
-import { answerQuestion, briefOf, readModel, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
+import { answerQuestion, briefOf, readModel, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
 
 type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
 interface Step { m: string; who: Who; owner?: string }
@@ -63,7 +63,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-  const mr = readModel(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn]);
+  const mr = readModel(ctx.model, ctx.line, solutionIn, [], [sellerOffers(reqIn, blockersIn)]);   // the seller's own words, and of the requirements and blockers only a question from its price page; the buyer's comparisons are not the seller's pricing
   const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const P = brief.short || 'the solution';
   const mw = modelWords(model, solutionIn, usage || undefined);

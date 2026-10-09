@@ -5,7 +5,7 @@
 import { describeWith, isoDate, joinList, onOrBeforeWorkday, parseContacts, partLabel, sentences, solutionBrief, tagKind, upperFirst, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
-import { answerQuestion, briefOf, readModel, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
+import { answerQuestion, briefOf, readModel, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
 
 const HYPOTHETICAL = /\s*All figures in this input are hypothetical[^.]*\.\s*/i;
 
@@ -31,7 +31,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
-  const mr = readModel(ctx.model, ctx.line, solutionIn, [notesIn, productsIn]);   // the alternatives the account uses (competitive_threats) are other sellers' words, not this seller's pricing
+  const mr = readModel(ctx.model, ctx.line, solutionIn, [productsIn], [sellerOffers(notesIn)]);   // the seller's own words, and of the notes only a question from its price page ("What is available on pay as you go?"); the buyer's comparisons and alternatives are not the seller's pricing
   const unit = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const P = brief.short || 'your solution';
   const parts = partsOf(brief);

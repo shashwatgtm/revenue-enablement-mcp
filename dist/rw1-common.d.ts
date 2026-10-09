@@ -116,16 +116,20 @@ export declare function briefOf(text: string, fields: string[]): SolutionBrief;
 export declare function usageUnit(...texts: string[]): string;
 /** Replaces the business model sentence of a context line when the user's pricing words show a usage priced deal. */
 export declare function usageLine(line: string, unit: string): string;
+export declare function sellerOffers(...texts: string[]): string;
 export interface ModelRead {
     model: Model2 | null;
     unit: string;
     line: string;
     stated: boolean;
 }
-/** The business model, read from the user's own words as well as from the sector reader. It changes the sector read only on the seller's own words:
+export declare function plainModelLine(line: string): string;
+/** The business model, read from the seller's own words as well as from the sector reader. `sellerText` is what the seller wrote about its own product (your_solution) and `others`
+ *  more of the seller's own words (the products the account already buys from it); never the buyer's objections, requirements, blockers, notes or alternatives, which are the
+ *  buyer's words ("is pay as you go cheaper?"). It changes the sector read only on the seller's own words:
  *  (a) a connectivity seller whose description names SIMs two ways (SIM and eSIM, SoftSIM, IoT connectivity) or opens with them, and names no sites or links, is a SIM seller;
  *  (b) a seller whose own pricing words say pay as you go, usage based, metered, prepaid, a rate card or "per message" (and no seat, per user or subscription words) is usage priced.
- *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing, and words about the buyer's current alternatives or results are not passed in.
- *  When the seller's words point both ways, the sector model stays and the line says it is assumed. */
-export declare function readModel(ctxModel: BusinessModel | null, ctxLine: string, sellerText: string, others: string[]): ModelRead;
+ *  A product noun alone (an API, a SIM card the customer supplies, a usage report) changes nothing.
+ *  When the seller's words point both ways, the sector model stays and the line says to check it. */
+export declare function readModel(ctxModel: BusinessModel | null, ctxLine: string, sellerText: string, others: string[], offers?: string[]): ModelRead;
 //# sourceMappingURL=rw1-common.d.ts.map

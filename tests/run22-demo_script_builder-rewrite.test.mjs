@@ -108,7 +108,7 @@ test("the product's own named parts are the steps; a part that does not fit is l
   const titles = stepBlocks(t).map(stepTitle);
   assert.ok(titles.length >= 4 && titles.length <= 6, titles.join(" | "));
   for (const p of ["Verify", "Repayment Score", "Payout", "Watch", "Income", "Connect"]) {
-    assert.ok(titles.some((x) => x.startsWith(p)) || new RegExp(`Not shown[^\\n]*${p}`).test(t), `part ${p} is a step or listed as not shown`);
+    assert.ok(titles.some((x) => x.startsWith(p)) || new RegExp(`(?:Not shown|Shown only when asked)[^\\n]*${p}`).test(t), `part ${p} is a step, listed as not shown, or shown in an answer`); // round 3: a part that an answer in a step shows is named as shown when asked
   }
   assert.doesNotMatch(t, /I will not demo|will not demo|do not demo/i);
 });
@@ -341,4 +341,46 @@ test("round 2: attendees written with 'the' or as a board are named once, withou
   assert.doesNotMatch(t, /\bthe the\b/i);
   assert.match(t, /and the board \(/);
   assert.doesNotMatch(t, /the board team/);
+});
+
+// ---- round 3: parts matched to pains and people by meaning (an invented CRM for sales, marketing and service teams) ----
+const ORBITDESK = {
+  demo_type: "first_look", primary_audience: "Sales user", attendees: "Administrator, Marketing user, Service agent", customer_industry: "Education",
+  your_solution: "Orbitdesk, CRM for sales, marketing and service teams: lead and opportunity management, lead scoring and prioritization, workflow automation, a mobile app for field sales, and Service CRM, an omnichannel customer support suite",
+  key_pain_points: "no single 360 view of customers across marketing, sales and service, and dependence on third-party tools (implied by the page's promise of a 360 view)",
+  competitor_context: "third-party tools for each function", demo_duration: 30,
+  must_show_features: "highly customizable lead entity with custom fields, and lead scoring and prioritization that apply your own business logic",
+};
+const orbit = await call(ORBITDESK);
+const stepBlock = (t, re) => (t.split("### Part 3")[1] || "").split(/\n(?=\*\*Step )/).find((b) => re.test(b.split("\n")[0])) || "";
+test("round 3: a 360 view pain is tied to the customer record parts, never to the field sales app", () => {
+  const field = stepBlock(orbit, /mobile app for field sales/i);
+  if (field) assert.doesNotMatch(field, /360 view/i, "the field app step carries the 360 view pain");
+  const tied = (orbit.split("### Part 3")[1] || "").split(/\n(?=\*\*Step )/).filter((b) => /360 view/i.test(b));
+  assert.ok(tied.length >= 1, "the 360 view pain is tied to a step");
+  assert.ok(tied.some((b) => /lead and opportunity management|lead entity|Service CRM/i.test(b.split("\n")[0])), "the step for the 360 view is a customer record part");
+});
+test("round 3: a service agent is shown the service part, and the part is not left out", () => {
+  const svc = stepBlock(orbit, /Service CRM/i);
+  assert.ok(svc, "a step for Service CRM");
+  assert.match(svc, /Service agent/);
+  assert.doesNotMatch(orbit.split("## The plan")[1].split("##")[0], /Not shown:[^\n]*Service CRM/);
+  const agentRow = orbit.split("\n").find((l) => /^\| Service agent/.test(l));
+  assert.match(agentRow, /Step \d/);
+});
+test("round 3: 'Service CRM, an omnichannel customer support suite' is one part, and every part is shown once or listed under Not shown, never both", () => {
+  const plan = orbit.split("## The plan")[1].split("## Who sees what")[0];
+  assert.doesNotMatch(plan, /omnichannel customer support suite;|; omnichannel customer support suite/);
+  const steps = (orbit.split("### Part 3")[1] || "").split("### Part 4")[0];
+  const titles = steps.split("\n").filter((l) => /^\*\*Step \d+:/.test(l)).join("\n").toLowerCase();
+  const notShown = ((plan.match(/Not shown: ([^\n]*)/) || [])[1] || "").toLowerCase();
+  for (const p of ["lead and opportunity management", "lead scoring and prioritization", "workflow automation", "mobile app for field sales", "service crm"]) {
+    const shown = titles.includes(p), listed = notShown.includes(p);
+    assert.ok(shown !== listed, `${p}: shown ${shown}, listed under Not shown ${listed}`);
+  }
+});
+test("round 3: a step with no problem tied to it asks about its own part, never 'who steps in when it stalls', and never says 'that problem'", () => {
+  const steps = (orbit.split("### Part 3")[1] || "").split("### Part 4")[0];
+  assert.doesNotMatch(steps, /who steps in when it stalls/);
+  for (const b of steps.split(/\n(?=\*\*Step )/).slice(1)) if (!/you told me|Take 'no single|problem as before/i.test(b)) assert.doesNotMatch(b, /that problem/i, b.split("\n")[0]);
 });

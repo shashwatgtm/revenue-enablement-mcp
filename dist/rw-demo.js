@@ -26,6 +26,11 @@ const TYPE_OPEN = {
     expansion_upsell: 'You already know part of this, so today is about what else it can do for you.',
     proof_of_concept: 'Today I will walk through what a proof would test, so we can agree it before it starts.',
 };
+const NO_PAIN = {
+    screen: ['Take one real case through it from its start to the result the user sees.', 'Pick one live example from your side and run it through from the beginning.', 'Run a case you chose, not one I prepared, and stop at the first thing that looks wrong.'],
+    say: ['I will take one real case through it from its start to the result the user sees.', 'I will pick one live example from your side and run it through from the beginning.', 'I will run a case you choose, not one I prepared.'],
+    ask: ['What would you check first on a real case?', 'Which part of this would you test hardest?', 'What would you want to see it do that you have not seen yet?'],
+};
 const PERSON_VARIANTS = [
     (p) => `how does ${p} show up for you today, and who feels it first?`,
     (p) => `what does ${p} cost your team today, and what have you tried?`,
@@ -90,7 +95,16 @@ function buildDemoScript(args, d) {
         addPerson(primaryAudience, null, true);
     for (const c of (0, dealtext_ts_1.parseContacts)(attendees, investment))
         addPerson(c.title, c, false);
-    const personText = (t) => `${t} ${(0, rw_kit_ts_1.lensFor)((0, dealtext_ts_1.familyOf)(t, investment))}`;
+    // what a person's own work is, in the words a part of a product is described by: a service agent works in the support suite, a sales user in leads and the field,
+    // a marketing user in campaigns and scoring, an administrator in set-up and workflow
+    const FUNCTION_WORDS = [
+        [/\bservice\b|\bsupport\b|help ?desk|\bcare\b|\bagents?\b|\bcases?\b|contact cent|customer success/i, 'support omnichannel ticket case helpdesk'],
+        [/\bsales\b|\breps?\b|account executive|\bseller|\bbdr\b|\bsdr\b|field/i, 'lead opportunity pipeline field scoring prioriti'],
+        [/\bmarketing\b|\bdemand\b|campaign|growth/i, 'campaign marketing automation scoring email journey audience nurture lead'],
+        [/\badmin|administrator|\bops\b|operations|configur/i, 'custom configure workflow automation field admin permission integration'],
+    ];
+    const functionWords = (t) => FUNCTION_WORDS.filter(([re]) => re.test(t)).map(([, w]) => w).join(' ');
+    const personText = (t) => `${t} ${(0, rw_kit_ts_1.lensFor)((0, dealtext_ts_1.familyOf)(t, investment))} ${functionWords(t)}`;
     // ---- time ----
     const demoSecs = Number(demoDuration);
     const intro = Math.floor(demoSecs * 0.15), discovery = Math.floor(demoSecs * 0.15), discussion = Math.floor(demoSecs * 0.15), close = Math.round(demoSecs * 0.05);
@@ -198,7 +212,7 @@ function buildDemoScript(args, d) {
     steps.sort((a, b) => (a.flow ? 0 : 1) - (b.flow ? 0 : 1) || (a.flow && b.flow ? ms.flows.indexOf(a.flow) - ms.flows.indexOf(b.flow) : minPain(a) - minPain(b)));
     const shown = steps.slice(0, maxSteps);
     const notShownFlows = steps.slice(maxSteps).map((s) => (s.flow ? s.flow.text : s.title));
-    const notShownCaps = capPool.map((x) => x.name);
+    const notShownCaps0 = capPool.map((x) => x.name);
     const perStep = Math.max(1, Math.floor(demo / Math.max(1, shown.length)));
     shown.forEach((s) => { s.minutes = perStep; });
     if (steps.length > shown.length)
@@ -265,6 +279,11 @@ function buildDemoScript(args, d) {
     }
     // the answers are read in the order they appear in the script, and no sentence is repeated from one answer to the next
     (0, rw_kit_ts_1.dedupeAnswers)([...shown.flatMap((s) => s.objections), ...atDiscussion, ...atClose].map((o) => answers.get(o)));
+    // a part an answer promises to show ("I will show how it handles it: Glean Protect") is shown there, so it is not listed as left out
+    const inSteps = new Set(shown.flatMap((s) => s.objections));
+    const answerOf = (n) => [...answers.entries()].find(([o, a]) => inSteps.has(o) && a.say.toLowerCase().includes(n.toLowerCase()))?.[0];
+    const shownInAnswer = notShownCaps0.filter((n) => answerOf(n));
+    const notShownCaps = notShownCaps0.filter((n) => !shownInAnswer.includes(n));
     const objectionBlock = (o) => {
         const a = answers.get(o);
         return `Buyer may ask: "${o.replace(/[?.]+$/, '')}${/\?$/.test(o) ? '?' : ''}"\nSay: "${say(a.say)}"${a.ask ? `\nAsk: "${say(a.ask)}"` : ''}${a.sector ? `\nPlaybook for ${v ? v.name : 'this sector'}, not for saying aloud: ${a.sector}` : ''}`;
@@ -343,6 +362,23 @@ function buildDemoScript(args, d) {
         lens ? `Ask: "${lens.checks[0]}"` : '',
         `Ask: "${typeQuestion[demoType] || typeQuestion.first_look}"`,
     ].filter(Boolean).join('\n\n');
+    // the question for a step with no problem tied to it is about the step's own part: what it connects to, how it is done today, who uses it, what would earn trust
+    const askUse = {};
+    const partAsk = (s, i) => {
+        const text = `${s.flow ? s.flow.text : ''} ${s.cap ? `${s.cap.name} ${s.cap.desc}` : s.title}`.toLowerCase();
+        const k = /\b(?:api|sdk|cli|server|plugins?|integrations?|connectors?|webhooks?|agents?|models?|engine|dashboard|portal|app|apps|mobile|sync|import|export)\b/.test(text) ? 'tech'
+            : /optimi[sz]ation|autoscal|analytics|reporting|monitor|forecast|scor(?:e|ing)|insight|benchmark|audit|reconcil|matching|capture|prioriti/.test(text) ? 'measure'
+                : /training|simulation|coaching|onboarding|support|services?|operations|advisory|marketing|content|workflow|journeys?|omnichannel/.test(text) ? 'people' : 'other';
+        const n = askUse[k] = (askUse[k] ?? -1) + 1;
+        const who = s.people.length ? personRef(s.people[0]) : 'the people who use it';
+        const V = {
+            tech: [`What would ${ref(s)} have to connect to in what you run today, and who would look after it?`, `Which of your current systems or data would ${ref(s)} need access to, and who approves that?`],
+            measure: [`How is ${ref(s)} done today, and what does it cost your team each month in time or money?`, `Which number tells you ${ref(s)} is working, and who looks at that number?`],
+            people: [`How does ${who} work with ${ref(s)} today, and what would change for ${s.people.length ? 'them' : 'them'} in the first week?`, `Which team would feel ${ref(s)} most, and what are they worried about?`],
+            other: [`What would you need to see in ${ref(s)} to trust it with a real case?`, pains.length ? `Which of the problems you named would ${ref(s)} change first, and who would notice?` : `Who would own ${ref(s)} after today, and what would they check first?`, `What would make ${ref(s)} worth keeping after a month?`],
+        };
+        return V[k][(n + i) % V[k].length];
+    };
     const seenPain = new Set();
     const typeUse = {};
     const usedLines = new Set();
@@ -353,10 +389,12 @@ function buildDemoScript(args, d) {
         const uniq = (text, lead) => { if (usedLines.has(text))
             text = lead(text); usedLines.add(text); return text; };
         const lowFirst = (t) => t.replace(/^([A-Z])(?=[a-z])/, (c) => c.toLowerCase());
+        // a step with no problem tied to it is not told "that problem": its wordings speak of the case it runs
+        const wording = main < 0 && ptype === 'general' ? NO_PAIN : rw_kit_ts_1.SHOW[ptype];
         const sh = {
-            screen: uniq(rw_kit_ts_1.SHOW[ptype].screen[vi % 3], (t) => `With ${ref(s)}: ${lowFirst(t)}`),
-            say: uniq(rw_kit_ts_1.SHOW[ptype].say[vi % 3], (t) => `For ${ref(s)}, ${t}`),
-            ask: uniq(rw_kit_ts_1.SHOW[ptype].ask[vi % 3], (t) => `On ${ref(s)}: ${lowFirst(t)}`),
+            screen: uniq(wording.screen[vi % 3], (t) => `With ${ref(s)}: ${lowFirst(t)}`),
+            say: uniq(wording.say[vi % 3], (t) => `For ${ref(s)}, ${t}`),
+            ask: uniq(wording.ask[vi % 3], (t) => `On ${ref(s)}: ${lowFirst(t)}`),
         };
         const painNow = s.pains.map((pi) => { const again = seenPain.has(pi); seenPain.add(pi); return again ? `the same problem as before (${say(pRef(pi))})` : say(pRef(pi)); });
         const head = `**Step ${i + 1}: ${s.title}** (about ${s.minutes} ${s.minutes === 1 ? 'minute' : 'minutes'})`;
@@ -375,7 +413,7 @@ function buildDemoScript(args, d) {
         const lines = [head, ...(forLine ? [forLine] : []), screen, `Say: "${intro2}${told}"`];
         if (s.claims.length)
             lines.push(`Say: "For the record: ${say(claimSay(s.claims))}" *(${claimLabels(s.claims)}; have the source ready)*`);
-        lines.push(`Ask: "${say(main >= 0 ? sh.ask : `How does your team handle ${ref(s)} today, and who steps in when it stalls?`)}"`);
+        lines.push(`Ask: "${say(main >= 0 ? sh.ask : partAsk(s, i))}"`);
         for (const o of s.objections)
             lines.push(objectionBlock(o));
         return lines.join('\n');
@@ -433,6 +471,7 @@ function buildDemoScript(args, d) {
     if (notShownFlows.length)
         sharpen.push(`more minutes in demo_duration (${(0, dealtext_ts_1.joinList)(notShownFlows)} did not fit in the ${demo} ${demo === 1 ? "minute" : "minutes"} of demo)`);
     const notesLine = sourceNotes.length ? `Notes in your inputs, kept out of the spoken lines: ${sourceNotes.map((n) => `(${n})`).join('; ')}.` : '';
+    const inAnswerLine = shownInAnswer.length ? `Shown only when asked: ${shownInAnswer.map((n) => `${n} (in the answer to "${answerOf(n).replace(/[?.]+$/, '')}")`).join('; ')}.` : '';
     const notShownLine = notShownAll.length ? `Not shown: ${notShownAll.join('; ')}.${notShownFlows.length ? ` Not used in the draft: ${notShownFlows.join('; ')} because the demo has room for ${shown.length} step${shown.length === 1 ? '' : 's'}; add minutes or move them to a follow-up session.` : ''}` : '';
     const untiedLine = untied.length ? `Not tied to a step: ${untied.map((i) => say(pRef(i))).join('; ')}. The words you gave do not link it to any part, so Part 2 asks the room.` : '';
     // ---- who sees what ----
@@ -443,7 +482,9 @@ function buildDemoScript(args, d) {
         const came = own.length ? (0, dealtext_ts_1.joinList)(own.slice(0, 2).map((pi) => say(pRef(pi)))) : fam0 === 'other' ? 'not known yet: Part 2 asks' : (0, answers_ts_1.roleFor)(pp.title, investment).cares;
         const seen = sis.length ? sis.map((si) => `Step ${si + 1}`).join(', ') : `Every step (Step 1${shown.length > 1 ? ` to Step ${shown.length}` : ''}), then the recap in Part 5`;
         const lvl = pp.contact ? pp.contact.level : (0, dealtext_ts_1.levelOf)(pp.title);
-        const roleCell = fam0 !== 'other' && lvl !== 'staff' && lvl !== 'group' ? (0, answers_ts_1.roleFor)(pp.title, investment).label : '';
+        // a person who is a leader is named by the kind of leader; a team or a user by the function they work in
+        const FAM_NOUN = { security: 'security', risk: 'risk', finance: 'finance', procurement: 'procurement', hr: 'people', engineering: 'engineering', data: 'data', it: 'IT', operations: 'operations', sales: 'sales', product: 'product', marketing: 'marketing', customer: 'customer service', executive: 'executive', investment: 'investment' };
+        const roleCell = fam0 === 'other' ? 'attendee' : lvl !== 'staff' && lvl !== 'group' ? (0, answers_ts_1.roleFor)(pp.title, investment).label : `${FAM_NOUN[fam0] || fam0} ${/\bteams?\b/i.test(pp.title) ? 'team' : 'user'}`;
         return `| ${d.cap(pp.given)} | ${roleCell} | ${came} | ${seen} |`;
     });
     const allClaims = [...claimsAll, ...shown.filter((s) => s.cap && s.cap.stat && !claimsAll.some((c) => (0, rw_kit_ts_1.overlap)(c.text, s.cap.stat, skipP) >= 2)).map((s) => ({ text: `${s.cap.name}: ${s.cap.stat}`, label: 'from the description you gave' }))];
@@ -475,7 +516,7 @@ ${ctx.line}
 | Discussion | ${partMin(discussion)} | ${atDiscussion.length ? `${atDiscussion.length} objection${atDiscussion.length === 1 ? '' : 's'} and open questions` : 'Open questions'} |
 | Close | ${partMin(close)} | ${outcomeText ? 'Tests the outcome' : 'Agrees the next step'} |${shortNote}
 
-${[notShownLine, untiedLine, notesLine].filter(Boolean).join('\n\n')}${notShownLine || untiedLine || notesLine ? '\n\n' : ''}## Who sees what
+${[notShownLine, inAnswerLine, untiedLine, notesLine].filter(Boolean).join('\n\n')}${notShownLine || inAnswerLine || untiedLine || notesLine ? '\n\n' : ''}## Who sees what
 
 | Person | Role | What they came for | Shown in |
 |---|---|---|---|

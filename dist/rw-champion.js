@@ -65,7 +65,10 @@ function buildChampionKit(args, d) {
             else
                 merged.push(piece);
         }
-        return merged.length >= 3 && merged.every((x) => x.split(/\s+/).length >= 3) ? merged : [];
+        if (!(merged.length >= 3 && merged.every((x) => x.split(/\s+/).length >= 3)))
+            return [];
+        // two figures joined by "and" are two claims; the words that only say where the first came from ("the page states ...") are not part of it
+        return merged.flatMap((x, k) => (k === 0 ? x.replace(/^(?:the\s+)?(?:[\w-]+\s+){0,3}(?:page|site|website|study|report|survey|brochure)\s+(?:states?|says?|claims?|shows?|reports?)\s+/i, '') : x).split(/\s+and\s+(?=\d)/i));
     };
     const outs = d.splitItems(keyValuePoints).flatMap((raw) => {
         const m = raw.replace(/[.]+$/, '').match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
@@ -81,13 +84,15 @@ function buildChampionKit(args, d) {
         const colon = body.indexOf(': ');
         const rawSubs = colon > 0 ? (0, dealtext_ts_1.splitTopLevel)(body.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
         // a short fragment that is not an action ("control and scale") is the end of the item before it
-        const ACTION = /^(?:get|keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|reclaim|shrink|turn|modernize|modernise|migrate|unify|enable|ensure|give|offer|provide|use|work|spend|drive|accelerate|eliminate|standardi[sz]e|centrali[sz]e|capture|apply|test|release|secure|comply|verify|forecast|price)\b/i;
-        const subs = rawSubs.reduce((acc, x) => { if (acc.length && x.split(/\s+/).length <= 3 && !ACTION.test(x) && !/\d/.test(x))
+        const ACTION = /^(?:get|keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|reclaim|shrink|turn|modernize|modernise|migrate|unify|enable|ensure|give|offer|provide|use|work|spend|drive|accelerate|eliminate|standardi[sz]e|centrali[sz]e|capture|apply|test|release|secure|comply|verify|forecast|price|resolve|put|act|catch|empower|unlock|allow|help|let|do|take|cover|align|free|see|learn|find|stop|start|build|buy|sell|win|renew|retain)\b/i;
+        const actionish = (x) => ACTION.test(x);
+        const subs = rawSubs.reduce((acc, x) => { if (acc.length && x.split(/\s+/).length <= 3 && !actionish(x) && !/\d/.test(x))
             acc[acc.length - 1] += `, ${x}`;
         else
             acc.push(x); return acc; }, []);
         // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
-        const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 16);
+        // (a list is split only when every item is a whole action of its own; otherwise the run-on stays one whole bullet, never a fragment)
+        const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 16 && x.split(/\s+/).length >= 3 && actionish(x));
         return { text, label, head: (0, rw_kit_ts_1.outcomeHead)(text), subs: plain ? subs : [], note: plain && nm && !label ? nm[2].trim() : '' };
     }
     const outClaims = outs.filter((o) => o.label || (0, rw_kit_ts_1.isStat)(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));

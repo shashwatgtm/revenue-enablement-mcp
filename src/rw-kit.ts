@@ -11,7 +11,7 @@ import { MODEL_TRADES, type BusinessModel } from './verticals.ts';
 // ---------------------------------------------------------------------------------------------------------------------------
 // Words, stems and word groups (used only to decide which part of a product answers which pain or person)
 // ---------------------------------------------------------------------------------------------------------------------------
-const STOPW = new Set('the and for are not too our have has does this will than with from your can use new own how what why who when where which you its any all is it do to of in on a an be or by at as if so my me they their there that these those should would could about into out up over under very more most some such each only also then them been being were was had get got one two via per through between across within using onto while'.split(' '));
+const STOPW = new Set('without within during before after the and for are not too our have has does this will than with from your can use new own how what why who when where which you its any all is it do to of in on a an be or by at as if so my me they their there that these those should would could about into out up over under very more most some such each only also then them been being were was had get got one two via per through between across within using onto while'.split(' '));
 const GENERIC = new Set(['platform', 'solution', 'product', 'service', 'services', 'management', 'manage', 'system', 'systems', 'tool', 'tools', 'customer', 'customers', 'team', 'teams', 'data', 'business', 'company', 'enterprise', 'enterprises', 'work', 'works', 'make', 'makes', 'help', 'helps', 'need', 'needs', 'time', 'real', 'full', 'single', 'across', 'ones', 'part', 'parts', 'many', 'much', 'every', 'using', 'used', 'user', 'users']);
 function norm(w: string): string {
   let x = w.toLowerCase();
@@ -19,9 +19,12 @@ function norm(w: string): string {
   if (x.length > 3) x = x.replace(/s$/, '');
   return x;
 }
+/** "across marketing, sales and service" names the scope of a problem, not its topic: the function names in such a list are not matched as words. */
+const SCOPE_LIST = /\bacross\s+(?:the\s+)?(?:(?:marketing|sales|service|services|support|finance|operations|ops|hr|it|engineering|product|legal|procurement)(?:\s*,\s*(?:and\s+)?|\s+and\s+|\s*&\s*|\s+or\s+)?)+/gi;
+const withoutScope = (t: string): string => t.replace(SCOPE_LIST, ' ');
 export function wordsOf(t: string, dropGeneric = true): string[] {
   const out: string[] = [];
-  for (const m of t.toLowerCase().match(/[a-z][a-z0-9]{2,}/g) || []) {
+  for (const m of withoutScope(t).toLowerCase().match(/[a-z][a-z0-9]{2,}/g) || []) {
     if (STOPW.has(m) || (dropGeneric && GENERIC.has(m))) continue;
     out.push(norm(m));
   }
@@ -44,7 +47,7 @@ const GROUPS: [string, RegExp][] = [
   ['speed', /\bdays\b|delay|slow|wait|latency|real.?time|instant|fast|minutes|hours|backlog|late\b|weeks/],
   ['data', /\bdata\b|report|analytic|insight|dashboard|metric|visib|track|monitor|transaction|record/],
   ['search', /search|find|knowledge|document|answer|assistant|copilot|context|connector|article/],
-  ['automation', /agent|automat|workflow|manual|\bbot\b|exception|orchestrat|approval|route|routing|triage/],
+  ['automation', /(?<!service |support |field |sales |insurance |call |contact |customer |travel |real estate |care )agents?\b|automat|workflow|manual|\bbot\b|exception|orchestrat|approval|route|routing|triage/],
   ['integration', /integrat|\bapis?\b|\bsdk\b|connector|\bsync|\berp\b|\bcrm\b|silo|disconnect|separate|fragment|spreadsheet|point tool|console|link/],
   ['testing', /\btest|\bqa\b|device|browser|release|defect|flaky|regression|\bbug|render/],
   ['logistics', /ship|deliver|carrier|courier|freight|route|dispatch|warehouse|fulfil|inventory|\border|\brto\b|pincode|serviceab|yard|dock|facility/],
@@ -52,10 +55,14 @@ const GROUPS: [string, RegExp][] = [
   ['sales', /\blead|opportunit|pipeline|\bsales\b|\bcrm\b|forecast|quota|scoring|outlet|distributor/],
   ['cost', /\bcost|budget|spend|expens|price|pricing|saving|waste|licen/],
   ['experience', /abandon|drop.?out|experience|friction|confusing|journey|conversion|checkout/],
+  // one record of the customer across the business: a "360 view" pain meets the CRM, the lead and the contact, not the field app
+  ['record', /360|single view|one view|unified view|complete view|customer view|view of (?:the |your )?customers?|golden record|customer record|customer data|customer profile|\bcrm\b|lead and opportunit|opportunit|contact (?:management|record)|account management|lead entity|custom fields?|\bprofiles?\b/],
+  ['operate', /aiops|\bsre\b|application (?:management|support|maintenance|operations)|incident|observab|uptime|maintenance|run and maintain|keep (?:the )?applications up|managed service/],
+  ['migration', /migrat|moderni[sz]|legacy|technical debt|tech debt|replac|re-?platform|lift and shift|transform|re-?architect|decommission|cloud/],
   ['build', /construction|project|change order|submittal|subcontract|daily log|bid\b|contractor/],
 ];
 export function groupsOf(t: string): Set<string> {
-  const low = t.toLowerCase();
+  const low = withoutScope(t).toLowerCase();
   const s = new Set<string>();
   for (const [id, re] of GROUPS) if (re.test(low)) s.add(id);
   return s;
@@ -83,7 +90,7 @@ const LENS: Record<string, string> = {
   sales: 'lead pipeline opportunity score forecast crm quota field mobile outlet order',
   product: 'onboarding experience conversion flow checkout link launch roadmap feature journey',
   marketing: 'campaign marketing whatsapp email audience content brand',
-  customer: 'ticket support chat voice knowledge agent assist copilot quality workforce contact queue',
+  customer: 'ticket support chat voice knowledge assist copilot quality workforce contact queue',
   data: 'analytics report insight data model search dashboard',
   hr: 'people employee payroll onboarding',
   procurement: 'procurement vendor approval spend purchase contract',
@@ -338,6 +345,8 @@ function splitCapList(src: string, product = ''): Capability[] {
     // after a "that ..." clause the rest of the list belongs to that clause
     const prev = out[out.length - 1];
     if (prev && prev.desc && thatOpen && !/^(?:with|plus|and)\s/i.test(seg)) { prev.desc = `${prev.desc}, ${one}`; return; }
+    // "Service CRM, an omnichannel customer support suite": an item opened by "a" or "an" after a capitalised name says what that name is
+    if (prev && !prev.desc && !thatOpen && /^(?:an?|the)\s/i.test(one) && one.split(/\s+/).length >= 3 && /[A-Z]/.test(prev.name) && !/\band\b/i.test(one.split(/\s+/).slice(0, 3).join(' ')) && i > 0) { prev.desc = one; return; }
     const parts: string[] = [];
     // a "that ..." clause belongs to the last item: split the "and" before it
     const tm = one.match(/^(.*?)(\s+(?:that|which)\s+.+)$/i);
@@ -552,7 +561,7 @@ export function objectionKind(t0: string, sectorLabels: string[] = []): string {
   if (/\boffline|without (?:a )?(?:network|internet|signal)|no (?:internet|network|signal)|low connectivity/i.test(t)) return 'offline';
   if (/uptime|downtime|outages?|availability|failover|\bsla\b|service levels?|reliab\w*\b.*\b(?:uptime|availability|outages?)|(?:uptime|availability|outages?)\b.*reliab/i.test(t)) return 'uptime';
   if (/accura|reliab|\bgps\b|precise|hallucinat|wrong answers?|false positives?/i.test(t)) return 'accuracy';
-  if (/adopt|will (?:not|n't) use|training|resist|change management|learn(?:ing)? (?:and tune|curve)|time to learn|too complex|take time to learn/i.test(t)) return 'adoption';
+  if (/adopt|will (?:not|n't) use|will not change|won'?t change|change how (?:they|we|our)|training|resist|change management|learn(?:ing)? (?:and tune|curve)|time to learn|too complex|take time to learn/i.test(t)) return 'adoption';
   if (/\bsuitable|right for|good fit|fit for|good for|works? for|\benterprises?\b|large (?:companies|enterprises)|small (?:business|compan)/i.test(t)) return 'suitability';
   if (/^why (?:do|does|did|would)\b.*\b(?:migrate|move|switch|leave)\b/i.test(t)) return 'switch';
   if (/^(?:can|could|may)\b/i.test(t) || /^(?:do|does|will|would|is there|are there)\b/i.test(t) && /\b(?:use|bring|choose|run|import|export|customi[sz]e|configure|extend|support|handle|cover|choose|add|change|fit|match|speak|reach)\b/i.test(t)) return 'canuse';
@@ -633,7 +642,8 @@ function listAfterColon(o: string): string[] {
 }
 function relCaps(text: string, c: AnswerCtx, n = 2): Capability[] {
   const skip = wordsOf(c.P, false);
-  return c.caps.map((x, i) => ({ x, i, s: overlap(`${x.name} ${x.desc}`, text, skip) })).filter((o) => o.s > 0).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, n).map((o) => o.x);
+  // by the words in common first, and by the meaning (the word groups they touch) when no word is shared
+  return c.caps.map((x, i) => ({ x, i, s: fit(`${x.name} ${x.desc}`, text, skip).s })).filter((o) => o.s > 0).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, n).map((o) => o.x);
 }
 function bestAlt(text: string, c: AnswerCtx): string {
   if (!c.alts.length) return '';
@@ -670,12 +680,14 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
   const altRaw = bestAlt(t, c);
   const alt = altRaw ? trimDot(altRaw) : '';
   const SEC_CLAIM = /secur|complian|\bsoc\b|soc ?[12]|iso|pci|gdpr|dpdp|certif|audit|privacy|encrypt|uptime|sla\b/i;
-  const claimHit = c.claims.find((x) => {
+  const claimMatches = c.claims.filter((x) => {
     const n = overlap(x.text, t, wordsOf(P, false));
     if (kind === 'securecompare' || kind === 'security' || kind === 'compliance') return SEC_CLAIM.test(x.text) && (n >= 1 || kind !== 'compliance');
     if (kind === 'timeline') return /\b(?:live|weeks?|days?|implement\w*|go-?live|deploy\w*|onboard\w*|months?)\b/i.test(x.text);
     return n >= 2;
   });
+  // for a timeline question the claim with a figure in it ("live in 6 days") is the one to quote, not the general line
+  const claimHit = kind === 'timeline' ? claimMatches.find((x) => /\d/.test(x.text)) || claimMatches[0] : claimMatches[0];
   const claimTxt = claimHit ? `${trimDot(claimHit.text)}${claimHit.label ? ` (${claimHit.label})` : ' (a claim you gave)'}` : '';
   const sector = (() => {
     const tw = new Set(wordsOf(t));
@@ -690,7 +702,37 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
   const nth = c.seen ? (c.seen[kind] = (c.seen[kind] ?? -1) + 1) : 0;
   const pick = <T,>(xs: T[]): T => xs[nth % xs.length];
   const S = (seller: string, champion: string): string => (sellerV ? seller : champion);
-  const done = (say: string[], ask: string, check: string, k = kind, risk = ''): Answer => ({ kind: k, say: say.filter(Boolean).join(' '), ask, check, sector, risk: risk || RISK[k] || RISK.general });
+  // an answer to a question about the product's fit, its difference or its method names the nearest part and the nearest value point of the case, so it is never only a process line
+  const ANCHOR_KINDS = new Set(['compare', 'achieve', 'phased', 'suitability', 'adoption', 'general', 'process', 'proof', 'why', 'timeline', 'uptime', 'accuracy', 'canuse', 'mycase', 'offline', 'overlap', 'switch']);
+  const upFirstK = (x: string): string => x.charAt(0).toUpperCase() + x.slice(1);
+  const anchorOf = (said: string, k: string): string => {
+    if (!ANCHOR_KINDS.has(k) || (!c.caps.length && !c.outcomes.length)) return '';
+    const lowSaid = said.toLowerCase();
+    const heads = c.outcomes.map((o) => lowerFirst(trimDot(outcomeHead(o)))).filter((h) => h.length > 8 && !/\d/.test(h));
+    const hasPart = c.caps.length === 0 || c.caps.some((x) => lowSaid.includes(x.name.toLowerCase()));
+    const hasPoint = heads.length === 0 || heads.some((h) => lowSaid.includes(h.toLowerCase().slice(0, 30)));
+    if (hasPart && hasPoint) return '';
+    const probe = `${t} ${c.pains[painIdx] || ''}`;
+    const nearest = relCaps(probe, c, 1)[0] || null;
+    const mentioned = c.caps.find((x) => lowSaid.includes(x.name.toLowerCase())) || null;
+    const part = mentioned || nearest;
+    const scoreOf = (h: string): number => fit(`${h} ${part ? `${part.name} ${part.desc}` : ''}`, probe, wordsOf(P, false)).s;
+    const point = heads.map((h, i) => ({ h, i, s: scoreOf(h) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s || a.i - b.i)[0]?.h || '';
+    const kindOf = c.kind ? `${P} is described as ${c.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}` : '';
+    const named = c.caps.slice(0, 3).map((x) => x.name);
+    const out: string[] = [];
+    // the part: the one that fits the question; when none fits, what the description says the seller is and the parts it names (no link is made up)
+    if (!hasPart) out.push(nearest ? S(`The nearest part in my description is ${capText(nearest)}, so I would test the answer there.`, `The nearest part in the description is ${capText(nearest)}, so that is where we should test the answer.`)
+      : kindOf ? S(`${upFirstK(kindOf)}${named.length ? `, with ${joinList(named)} among its parts` : ''}.`, `${upFirstK(kindOf)}${named.length ? `, with ${joinList(named)} among its parts` : ''}.`) : '');
+    // the value point: the one nearest the question, else the first
+    if (!hasPoint) { const vp = point || heads[0] || ''; if (vp) out.push(S(`The value point to judge it against is "${vp}".`, `The value point to judge it against is "${vp}".`)); }
+    return out.filter(Boolean).join(' ');
+  };
+  const done = (say: string[], ask: string, check: string, k = kind, risk = ''): Answer => {
+    const said = say.filter(Boolean);
+    const anchor = anchorOf(said.join(' '), k);
+    return { kind: k, say: (anchor ? [...said, anchor] : said).join(' '), ask, check, sector, risk: risk || RISK[k] || RISK.general };
+  };
   const drivers = model ? PRICE_DRIVERS[model] : 'what you use, how much of it, and what is included';
   const startAt = c.shown && c.shown.length ? `the parts you saw today (${joinList(c.shown.slice(0, 4))})` : c.caps.length ? `the parts you want to start with (${joinList(c.caps.slice(0, 3).map((x) => x.name))})` : 'the parts you want to start with';
 
@@ -815,7 +857,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       ], pick([S('Which of those differences matters most in your case?', 'Which of those differences matters most in our case?'), S('Which of those two sides is closer to how you work today?', 'Which of those two sides is closer to how we work today?'), S('What would you need to see to call one of them the better fit?', 'What would we need to see to call one of them the better fit?')]), `what ${theirs || 'the other option'} and ${P} each do today for that point, from their own documentation; do not claim a difference you cannot show`, 'compare', theirs ? `The difference claimed over ${theirs} may not hold on our own work.` : '');
     }
     case 'integration': {
-      const named = [...new Set((t.match(/\b(?:[A-Z][A-Za-z0-9]*(?:\s+(?:[A-Z][A-Za-z0-9]*|ERP|CRM))*)\b/g) || []).filter((x) => !/^(?:How|Does|Do|Can|Will|What|Why|Is|Are|Our|The|I|We|It|Existing)$/.test(x) && !new RegExp(esc(P), 'i').test(x) && !/^(?:API|APIs|SDK)$/i.test(x)))];
+      const named = [...new Set((t.match(/\b(?:[A-Z][A-Za-z0-9]*(?:\s+(?:[A-Z][A-Za-z0-9]*|ERP|CRM))*)\b/g) || []).filter((x) => !/^(?:How|Does|Do|Can|Will|What|Why|Is|Are|Our|The|I|We|It|Existing)$/.test(x) && !(t.startsWith(x) && /^[A-Z][a-z]+(?:ion|ions|ment|ity|ing|ance|ence|ness|ics)$/.test(x)) && !new RegExp(esc(P), 'i').test(x) && !/^(?:API|APIs|SDK)$/i.test(x)))];
       const focus = (t.match(/\b(?:with|into|to|between)\s+(?:(?:our|my|your|the|existing)\s+)?(.+)$/i) || [])[1] || '';
       const sys = named.length ? named : focus && !/^(?:it|this|that)$/i.test(focus) ? [focus.trim()] : [];
       const apiCaps = relCaps(`${t} integration api connector open`, c, 2);
@@ -854,7 +896,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       const foc = (t.match(/\b(?:does|will|would|is|are|do)\s+(?:the\s+|our\s+|your\s+)?(.+?)\s+(?:take|need|require)\b/i) || [])[1] || '';
       const plan = foc && !/^(?:it|this|that)$/i.test(foc) ? `a dated plan for ${foc}` : 'a dated plan';
       return done([
-        claimTxt ? S(`On record from you: ${claimTxt}. That is a general line, so I will give you ${plan} for your case instead.`, `On record: ${claimTxt}. That is a general line; we should ask ${P} for ${plan} for our case.`) : S(`I will give you ${plan}, not a general number.`, `We should ask ${P} for ${plan}, not a general number.`),
+        claimTxt ? S(`On record from you: ${claimTxt}. That is ${/\d/.test(claimTxt) ? 'one result' : 'a general line'}, so I will give you ${plan} for your case instead.`, `On record: ${claimTxt}. That is ${/\d/.test(claimTxt) ? 'one result' : 'a general line'}; we should ask ${P} for ${plan} for our case.`) : S(`I will give you ${plan}, not a general number.`, `We should ask ${P} for ${plan}, not a general number.`),
         S(`It will show the steps from signing to first use, who does what on each side, and what you need to have ready.${MODEL_SETUP[model || ''] || ''}`, `It should show the steps from signing to first use, who does what on each side, and what we need to have ready.${MODEL_SETUP[model || ''] || ''}`),
       ], S('What date do you need to be live by, and what is behind that date?', 'What date do we need to be live by, and what is behind it?'), `the set-up time you have actually achieved for customers of a similar size and what ${P} needs from the buyer; give a range only if you can show it`);
     }
@@ -902,7 +944,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       ], S('What would have to be true for you to move?', 'What would have to be true for us to move?'), `why customers who moved did so, from a customer that has agreed to speak; do not generalise`);
     }
     case 'phased': {
-      const first = c.caps[0] ? c.caps[0].name : '';
+      const first = (relCaps(`${t} ${c.pains[painIdx] || ''}`, c, 1)[0] || c.caps[0])?.name || '';
       return done([
         S(`I would not ask you for a programme. Start with one first phase${first ? `, for example ${first},` : ''} on one case, with its own measure and its own price; the next phase is decided only on that result.`, `I am not asking for a programme. I am asking for one first phase${first ? `, for example ${first},` : ''} on one case, priced and judged on its own measure; the next phase is decided only on that result.`),
         alt ? S(`That also keeps ${alt} where it is until the first phase has shown what it can do.`, `That also leaves ${alt} in place until the first phase has shown what it can do.`) : '',
@@ -965,7 +1007,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
               S(`If ${P} does not cover it, I will say so rather than stretch the answer.`, `If ${P} does not cover it, we should hear that rather than a stretched answer.`),
               S(`Show me a case and I will tell you straight whether ${P} handles it.`, `We should put a case to ${P} and hear straight whether it handles it.`)]),
         nearAlt ? S(`The option in front of you that comes closest is ${nearAlt}.`, `The option in front of us that comes closest is ${nearAlt}.`) : '',
-      ], pick([S('What would make that answer enough for you?', 'What would make that answer enough for us?'), S('What decision does the answer change for you?', 'What decision does the answer change for us?'), S('Who else needs to hear that answer before you can move?', 'Who else needs to hear that answer before we can move?')]), `the facts behind this question from ${Ps} own documentation`, 'general');
+      ], pick([S('What would make that answer enough for you?', 'What would make that answer enough for us?'), S('What decision does the answer change for you?', 'What decision does the answer change for us?'), S('Who else needs to hear that answer before you can move?', 'Who else needs to hear that answer before we can move?')]), rel.length ? `what ${capsTxt(rel)} does on "${clip(t, 80)}", shown on a real case of ours rather than described` : `a yes or no on "${clip(t, 80)}" from ${Ps} own documentation, with the case it was proved on`, 'general');
     }
   }
 }

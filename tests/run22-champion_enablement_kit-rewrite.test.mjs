@@ -263,3 +263,55 @@ test("round 2: a check that starts with the product's name keeps its capital let
   assert.doesNotMatch(checks, /confirm: buildline/);
   assert.match(checks, /confirm: [^\n]*Buildline/);
 });
+
+// ---- round 3: thin answers and broken bullets (invented services firm and an invented freight platform) ----
+const GRIDFORGE = {
+  asset_type: "internal_business_case", champion_role: "technology leaders", target_stakeholder: "Chief Information Officer",
+  your_solution: "Gridforge, an engineering services firm that builds, modernizes and runs enterprise applications with AI enhanced teams and its own platforms: Forgekit for AI driven development, Moveport for cloud and data migration, Watchtower for AIOps and automation, Agentyard for intelligent agents",
+  key_value_points: "turn application portfolios from operational costs into strategic assets: reclaim budget locked in maintenance, shrink technical debt, raise release velocity, keep applications up and move with greater speed, control and scale",
+  known_objections: "How do enterprises reduce application management costs without sacrificing service quality?; Can enterprises modernize legacy applications incrementally without a full replacement program?; Why do banks choose specialist banking IT partners over general IT firms?; Our operations team will not change how they work",
+  competitive_context: "traditional cloud migration tools that focus mainly on moving workloads; general IT firms without deep domain expertise in banking", budget_context: "$2,000,000 a year (hypothetical annual cost)",
+};
+const FREIGHTLY = {
+  asset_type: "internal_business_case", champion_role: "Transport Excellence Manager", target_stakeholder: "Chief Supply Chain Officer",
+  your_solution: "Freightly, a decision platform for shippers that joins transport management, shipment visibility on every mode, yard management and last mile delivery, with AI agents that act on exceptions",
+  key_value_points: "act before a problem becomes a cost: put an end to best guess dock labor planning, avoid excess cost from expedites, detention and dwell, free up working capital without risking stock outs, and resolve exceptions faster; the page states 30% reduction in supply chain costs, 85% faster exception resolution, 40% improvement in on time delivery and 60% reduction in manual tasks (page claims); measurable gains in productivity within weeks of deployment (page claim); one customer went live in 6 days (page claim)",
+  known_objections: "Integration effort; What is the implementation timeline?; Our operations team will not change how they work",
+  competitive_context: "a legacy logistics system that cannot detect delays", budget_context: "$250,000 a year (hypothetical annual cost)",
+};
+const gridforge = await call(GRIDFORGE), freightly = await call(FREIGHTLY);
+test("round 3: every answer uses the seller's parts or value points in at least one concrete sentence, and the part chosen is the one that fits", () => {
+  const PARTS = /Forgekit|Moveport|Watchtower|Agentyard/, POINTS = /budget locked in maintenance|technical debt|release velocity|keep applications up|strategic assets/i;
+  for (const o of GRIDFORGE.known_objections.split("; ")) {
+    const b = objBlock(gridforge, o);
+    assert.ok(PARTS.test(b) || POINTS.test(b), `${o}: no part and no value point in the answer`);
+  }
+  assert.match(objBlock(gridforge, "How do enterprises reduce application management costs without sacrificing service quality?"), /Watchtower/);
+  const inc = objBlock(gridforge, "Can enterprises modernize legacy applications incrementally without a full replacement program?");
+  assert.match(inc, /Moveport/);
+  assert.doesNotMatch(inc, /for example Forgekit/);
+});
+test("round 3: a value point listed apart is listed as whole items that each start with an action, or kept as one whole bullet; never a fragment", () => {
+  for (const t of [gridforge, freightly]) {
+    const sec = t.split("## What we expect to get")[1].split("\n\n")[1];
+    for (const l of sec.split("\n").filter((x) => /^\s+- /.test(x))) assert.match(l.trim(), /^- (?:Reclaim|Shrink|Raise|Keep|Put|Avoid|Free|Resolve|Act)\b/, `fragment bullet: ${l}`);
+  }
+  const f = freightly.split("## What we expect to get")[1].split("\n\n")[1];
+  assert.match(f, /\n\s+- Resolve exceptions faster\n/);
+  assert.match(f, /\n\s+- Avoid excess cost from expedites, detention and dwell\n/);
+  assert.match(f, /^- 40% improvement in on time delivery \(page claims\)$/m);
+  assert.match(f, /^- 60% reduction in manual tasks \(page claims\)$/m);
+  assert.doesNotMatch(f, /The page states 30%|The platform page states/i);
+});
+test("round 3: an objection that is only a label does not print the label as a system name, and a 'will not change' objection is an adoption answer", () => {
+  const integ = objBlock(freightly, "Integration effort");
+  assert.doesNotMatch(integ, /\(Integration\)/);
+  assert.doesNotMatch(freightly, /which of Integration/i);
+  const adopt = objBlock(freightly, "Our operations team will not change how they work");
+  assert.match(adopt, /first group|small first group|every day/i);
+  assert.doesNotMatch(freightly.split("## Risks")[1].split("## Next steps")[0], /the facts behind this question/);
+});
+test("round 3: the timeline answer quotes the specific go-live claim, not the general one", () => {
+  const tl = objBlock(freightly, "What is the implementation timeline?");
+  assert.match(tl, /went live in 6 days/);
+});

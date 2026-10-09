@@ -214,7 +214,7 @@ function buildDiscoveryBank(args, d) {
         heading('P: Paper process', [`What do legal, security and procurement need to see before ${P} can be signed, and how long does each take?`, rankedParts.length >= 2 ? `Which of ${partWords(2).replace(' or ', ' and ')} would those reviewers look at hardest?` : `What would those reviewers look at hardest in ${critA}?`]),
         heading('I: Identify pain', painIQs),
         heading('C: Champion', champQs),
-        heading('C: Competition', [`What do you use today for ${critA}, and what do you like about it?`, `Have you considered building this yourselves, or leaving it as it is?`, `Which other vendors are you speaking to about ${critA}?`]),
+        heading('C: Competition', [pains.length ? `What do you use today to deal with ${X}, and what do you like about it?` : `What do you use today instead of ${critA}, and what do you like about it?`, `Have you considered building this yourselves, or leaving it as it is?`, `Which other vendors are you speaking to about ${critA}?`]),
     ].join('\n\n');
     const bant = `## BANT questions\n\n` + [
         heading('B: Budget', [`Is there budget this year for fixing ${X}, and which line does it sit under?`, `What do you spend today on ${critA}, including your team's time?`, isSigner ? `Is the budget for a purchase like ${P}${inInd} yours to release, or does someone else hold it?` : `Who controls the budget for a purchase like ${P}${inInd}: ${signerThe}?`]),

@@ -1263,7 +1263,7 @@ exports.SUBTYPES = [
     },
     {
         id: 'email-security', vertical: 'cybersecurity', name: 'email security',
-        match: /\b(?:email security|e.mail security|secure email gateway|anti.phishing|phishing (?:protection|simulation|defen[cs]e|detection)|business email compromise|email threat protection|email filtering|email encryption|security awareness training)\b/i,
+        match: /\b(?:email security|e.mail security|secure email gateway|anti.phishing|phishing (?:protection|simulation|defen[cs]e|detection)|business email compromise|email threat protection|email filtering|email encryption)\b/i,
         model: 'saas',
         notes: {
             vocabulary: ['phishing', 'business email compromise', 'malicious attachment', 'spoofing', 'impersonation', 'quarantine', 'secure email gateway', 'user reporting', 'awareness training', 'mailbox'],
@@ -1284,6 +1284,32 @@ exports.SUBTYPES = [
                 'How do staff report suspicious mail, and who handles those reports?',
                 'Which teams are targeted most (finance, executives, support)?',
                 'How would you judge a trial a success?',
+            ],
+        },
+    },
+    {
+        id: 'awareness-training', vertical: 'cybersecurity', name: 'security awareness and human risk',
+        match: /\b(?:security awareness(?: training| platform| programme| program)?|awareness training|human risk(?: management)?|phishing training|security culture|behaviou?r change (?:training|platform))\b/i,
+        model: 'saas',
+        notes: {
+            vocabulary: ['security awareness', 'human risk', 'user reporting', 'behaviour change', 'repeat clickers', 'adaptive training', 'security champions', 'suspicious message', 'completion', 'employee privacy'],
+            buyerRoles: ['CISO', 'Head of Security Awareness', 'Head of Security Operations', 'Head of HR or Learning and Development', 'Head of Risk and Compliance', 'Head of IT'],
+            committee: 'The CISO or the head of security awareness signs; the awareness or security operations lead champions it; HR or learning and development checks how training reaches staff; IT handles the identity and mail links; legal and employee representatives check what is recorded about each person.',
+            objections: [
+                { objection: 'Our staff already do a yearly course', response: 'Show that a yearly course and steady practice do different jobs, and measure real reports and risky clicks over time rather than course completion.' },
+                { objection: 'Employees will feel watched or tricked', response: 'Explain what is recorded about each person, who sees it and how practice messages are framed, and agree the rules with HR and employee representatives before launch.' },
+                { objection: 'It takes staff away from their work', response: 'Show short sessions tied to real mistakes, the time per person per month, and pilot with one team first.' },
+                { objection: 'We already filter email', response: 'Filtering and awareness do different jobs: show the messages that still reach staff and how many of them get reported.' },
+            ],
+            salesMotion: 'CISO or security awareness led, often after an incident or an audit finding; a pilot with a few departments, then a company wide rollout with HR and legal involved early.',
+            metrics: ['user report rate', 'repeat risky clicks', 'time to report a suspicious message', 'share of staff who took part in practice', 'reports that were real threats', 'time spent per person', 'analyst time per reported message'],
+            proofShape: 'Report rate and risky click rate for a group before and after a set period, with the length of the period and the size of the group stated.',
+            discovery: [
+                'How do you train staff on phishing and social engineering today, and how often?',
+                'What happened the last time a staff member clicked on something they should not have?',
+                'How do staff report a suspicious message, and who handles those reports?',
+                'Which groups carry the most risk (finance, executives, new joiners, support)?',
+                'How would you judge a pilot a success, and who has to agree?',
             ],
         },
     },

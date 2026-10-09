@@ -51,7 +51,7 @@ function buildDiscoveryBank(args, d) {
     const roleFam = prospectRole ? (0, dealtext_ts_1.familyOf)(prospectRole, investment) : 'other';
     const roleTxt = prospectRole ? low(prospectRole) : '';
     const plural = !!roleTxt && isPluralRole(roleTxt);
-    const youRole = roleTxt && !plural ? anOf(roleTxt) : 'you';
+    const youRole = 'you'; // the questions are put to the person in the room, so they say "you"
     const asRole = roleTxt ? `as ${plural ? roleTxt : anOf(roleTxt)}` : '';
     const indLow = prospectIndustry ? low(prospectIndustry) : '';
     const inInd = indLow && !(roleTxt && roleTxt.includes(indLow)) ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
@@ -69,7 +69,8 @@ function buildDiscoveryBank(args, d) {
     const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics);
     const M1 = sectorMetrics[0] || 'the number this problem moves';
     const Mlist = sectorMetrics.length >= 2 ? (0, dealtext_ts_1.joinList)(sectorMetrics.slice(0, 3), 'or') : M1;
-    const otherRoles = v ? v.buyerRoles.filter((r) => (0, dealtext_ts_1.familyOf)(r, investment) !== roleFam).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
+    const aboutSecurity = /\b(?:secur\w*|phish\w*|threat\w*|vulnerab\w*|fraud|breach\w*|identity|access|privacy|encrypt\w*)\b/i.test(`${yourSolution} ${knownPainPoints}`);
+    const otherRoles = v ? v.buyerRoles.filter((r) => (0, dealtext_ts_1.familyOf)(r, investment) !== roleFam && (aboutSecurity || !['security', 'risk'].includes((0, dealtext_ts_1.familyOf)(r, investment)))).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
     const otherTxt = otherRoles.length ? (0, dealtext_ts_1.joinList)(otherRoles.map((r) => `your ${r}`), 'or') : 'someone else on your side';
     const signerClause = v ? low(v.committee.split(';')[0]).replace(/\s+signs?$/i, '') : '';
     const signer = isSigner ? 'you' : signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
@@ -77,9 +78,12 @@ function buildDiscoveryBank(args, d) {
     // ---- the parts, closest to the pains and the role first ----
     const roleLens = prospectRole ? `${prospectRole} ${(0, rw_kit_ts_1.lensFor)(roleFam)}` : '';
     const skipP = (0, rw_kit_ts_1.wordsOf)(P, false);
+    // a part touches a problem by a word in common, or (less) when its own name belongs to a word group the problem is about ("financial crime compliance" and "tighter regulations")
+    const touch = (c, p) => { const f = (0, rw_kit_ts_1.fit)(`${c.name} ${c.desc}`, p, skipP); if (f.w >= 1)
+        return f.s; const gp = (0, rw_kit_ts_1.groupsOf)(p); return [...(0, rw_kit_ts_1.groupsOf)(c.name)].some((g) => gp.has(g)) ? 1 : 0; };
     const partScore = (c) => {
         const t = `${c.name} ${c.desc}`;
-        const byPain = pains.length ? Math.max(...pains.map((p) => { const f = (0, rw_kit_ts_1.fit)(t, p, skipP); return f.w >= 1 ? f.s : 0; })) : 0;
+        const byPain = pains.length ? Math.max(...pains.map((p) => touch(c, p))) : 0;
         return byPain * 2 + (roleLens ? (() => { const f = (0, rw_kit_ts_1.fit)(t, roleLens, skipP); return f.w >= 1 ? f.s : 0; })() : 0);
     };
     const scored = product.caps.map((c, i) => ({ c, i, s: partScore(c) }));
@@ -88,8 +92,8 @@ function buildDiscoveryBank(args, d) {
     const critA = P;
     const critB = rankedParts[1]?.name || sectorMetrics[0] || 'the outcome you care about';
     const partWords = (n) => (0, dealtext_ts_1.joinList)(rankedParts.slice(0, n).map((x) => x.name), 'or');
-    const bestPainFor = (c) => { let best = -1, bs = 0; pains.forEach((p, i) => { const f = (0, rw_kit_ts_1.fit)(`${c.name} ${c.desc}`, p, skipP); if (f.w >= 1 && f.s > bs) {
-        bs = f.s;
+    const bestPainFor = (c) => { let best = -1, bs = 0; pains.forEach((p, i) => { const sc = touch(c, p); if (sc > bs) {
+        bs = sc;
         best = i;
     } }); return best; };
     const qs = (items) => items.filter(Boolean).map((x) => `- ${x}`).join('\n');
@@ -136,7 +140,7 @@ function buildDiscoveryBank(args, d) {
     // ---- the prospect's role: built from the pain, the parts and the industry ----
     const roleKnown = !!roleKnow && roleFam !== 'other';
     const roleOwn = prospectRole ? [
-        pains.length ? `${(0, rw_kit_ts_1.upFirst)(asRole)}${inInd}, which of the numbers you answer for does ${X} move, and by how much?` : `${(0, rw_kit_ts_1.upFirst)(asRole)}${inInd}, which numbers do you answer for in ${critA}, and to whom?`,
+        pains.length ? `In your role${inInd}, which of the numbers you answer for does ${X} move, and by how much?` : `In your role${inInd}, which numbers do you answer for in ${critA}, and to whom?`,
         rankedParts.length >= 2 ? `Which of ${partWords(2)} would matter most to ${youRole}${inInd}, and why?` : rankedParts.length ? `How would ${rankedParts[0].name} matter to ${youRole}${inInd}, and what would it need to do first to earn its place?` : '',
         `Who do you turn to first when this goes wrong${inInd}, and what do they say?`,
     ] : [];
@@ -160,13 +164,21 @@ function buildDiscoveryBank(args, d) {
     ];
     // a statement that carries figures after a colon ("complex: 9,000 devices, 21 systems and 8 engines") is asked about by its figures: which of them are covered, which left out
     const figuresOf = (p) => { const at = p.indexOf(': '); const tail = at > 0 ? p.slice(at + 2) : ''; return /\d/.test(tail) ? tail.replace(/,?\s+and\s+[a-z][^,]*$/i, (m) => (/\bmust\b|\bcannot\b|\bcan't\b|\bneed/i.test(m) ? '' : m)) : ''; };
-    const painLines = pains.map((p, i) => {
+    // a problem of a known kind (waiting, risk, hand-offs, leaving, cost, audit, finding things) is asked about in the words of that kind; the first problem keeps its measure question too
+    const typedUse = {};
+    const painLines = pains.flatMap((p, i) => {
         const fig = figuresOf(p);
         if (fig && i === 0)
-            return `On ${pRef(i)}: you gave "${low((0, dealtext_ts_1.clip)(fig, 110)).replace(/"/g, "'")}". Which of those do you cover today, which do you leave out, and how do you choose?`;
-        return painShells[i % painShells.length](pRef(i), v && !sellerSw ? (0, dealtext_ts_1.joinList)(d.rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : '');
+            return [`On ${pRef(i)}: you gave "${low((0, dealtext_ts_1.clip)(fig, 110)).replace(/"/g, "'")}". Which of those do you cover today, which do you leave out, and how do you choose?`];
+        const pt = (0, rw_kit_ts_1.painType)(p);
+        if (pt === 'general')
+            return [painShells[i % painShells.length](pRef(i), v && !sellerSw ? (0, dealtext_ts_1.joinList)(d.rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : '')];
+        const n = typedUse[pt] = (typedUse[pt] ?? -1) + 1;
+        const m0 = v && !sellerSw ? (0, dealtext_ts_1.joinList)(d.rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : '';
+        const ask = rw_kit_ts_1.SHOW[pt].ask[n % 3].replace(/^([A-Z])(?=[a-z])/, (c) => c.toLowerCase());
+        return [`On ${pRef(i)}: ${ask}${i === 0 && m0 ? ` And which of ${m0} does it show up in first?` : ''}`];
     });
-    const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${qs([...painLines, pains.length > 1 ? `Of ${pains.length === 2 ? 'the two' : `the ${pains.length}`} problems above, which hurts most, and which would ${signerThe} fix first if only one could be fixed?` : ''])}\n\n---\n\n` : '';
+    const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${qs([...painLines, pains.length > 1 ? `Of ${pains.length === 2 ? 'the two' : `the ${pains.length}`} problems above, which hurts most${inInd}, and which would ${signerThe} fix first if only one could be fixed?` : ''])}\n\n---\n\n` : '';
     // ---- the product's parts ----
     // the kind of a part decides what is worth asking about it
     const partKind = (c) => {
@@ -181,13 +193,19 @@ function buildDiscoveryBank(args, d) {
     };
     const kindCount = { tech: 0, measure: 0, people: 0, other: 0 };
     let tiedCount = 0;
+    const usedTied = new Set();
     const partShell = (c, i) => {
         const pi = bestPainFor(c);
         const said = c.desc && !/^(?:that|which|for|as)\s/i.test(c.desc) ? ` (${c.desc})` : c.desc ? ` ${c.desc}` : '';
         const head = `${(0, rw_kit_ts_1.upFirst)(c.name)}${said}`;
-        if (pi >= 0 && i % 2 === 0) {
-            const n = tiedCount++;
-            return `${head}: ${[`on ${pShort(pi)}, which step does it touch, who does that step today, and with what?`, `how much of ${pShort(pi)} would it take over, and what would still be done by hand?`, `which part of ${pShort(pi)} would you try it on first, and what result would count?`][n % 3]}`;
+        if (pi >= 0) {
+            const options = [`on ${pShort(pi)}, which step does it touch, who does that step today, and with what?`, `how much of ${pShort(pi)} would it take over, and what would still be done by hand?`, `which part of ${pShort(pi)} would you try it on first, and what result would count?`];
+            const pick = options.map((_o, k) => options[(tiedCount + k) % 3]).find((o) => !usedTied.has(o));
+            if (pick) {
+                tiedCount++;
+                usedTied.add(pick);
+                return `${head}: ${pick}`;
+            }
         }
         const k = partKind(c), n = kindCount[k]++;
         const V = {
@@ -212,15 +230,25 @@ function buildDiscoveryBank(args, d) {
     const painIQs = pains.length ? pains.slice(0, 3).flatMap((p, i) => (i === 0
         ? [`On ${pRef(i)}: who feels it most, and what does it cost them?`, `On ${pShort(i)}: what happens each week that it stays that way?`]
         : [`On ${pRef(i)}: ${i === 1 ? 'who first raised it, and why then?' : 'what does it cost, and who owns it?'}`])) : [`What is not working today in ${critA}${inInd}?`];
+    // each further problem is asked about with its own measures, so the metrics do not stay on the first problem only
+    const perPainMeasures = pains.length > 1 ? pains.slice(1, 3).map((p, k) => {
+        const i = k + 1;
+        const fromSector = v && !sellerSw ? v.metrics.filter((m) => (0, rw_kit_ts_1.fit)(m, p).s > 0).slice(0, 3) : [];
+        // the things the problem itself names ("from rising volumes, tighter regulations and the cost of risk management") are the measures when the sector's own do not fit
+        const listed = (p.match(/\b(?:from|by|with|of|across)\s+((?:[^,]{3,60},\s+)+(?:and\s+|or\s+)?[^,]{3,90})$/i) || [])[1];
+        const own = listed ? listed.split(/,\s+(?:and\s+|or\s+)?|\s+and\s+/).map((x) => x.trim()).filter(Boolean).slice(0, 4) : [];
+        const items = fromSector.length >= 2 ? fromSector : own.length >= 2 ? own : [];
+        return items.length ? `If ${pShort(i)} were fixed, which of ${(0, dealtext_ts_1.joinList)(items, 'or')} would move first, and by how much?` : `If ${pShort(i)} were fixed, which number would move first, and who reports it today?`;
+    }) : [];
     const heading = (t, items) => `### ${t}\n\n${qs(items)}`;
     const ebQs = isSigner
-        ? [`${(0, rw_kit_ts_1.upFirst)(asRole)} do you sign off a purchase like ${P}${inInd} yourself, or does a board, a committee or an owner have the last word?`, `Who else has to agree before ${P} can be signed: ${otherTxt}?`, `What would you need to see from ${P} to say yes yourself?`]
+        ? [`Do you sign off a purchase like ${P}${inInd} yourself, or does a board, a committee or an owner have the last word?`, `Who else has to agree before ${P} can be signed: ${otherTxt}?`, `What would you need to see from ${P} to say yes yourself?`]
         : [`Who signs off a purchase like ${P}${inInd}, and have they seen ${X} first-hand?`, `What would ${signerThe} need to see to move forward on ${P}?`, `Can we include ${signerThe} in the next conversation about ${critA}?`];
     const champQs = isSigner
         ? [`Besides you, who would carry ${P} inside${inInd}: ${otherTxt}?`, `If I gave you a business case for ${P}, who would you take it to first?`, `What would that person need from us to push for ${critA}?`]
         : [`Besides ${youRole}, who else wants ${X} fixed${otherRoles.length ? `: ${otherTxt}` : ''}?`, `If I gave you a business case for ${P}, would you take it to ${signerThe}?`, `What would that person need from us to push for ${critA}?`];
     const meddpicc = `## MEDDPICC questions\n\n` + [
-        heading('M: Metrics', [...metricsQs, `If ${X} were fixed, which of ${Mlist} would move first, and by how much would it have to move to matter to ${youRole}?`, `What does ${X} cost each month today in time, money or risk, and how did you arrive at that figure?`]),
+        heading('M: Metrics', [...metricsQs, `If ${X} were fixed, which of ${Mlist} would move first, and by how much would it have to move to matter to ${youRole}?`, ...perPainMeasures, `What does ${X} cost each month today in time, money or risk, and how did you arrive at that figure?`]),
         heading('E: Economic buyer', ebQs),
         heading('D: Decision criteria', [rankedParts.length >= 2 ? `Which of ${partWords(3)} would be a must-have for ${youRole}, and which would be nice to have?` : `What would be a must-have in ${critA} for ${youRole}, and what would be nice to have?`, `How much weight do you give ${M1} when you compare options for ${critA}?`, `What would make you drop an option for ${critA}?`]),
         heading('D: Decision process', [`What steps does a decision on ${critA} go through${inInd}, and who is involved at each step?`, `What date are you working back from to have ${X} fixed, and what happens if it slips?`]),
@@ -251,9 +279,9 @@ function buildDiscoveryBank(args, d) {
     ].join('\n\n');
     const gapSelling = `## Gap Selling questions\n\n` + [
         heading('Current state', [`Walk me through how ${critA} runs today: who does each step and with which tools?`, `How does ${X} show up in ${M1} today?`]),
-        heading('Future state', [`If ${X} were gone a year from now, what would ${youRole} be doing differently?`, `How would you measure that: ${Mlist}?`]),
+        heading('Future state', [`If ${X} were gone a year from now, what would ${youRole} be doing differently in your work${inInd}?`, `How would you measure that: ${Mlist}?`]),
         heading('The gap', [`What does the gap between today and that cost each quarter, in terms of ${M1}?`, `Who else feels the gap in ${critA}, and what do they lose?`]),
-        heading('Problems behind the problem', [`Why do you think ${X} happens, and what have you tried to fix it?`, `What in your systems or process makes it hard to fix${rankedParts[0] ? `, starting with ${rankedParts[0].name}` : ''}?`]),
+        heading('Problems behind the problem', [`Why do you think ${X} happens${inInd}, and what have you tried to fix it?`, `What in your systems or process makes it hard to fix${rankedParts[0] ? `, starting with ${rankedParts[0].name}` : ''}?`]),
     ].join('\n\n');
     // ---- the close, by stage ----
     const CLOSE = {
@@ -264,7 +292,7 @@ function buildDiscoveryBank(args, d) {
         executive: `What would you need from us to take ${P} to a decision on ${critA}?`,
     };
     const closeSection = `## Closing the call\n\n${qs([
-        `Here is what I heard: ${pains.length > 1 ? `${pains.length} problems with ${critA}` : pains.length ? 'one problem with ' + critA : `the problem with ${critA}`}${knownMetrics && !noMetrics ? `, measured today as "${low((0, dealtext_ts_1.clip)(knownMetrics, 100)).replace(/"/g, "'")}"` : ''}${roleTxt ? `, and it sits with ${youRole}` : ''}. Have I got that right?`,
+        `Here is what I heard: ${pains.length > 1 ? `${pains.length} problems you want fixed with ${critA}` : pains.length ? `one problem you want fixed with ${critA}` : `the problem you want fixed with ${critA}`}${knownMetrics && !noMetrics ? `, measured today as "${low((0, dealtext_ts_1.clip)(knownMetrics, 100)).replace(/"/g, "'")}"` : ''}${roleTxt ? (isSigner ? ', and the decision is yours' : `, and the decision sits with ${signerThe}`) : ''}. Have I got that right?`,
         gaps.length ? `The open points are ${(0, dealtext_ts_1.joinList)(gaps.map((g) => low(g)))}. Who can I speak to about each one?` : `What should I have asked about ${critA} and did not?`,
         CLOSE[dealStage] || CLOSE.discovery
     ])}\n\n---\n\n`;

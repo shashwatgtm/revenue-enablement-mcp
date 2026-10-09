@@ -141,13 +141,19 @@ function buildChampionKit(args, d) {
     const kindSentence = !kind || (0, rw_kit_ts_1.wordsOf)(kind, false).every((w) => (0, rw_kit_ts_1.wordsOf)(P, false).includes(w)) ? '' : /^(?:a|an|the)\s/i.test(kind) ? `${(0, rw_kit_ts_1.upFirst)(P)} is ${kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(kind) ? `${(0, rw_kit_ts_1.upFirst)(P)} is ${(0, dealtext_ts_1.aAn)(kind)}.` : `${(0, rw_kit_ts_1.upFirst)(P)} is described as ${kind}.`;
     const partsSentence = product.caps.length >= 2 ? `It covers ${(0, dealtext_ts_1.joinList)(product.caps.slice(0, 8).map(rw_kit_ts_1.capText))}.${rel.length && rel.length < product.caps.length ? ` The ${rel.length === 1 ? 'part' : 'parts'} closest to our points ${rel.length === 1 ? 'is' : 'are'} ${(0, dealtext_ts_1.joinList)(rel.map((c) => c.name))}.` : ''}` : '';
     const overview = [kindSentence || (brief.name ? `We are looking at ${P}.` : ''), partsSentence].filter(Boolean).join(' ');
-    const steps = d.steps(v, modelKey).slice(0, 4).map(own);
+    const stepsAll = d.steps(v, modelKey).slice(0, 4).map(own);
+    // a case whose value points are about modernising starts with the first application to modernise, not with the design of the service levels
+    const modernising = /\bmoderni[sz]\w*|\bmigrat\w*|\blegacy\b|technical debt/i.test(outs.map((o) => o.text).join(' '));
+    const steps = modernising && ctx.model === 'services' && /service levels?|sla\b/i.test(stepsAll[0] || '') ? [`agree the first application or workload to modernise, the measure that shows it worked, and the scope of the service`, ...stepsAll.slice(1)] : stepsAll;
     const stepFirst = low(steps[0] || 'agree the scope, the owners and the measure');
     const stepLast = low(steps[steps.length - 1] || 'review the result and decide the wider rollout');
     const askLine = `${bud ? `approve ${P} at ${bud}` : `approve ${P}`} and the first step: ${stepFirst}`;
     const aim = outs[0] ? low(outs[0].head) : '';
     const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
-    const noReturn = `No return figure is stated here, because none was given. Run roi_business_case_builder with our own cost figures and add the result.`;
+    const quotedReturn = outClaims.find((c) => /\b(?:roi|return on investment|payback|return)\b/i.test(c.text));
+    const noReturn = quotedReturn
+        ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [(0, dealtext_ts_1.clip)(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Run roi_business_case_builder with our own cost figures and add the result.`
+        : `No return figure is stated here, because none was given. Run roi_business_case_builder with our own cost figures and add the result.`;
     const outBullets = outs.map((o) => `- ${(0, rw_kit_ts_1.upFirst)(o.subs.length ? o.head : o.text)}${o.label ? ` (${o.label})` : ''}${o.subs.length && o.note ? ` (${o.note})` : ''}${o.subs.length ? `:\n${o.subs.map((x) => `  - ${(0, rw_kit_ts_1.upFirst)(x)}`).join('\n')}` : ''}`).join('\n');
     const altList = alts.length > 1 && alts.some((a) => /,|\band\b/i.test(a)) ? alts.join('; ') : (0, dealtext_ts_1.joinList)(alts);
     const altsSentence = alts.length ? `The alternatives we looked at are ${altList}.` : '';
@@ -221,7 +227,7 @@ function buildChampionKit(args, d) {
             head('Internal Business Case'),
             memoLines(`Subject: Business case for ${P}`),
             `I recommend that we approve ${P}${bud ? `, at ${bud}` : ''}.${aim ? ` The aim: ${aim}.` : ''}${urg ? ` The timing: ${urg}.` : ''} The rest of this note says what it is, what we expect to get, what it costs, what could go wrong and how I would start.`,
-            alts.length ? `## Where we are today\n\n${alts.length > 1 ? `The options in front of us are ${altList}.` : `The option in front of us is ${altList}.`}` : '',
+            alts.length ? `## Where we are today\n\n${alts.length > 1 ? `The options in front of us are ${altList}.` : `The option in front of us is ${altList}.`}${aim ? ` What we want instead: ${aim}.` : ''}` : '',
             `## What we propose\n\n${overview || `We are proposing ${P}.`}`,
             outs.length ? `## What we expect to get\n\n${outBullets}${claimNote ? `\n\n${claimNote}` : ''}` : '',
             `## What it costs\n\n${bud ? `${bud}. ` : 'No price has been given yet. '}${noReturn}`,

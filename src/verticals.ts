@@ -1318,7 +1318,7 @@ export const SUBTYPES: SubType[] = [
         { objection: 'Our staff already do a yearly course', response: 'Show that a yearly course and steady practice do different jobs, and measure real reports and risky clicks over time rather than course completion.' },
         { objection: 'Employees will feel watched or tricked', response: 'Explain what is recorded about each person, who sees it and how practice messages are framed, and agree the rules with HR and employee representatives before launch.' },
         { objection: 'It takes staff away from their work', response: 'Show short sessions tied to real mistakes, the time per person per month, and pilot with one team first.' },
-        { objection: 'We already filter email', response: 'Filtering and awareness do different jobs: show the messages that still reach staff and how many of them get reported.' },
+        { objection: 'Our email security already catches phishing', response: 'Email security and awareness do different jobs: show the messages that still reach staff and how many of them get reported.' },
       ],
       salesMotion: 'CISO or security awareness led, often after an incident or an audit finding; a pilot with a few departments, then a company wide rollout with HR and legal involved early.',
       metrics: ['user report rate', 'repeat risky clicks', 'time to report a suspicious message', 'share of staff who took part in practice', 'reports that were real threats', 'time spent per person', 'analyst time per reported message'],

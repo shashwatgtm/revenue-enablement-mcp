@@ -17,5 +17,7 @@ export declare function trapQuestion(wRaw: string, comp: string): {
     topic: string;
 };
 export declare const TRAP_WANT_VERBS: RegExp;
+export declare function fineClauses(w: string): string[];
+export declare function joinLists(cs: string[]): string[];
 export declare function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: string, sectorBlock: (v: Vertical | null) => string): string;
 //# sourceMappingURL=rw-trap.d.ts.map

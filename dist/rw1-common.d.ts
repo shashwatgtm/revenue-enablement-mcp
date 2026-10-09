@@ -46,7 +46,8 @@ export interface ModelWords {
     /** what is set up before first use */
     setup: string;
 }
-export declare function modelWords(model: BusinessModel | null, _sellerText: string, unit?: string): ModelWords;
+export type Model2 = BusinessModel | 'sim';
+export declare function modelWords(model: Model2 | null, _sellerText: string, unit?: string): ModelWords;
 export type Part = 'champion' | 'buyer' | 'economic' | 'blocker' | 'user' | 'influencer' | 'outside' | 'group';
 export interface RoleCtx {
     P: string;
@@ -74,7 +75,7 @@ export declare function readThreats(items: string[]): ThreatRead[];
 export interface QACtx {
     P: string;
     parts: string[];
-    model: BusinessModel | null;
+    model: Model2 | null;
     sellerText: string;
     /** the unit a usage priced deal is paid in (read from the user's words), or '' */
     unit?: string;
@@ -115,4 +116,13 @@ export declare function briefOf(text: string, fields: string[]): SolutionBrief;
 export declare function usageUnit(...texts: string[]): string;
 /** Replaces the business model sentence of a context line when the user's pricing words show a usage priced deal. */
 export declare function usageLine(line: string, unit: string): string;
+export interface ModelRead {
+    model: Model2 | null;
+    unit: string;
+    line: string;
+    stated: boolean;
+}
+/** The business model, read from the user's own words as well as from the sector reader. A connectivity sector read is for fixed sites and links; a seller of SIMs gets its own wording,
+ *  and a seller of an API or of pay as you go usage gets usage wording, unless the user's words name sites, links or a managed network. */
+export declare function readModel(ctxModel: BusinessModel | null, ctxLine: string, sellerText: string, others: string[]): ModelRead;
 //# sourceMappingURL=rw1-common.d.ts.map

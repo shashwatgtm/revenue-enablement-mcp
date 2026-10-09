@@ -63,25 +63,31 @@ function buildMutualActionPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
-    const usage = (0, rw1_common_ts_1.usageUnit)(solutionIn, reqIn, blockersIn);
-    const model = usage && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
-    const ctxLine = usage && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [reqIn, blockersIn, dealName]);
+    const usage = mr.unit;
+    const model = mr.model;
+    const ctxLine = mr.line;
     const P = brief.short || 'the solution';
     const mw = (0, rw1_common_ts_1.modelWords)(model, solutionIn, usage || undefined);
-    const statedModel = !/assumed/.test(ctx.line) || !!usage;
+    const statedModel = mr.stated;
+    // an owner led deal: the champion is the owner, no procurement contact or buying process was given. The owner decides and signs; the enterprise steps are left out.
+    const OWNER_WORDS = /\b(?:owners?|founders?|proprietors?|shop ?keepers?|self[- ]employed|managing partner)\b/i;
+    const ownerLed = (OWNER_WORDS.test(champion) || OWNER_WORDS.test(economic)) && !procurement && !stepsIn;
+    const USERISH = /\b(?:staff|cashiers?|representatives|reps?|crew|waiters?|waitresses|clerks?|counter|front desk|field (?:teams?|staff)|drivers?|operators?)\b/i;
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)((0, rw1_common_ts_1.industryFromTitle)(dealName));
     // ---- the people ----
     const evaluators = (0, dealtext_ts_1.parseContacts)(evalIn, investment).map((c) => ({ ...c, raw: c.raw.replace(/^(?:and|or)\s+/i, ''), title: c.title.replace(/^(?:and|or)\s+/i, '') }));
-    const pick = (fams) => evaluators.find((e) => fams.includes(e.family));
-    const itName = (pick(['it', 'engineering', 'data']) || pick(['security']))?.title || 'Buyer IT reviewer';
-    const secName = (pick(['security']) || pick(['it', 'engineering']) || pick(['risk']))?.title || 'Buyer security reviewer';
-    const riskName = (pick(['risk']) || pick(['security']))?.title || 'Buyer risk and compliance reviewer';
-    const finName = pick(['finance'])?.title || 'Buyer finance contact';
+    const pick = (fams) => evaluators.find((e) => fams.includes(e.family) && !USERISH.test(e.title));
     const champName = champion || 'Buyer champion';
-    const ebName = economic || 'Economic buyer';
-    const champRef = champion || 'the buyer\'s champion';
-    const ebRef = economic || 'the economic buyer';
-    const procName = procurement || 'Buyer procurement and legal';
+    const own = ownerLed ? champName : '';
+    const itName = (pick(['it', 'engineering', 'data']) || pick(['security']))?.title || own || 'Buyer IT reviewer';
+    const secName = (pick(['security']) || pick(['it', 'engineering']) || pick(['risk']))?.title || own || 'Buyer security reviewer';
+    const riskName = (pick(['risk']) || pick(['security']))?.title || own || 'Buyer risk and compliance reviewer';
+    const finName = pick(['finance'])?.title || own || 'Buyer finance contact';
+    const ebName = economic || own || 'Economic buyer';
+    const champRef = champion ? (/^the\s/i.test(champion) ? champion : `the ${champion}`) : 'the buyer\'s champion';
+    const ebRef = economic || (ownerLed ? champRef : 'the economic buyer');
+    const procName = procurement || own || 'Buyer procurement and legal';
     const whoName = (w) => ({
         champion: champName, eb: ebName, seller: 'Seller (account executive)', se: 'Seller (solutions engineer)', both: 'Both teams', it: `${itName} with Seller (solutions engineer)`,
         security: secName, risk: riskName, proc: procName, finance: finName, eval: evaluators.length ? (0, dealtext_ts_1.joinList)(evaluators.slice(0, 3).map((e) => e.title)) : 'Buyer technical evaluators',
@@ -91,8 +97,8 @@ function buildMutualActionPlan(args, d) {
     const close = (0, dealtext_ts_1.onOrBeforeWorkday)(closeInput);
     const closeNote = (0, dealtext_ts_1.isoDate)(close) !== (0, dealtext_ts_1.isoDate)(closeInput) ? ` (${(0, dealtext_ts_1.isoDate)(closeInput)} is a ${(0, dealtext_ts_1.weekdayName)(closeInput)}; the plan closes on ${(0, dealtext_ts_1.weekdayName)(close)} ${(0, dealtext_ts_1.isoDate)(close)})` : '';
     const N = Math.max((0, dealtext_ts_1.workdaysBetween)(start, close), 0);
-    const from = Math.max(STAGE_ORDER.indexOf(currentStage), 0);
-    const phaseStages = STAGE_ORDER.slice(from);
+    const from = Math.max(ownerLed && ['negotiation', 'procurement'].includes(currentStage) ? STAGE_ORDER.indexOf('proposal') : STAGE_ORDER.indexOf(currentStage), 0);
+    const phaseStages = STAGE_ORDER.slice(from).filter((x) => !(ownerLed && (x === 'negotiation' || x === 'procurement')));
     const modelKey = investment ? 'investment' : v ? v.id : '';
     const evalWeight = ['ites', 'telecom', 'investment'].includes(modelKey) ? 5 : 4;
     const weights = phaseStages.map((s) => (s === 'evaluation' ? evalWeight : 2));
@@ -118,7 +124,7 @@ function buildMutualActionPlan(args, d) {
     [...phaseStages, 'close'].forEach((s, i) => {
         const a = cursor;
         const b = i === phaseStages.length ? close : (0, dealtext_ts_1.addWorkdays)(a, lens[i]);
-        bounds.push({ name: s === 'close' ? 'Close & Launch' : STAGE_NAME[s], stage: s, a, b: b.getTime() > close.getTime() ? close : b, len: lens[i] });
+        bounds.push({ name: s === 'close' ? (ownerLed ? 'Order & Setup' : 'Close & Launch') : (ownerLed && s === 'proposal' ? 'Offer & Agreement' : STAGE_NAME[s]), stage: s, a, b: b.getTime() > close.getTime() ? close : b, len: lens[i] });
         cursor = b.getTime() > close.getTime() ? close : b;
     });
     const dateIn = (ph, i, k) => {
@@ -156,6 +162,8 @@ function buildMutualActionPlan(args, d) {
         let best = '';
         let n = 0;
         for (const e of evaluators) {
+            if (ownerLed && USERISH.test(e.title))
+                continue;
             const s = (e.title.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => t.includes(w.slice(0, 5))).length;
             if (s > n) {
                 n = s;
@@ -239,6 +247,12 @@ function buildMutualActionPlan(args, d) {
             { m: 'Bring the pilot sites live and compare uptime and repair time with the current operator for the same sites', who: 'champion' },
             { m: 'Draft the wave plan by region, with a fallback link and a rollback rule for each wave', who: 'both' },
         ],
+        sim: [
+            { m: `Agree the test: which devices and countries, and the baseline to beat (the current provider's coverage, time to resolve a network issue, data used and price), and how long the test runs`, who: 'both' },
+            { m: `Order the test SIMs and activate them in the buyer's devices, with the profile and the platform or API access set up`, who: 'it' },
+            { m: `Run the test SIMs in the buyer's real locations, for the test length agreed in step 1, and compare coverage, time to resolve an issue and data used with the current provider`, who: 'champion' },
+            { m: 'Review the results against the baseline and agree the order in which devices and countries move', who: 'both' },
+        ],
         hardware_software: [
             { m: 'Choose the pilot site and agree the baseline and the measure the devices must improve', who: 'both' },
             { m: `Deliver and install the pilot devices and connect them to the ${P} software`, who: 'it' },
@@ -258,15 +272,25 @@ function buildMutualActionPlan(args, d) {
             { m: 'Review the result against the baseline and agree what the rollout covers and in what order', who: 'both' },
         ],
     };
-    const baseEval = [...(stock || modelEval[model || 'saas'] || modelEval.saas)];
+    const baseEval = ownerLed ? [] : [...(stock || modelEval[model || 'saas'] || modelEval.saas)];
+    const userGroups = evaluators.filter((e) => USERISH.test(e.title) || (e.level === 'group' && ownerLed));
+    const ownerEval = [
+        { m: `Choose one outlet or one team and a few real trading days for the trial, and agree what ${ownerLed ? champRef : 'the buyer'} wants to see at the end${criteria.length ? ` (${criteria.slice(0, 2).map(rw1_common_ts_1.lowerStart).join('; ')})` : ''}`, who: 'both' },
+        { m: `Set up the trial with a small set of real items and prices`, who: 'se' },
+        ...userGroups.slice(0, 3).map((e) => ({ m: `Let ${e.title} try ${P} on a real working day and note what slows them or goes wrong`, who: 'eval', owner: e.title })),
+    ];
+    const ownerDecide = { m: `Go through the trial with ${champRef} against what was agreed, and decide`, who: 'both' };
     const critSteps = criteria.slice(0, 3).map((c) => ({ m: `Test the buyer's criterion ${(0, rw1_common_ts_1.quoted)(c)}: ${(0, rw1_common_ts_1.lowerStart)(testFor(c))}`, who: 'eval', owner: evaluatorFor(c) }));
     const claimStep = claims.length && !criteria.length ? [{ m: `Agree which of the seller's claims the buyer wants tested on its own data (${(0, dealtext_ts_1.joinList)(claims.slice(0, 2).map((c) => (0, rw1_common_ts_1.quoted)(c.text)))}${claims.length > 2 ? ' and the others' : ''}), and the pass mark for each`, who: 'both' }] : [];
-    const evalSteps = [...baseEval, ...claimStep, ...critSteps, ...(processBy.evaluation || [])];
-    if (!securityCovered && !evalSteps.some((s) => /security|compliance|risk/i.test(s.m)))
+    const evalSteps = [...(ownerLed ? ownerEval : baseEval), ...claimStep, ...critSteps, ...(processBy.evaluation || [])];
+    if (!ownerLed && !securityCovered && !evalSteps.some((s) => /security|compliance|risk/i.test(s.m)))
         evalSteps.push({ m: 'Security and compliance review of the vendor and its data handling', who: 'security' });
     if (buyerCtx?.id === 'financial')
         evalSteps.push({ m: 'Complete the third party risk assessment and the information security questionnaire the buyer requires of a new vendor', who: 'risk' });
-    evalSteps.push(brief.short ? { m: `Reference calls with similar ${P} customers (only if one has agreed)`, who: 'champion' } : { m: 'Reference calls with similar customers (only if one has agreed)', who: 'champion' });
+    if (ownerLed)
+        evalSteps.push(ownerDecide);
+    else
+        evalSteps.push(brief.short ? { m: `Reference calls with similar ${P} customers (only if one has agreed)`, who: 'champion' } : { m: 'Reference calls with similar customers (only if one has agreed)', who: 'champion' });
     const dedup = (steps) => steps.filter((s, i) => steps.findIndex((t) => t.m === s.m) === i);
     const discoveryWho = [champion, economic, ...evaluators.map((e) => e.title)].filter(Boolean);
     const stepsFor = {
@@ -278,7 +302,13 @@ function buildMutualActionPlan(args, d) {
             ...(processBy.discovery || []),
         ],
         evaluation: dedup(evalSteps),
-        proposal: [
+        proposal: ownerLed ? [
+            { m: `Go through the offer and the price with ${ebRef}, in the owner's own numbers`, who: 'seller' },
+            { m: `Agree how it is bought and paid for: ${mw.terms}`, who: 'seller' },
+            { m: blockerItems.length ? `Send written answers to the ${blockerItems.length === 1 ? 'question' : `${blockerItems.length} questions`} in Risks & Blockers` : 'Confirm in writing that no question is left open', who: 'both' },
+            { m: 'Agree the set-up, the import of existing data and the training, and who does each', who: 'both' },
+            ...(processBy.proposal || []),
+        ] : [
             { m: `Present the business case, built from the buyer's own figures, to ${ebRef}`, who: 'seller' },
             { m: 'Check the cost and value figures with the finance contact', who: 'finance' },
             ...(buyerCtx?.id === 'public-sector' ? [{ m: 'Confirm the route the purchase must follow (a tender, a framework or an approved supplier list) and any security authorisation needed before use', who: 'proc' }] : []),
@@ -299,33 +329,40 @@ function buildMutualActionPlan(args, d) {
             { m: 'Complete the final approvals', who: 'eb' },
             ...(processBy.procurement || []),
         ],
-        close: [
+        close: ownerLed ? [
+            { m: 'Order placed and first payment made', who: 'eb' },
+            { m: `Set-up starts: ${mw.setup}`, who: 'both' },
+            { m: 'Training for the people who will use it, and a check after the first week', who: 'se' },
+        ] : [
             { m: 'Contract signed', who: 'eb' },
             { m: `Kickoff scheduled: ${mw.setup}`, who: 'both' },
             { m: criteria.length ? 'Success criteria written down from the criteria above, with the pass mark for each' : 'Success criteria written down', who: 'seller' },
         ],
     };
+    const OWNER_AIM = { evaluation: 'Show on the buyer\'s own items and prices, with the people who will use it, that the criteria are met.', proposal: 'Agree the offer, the price and how it is bought, and answer every open question in writing.', close: 'Order, pay and set up, then check after the first week.' };
+    const aimOf = (stage) => (ownerLed && OWNER_AIM[stage]) || STAGE_AIM[stage];
     const phaseBlock = (ph, n) => {
         const steps = stepsFor[ph.stage] || [];
         const rows = steps.map((s, i) => `| ${i + 1} | ${s.m} | ${s.owner ?? whoName(s.who)} | ${dateIn(ph, i, steps.length)} | Pending |`);
         const heading = `### Phase ${n}: ${ph.name}${n === 1 ? ', the current stage' : ''} (${(0, dealtext_ts_1.isoDate)(ph.a)} to ${(0, dealtext_ts_1.isoDate)(ph.b)})`;
         const extra = ph.stage === 'evaluation' && v ? `\n**How this sector buys:** ${v.salesMotion}\n` : '';
         const window = ph.stage === 'evaluation' && ph.len > 0 && ph.len < 8 ? `\nThe evaluation has only ${ph.len} working day${ph.len === 1 ? '' : 's'}, so the test as written (${(0, rw1_common_ts_1.lowerStart)(mw.proof)}) will not fit. Shorten it to one case, or move the close date.\n` : '';
-        return `${heading}\n\n${STAGE_AIM[ph.stage]}\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n${rows.join('\n')}\n${window}${extra}`;
+        return `${heading}\n\n${aimOf(ph.stage)}\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n${rows.join('\n')}\n${window}${extra}`;
     };
     const tight = N < 10 ? `\n*Only ${N} working day${N === 1 ? '' : 's'} remain before the close date, so the phases are short and several steps must run in parallel. Check that the close date is realistic.*\n` : '';
     // ---- assemble ----
     const out = [];
     out.push(`# Mutual Action Plan: ${dealName}`);
     const stageText = currentStage.replace(/_/g, ' ');
-    out.push(`## Overview\n\nThis plan takes the deal ${(0, rw1_common_ts_1.quoted)(dealName)} from the ${stageText} stage to a signed contract on ${(0, dealtext_ts_1.isoDate)(closeInput)}${closeNote}: ${N} working days from ${(0, dealtext_ts_1.isoDate)(start)}, ${daysUntilClose} calendar days.${solutionIn ? (brief.short ? ` The seller is offering ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}${model && statedModel ? `, bought as ${mw.priced}` : ''}.` : ` The seller is offering what it describes in its own words as ${(0, rw1_common_ts_1.sellerWords)(brief)}${model && statedModel ? `, bought as ${mw.priced}` : ''}.`) : ''}${industryWords ? ` The buyer works in ${(0, rw1_common_ts_1.lowerStart)(industryWords)}, read from the deal name.` : ''}${buyerCtx ? ` ${buyerCtx.reviews} ${buyerCtx.buying}` : ''}\n\n${ctxLine}${tight}`);
+    out.push(`## Overview\n\nThis plan takes the deal ${(0, rw1_common_ts_1.quoted)(dealName)} from the ${stageText} stage to a signed contract on ${(0, dealtext_ts_1.isoDate)(closeInput)}${closeNote}: ${N} working days from ${(0, dealtext_ts_1.isoDate)(start)}, ${daysUntilClose} calendar days.${solutionIn ? (brief.short ? ` The seller is offering ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}${model && statedModel ? `, bought as ${mw.priced}` : ''}.` : ` The seller is offering what it describes in its own words as ${(0, rw1_common_ts_1.sellerWords)(brief)}${model && statedModel ? `, bought as ${mw.priced}` : ''}.`) : ''}${industryWords ? ` The buyer works in ${(0, rw1_common_ts_1.lowerStart)(industryWords)}, read from the deal name.` : ''}${buyerCtx ? ` ${buyerCtx.reviews} ${buyerCtx.buying}` : ''}\n\n${ctxLine}${ownerLed ? `\n\nThe champion you named is the owner, so this plan treats the owner as the one who decides and signs: there is no procurement, legal or vendor registration phase, and the people who use the product try it on a real working day.` : ''}${tight}`);
     const people = [];
     if (champion)
-        people.push(`| **Champion** | ${champion} | Keeps the plan alive on the buyer's side, gathers the evaluators and answers the open questions with us |`);
+        people.push(ownerLed && !economic ? `| **Owner, champion and decision maker** | ${champion} | Decides and signs, keeps the plan alive on the buyer's side and answers the open questions with us |` : `| **Champion** | ${champion} | Keeps the plan alive on the buyer's side, gathers the evaluators and answers the open questions with us |`);
     if (economic)
         people.push(`| **Economic buyer** | ${economic} | Approves the business case and the final decision |`);
+    const ownsOf = (e) => USERISH.test(e.title) ? 'Tries the product on a real working day and says what slows them or goes wrong' : /\bdecision makers?\b/i.test(e.title) ? 'Decides with the owner' : (0, dealtext_ts_1.upperFirst)((0, answers_ts_1.roleFor)(e.title, investment).owns);
     for (const e of evaluators)
-        people.push(`| **Evaluator** | ${e.title} | ${(0, dealtext_ts_1.upperFirst)((0, answers_ts_1.roleFor)(e.title, investment).owns)} |`);
+        people.push(`| **Evaluator** | ${e.title} | ${ownsOf(e)} |`);
     if (procurement)
         people.push(`| **Procurement** | ${procurement} | The buyer's purchasing steps, the contract and the payment terms |`);
     out.push(`## Key Stakeholders\n\n${people.length ? `| Role | Name | What they own in this plan |\n|------|------|-----------|\n${people.join('\n')}\n\n` : ''}On the seller side the account executive owns the deal and the plan, a solutions engineer owns the technical validation, and an executive sponsor is called in at the phase gates and for escalation.`);
@@ -376,11 +413,11 @@ This only works as a mutual plan once the buyer has corrected the dates and the 
     const miss = [];
     if (!champion)
         miss.push('`buyer_champion` (it would change who keeps the plan alive on the buyer\'s side and owns the first meetings)');
-    if (!economic)
+    if (!economic && !ownerLed)
         miss.push('`economic_buyer` (it would change who approves the business case and owns the final approvals)');
     if (!evalIn)
         miss.push('`technical_evaluators` (it would change the owners of the technical and security steps, which now use roles)');
-    if (!procurement)
+    if (!procurement && !ownerLed)
         miss.push('`procurement_contact` (it would change the owner of the legal, vendor registration and payment steps)');
     if (!reqIn)
         miss.push('`known_requirements` (it would change the criteria table, now empty, into one row for each with a test)');

@@ -196,6 +196,24 @@ function buildDemoScript(args, d) {
         steps.push(newStep((0, rw_kit_ts_1.upFirst)(cp.name), null, cp, textOf(null, cp)));
         assign();
     }
+    // a problem no part answers, with room left in the demo: a step that walks that problem live, so the room's own words are worked through
+    // (only when the user named no flow of their own: the flows they asked to see are the steps they get)
+    if (steps.length && steps.length < maxSteps && pains.length && !ms.flows.length) {
+        const left = pains.map((_p, i) => i).filter((i) => !steps.some((st) => st.pains.includes(i) && (st.painScore[i] ?? 0) >= 100));
+        for (const i of left) {
+            if (steps.length >= maxSteps)
+                break;
+            const st = newStep(pains[i].split(/\s+/).length <= 10 ? `A live case of ${low(pains[i])}` : `A live case of the ${ORDINAL[i] || `number ${i + 1}`} problem you described`, null, null, pains[i]);
+            st.fromPain = true;
+            st.painIdx = i;
+            steps.push(st);
+        }
+        assign();
+        steps.forEach((st) => { if (st.fromPain && st.painIdx !== undefined) {
+            st.pains = [st.painIdx];
+            st.painScore[st.painIdx] = 100;
+        } });
+    }
     if (!steps.length) {
         // no flow and no named part: one step for each pain, in the user's words
         pains.slice(0, maxSteps).forEach((p, i) => { const st = newStep(`Problem ${i + 1}${p.split(/\s+/).length <= 10 ? `: ${low(p)}` : ''}`, null, null, p); st.fromPain = true; steps.push(st); });
@@ -358,7 +376,7 @@ function buildDemoScript(args, d) {
     };
     const confirm = [
         keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so before I show anything: what is the one thing you most want solved?"`,
-        untied.length ? `Say: "I have no step yet for ${(0, dealtext_ts_1.joinList)(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}. Which part of ${P} would you want to see for that?"` : '',
+        untied.length ? `Ask: "Which part of ${P} would you most want to see for ${(0, dealtext_ts_1.joinList)(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your_solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
         ...people.map((_p, qi) => askFor(qi)),
         lens ? `Ask: "${lens.checks[0]}"` : '',
         `Ask: "${typeQuestion[demoType] || typeQuestion.first_look}"`,
@@ -401,7 +419,7 @@ function buildDemoScript(args, d) {
         const head = `**Step ${i + 1}: ${s.title}** (about ${s.minutes} ${s.minutes === 1 ? 'minute' : 'minutes'})`;
         const forLine = s.people.length ? `Step ${i + 1} is for ${(0, dealtext_ts_1.joinList)(s.people.map(personRef))}${painNow.length ? '' : `, whose work ${ref(s)} is closest to`}.` : '';
         const what = s.fromPain ? `${P} on one real case of "${say(pains[main] ?? s.title)}"` : s.flow && s.cap ? (s.flow.text.toLowerCase().includes(s.cap.name.toLowerCase()) ? s.flow.text : `${s.flow.text}, in ${(0, rw_kit_ts_1.capText)(s.cap)}`) : s.cap ? (0, rw_kit_ts_1.capText)(s.cap) : s.flow ? s.flow.text : `${P} on one real case of "${say(pains[main] ?? s.title)}"`;
-        const caseOf = (main >= 0 && !s.fromPain ? `, run on one real case of ${say(pRef(main))}` : '') + (i === 0 && customerIndustry ? `${main >= 0 && !s.fromPain ? ', using' : ', using'} an example from ${customerIndustry}` : '');
+        const caseOf = (main >= 0 && !s.fromPain ? `, run on one real case of ${say(pRef(main))}${pRef(main).startsWith('"') ? '' : ` (${say(pains[main].split(/\s+/).length <= 24 ? low(pains[main]) : (0, rw_kit_ts_1.painShort)(low(pains[main])))})`}` : '') + (i === 0 && customerIndustry ? `${main >= 0 && !s.fromPain ? ', using' : ', using'} an example from ${customerIndustry}` : '');
         const screen = `On screen: ${what}${caseOf}. ${sh.screen}${s.flow && s.flow.label ? ` Run it only if it works live (${s.flow.label}).` : ''}`;
         let intro2;
         if (s.flow)
@@ -414,6 +432,11 @@ function buildDemoScript(args, d) {
         const lines = [head, ...(forLine ? [forLine] : []), screen, `Say: "${intro2}${told}"`];
         if (s.claims.length)
             lines.push(`Say: "For the record: ${say(claimSay(s.claims))}" *(${claimLabels(s.claims)}; have the source ready)*`);
+        // what a step lacks is said to the seller, never to the room
+        if (s.fromPain && shown.some((x) => !x.fromPain))
+            lines.push(`*(Note for you, not for the room: no part of your_solution is tied to ${main >= 0 ? say(pRef(main)) : 'this problem'}, so the step walks the problem itself; decide before the call which part you will show.)*`);
+        else if (s.cap && !s.cap.desc && !s.flow && main < 0)
+            lines.push(`*(Note for you, not for the room: your_solution gives only the name ${s.cap.name}, so the lines here do not say what it does.)*`);
         lines.push(`Ask: "${say(main >= 0 ? sh.ask : partAsk(s, i))}"`);
         for (const o of s.objections)
             lines.push(objectionBlock(o));
@@ -428,7 +451,7 @@ function buildDemoScript(args, d) {
         notShownCaps.length ? `Say: "There is more behind this than I showed today: ${say((0, dealtext_ts_1.joinList)(notShownCaps))}. Tell me which of your problems they would help with and I will cover them next time."` : '',
     ].filter(Boolean).join('\n\n');
     const withPain = shown.filter((s) => s.pains.length), withoutPain = shown.filter((s) => !s.pains.length);
-    const recap = shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...withPain.map((s) => `For ${say(pRef(s.pains[0]))} you saw ${ref(s)}.`), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
+    const recap = shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...withPain.map((s) => (s.fromPain && shown.some((x) => !x.fromPain) ? `For ${say(pRef(s.pains[0]))} you saw a live case run through ${P}.` : `For ${say(pRef(s.pains[0]))} you saw ${ref(s)}.`)), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
     const rest = unattached.slice(3);
     const nextOpt = v ? low(d.stock(v, modelKey).next) : '';
     const closeBlock = [

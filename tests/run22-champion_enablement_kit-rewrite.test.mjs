@@ -315,3 +315,58 @@ test("round 3: the timeline answer quotes the specific go-live claim, not the ge
   const tl = objBlock(freightly, "What is the implementation timeline?");
   assert.match(tl, /went live in 6 days/);
 });
+
+// ---- round 4: billing questions, claims kept whole, a specialist answer that speaks of the domain, a part not chosen by half a word ----
+const PARCELNEST = {
+  asset_type: "internal_business_case", champion_role: "Logistics Coordinator", target_stakeholder: "online shop owner",
+  your_solution: "Parcelnest, cloud based multi-carrier shipping software and an open shipping API for online shops: compare 500+ courier services, buy and print discounted labels one by one or in batches, shipping rules, pre-paid returns and a network of fulfilment partners",
+  key_value_points: "instantly save on shipping with discounted rates up to 90% off retail (page claim), ship 5X faster with batch label printing and shipping rules (page claim), start shipping in as little as 3 minutes, and cut fulfilment costs by up to 40% by adding warehousing, pick and pack services (page claim)",
+  known_objections: "When will I be billed?; Are there any other fees?; Can I cancel my account?; Should I get an Annual Plan?; How does API billing work?",
+  competitive_context: "negotiating individual carrier deals yourself; paying standard retail courier rates", budget_context: "$3,600 a year (hypothetical annual cost)",
+};
+const parcel = await call(PARCELNEST);
+test("round 4: the claims are kept whole, each with its own label once", () => {
+  const sec = parcel.split("## What we expect to get")[1].split("\n\n")[1].split("\n");
+  assert.equal(sec.length, 4, sec.join(" | "));
+  assert.doesNotMatch(parcel, /\(page claims?\) \(page claims?\)/);
+  assert.match(sec[3], /Cut fulfilment costs by up to 40% by adding warehousing, pick and pack services \(page claim\)$/);
+  assert.match(sec[2], /^- Start shipping in as little as 3 minutes$/);
+});
+test("round 4: a billing question says when and how billing happens, a fee question lists what to ask, a plan question compares the two plans", () => {
+  const billed = objBlock(parcel, "When will I be billed?");
+  assert.match(billed, /first charge/);
+  assert.match(billed, /in advance or after use|period/);
+  assert.doesNotMatch(billed, /pick and pack|warehousing|rather than from a general claim/);
+  const api = objBlock(parcel, "How does API billing work?");
+  assert.match(api, /counted|metered/i);
+  assert.doesNotMatch(api, /system by system/);
+  const fees = objBlock(parcel, "Are there any other fees?");
+  assert.match(fees, /line by line|set-up|on top/i);
+  const plan = objBlock(parcel, "Should I get an Annual Plan?");
+  assert.match(plan, /annual/i);
+  assert.match(plan, /monthly|stop|mid/i);
+  assert.doesNotMatch(plan, /test, not a claim|stretched answer/);
+});
+test("round 4: a shipping label seller is not given the notes of warehouse software", () => {
+  assert.doesNotMatch(parcel, /dock to stock|putaway|slotting|floor staff|scanning devices|picking paths/i);
+});
+const ZEROLINE = {
+  asset_type: "internal_business_case", champion_role: "technology leaders", target_stakeholder: "Chief Information Officer",
+  your_solution: "Gridforge, an engineering services firm that builds, modernizes and runs enterprise applications: Forgekit for AI driven development, Moveport for cloud and data migration, Watchtower for AIOps and automation, Zeroline as the AI delivery layer",
+  key_value_points: "turn application portfolios from operational costs into strategic assets: reclaim budget locked in maintenance, shrink technical debt, raise release velocity (the Zero Friction idea)",
+  known_objections: "Why do banks choose specialist banking IT partners over general IT firms?; Why do enterprises choose Moveport over standard cloud migration tools and services?",
+  competitive_context: "traditional cloud migration tools that focus mainly on moving workloads; general IT firms without deep domain expertise in banking", budget_context: "$2,000,000 a year (hypothetical annual cost)",
+};
+const zl = await call(ZEROLINE);
+test("round 4: a part is not called close to the points because it starts with the same four letters as a word of a remark", () => {
+  const prop = zl.split("## What we propose")[1].split("##")[0];
+  assert.doesNotMatch(prop, /closest to our points[^.]*Zeroline/);
+});
+test("round 4: the specialist answer speaks of the domain, and the part answer names what the part adds over the alternative", () => {
+  const spec = objBlock(zl, "Why do banks choose specialist banking IT partners over general IT firms?");
+  assert.match(spec, /banking work|work in banking|banking depth/i);
+  assert.match(spec, /reference from a banking client/);
+  assert.doesNotMatch(spec, /with the gaps written down/);
+  const part = objBlock(zl, "Why do enterprises choose Moveport over standard cloud migration tools and services?");
+  assert.match(part, /\bdata\b[^.]*(?:adds|names|covers)|(?:adds|names|covers)[^.]*\bdata\b/i);
+});

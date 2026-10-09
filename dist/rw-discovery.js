@@ -141,7 +141,10 @@ function buildDiscoveryBank(args, d) {
         `Who do you turn to first when this goes wrong${inInd}, and what do they say?`,
     ] : [];
     const roleSection = prospectRole ? `## Questions for ${prospectRole}\n\n${roleKnown ? `${(0, rw_kit_ts_1.upFirst)(plural ? roleKnow.label + 's' : (0, dealtext_ts_1.aAn)(roleKnow.label))} ${plural ? 'care' : 'cares'} about ${roleKnow.cares}, and ${plural ? 'worry' : 'worries'} about ${roleKnow.worry}.\n\n` : ''}${qs([...roleOwn, ...(roleKnown ? roleKnow.questions : [])])}\n\n${roleKnown ? `**What they need to see before they say yes:** ${roleKnow.needs}.\n\n` : ''}---\n\n` : '';
-    const lensSection = lens ? `## Questions for a buyer in ${lens.name}\n\n${qs(lens.checks)}\n\nTheir words: ${lens.words.join(', ')}. Use the ones that are true for this prospect.\n\n---\n\n` : '';
+    // "If a model or rule decides something about a customer" is asked only of a seller whose product scores, predicts, decides or recommends
+    const decides = /\b(?:scor\w+|predict\w*|decision\w*|underwrit\w*|credit|fraud|risk|approv\w*|eligib\w*|lend\w*|claims?|recommend\w*|models?)\b/i.test(`${yourSolution} ${knownPainPoints}`);
+    const lensChecks = lens ? lens.checks.filter((c) => !/model or rule decides/i.test(c) || decides) : [];
+    const lensSection = lens ? `## Questions for a buyer in ${lens.name}\n\n${qs(lensChecks)}\n\nTheir words: ${lens.words.join(', ')}. Use the ones that are true for this prospect.\n\n---\n\n` : '';
     // a software seller's own activation and expansion questions do not suit a finance, security or IT leader who is buying from it
     const sectorFits = !(v && v.id === 'saas' && (sellerSw || ['finance', 'security', 'risk', 'it', 'engineering', 'procurement'].includes(roleFam)));
     const sectorSection = v ? `## Questions in the language of ${v.name}\n\n${sectorFits ? qs(v.discovery) : `The usual ${v.name} questions are about a software company's own customers. They do not fit ${sellerSw ? `a buyer in ${indLow}` : roleKnow ? (0, dealtext_ts_1.aAn)(roleKnow.label) : 'a buyer in this role'}, so use the questions above and below.`}\n\n---\n\n` : '';
@@ -155,7 +158,14 @@ function buildDiscoveryBank(args, d) {
         (r) => `On ${r}: who outside your own team notices it, and what do they say?`,
         (r) => `On ${r}: what would be different for the people involved in the first three months after it was gone?`,
     ];
-    const painLines = pains.map((p, i) => painShells[i % painShells.length](pRef(i), v && !sellerSw ? (0, dealtext_ts_1.joinList)(d.rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : ''));
+    // a statement that carries figures after a colon ("complex: 9,000 devices, 21 systems and 8 engines") is asked about by its figures: which of them are covered, which left out
+    const figuresOf = (p) => { const at = p.indexOf(': '); const tail = at > 0 ? p.slice(at + 2) : ''; return /\d/.test(tail) ? tail.replace(/,?\s+and\s+[a-z][^,]*$/i, (m) => (/\bmust\b|\bcannot\b|\bcan't\b|\bneed/i.test(m) ? '' : m)) : ''; };
+    const painLines = pains.map((p, i) => {
+        const fig = figuresOf(p);
+        if (fig && i === 0)
+            return `On ${pRef(i)}: you gave "${low((0, dealtext_ts_1.clip)(fig, 110)).replace(/"/g, "'")}". Which of those do you cover today, which do you leave out, and how do you choose?`;
+        return painShells[i % painShells.length](pRef(i), v && !sellerSw ? (0, dealtext_ts_1.joinList)(d.rankMeasures(v.metrics, p, '').slice(0, 2), 'or') : '');
+    });
     const painSection = knownPainPoints ? `## Questions on the pain you described\n\n${qs([...painLines, pains.length > 1 ? `Of ${pains.length === 2 ? 'the two' : `the ${pains.length}`} problems above, which hurts most, and which would ${signerThe} fix first if only one could be fixed?` : ''])}\n\n---\n\n` : '';
     // ---- the product's parts ----
     // the kind of a part decides what is worth asking about it
@@ -170,12 +180,15 @@ function buildDiscoveryBank(args, d) {
         return 'other';
     };
     const kindCount = { tech: 0, measure: 0, people: 0, other: 0 };
+    let tiedCount = 0;
     const partShell = (c, i) => {
         const pi = bestPainFor(c);
         const said = c.desc && !/^(?:that|which|for|as)\s/i.test(c.desc) ? ` (${c.desc})` : c.desc ? ` ${c.desc}` : '';
         const head = `${(0, rw_kit_ts_1.upFirst)(c.name)}${said}`;
-        if (pi >= 0 && i % 2 === 0)
-            return `${head}: on ${pShort(pi)}, which step does it touch, who does that step today, and with what?`;
+        if (pi >= 0 && i % 2 === 0) {
+            const n = tiedCount++;
+            return `${head}: ${[`on ${pShort(pi)}, which step does it touch, who does that step today, and with what?`, `how much of ${pShort(pi)} would it take over, and what would still be done by hand?`, `which part of ${pShort(pi)} would you try it on first, and what result would count?`][n % 3]}`;
+        }
         const k = partKind(c), n = kindCount[k]++;
         const V = {
             tech: [`what would it have to connect to in what you run today, and who would set it up and look after it?`, `which of your current systems or data would it need access to, and who approves that?`, `who on your side would try it first, and what would make them keep using it?`],

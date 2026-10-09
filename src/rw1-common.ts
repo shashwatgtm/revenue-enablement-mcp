@@ -3,7 +3,7 @@
 // where a fact about the user's own product would be needed, the text says what to bring or confirm, and never states it.
 import { clip, isGenericWord, joinList, partLabel, sentences, solutionBrief, splitTopLevel, upperFirst, type Contact, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, namedThings, roleFor, type BlockerContext } from './answers.ts';
-import { MODEL_TRADES, type BusinessModel, type Vertical } from './verticals.ts';
+import { MODEL_TRADES, VERTICALS, type BusinessModel, type Vertical } from './verticals.ts';
 
 /** What the shared helpers of index.ts give to the rewritten tools (passed in, so this file never imports index.ts). */
 export interface Deps {
@@ -33,8 +33,11 @@ const SAME: string[][] = [
   ['legacy', 'old', 'incumbent', 'modernization', 'modernisation', 'migration', 'migrate'],
   ['testing', 'test', 'quality', 'defects', 'release'],
   ['route', 'routing', 'carrier', 'carriers', 'network', 'networks', 'bottleneck', 'bottlenecks', 'operator', 'telecom', 'roaming', 'reseller', 'resell'],
-  ['courier', 'couriers', 'shipping', 'shipment', 'parcel', 'delivery', 'freight', 'serviceability', 'rates', 'rate', 'carrier'],
+  ['courier', 'couriers', 'shipping', 'shipment', 'parcel', 'delivery', 'freight', 'serviceability', 'rates', 'rate', 'carrier', 'ship', 'ships', 'shipped', 'fulfilment', 'fulfillment', 'warehouse', 'warehousing'],
   ['sim', 'sims', 'esim', 'softsim', 'roaming', 'device', 'devices', 'iot', 'connectivity'],
+  ['conversion', 'conversions', 'checkout', 'cart', 'carts', 'abandonment', 'purchase', 'purchases', 'basket'],
+  ['authentication', 'authenticated', 'authenticate', 'authenticating', 'login', 'logins', 'signin', 'sign-in', 'sign-on', 'sign', 'mfa', 'sso', 'passwordless', 'password', 'passwords'],
+  ['review', 'reviews', 'reviewed', 'sample', 'samples', 'sampling', 'analytics', 'analysis', 'analyse', 'scoring', 'score', 'scores'],
 ];
 const groupOf = (w: string): number => { const i = SAME.findIndex((g) => g.includes(w)); return i >= 0 ? i : SAME.findIndex((g) => g.includes(w.replace(/(?:ies|es|s)$/, '')) || g.includes(w.replace(/s$/, ''))); };
 /** How many ideas two texts share: a shared word stem, or two words that mean about the same thing. */
@@ -47,6 +50,58 @@ export function shared(a: string, b: string): number {
   n += [...ga].filter((g) => gb.has(g)).length;
   return n;
 }
+/** The part of a product that best answers a text (a cost line, a result, a pain): the part sharing the most words or ideas with it, the first listed on a tie. A text about audio that is recognised or transcribed
+ *  goes to the part that reads speech, not to the one that produces it. */
+const SPEECH_IN = /\b(?:audio|recordings?|transcri\w+|recogni\w+|accents?|noisy|noise|studio)\b/i;
+const READS_SPEECH = /speech[- ]to[- ]text|transcri\w+|recogni\w+|\basr\b|\bstt\b/i;
+/** How many different words of the text mean something the part also says (a shared stem or a word of the same group): the tie-break between parts that share the same number of ideas. */
+function wordHits(text: string, part: string): number {
+  const ps = stemsOf(part);
+  const pg = new Set((part.toLowerCase().match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
+  const seen = new Set<string>();
+  for (const w of text.toLowerCase().match(/[a-z-]{3,}/g) || []) {
+    const g = groupOf(w);
+    if (ps.has(w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)) || (g >= 0 && pg.has(g))) seen.add(w);
+  }
+  return seen.size;
+}
+export function matchPart(text: string, parts: string[]): string {
+  let best = ''; let n = 0; let h = 0;
+  for (const p of parts) {
+    // the ways the product is run answer a text about where it may run, not one about how fast something is deployed
+    if (/^deployment options \(/.test(p) && !/\b(?:deployment options|cloud[- ]only|on-?prem\w*|self[- ]?(?:managed|hosted)|dedicated|air-?gapped|hybrid|private cloud|single tenant|data residency|sovereign\w*)\b/i.test(text)) continue;
+    let s = shared(text, p);
+    if (s > 0 && SPEECH_IN.test(text) && READS_SPEECH.test(p)) s += 1;
+    if (s === 0) continue;
+    const hits = wordHits(text, p);
+    if (s > n || (s === n && hits > h)) { n = s; h = hits; best = p; }
+  }
+  return best;
+}
+/** A pain about pieces that are stitched together is answered by the part that joins them, when the description says one does ("a unified Voice Agent API"). */
+export const STITCHED = /\b(?:stitched|piecemeal|point (?:tools?|solutions?)|separate (?:tools|components|vendors|systems|pieces)|disconnected|multiple (?:tools|components|vendors)|silos?|siloed|best-of-breed|patchwork)\b/i;
+export function joiningPart(parts: string[], full: string): string {
+  const low = full.toLowerCase();
+  for (const p of parts) {
+    const name = p.toLowerCase();
+    for (let i = low.indexOf(name); i >= 0; i = low.indexOf(name, i + 1)) {
+      if (/\b(?:unified|integrated|single|all[- ]in[- ]one|end[- ]to[- ]end|orchestrat\w*|combined)\s+(?:\w+\s+){0,2}$/.test(low.slice(Math.max(0, i - 30), i))) return p;
+    }
+  }
+  return '';
+}
+/** Quoted results are separated by semicolons, but "Name: what happened; 50% faster ... (page claim)" is one claim whose figures sit after the semicolon: such a figure goes back with its name. */
+export function joinSplitClaims(text: string): string {
+  const out: string[] = [];
+  for (const f of text.split(/;\s*|\n/)) {
+    const x = f.trim();
+    if (!x) continue;
+    const prev = out[out.length - 1];
+    if (prev && /^[^:]{2,60}:/.test(prev) && !/\d/.test(prev) && !/\)\s*$/.test(prev) && /^\d/.test(x)) out[out.length - 1] = `${prev}, ${x}`;
+    else out.push(x);
+  }
+  return out.join('; ');
+}
 export const lowerStart = (s: string): string => ((/^[A-Z][a-z]/.test(s) || /^(?:A|An)\s/.test(s)) && !/^(?:I|AI|API|ERP|CRM|SMS|IT|HR|QA)\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 export const stripEnd = (s: string): string => s.trim().replace(/[\s.;:,!?]+$/, '');
 /** A text the user typed, shown in quotes (kept as typed; a quote the safeguard already put around it is not doubled). */
@@ -56,7 +111,47 @@ export function plural(n: number, one: string, many: string): string { return n 
 export const some = (items: string[], n: number): string => joinList(items.slice(0, n));
 
 /** The parts of a product, as the user's description lists them: after a colon or "made of", or after "joins", "covers", "includes", "with". */
+/** The last item of a list written "a, b, c and d" is two items. */
+function splitLastAnd(items: string[]): string[] {
+  if (items.length < 3) return items;
+  const last = items[items.length - 1];
+  const m = last.match(/^(.{3,40}?)\s+and\s+(?:the\s+)?(.{3,40})$/i);
+  if (m && m[1].split(/\s+/).length <= 4 && m[2].split(/\s+/).length <= 5) return [...items.slice(0, -1), m[1], m[2]];
+  return items;
+}
+/** The ways the product is run, when the description lists them: "run as X, Y or Z", "available as ...", "deployed on ...". */
+function deploymentOptions(full: string): string {
+  const m = full.match(/\b(?:run|runs|available|delivered|deployed|offered|hosted|sold)\s+(?:as|in|on|via)\s+((?:[^.;]|\.(?=\S)){8,160})/i);
+  if (!m) return '';
+  const opts = splitTopLevel(m[1].replace(/,?\s+(?:or|and)\s+/gi, ', ')).map(stripEnd).filter(Boolean);
+  return opts.length >= 2 ? `deployment options (${joinList(opts, 'or')})` : '';
+}
+/** Named parts and product lists of a long description: "Name (what it does), Name (what it does)", "the language model Name" and "the products ... are a, b, c and d". */
+function richParts(full: string): string[] {
+  const found: { at: number; label: string }[] = [];
+  const named = [...full.matchAll(/\b([A-Z][A-Za-z0-9.]*(?: [A-Z][A-Za-z0-9.]*){0,3})\s+\(([a-z][a-z -]{3,40})\)/g)];
+  if (named.length < 2) return [];
+  for (const m of named) found.push({ at: m.index ?? 0, label: `${m[1]} (${m[2]})` });
+  for (const m of full.matchAll(/\bthe ([a-z][a-z ]{3,25}? model) ([A-Z][A-Za-z0-9.]*(?: [A-Z][A-Za-z0-9.]*){0,2})/g)) found.push({ at: m.index ?? 0, label: `${m[2]} (${m[1]})` });
+  for (const m of full.matchAll(/\b(?:are|include|includes|including|comprise|comprises|consists? of|made up of)\s+([^.;]{10,200})/g)) {
+    const items = splitLastAnd(splitTopLevel(m[1])).map(stripEnd).filter(Boolean);
+    if (items.length >= 3 && items.every((x) => x.split(/\s+/).length <= 4 && !/[A-Z][a-z]+ \(/.test(x))) items.forEach((x, k) => found.push({ at: (m.index ?? 0) + k, label: x }));
+  }
+  return found.sort((x, y) => x.at - y.at).map((x) => x.label).slice(0, 14);
+}
 export function partsOf(brief: SolutionBrief): string[] {
+  const rich = richParts(brief.full);
+  if (rich.length >= 4) return rich;
+  const base = partsOfBase(brief);
+  const colon = brief.full.slice(0, 200).match(/^[^:]{3,140}:\s*(.+)$/s);
+  if (!base.length && colon) {
+    const tail = colon[1].split(/\.\s+(?=[A-Z])/)[0].replace(/,?\s+(?:run|runs|available|delivered|deployed|offered|hosted|sold)\s+(?:as|in|on|via)\b.*$/i, '');
+    const items = splitLastAnd(splitTopLevel(tail)).map((x) => partLabel(x).replace(/[.;]+$/, '').trim()).filter((p) => p.length > 2 && p.split(/\s+/).length <= 8);
+    if (items.length >= 3) { const dep = deploymentOptions(brief.full); return [...items.slice(0, 12), ...(dep ? [dep] : [])]; }
+  }
+  return splitLastAnd(base);
+}
+function partsOfBase(brief: SolutionBrief): string[] {
   const mergeFragments = (xs: string[]): string[] => {
     const out: string[] = [];
     xs.forEach((x, i) => { const prev = out[out.length - 1]; if (prev && /\b(?:for|of|to|with|in|on|and|or|from|by)$/i.test(prev.trim())) out[out.length - 1] = `${prev}, ${x}`; else out.push(x); void i; });
@@ -116,7 +211,8 @@ export function modelWords(model: Model2 | null, _sellerText: string, unit?: str
 // Roles: what the person cares about and the next step, by title (role knowledge only; no statistic, no named company)
 // ---------------------------------------------------------------------------------------------------------------------------
 export type Part = 'champion' | 'buyer' | 'economic' | 'blocker' | 'user' | 'influencer' | 'outside' | 'group';
-export interface RoleCtx { P: string; v: Vertical | null; metric: string }
+export interface RoleCtx { P: string; v: Vertical | null; metric: string; /** the buyer runs calls or support work (a contact centre, a support desk): quality assurance there means scoring calls, not testing software */ callContext?: boolean }
+export const CALL_CONTEXT = /\b(?:contact cent(?:re|er)s?|call cent(?:re|er)s?|ccaas|customer (?:service|support|experience)|support (?:teams?|desks?|cent(?:re|er)s?)|help ?desks?|bpo|agents? (?:coach\w*|assist)|coach\w* agents|supervisors?)\b/i;
 export interface RoleRead { part: string; cares: string; step: string; kind: Part | null; ask?: string }
 interface RolePattern { re: RegExp; part: string; kind: Part; ask?: string; cares: string; step: (c: RoleCtx) => string }
 const ROLE_PATTERNS: RolePattern[] = [
@@ -177,8 +273,12 @@ const ROLE_PATTERNS: RolePattern[] = [
   { re: /\b(?:leadership team|leaders?|executives?)\b/i, part: 'Senior group', kind: 'group', cares: 'the outcome and the risk, in a short case', step: () => 'Ask the champion who in the group has the final say and what they need to see' },
 ];
 /** What a contact is for, from the title (and from the role the user wrote in brackets, which always wins). */
+const CALL_QUALITY: RolePattern = { re: /./, part: 'Evaluator: checks the quality and compliance of calls', kind: 'influencer', ask: 'How many of your calls do you review today as a share of all calls, and what do you miss?',
+  cares: 'how many calls are reviewed, how fast a problem is found, and whether the scoring matches how a supervisor would judge the same call',
+  step: (c) => `Ask them to bring a sample of calls they have already scored and compare ${c.P}'s results with their own scores` };
 export function readRole(c: Contact, kind: Part | null, ctx: RoleCtx, investment: boolean): RoleRead {
-  const hit = ROLE_PATTERNS.find((p) => p.re.test(c.title));
+  const qa = /\b(?:qa|quality assurance|quality)\b/i.test(c.title) && !/\b(?:software|release|test automation|sdet|engineers?|developers?)\b/i.test(c.title);
+  const hit = qa && (ctx.callContext || /\b(?:compliance|calls?|agents?|coach\w*|contact cent\w+)\b/i.test(c.title)) ? CALL_QUALITY : ROLE_PATTERNS.find((p) => p.re.test(c.title));
   const base = roleFor(c.title, investment);
   const part = hit ? hit.part : c.level === 'group' ? 'A group of users or evaluators' : c.level === 'exec' ? 'Senior leader' : upperFirst(base.label);
   const cares = hit ? hit.cares : base.cares;
@@ -229,22 +329,21 @@ export interface QACtx {
   sellerText: string;
   /** the unit a usage priced deal is paid in (read from the user's words), or '' */
   unit?: string;
+  /** false when the business model is only the sector's usual one (assumed): the answer then names no way of paying */
+  stated?: boolean;
   v: Vertical | null;
   /** the buyer's own requirements and the alternatives they use, as short phrases */
   needs: string[];
   alternatives: string[];
 }
 export interface QAnswer { id: string; answer: string; bring: string; ask: string }
-const partFor = (text: string, parts: string[]): string => {
-  let best = ''; let n = 0;
-  for (const p of parts) { const s = shared(text, p); if (s > n) { n = s; best = p; } }
-  return best;
-};
+const partFor = (text: string, parts: string[]): string => matchPart(text, parts);
 const unitFor = (text: string, ctx: QACtx): string => {
   if (ctx.unit && !/\bper\b/i.test(text)) return `per ${ctx.unit}`;
   const t = text.match(/\bper (?:message|sms|transaction|seat|user|site|link|device|ticket|fte|contact|call|check|verification|api call|shipment|order|sim|label|booking|request|session|minute)\b/i);
   if (t) return t[0].toLowerCase();
-  return ({ transactions: 'per unit of usage', connectivity: 'per site', services: 'per FTE, per ticket or fixed', hardware_software: 'per device plus the software', marketplace: 'as a take rate', investment: 'as a fee on assets', saas: 'as a subscription' } as Record<string, string>)[ctx.model || ''] || 'as a subscription';
+  if (ctx.stated === false && (ctx.model === 'saas' || !ctx.model)) return '';   // only the sector's usual model: no way of paying is named
+  return ({ transactions: 'per unit of usage', connectivity: 'per site', services: 'per FTE, per ticket or fixed', hardware_software: 'per device plus the software', marketplace: 'as a take rate', investment: 'as a fee on assets', saas: 'as a subscription' } as Record<string, string>)[ctx.model || ''] || '';
 };
 /** Answers one objection or blocker. The answer says what to do and what to bring; it states no fact about the user's product. */
 export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
@@ -252,7 +351,7 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   const t = text.toLowerCase();
   const P = ctx.P;
   const needs = some(ctx.needs, 3);
-  const modelT = MODEL_TRADES[ctx.model === 'sim' ? 'transactions' : ctx.model || 'unknown'];
+  const modelT = MODEL_TRADES[ctx.model === 'sim' ? 'transactions' : ctx.stated === false && ctx.model === 'saas' ? 'unknown' : ctx.model || 'unknown'];
   const named = namedThings(text, [P, ctx.P]).filter((s) => !/^(?:API|APIs|SDK|Does|Can|Is|How|Why|What)$/i.test(s));
   const relevant = partFor(text, ctx.parts);
   const mk = (id: string, answer: string, bring: string, ask: string): QAnswer => ({ id, answer, bring, ask });
@@ -279,7 +378,7 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   }
   if (/\b(?:cheap(?:est|er)?|lowest|lower (?:price|cost)|less expensive|cheaper)\b/i.test(t) || /\bprice\b.{0,30}\b(?:lower|less|cheaper)\b|\bcompare\b.{0,30}\bcost\b/i.test(t)) {
     const unit = unitFor(text, ctx);
-    return mk('cheapest', `Do not claim it is the cheapest. Take the buyer's last invoice or usage report and price the same activity both ways, ${unit} and including every fee, so the comparison is theirs and not yours. Where the lower figure is not yours, say what the difference buys (${needs || 'what the buyer named as important'}).`, `your price list, how ${unit} pricing is built, and every fee that is not in the headline rate`, 'Can you show me your last month of activity so we can price the same month both ways?');
+    return mk('cheapest', `Do not claim it is the cheapest. Take the buyer's last invoice or usage report and price the same activity both ways, ${unit ? `${unit} and ` : ''}including every fee, so the comparison is theirs and not yours. Where the lower figure is not yours, say what the difference buys (${needs || 'what the buyer named as important'}).`, `your price list, how the price is built${unit ? ` (${unit})` : ''}, and every fee that is not in the headline rate`, 'Can you show me your last month of activity so we can price the same month both ways?');
   }
   if (/\bpay[- ]as[- ]you[- ]go\b|\bwithout (?:a )?(?:contract|commitment)\b|\bprepaid\b|\btop[- ]?up\b/i.test(t) && /\b(?:what|which|available|include\w*|offer\w*|can i|do you)\b/i.test(t)) {
     return mk('payg', `List, product by product${ctx.parts.length ? ` (${some(ctx.parts, 5)})` : ''}, what can be used on pay as you go and what needs a contract: for each, the price basis, any minimum spend or top up, and what a committed plan adds. Never present a product as pay as you go unless your price list says so.`, `which of ${P}'s products are sold pay as you go and which need a contract, from the price list`, 'Which of these would you start with, and what monthly volume do you expect?');
@@ -288,6 +387,9 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   if (startM) {
     const items = splitTopLevel(startM[1].replace(/,?\s+(?:or|and)\s+/gi, ', ')).map(stripEnd).filter(Boolean);
     return mk('start-with', `Answer item by item (${joinList(items)}): for each, say whether it can be started today, what has to be registered, approved or set up before the first live use and how long that takes, and what the first live use looks like. Do not say "yes" to the whole list if one item has a lead time.`, `the start steps and lead times of ${joinList(items)}, from ${P}'s own documentation`, `Which of ${joinList(items, 'or')} do you need live first?`);
+  }
+  if (/\bexceed\w*\b[^?]{0,40}\b(?:limits?|caps?|quota|allowance|concurrency)\b|\b(?:concurrency|rate|request|api|quota)\s+limits?\b|\bover (?:the |my |our )?(?:limit|quota|cap)\b|\bhit(?:ting)? (?:the |my |our )?(?:limit|quota|cap)\b/i.test(t)) {
+    return mk('over-limit', `Answer in three parts: what happens at the limit (new requests wait in a queue, are refused, or are served and billed on), how the limit is raised and how fast, and what the buyer can see before they reach it. Say which of these ${P} does today; do not promise a behaviour you cannot show.`, `what ${P} does when a limit is reached, how a limit is raised and how long that takes, from its documentation`, 'At your busiest hour, how many do you expect at once, and how often do you reach that?');
   }
   if (/\b(?:spending|spend|usage|credit|daily|monthly)\s+(?:limits?|caps?|alerts?|controls?)\b|\bset (?:a |an )?(?:limits?|caps?|budgets?|alerts?)\b|\blimits? on (?:my|the|our)\b/i.test(t)) {
     return mk('limits', `Answer yes or no, then how: at which level a limit can be set (account, product or user), what happens when it is reached (traffic or use stops, or only an alert goes out), who can change it, and how fast a change takes effect.`, `${P}'s controls for limits and alerts, and what each one does when it is reached`, 'When a limit is reached, do you want use to stop, or only a warning?');
@@ -300,8 +402,8 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   if (/\b(?:subscription|licen[cs]e|perpetual|on[- ]prem\w*|desktop)\b/i.test(t) && /\b(?:purchase|buy|pay|get|switch|move|convert)\b/i.test(t)) {
     return mk('buy-model', `Answer with the ways of buying that exist${ctx.parts.length || ctx.sellerText ? ' for this product' : ''}: a licence, a subscription, or a mix, and for each what it means for upgrades, support and the data. Say yes or no to the form the buyer asked for before anything else, and what it costs to move from one to the other later.`, `the ways ${P} can be bought (licence, subscription, cloud, hybrid), and what each includes, from the price list`, 'Which would you prefer: paying once with yearly upkeep, or paying each year, and why?');
   }
-  if (/\b(?:do|will|would|am|are) (?:i|we)\b.{0,20}\b(?:pay|be charged|get charged|billed)\b|\bcharged for\b|\bbilled for\b|\bpay for\b/i.test(t)) {
-    return mk('usage-billing', `Answer from the billing rules, using the case in the question: say what counts as billable (active, connected, sending, or only present on the account), when it starts and stops, and show a worked invoice for exactly that case. If the rule has an exception, state it first.`, `${P}'s billing rules for this case: what is billable, from when to when, and what is not`, 'Which of your items would sit idle, and for how long, in a typical month?');
+  if (/\b(?:do|will|would|am|are) (?:i|we)\b.{0,20}\b(?:pay|be charged|get charged|billed)\b|\bcharged for\b|\bbilled for\b|\bpay for\b|\b(?:does|do|will|would)\b[^?]{0,40}\bcharge(?:s)? for\b|\bround(?:s|ed|ing)? up\b|\bbilling increments?\b/i.test(t)) {
+    return mk('usage-billing', `Answer from the billing rules, using the case in the question: say what counts as billable in this case (used, idle, connected, or only present on the account), how the amount is rounded, when it starts and stops, and show a worked invoice for exactly that case. If the rule has an exception, state it first.`, `${P}'s billing rules for this case: what is billable, from when to when, and what is not`, 'Which of your items would sit idle, and for how long, in a typical month?');
   }
   if (/\bcustom (?:pricing|quote|plan|terms)|tailored (?:pricing|plan|to)|volume (?:pricing|discount|tiers?)|enterprise pricing|pricing .{0,30}\b(?:scale|volume|deployment|needs)\b/i.test(t)) {
     return mk('custom-price', `Say plainly whether a tailored price exists, then how it is built: what the buyer must give (volumes, how fast they ramp, the term), and the structures you can offer for it. Possible trades: ${joinList(modelT.slice(0, 3))}. Ask for their expected volumes before you name any figure.`, `which structures and limits your price list allows for a tailored price, and who approves one`, 'What volume do you expect in the first year, and how fast does it ramp?');
@@ -315,13 +417,26 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   if (/\b(?:refund\w*|cancel\w*|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|annual maintenance|maintenance fee|renew\w*|credits?|expire\w*)\b/i.test(t)) {
     return mk('terms', `Answer from the written terms, in one place: what is paid and when, what is refundable, what happens on cancellation, and whether a minimum, a commitment or a maintenance fee applies. Never say "no commitment" or "fully refundable" unless the written terms say so.${ctx.model === 'transactions' ? ' For a usage priced deal, say whether pay as you go has any minimum spend, and what a committed plan adds.' : ''}`, `the current billing, refund and cancellation terms of ${P}, including any minimum or maintenance fee`, 'What would the terms need to say for this to be an easy yes?');
   }
+  if (/\boverages?\b|\bgo(?:es)? (?:over|above) (?:the |my |our )?(?:plan|allowance|quota|included)|\bbeyond (?:the |my |our )?(?:plan|allowance|included)|\bexcess (?:usage|use)\b/i.test(t)) {
+    const plan = (text.match(/\b(?:on|in|under) (?:the )?([A-Z][A-Za-z0-9]*(?: [A-Z][A-Za-z0-9]*)?) plan\b/) || [])[1];
+    return mk('overage', `Answer from the written rules of ${plan ? `the ${plan} plan` : 'the plan'} with a worked month that goes over: what counts as over, the rate for the extra use compared with the rate inside the plan, whether use stops or is billed on, and when the buyer is told.`, `the written overage rules of ${plan ? `the ${plan} plan` : 'the plan'} in ${P}'s price list, with an example month`, 'How far over the plan do you expect to go in a busy month?');
+  }
+  if (/\b(?:reduc\w+|lower\w*|cut(?:ting)?|sav(?:e|ing)\w*|bring(?:ing)? down|control\w*|manag\w+|optimi[sz]\w+|minimi[sz]\w+)\b[^?]{0,50}\b(?:costs?|spend|expenses?|fees)\b/i.test(t) && /^(?:how|can|could|what|will|does|do)\b/i.test(t)) {
+    const where = (text.match(/\b(?:reduc\w+|lower\w*|cut(?:ting)?|sav(?:e|ing)\w*|bring(?:ing)? down|control\w*|manag\w+|optimi[sz]\w+|minimi[sz]\w+)\s+(?:the\s+|their\s+|our\s+)?([a-z][a-z \-]{2,40}?\s(?:costs?|spend|expenses?|fees))/i) || [])[1];
+    return mk('outcome-cost', `Answer with the way the cost comes down, not with a price list: where ${where ? `the ${stripEnd(where)} sit` : 'the cost sits'} today (run, support, upgrades, licences or people), which part of it ${P} takes over or removes, and how the quality of the work is protected${ctx.model === 'services' ? ' (service levels, service credits and a parallel run)' : ''}. Use the buyer's own figures for today's cost, and show one case where it came down only if that customer has agreed.`, `a case with the cost before and after and the quality kept, only if the customer has agreed to share it; otherwise say what you can show and what you cannot`, 'Where does most of the cost sit today: running it, supporting it, upgrading it, licences or people?');
+  }
   if (/\b(?:how much|price|pricing|priced|costs?|fees?|charges?|budget|afford\w*|expensive|rates?)\b/i.test(t) && !/\bcompar/i.test(t)) {
     const unit = unitFor(text, ctx);
-    return mk('price', `Answer with how ${P} is priced (${unit}) and one worked example on the buyer's own volumes, with every charge on the page. Then set the figure next to what the problem costs them today${ctx.alternatives.length ? ` (${lowerStart(ctx.alternatives[0])})` : ''}, so the price is read against their own cost and not on its own.`, `${P}'s price list and exactly what it includes; use a competitor's price only from a quote the buyer shows you`, 'What would this need to be compared with for the price to make sense to you?');
+    return mk('price', `Answer with how ${P} is priced${unit ? ` (${unit})` : ''} and one worked example on the buyer's own volumes, with every charge on the page. Then set the figure next to what the problem costs them today${ctx.alternatives.length ? ` (${lowerStart(ctx.alternatives[0])})` : ''}, so the price is read against their own cost and not on its own.`, `${P}'s price list and exactly what it includes; use a competitor's price only from a quote the buyer shows you`, 'What would this need to be compared with for the price to make sense to you?');
   }
   if (/\bwhy not\b|\balready (?:have|use|has|got|own)\b|\bextend (?:the|our|what)\b|\bwe (?:have|use|built|run) (?:a|an|our|the)\b|\bin-?house\b|\bbuild (?:it|this)\b|\bour (?:own )?(?:erp|crm|tms|wms|system|tool)s? (?:already|has|does)\b/i.test(t)) {
     const cur = ctx.alternatives.length ? ` (${lowerStart(ctx.alternatives[0])})` : '';
     return mk('incumbent', `Start from what their current setup does not do${cur}, in their words, and what that gap costs them. Position ${P} alongside it where you can and replace it only where the gap is clear. Draw the overlap line by line and honestly, including what the current tool does better.`, `what ${P} covers that the current setup does not, and what the current setup covers that ${P} does not`, 'What does the current setup not do today, and what does that cost you?');
+  }
+  const deployAsked = [...new Set((text.match(/\bon-?prem\w*|\bprivate cloud\b|\bself-?host\w*|\bhybrid\b|\bvpc\b|\bair-?gapped\b|\bdedicated (?:cloud|instance|tenant)\b|\bon our own servers\b/gi) || []).map((x) => x.toLowerCase()))];
+  if (deployAsked.length && /^(?:can|could|do|does|is|are|will|would)\b/i.test(t)) {
+    const said = (ctx.sellerText.match(/\b(?:in the cloud|on the cloud|self-?hosted|on-?prem\w*|private cloud|hybrid|vpc|air-?gapped)(?:(?:,| or| and|,? and)\s*(?:in the cloud|self-?hosted|on-?prem\w*|private cloud|hybrid|vpc|air-?gapped|cloud|dedicated|public cloud))*/i) || [])[0];
+    return mk('deploy-options', `Answer yes or no for each option the buyer named (${joinList(deployAsked, 'or')}), then say what each one needs: what the buyer runs and what ${P} runs, who updates it, how it is supported, and how the price differs.${said ? ` Your description says it is available ${said}, so start from that and say which of the buyer's options it covers.` : ''}`, `which of ${joinList(deployAsked, 'or')} ${P} supports today, with the limits and the price difference, from its own documentation`, 'Which of your rules or systems decides where it may run?');
   }
   const integ = /\b(?:integrat\w*|connect(?:s|ed)? (?:to|with)|work(?:s)? with|plug into|apis?|sync\w*|existing (?:tools|systems|erp|stack))\b/i.test(t) || /\b(?:salesforce|netsuite|sap|oracle|erp|crm|tms|wms|siem|dms|hris|tally|quickbooks|zoho|slack|jira|splunk|servicenow)\b/i.test(t);
   if (integ) {
@@ -338,16 +453,21 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
     return mk('security', `Bring the answers before they are asked: where the data is stored and processed, who can see it, how it is protected and deleted, and what the buyer wants to check before they approve (a security or IT contact, or the owner). Offer the security documents first and a call with whoever reviews.`, `where ${P} stores and processes the buyer's data, who can reach it, and which security documents you can share`, 'What does your security team need to see before they approve a new vendor?');
   }
   if (/\b(?:differ\w*|different|vs\.?|versus|compared? (?:to|with)|instead of|better than|why .{1,40}\bover\b|over (?:a |an |the )?\S+|main difference)\b/i.test(t)) {
-    const m = text.match(/\bwhy (?:do |should |would |choose )?(.+?) over (?:a |an |the )?(.+)$/i) || text.match(/\bhow (?:does|do|is|are) (?:a |an |the )?(.+?) (?:differ|different) from (?:a |an |the )?(.+)$/i) || text.match(/\bbetween (.+?) and (.+)$/i);
-    const a = m ? stripEnd(m[1]) : P;
+    // "Why do enterprises choose A over B?": the subject and the verb are not part of what is compared
+    const m = text.match(/\bwhy (?:do|does|did|would|should|will|can) (?:[a-z][a-z-]*(?: [a-z][a-z-]*){0,2}) (?:choose|pick|prefer|select|buy|use|go with|trust|hire|appoint|engage|opt for) (.+?) (?:over|instead of|rather than|versus|vs\.?) (?:a |an |the )?(.+)$/i)
+      || text.match(/\bwhy (?:do |should |would |choose )?(.+?) (?:over|instead of|rather than) (?:a |an |the )?(.+)$/i) || text.match(/\bhow (?:does|do|is|are) (?:a |an |the )?(.+?) (?:differ|different) from (?:a |an |the )?(.+)$/i) || text.match(/\bbetween (.+?) and (.+)$/i);
+    const a = m ? stripEnd(m[1]).replace(/^(?:(?:i|we|you|they|customers?|buyers?|[a-z-]+s)\s+)?(?:choose|pick|prefer|select|buy|use|go with|trust|hire|engage)\s+/i, '') : P;
     const b = m ? stripEnd(m[2]) : (ctx.alternatives[0] ? lowerStart(ctx.alternatives[0]) : 'the other option');
-    return mk('difference', `Answer it as a difference in what each one is for, on the points this buyer cares about${needs ? ` (${needs})` : ''}, and not as a feature list. Set ${a} and ${b} side by side on those points, show each on the buyer's own case, and say plainly when ${b} is the better choice for something.`, `what ${a} and ${b} each do today, from your own documentation; do not claim a difference you cannot show`, 'What are you trying to get done with it, and what have you tried so far?');
+    return mk('difference', `Answer it as a difference in what ${a} and ${b} are each for, on the points this buyer cares about${needs ? ` (${needs})` : ''}, and not as a feature list. Set ${a} and ${b} side by side on those points, show each on the buyer's own case, and say plainly when ${b} is the better choice for something.`, `what ${a} and ${b} each do today, from your own documentation; do not claim a difference you cannot show`, 'What are you trying to get done with it, and what have you tried so far?');
   }
   if (/\b(?:can|do|does|will|could) (?:we|you|it|i|they)\b.{0,40}\b(?:all|every|each|any)\b|\b(?:countries|regions|cities|languages|markets|currencies)\b/i.test(t) && /^(?:can|do|does|will|could|is|are)\b/i.test(t)) {
     return mk('coverage', `Answer item by item, not with "all": for each country, region, language or case in the buyer's list, say whether it is supported today, supported after set-up or approval, or not supported, and what that costs. Ask for their list first and send it back marked up.`, `which of the buyer's items ${P} supports today, which need set-up or approval and how long that takes, and which it does not support`, 'Which of these matter first, and which could wait for a later wave?');
   }
   if (/\b(?:suitable|right for|fit for|fit our|work(?:s)? for|enterprises?|growing|at scale|scale|specific .{0,25}(?:workflows?|codes?|processes)|cost codes)\b/i.test(t)) {
-    return mk('fit', `Answer with the buyer's own hardest cases, by name, instead of a plain yes: ask for the three that would break a weaker product (volume, number of entities, approvals, special rules), and for each say whether it works today, works with set-up, or is not supported. Then offer a test on the one that matters most.`, `which of the buyer's cases ${P} supports today, which need configuration and which it does not support; a reference of similar size only if the customer has agreed`, 'Which three cases would you want to see working before you believe it?');
+    if (ctx.model === 'services') {
+      return mk('fit', `Answer with a staged plan on the buyer's own case instead of a plain yes: ask for the three applications or workloads that would be hardest to move (age, size, dependencies and the rules that apply to them), and for each say what ${P} has done on a case like it, what it would do first and what it would not take on. Then offer a pilot on the one that matters most, with a parallel run and exit criteria.`, `the kinds of work ${P} has delivered that match the buyer's cases, from its own project notes; a reference of similar size only if the customer has agreed`, 'Which three applications or workloads would you want to see handled before you believe it?');
+    }
+    return mk('fit', `Answer with the buyer's own hardest cases, by name, instead of a plain yes: ask for the three that would break a weaker option (the size, the number of sites or entities, the special rules), and for each say whether it works today, works with set-up, or is not supported. Then offer a test on the one that matters most.`, `which of the buyer's cases ${P} supports today, which need configuration and which it does not support; a reference of similar size only if the customer has agreed`, 'Which three cases would you want to see working before you believe it?');
   }
   if (/\b(?:time to (?:learn|tune|set)|take time|steep|learning curve|too complex|complex to|hard to (?:use|learn|configure))\b/i.test(t)) {
     return mk('effort', `Do not argue the point; agree that tailoring takes effort and show how it is managed: what works out of the box, who tunes the rest in the first weeks (your team or theirs), and how long it takes to a first useful result. Offer a short pilot so the buyer can measure the effort themselves.`, `what is configured by default in ${P}, what a typical customer tunes, and the time it took for a customer of a similar size`, 'Who on your side would own the tuning, and how much of their week can they give it?');
@@ -431,7 +551,9 @@ export function dedupeAnswers<T extends { text: string; a: QAnswer }>(items: T[]
   const key = (x: string): string => x.toLowerCase().replace(/\s+/g, ' ').trim();
   for (const it of items) {
     const sents = sentences(it.a.answer);
-    const kept = sents.map((x, i) => (seen.has(key(x)) ? (i === 0 ? `For ${quoted(it.text.length > 140 ? clip(it.text, 140) : it.text)}: ${lowerStart(x)}` : '') : x)).filter(Boolean);
+    // a sentence an earlier answer holds is dropped; the question is not repeated (it is the heading above the answer). When nothing else is left the first sentence stays.
+    let kept = sents.filter((x) => !seen.has(key(x)));
+    if (!kept.length && sents.length) kept = [sents[0]];
     it.a.answer = kept.join(' ');
     sents.forEach((x) => seen.add(key(x)));
     if (seen.has(key(it.a.bring))) it.a.bring = `for ${quoted(it.text.length > 140 ? clip(it.text, 140) : it.text)}: ${it.a.bring}`;
@@ -494,9 +616,24 @@ export function usageLine(line: string, unit: string): string {
 /** The sentences of the deal text (objections, notes, blockers, requirements) in which the seller's own offer of usage pricing shows: a question taken from its price page
  *  such as "What is available on pay as you go?". A sentence that compares with something else ("Is pay as you go cheaper?", "Why not keep paying per transaction?", "lower fees than ...") is the buyer's. */
 const BUYER_COMPARES = /\b(?:cheaper|cheapest|less expensive|than|instead|versus|vs\.?|keep(?:ing)? paying|why not|rather than|currently|today|already|alternatives?|competitors?|switch(?:ing)? from|banks?|incumbents?|we pay|we use)\b/i;
+// usage words of a price page that are not a pricing phrase by themselves: overages, rounding up, "billed per hour"
+const OFFER_USAGE = /\boverages?\b|\bround(?:s|ed|ing)? up\b|\bhigh[- ]usage\b|\bbilled (?:per|by|in)\b|\bper[- ](?:hour|minute|token|character|thousand|million|1,?000)\b|\bcharge(?:s|d)? for (?:silence|idle|unused)\b/i;
 export function sellerOffers(...texts: string[]): string {
-  return texts.join(' . ').split(/[?;\n]|\.(?=\s|$)/).map((x) => x.trim()).filter((x) => x && STRONG_USAGE.test(x) && !BUYER_COMPARES.test(x)).join(' . ');
+  return texts.join(' . ').split(/[?;\n]|\.(?=\s|$)/).map((x) => x.trim()).filter((x) => x && (STRONG_USAGE.test(x) || OFFER_USAGE.test(x)) && !BUYER_COMPARES.test(x)).join(' . ');
 }
+/** A payments provider in the seller's own words (a gateway, payouts, checkout, merchants, card issuing ...). A core banking or lending platform that only lists "payments" among the things it connects is not one. */
+const PAYMENT_PROVIDER = /\bpayments? (?:gateway|processing|processor|service provider|orchestration|apis?|infrastructure)\b|\bpayouts?\b|\bcheckout\b|\bacquir\w+|\bcard (?:issuing|processing|payments)\b|\bmerchants?\b|\bremittances?\b|\bupi\b|\bwallets?\b|\bbuy now pay later\b|\bbanking as a service\b|\bbank account (?:data|apis?|linking|verification)\b|\bopen banking\b|\bpay[- ]ins?\b/i;
+/** The sector read, set back to its parent when the sub-type does not fit the seller's own words: "payments and banking APIs" is the sub-type of a payments provider; a core banking platform
+ *  is fintech but not a payments provider, and gets neither the payments objections nor a payments evaluation. */
+export function reframeSector<C extends { v: Vertical | null; line: string }>(ctx: C, sellerText: string): C {
+  const v = ctx.v;
+  if (!v || v.subtype !== 'payments-banking' || PAYMENT_PROVIDER.test(sellerText)) return ctx;
+  const parent = VERTICALS.find((x) => x.id === v.id);
+  if (!parent) return ctx;
+  return { ...ctx, v: parent, line: ctx.line.replace(/(read from your inputs as )[^.]*?payments and banking APIs/, `$1${parent.name}`) };
+}
+// a sector's usual model "per transaction" is kept only for a seller whose words show a usage or API product
+const USAGE_CUES = /\bapis?\b|\bsdk\b|\bsms\b|\bmessag\w+|\bvoice\b|\botp\b|\bverification\b|\bgateway\b|\blabels?\b|\bcouriers?\b|\bshipping\b|\bper[- ]\w+\b|\busage\b|\bvolume\b|\bmetered\b|\bpay[- ]as[- ]you[- ]go\b/i;
 export interface ModelRead { model: Model2 | null; unit: string; line: string; stated: boolean }
 const FIXED_LINK_WORDS = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site survey|managed network|branch(?:es)? (?:network|sites?)|wi-?fi|broadband|bandwidth|wan\b)\b/i;
 // the seller's own pricing words: a single product noun (API, SIM, volume) is never one
@@ -536,9 +673,13 @@ export function readModel(ctxModel: BusinessModel | null, ctxLine: string, selle
   const unit = usageUnit(sellerText, ...evidence);
   const assumed = /assumed/.test(ctxLine);
   const fixed = FIXED_LINK_WORDS.test(all);
-  const usageStrong = STRONG_USAGE.test(all);
+  const usageStrong = STRONG_USAGE.test(all) || (SOFTWARE_CUES.test(sellerText) && OFFER_USAGE.test(offers.join(' . ')));
   const seatWords = SEAT_WORDS.test(all);
   const serviceWords = SERVICE_WORDS.test(all);
+  if (ctxModel === 'transactions' && assumed && !usageStrong && !USAGE_CUES.test(sellerText)) {
+    // the sector's usual model is per transaction, but the seller's words show no usage product (a core banking platform): the wording stays neutral
+    return { model: null, unit: '', line: plainModelLine(ctxLine), stated: false };
+  }
   let model: Model2 | null = ctxModel;
   let line = ctxLine;
   let changed = false;
@@ -559,7 +700,7 @@ export function readModel(ctxModel: BusinessModel | null, ctxLine: string, selle
   }
   if (usageStrong && !fixed && (ctxModel === 'connectivity' || ctxModel === 'saas' || ctxModel === 'transactions' || ctxModel === null)) {
     model = 'transactions'; changed = true;
-    line = unit ? usageLine(ctxLine, unit) : line.replace(MODEL_LINE, 'Business model: usage priced (pay as you go), read from your wording about price.*');
+    line = unit ? usageLine(ctxLine, unit) : line.replace(MODEL_LINE, 'Business model: usage priced, read from your wording about price.*');
     return { model, unit: seatWords ? '' : unit, line, stated: true };
   }
   return { model, unit: seatWords ? '' : unit, line: plainModelLine(line), stated: changed || !assumed };

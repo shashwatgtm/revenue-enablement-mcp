@@ -5,7 +5,7 @@
 import { addWorkdays, describeWith, isoDate, joinList, onOrAfterWorkday, onOrBeforeWorkday, parseContacts, solutionBrief, upperFirst, weekdayName, workdaysBetween, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
-import { answerQuestion, briefOf, readModel, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
+import { answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
 
 type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
 interface Step { m: string; who: Who; owner?: string }
@@ -59,7 +59,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));
 
   const industryWords = cleanIndustry(industryFromTitle(dealName));
-  const ctx = d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] });
+  const ctx = reframeSector(d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] }), solutionIn);
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
@@ -181,7 +181,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
 
   // ---- blockers ----
   const blockerItems = d.splitItems(blockersIn);
-  const qa: QACtx = { P, parts: partsOf(brief), model, sellerText: solutionIn, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(lowerStart), alternatives: [] };
+  const qa: QACtx = { P, parts: partsOf(brief), model, sellerText: solutionIn, stated: mr.stated, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(lowerStart), alternatives: [] };
   const blockerAnswers = dedupeAnswers(blockerItems.map((b) => ({ text: b, a: answerQuestion(b, qa) })));
   const ownerFor = (id: string): string => ({ it: `${itName} with Seller (solutions engineer)`, security: `${secName} with Seller`, price: `${ebName} with Seller`, champion: `${champName} with Seller`, se: `${champName} with Seller (solutions engineer)`, terms: `${procName} with ${ebName}`, seller: `Seller with ${champName}` } as Record<string, string>)[ownerKind(id)] || `Seller with ${champName}`;
 

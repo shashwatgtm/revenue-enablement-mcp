@@ -25,6 +25,12 @@ export interface Deps {
 export declare const stemsOf: (t: string) => Set<string>;
 /** How many ideas two texts share: a shared word stem, or two words that mean about the same thing. */
 export declare function shared(a: string, b: string): number;
+export declare function matchPart(text: string, parts: string[]): string;
+/** A pain about pieces that are stitched together is answered by the part that joins them, when the description says one does ("a unified Voice Agent API"). */
+export declare const STITCHED: RegExp;
+export declare function joiningPart(parts: string[], full: string): string;
+/** Quoted results are separated by semicolons, but "Name: what happened; 50% faster ... (page claim)" is one claim whose figures sit after the semicolon: such a figure goes back with its name. */
+export declare function joinSplitClaims(text: string): string;
 export declare const lowerStart: (s: string) => string;
 export declare const stripEnd: (s: string) => string;
 /** A text the user typed, shown in quotes (kept as typed; a quote the safeguard already put around it is not doubled). */
@@ -32,7 +38,6 @@ export declare const quoted: (s: string) => string;
 export declare function plural(n: number, one: string, many: string): string;
 /** "a, b and c" limited to the first n items. */
 export declare const some: (items: string[], n: number) => string;
-/** The parts of a product, as the user's description lists them: after a colon or "made of", or after "joins", "covers", "includes", "with". */
 export declare function partsOf(brief: SolutionBrief): string[];
 export interface ModelWords {
     /** what the buyer pays for, in the seller's own unit */
@@ -52,8 +57,10 @@ export type Part = 'champion' | 'buyer' | 'economic' | 'blocker' | 'user' | 'inf
 export interface RoleCtx {
     P: string;
     v: Vertical | null;
-    metric: string;
+    metric: string; /** the buyer runs calls or support work (a contact centre, a support desk): quality assurance there means scoring calls, not testing software */
+    callContext?: boolean;
 }
+export declare const CALL_CONTEXT: RegExp;
 export interface RoleRead {
     part: string;
     cares: string;
@@ -61,7 +68,6 @@ export interface RoleRead {
     kind: Part | null;
     ask?: string;
 }
-/** What a contact is for, from the title (and from the role the user wrote in brackets, which always wins). */
 export declare function readRole(c: Contact, kind: Part | null, ctx: RoleCtx, investment: boolean): RoleRead;
 export interface ThreatRead {
     text: string;
@@ -79,6 +85,8 @@ export interface QACtx {
     sellerText: string;
     /** the unit a usage priced deal is paid in (read from the user's words), or '' */
     unit?: string;
+    /** false when the business model is only the sector's usual one (assumed): the answer then names no way of paying */
+    stated?: boolean;
     v: Vertical | null;
     /** the buyer's own requirements and the alternatives they use, as short phrases */
     needs: string[];
@@ -117,6 +125,12 @@ export declare function usageUnit(...texts: string[]): string;
 /** Replaces the business model sentence of a context line when the user's pricing words show a usage priced deal. */
 export declare function usageLine(line: string, unit: string): string;
 export declare function sellerOffers(...texts: string[]): string;
+/** The sector read, set back to its parent when the sub-type does not fit the seller's own words: "payments and banking APIs" is the sub-type of a payments provider; a core banking platform
+ *  is fintech but not a payments provider, and gets neither the payments objections nor a payments evaluation. */
+export declare function reframeSector<C extends {
+    v: Vertical | null;
+    line: string;
+}>(ctx: C, sellerText: string): C;
 export interface ModelRead {
     model: Model2 | null;
     unit: string;

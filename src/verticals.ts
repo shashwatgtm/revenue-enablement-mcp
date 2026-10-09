@@ -1851,6 +1851,42 @@ export function detectVertical(...args: unknown[]): Vertical | null {
   return explainSector(...args).vertical;
 }
 
+// Run 22: the BUYER's industry (not the seller's vertical above). Words and plain questions a buyer in that industry puts to any vendor, so a demo or a
+// discovery list can speak to the industry the user typed instead of repeating it as a label. Vocabulary and questions only: no statistic, no
+// benchmark, no named company, no fact about any product (rule B82).
+export interface BuyerLens { id: string; name: string; match: RegExp; words: string[]; checks: string[]; }
+export const BUYER_LENS: BuyerLens[] = [
+  { id: 'financial', name: 'financial services', match: /\b(?:bfsi|banks?|banking|financial services?|lend(?:ing|ers?)|insurers?|insurance|fintech|credit unions?|nbfc|payments? (?:technology|companies|providers?))\b/i,
+    words: ['regulator', 'audit trail', 'customer data', 'access permissions', 'model risk', 'third party review'],
+    checks: ['Where would your customer data sit with a vendor like this, who could see it, and what would your regulator or auditor ask to see?', 'Which of your existing controls and approvals would this have to respect, and who signs them off?', 'If a model or rule decides something about a customer, how is that decision explained and reviewed here?', 'Which employees may see which customer records today, and how would a new tool respect those permissions?'] },
+  { id: 'retail', name: 'retail and e-commerce', match: /\b(?:retail\w*|e-?commerce|d2c|online (?:stores?|sellers?|shops?)|marketplaces? sellers?|merchants?)\b/i,
+    words: ['sale day', 'orders', 'returns', 'checkout', 'channels', 'stock'],
+    checks: ['How does your business cope on a sale day, when order volumes jump, and where does it strain first?', 'Which of your channels (your own site, marketplaces, stores) would this touch first?', 'How do returns and failed orders reach you today?'] },
+  { id: 'consumer-goods', name: 'consumer goods and distribution', match: /\b(?:fmcg|consumer goods|beverages?|food and drink|distributors?|route to market|trade marketing)\b/i,
+    words: ['outlets', 'distributors', 'secondary sales', 'beat plan', 'trade scheme', 'stock out'],
+    checks: ['How do your people work in outlets with a weak signal, and how do the distributor\'s own records fit in?', 'Who in the field would use this every day, and what do they do when it is slow?'] },
+  { id: 'education', name: 'education', match: /\b(?:education|schools?|colleges?|universit\w+|edtech|institutes?|coaching|students?|admissions?)\b/i,
+    words: ['enquiries', 'admissions', 'counsellors', 'applications', 'intake', 'fee reminders'],
+    checks: ['How do enquiries and applications reach your counsellors today, and how soon is each one followed up?', 'Who sees a student\'s record across admissions, fees and communication, and who may change it?'] },
+  { id: 'manufacturing', name: 'manufacturing', match: /\b(?:manufactur\w*|factor(?:y|ies)|plants?|industrial|shop floor)\b/i,
+    words: ['plant', 'shift', 'suppliers', 'work orders', 'downtime', 'quality checks'],
+    checks: ['Which plant systems do you already run, and who keeps the links between them working?', 'What happens on your shop floor when a system is down for an hour?'] },
+  { id: 'automotive', name: 'automotive', match: /\b(?:automotive|automobiles?|auto (?:makers?|parts)|vehicles? makers?|oems?|dealers?hips?)\b/i,
+    words: ['plants', 'suppliers', 'dealers', 'inbound parts', 'line stoppage', 'shipments'],
+    checks: ['Which of your plants, suppliers and dealers would be involved, not just one of them?', 'How do you find out today that a late part will stop a line?'] },
+  { id: 'construction', name: 'construction and infrastructure', match: /\b(?:construction|civil|infrastructure|contractors?|builders?|real estate developers?)\b/i,
+    words: ['job cost', 'change orders', 'subcontractors', 'site', 'pay applications', 'daily logs'],
+    checks: ['How do your people work on a site with a weak signal and many subcontractors?', 'How does the field record reach the job cost and the ledger today, and where is it keyed twice?'] },
+  { id: 'software', name: 'software and technology', match: /\b(?:b2b saas|saas and software|software (?:companies|vendors|teams)|technology companies|tech companies|software)\b/i,
+    words: ['release', 'product teams', 'engineering', 'platform', 'roadmap', 'incidents'],
+    checks: ['Which product or platform teams in your company would use it, and where does it meet your release process?', 'What would your engineers need to see before they trust it?'] },
+];
+/** The buyer's industry as typed ("BFSI", "Education", "SMB online retailers and D2C brands"), or null when it matches none of the entries. */
+export function buyerLens(industry: unknown): BuyerLens | null {
+  if (typeof industry !== 'string' || !industry.trim()) return null;
+  return BUYER_LENS.find((b) => b.match.test(industry)) || null;
+}
+
 export type BusinessModel = 'saas' | 'services' | 'connectivity' | 'transactions' | 'marketplace' | 'hardware_software' | 'investment';
 export const BUSINESS_MODELS: BusinessModel[] = ['saas', 'services', 'connectivity', 'transactions', 'marketplace', 'hardware_software', 'investment'];
 export const MODEL_NAME: Record<BusinessModel, string> = {

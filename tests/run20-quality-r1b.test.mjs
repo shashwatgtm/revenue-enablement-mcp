@@ -195,8 +195,9 @@ test("discovery_question_bank: no placeholder, the pains are split, role and par
   assert.match(r.text, /On "a 60 day reimbursement cycle"/);
   assert.match(r.text, /Questions on what Spendrill covers/);
   assert.match(r.text, /Receipt capture: .*\?/); // run 21c: draft rewrite: each part has its own question built from the pain, not the old stock wording
-  // the long pain is quoted whole only once (the context line)
-  assert.equal((r.text.match(/manual expense capture and bill checking, a 60 day reimbursement cycle/g) || []).length, 1);
+  // run 22: the long pain is listed as separate numbered problems in the context and never pasted again as one lump
+  assert.equal((r.text.match(/manual expense capture and bill checking, a 60 day reimbursement cycle/g) || []).length, 0);
+  assert.match(r.text, /\n\s+1\. manual expense capture and bill checking\n\s+2\. a 60 day reimbursement cycle\n\s+3\. policy violations and cash leakage\n\s+4\. teams stuck on legacy systems\n/);
 });
 test("discovery_question_bank: a finance buyer of a SaaS-sector product is not asked about onboarding and drop-off", async () => {
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_industry: "B2B SaaS and software", prospect_role: "CFO", your_solution: "Billwise, a billing platform for subscription companies: invoicing, subscription management, revenue recognition and collections",
@@ -357,11 +358,13 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.equal(r.isError, false);
   assert.doesNotMatch(r.text, BRACKET);
   assert.doesNotMatch(r.text, /\[Your name\]/);
-  assert.ok((r.text.match(/route planning, live re-planning, driver app/g) || []).length <= 1, "description pasted more than once");
+  assert.ok((r.text.match(/route planning, live re-planning, driver app, proof of delivery/g) || []).length <= 1, "description pasted more than once");
+  assert.ok(!r.text.includes(LANEHOP), "the whole description pasted");
   assert.doesNotMatch(r.text, NO_ANSWER);
   // run 21c: draft rewrite. The objections now sit in the script where they come up (in a step, in the discussion or at the close), each with its spoken answer.
+  // run 22: what to confirm before saying each answer is one list at the end ("Check before you say it"), one line for each objection
   const obj = r.text.split("## Demo Script")[1].split("\n## ")[0];
-  assert.equal((obj.match(/Confirm before you say it/g) || []).length, 3);
+  assert.equal((r.text.split("## Check before you say it")[1].split("\n---")[0].match(/^- "/gm) || []).length, 3);
   assert.match(obj, /with no signal|low-signal/i);          // offline
   assert.match(obj, /system by system/i);                    // integration
   assert.match(obj, /dated plan/i);                          // set up
@@ -369,7 +372,7 @@ test("demo_script_builder: short name, split features, every objection answered 
   assert.match(r.text, /\*\*Step 1: Live re-planning\*\*/);
   assert.match(r.text, /\*\*Step 2: Driver app that works offline\*\*/);
   assert.match(r.text, /\*\*Step 3: Integration with an existing TMS or ERP in weeks\*\*/);
-  assert.match(r.text, /Claims to prove before you say them/);
+  assert.match(r.text, /## Claims to prove before you say them/);
   // the pains are separate, the audience and the room are used
   assert.match(r.text, /first, manual or outdated route planning/);   // run 21c: draft rewrite (the playback is one spoken line)
   assert.match(r.text, /Head of Last-mile/);
@@ -437,7 +440,9 @@ test("champion_enablement_kit internal_business_case: no placeholder, objections
   assert.match(r.text, /manual spreadsheet routing/); assert.match(r.text, /a legacy TMS that plans once a day/);
   assert.match(r.text, /\$150,000 a year \(hypothetical\)/);
   assert.match(r.text, /the peak season starts in November/);
-  assert.equal((r.text.match(/Confirm before you say it/g) || []).length, 3);
+  // run 22: what to confirm before forwarding is one list at the end, one line for each objection
+  const checkList = r.text.split("## Before you forward this")[1].split("\n\n###")[0];
+  assert.equal((checkList.match(/^- "/gm) || []).length, 3);
   assert.match(r.text, /operations leader/);
   assert.match(r.text, /pilot hub|pilot at one hub/i);
 });

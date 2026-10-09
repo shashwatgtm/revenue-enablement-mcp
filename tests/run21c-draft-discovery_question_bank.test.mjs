@@ -83,12 +83,16 @@ test("a known metric and a gap are asked about once each, and the gaps come befo
   const t = await call({ framework: "meddpicc", ...A });
   assert.ok(t.search(/Gaps to fill first/i) > 0 && t.search(/Gaps to fill first/i) < t.search(/### M|## M/));
   assert.match(t, /pay applications take 9 days to prepare/);
-  assert.equal((t.match(/change orders sit in email for weeks, and job cost reports arrive after the money is spent/g) || []).length, 1, "the whole pain is quoted once");
+  // run 22: the two problems are listed apart in the context (each once as a list item) and the two are never pasted again as one lump
+  assert.equal((t.match(/change orders sit in email for weeks, and job cost reports arrive after the money is spent/g) || []).length, 0, "the pains are not pasted as one lump");
+  assert.equal((t.match(/^\s+\d\. change orders sit in email for weeks$/gm) || []).length, 1);
+  assert.equal((t.match(/^\s+\d\. job cost reports arrive after the money is spent$/gm) || []).length, 1);
 });
 
 test("missing inputs are said once, in one line, and the list still reads well", async () => {
   const t = await call({ framework: "bant", prospect_role: "VP Sales" });
-  assert.equal((t.match(/Not given:/g) || []).length, 1);
+  assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1); // run 22: one closing line, replacing the old "Not given:" line
+  assert.doesNotMatch(t, /Not given:/);
   assert.doesNotMatch(t, /\[[^\]\n]*\]|\{[^}\n]*\}|your product|your solution/i);
   assert.ok(questions(t).length >= 8);
 });

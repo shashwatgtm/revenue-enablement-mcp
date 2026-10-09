@@ -212,8 +212,9 @@ test("risk_assessment: every risk has what it means here and how it is covered, 
 test("thin inputs: what is missing is said once, near the top, and the draft still reads", async () => {
   for (const type of TYPES) {
     const t = await call({ asset_type: type, your_solution: "Tallyhub, an invoicing tool for freelancers" });
-    assert.equal((t.match(/Not given:/g) || []).length, 1, type);
-    assert.ok(t.split("\n").findIndex((l) => l.startsWith("Not given:")) < 8, type);
+    // run 22: what was not given is named once, at the end, as "To sharpen this, give: ..." with what each would change
+    assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1, type);
+    assert.ok(t.length - t.indexOf("To sharpen this, give:") < 2400, type);
     assert.doesNotMatch(t, PLACEHOLDER, type);
     assert.doesNotMatch(t, /\((?:urgency_drivers|budget_context|key_value_points|competitive_context)\)/, type);
     assert.doesNotMatch(t, /[–—]/, type);

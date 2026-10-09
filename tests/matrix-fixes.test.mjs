@@ -37,9 +37,10 @@ test("email_sequence_generator: num_emails 0 is shown as given, not replaced by 
 
 test("demo_script_builder: demo_duration 0 falls back to the labelled default; 1 minute is singular", async () => {
   const r = await call("demo_script_builder", { demo_type: "first_look", your_solution: "FlowOps", demo_duration: 0 });
-  assert.match(r.text, /\| \*\*Duration\*\* \| 30 minutes \(default\) \|/);
+  // run 22: the length is said in the opening line of the script (a default is labelled), not in a configuration table
+  assert.match(r.text, /FlowOps, first look, 30 minutes \(default\)/);
   const one = await call("demo_script_builder", { demo_type: "first_look", your_solution: "FlowOps", demo_duration: 1 });
-  assert.match(one.text, /\| \*\*Duration\*\* \| 1 minute \|/);
+  assert.match(one.text, /FlowOps, first look, 1 minute\b(?!s)/);
   assert.doesNotMatch(one.text, /1 minutes/);
 });
 

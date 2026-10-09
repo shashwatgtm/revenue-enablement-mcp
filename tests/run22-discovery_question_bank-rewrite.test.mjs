@@ -228,3 +228,26 @@ test("round 2: no question assumes a free trial, and a 'Which of' question alway
     for (const m of t.matchAll(/Which of ([^?]*?) would (?:matter most|be a must-have)/gi)) assert.match(m[1], /,| or | and /, `${n}: "Which of ${m[1]}" names one thing`);
   }
 });
+
+// ---- round 4: a pain with figures becomes a question, the pain list is not cut to fragments, and a model question is asked only of a seller whose product decides something ----
+const TESTBENCH = {
+  framework: "meddpicc", prospect_industry: "banking and insurance", prospect_role: "Head of Testing", deal_stage: "discovery",
+  your_solution: "Testbench, a cloud platform for testing websites and mobile apps on real browsers and real devices, with test automation, visual testing, accessibility testing, test management and AI agents",
+  known_pain_points: "testing in the release cycle is increasingly complex: 4 billion active users on 9,000 distinct devices, 21 operating systems and 8 major browser engines, and sites and apps must render well on all",
+};
+const tb = await call(TESTBENCH);
+test("round 4: a pain with figures is listed whole, and the figures become a question", () => {
+  const ctx = tb.split("## Context")[1].split("---")[0];
+  assert.doesNotMatch(ctx, /\n\s+\d\. sites and apps must render well on all\n/, "the pain is not cut to a fragment that has lost its meaning");
+  assert.match(ctx, /9,000 distinct devices, 21 operating systems and 8 major browser engines/);
+  const qs = questions(tb).filter((l) => /9,000 distinct devices/.test(l));
+  assert.ok(qs.length >= 1, "a question quotes the figures");
+  assert.ok(qs.some((l) => /test(?:ed)? on today|do not test|leave out/i.test(l)), qs.join(" | "));
+});
+test("round 4: two parts tied to the same problem are not asked the same sentence, and the model question is left out for a testing platform", () => {
+  const sec = part(tb, "## Questions on what");
+  const qs = sec.split("\n").filter((l) => l.startsWith("- ")).map((l) => l.replace(/^- [^:]+: /, ""));
+  assert.equal(new Set(qs).size, qs.length, qs.join(" | "));
+  assert.doesNotMatch(tb, /If a model or rule decides something about a customer/);
+  assert.match(out.Quillbase, /Questions for a buyer in financial services/);
+});

@@ -66,6 +66,8 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const targetRole = roleFor(target, investment);
 
   // ---- the value points: once, with the vendor's claims labelled as the vendor's ----
+  const ACTION_RE = /^(?:get|keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|reclaim|shrink|turn|modernize|modernise|migrate|unify|enable|ensure|give|offer|provide|use|work|spend|drive|accelerate|eliminate|standardi[sz]e|centrali[sz]e|capture|apply|test|release|secure|comply|verify|forecast|price|resolve|put|act|catch|empower|unlock|allow|help|let|do|take|cover|align|free|see|learn|find|stop|start|build|buy|sell|win|renew|retain)\b/i;
+  const actionStart = (x: string): boolean => ACTION_RE.test(x);
   // one point typed as a run of three or more claims ("a, b, c and d") is listed as separate points; a short tail ("not days") stays with the one before it
   const runOfClaims = (text: string): string[] => {
     if (text.includes(': ')) return [];
@@ -77,7 +79,24 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     // two figures joined by "and" are two claims; the words that only say where the first came from ("the page states ...") are not part of it
     return merged.flatMap((x, k) => (k === 0 ? x.replace(/^(?:the\s+)?(?:[\w-]+\s+){0,3}(?:page|site|website|study|report|survey|brochure)\s+(?:states?|says?|claims?|shows?|reports?)\s+/i, '') : x).split(/\s+and\s+(?=\d)/i));
   };
+  // a run of claims that carry a label each ("a (page claim), b (page claim), c, and d (page claim)") is cut into claims, each with its own label once;
+  // a piece that is only the tail of a list ("warehousing, pick and pack services") stays with the claim before it
+  const LABEL_TAIL = /^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/;
+  const isLabelText = (x: string): boolean => /\b(?:claims?|headline|story|survey|quote|page|case study|customer|figures?|vendor|service level|own)\b/i.test(x);
+  const labelledPieces = (raw: string): { text: string; label: string }[] => {
+    const body = raw.replace(/[.]+$/, '').trim();
+    if (body.includes(': ') || (body.match(/\([^()]*\b(?:claims?|headline|story|survey|quote|page|figures?|vendor)\b[^()]*\)/gi) || []).length < 2) return [];
+    const merged: string[] = [];
+    for (const piece of splitTopLevel(body).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean)) {
+      const prev = merged[merged.length - 1];
+      const prevLabelled = !!prev && LABEL_TAIL.test(prev) && isLabelText((prev.match(LABEL_TAIL) || [])[2] || '');
+      if (prev && !prevLabelled && piece.split(/\s+/).length <= 8 && !actionStart(piece) && !/^\d/.test(piece)) merged[merged.length - 1] = `${prev}, ${piece}`; else merged.push(piece);
+    }
+    return merged.map((x) => { const lm = x.match(LABEL_TAIL); return lm && isLabelText(lm[2]) ? { text: lm[1].trim(), label: lm[2].trim() } : { text: x, label: '' }; });
+  };
   const outs: Outcome[] = d.splitItems(keyValuePoints).flatMap((raw) => {
+    const lp = labelledPieces(raw);
+    if (lp.length >= 2) return lp.map((x) => outcomeOf(x.text, x.label));
     const m = raw.replace(/[.]+$/, '').match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
     const label = m && /\b(?:claims?|headline|story|survey|quote|page|case study|customer|figures?|vendor|service level|own)\b/i.test(m[2]) ? m[2].trim() : '';
     const whole = (label ? m![1] : raw).replace(/[.]+$/, '').trim();
@@ -91,8 +110,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     const colon = body.indexOf(': ');
     const rawSubs = colon > 0 ? splitTopLevel(body.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
     // a short fragment that is not an action ("control and scale") is the end of the item before it
-    const ACTION = /^(?:get|keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|reclaim|shrink|turn|modernize|modernise|migrate|unify|enable|ensure|give|offer|provide|use|work|spend|drive|accelerate|eliminate|standardi[sz]e|centrali[sz]e|capture|apply|test|release|secure|comply|verify|forecast|price|resolve|put|act|catch|empower|unlock|allow|help|let|do|take|cover|align|free|see|learn|find|stop|start|build|buy|sell|win|renew|retain)\b/i;
-    const actionish = (x: string): boolean => ACTION.test(x);
+    const actionish = (x: string): boolean => actionStart(x);
     const subs = rawSubs.reduce<string[]>((acc, x) => { if (acc.length && x.split(/\s+/).length <= 3 && !actionish(x) && !/\d/.test(x)) acc[acc.length - 1] += `, ${x}`; else acc.push(x); return acc; }, []);
     // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
     // (a list is split only when every item is a whole action of its own; otherwise the run-on stays one whole bullet, never a fragment)

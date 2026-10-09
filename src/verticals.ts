@@ -240,7 +240,7 @@ export const VERTICALS: Vertical[] = [
   },
   {
     id: 'saas', name: 'SaaS',
-    match: /\b(saas|software as a service|subscriptions?|b2b software|crm|billing|invoicing|dunning|prorat\w*|revenue recognition|moneti[sz]\w*|usage-based (?:pricing|billing)|metered billing|pricing and packaging|quote-to-cash|product analytics|product-led|plg|customer success|revenue operations|revops|sales enablement|marketing automation|churn|net revenue retention|applicant tracking|recruit(?:ing|ment) (?:platform|software|tools?)|survey (?:platform|tool|software)|form builders?|e-?signatures?|contract management|employee engagement)\b/i,
+    match: /\b(saas|software as a service|subscriptions?|b2b software|crm|billing|invoicing|dunning|prorat\w*|revenue recognition|moneti[sz]\w*|usage-based (?:pricing|billing)|metered billing|pricing and packaging|quote-to-cash|product analytics|product-led|plg|customer success|revenue operations|revops|sales enablement|marketing automation|churn|net revenue retention|applicant tracking|recruit(?:ing|ment) (?:platform|software|tools?)|survey (?:platform|tool|software)|form builders?|e-?signatures?|contract management|employee engagement|locali[sz]ation (?:platforms?|management|software|tools?)|(?:software|app|website|content) locali[sz]ation|translation (?:management|platforms?|software|tools?)|i18n)\b/i,
     weak: /\b(software|platform)\b/i,
     vocabulary: ['onboarding', 'time to value', 'renewal', 'integration', 'admin controls', 'single sign on', 'seats', 'trial', 'usage', 'security review'],
     buyerRoles: ['Head of the function that uses it', 'VP Operations', 'Head of IT', 'Chief Financial Officer', 'Head of Procurement'],

@@ -7,7 +7,7 @@
 import { joinList, clip, upperFirst, aAn, splitTopLevel, parseProof } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import type { Vertical } from './verticals.ts';
-import { readSector, productOf, isKind, partsIn, readAlt, endSentence, andList, type Deps } from './rw-common.ts';
+import { readSector, fitSector, productOf, isKind, partsIn, readAlt, endSentence, andList, PROVIDER, type Deps } from './rw-common.ts';
 
 // the one place the helpers below reach the "lower the first word" function that lives in src/index.ts
 const lf = { lower: (s: string): string => s, isCommon: (w: string): boolean => false };
@@ -23,7 +23,8 @@ export function lowerKeep(t: string): string { const x = t.trim(); return /^[A-Z
 // A long strength holds several claims: it is cut where a new claim opens after a comma (never inside a list), so each criterion is short.
 export function trapClaims(s: string): string[] {
   const t = s.trim().replace(/[.]+$/, '');
-  if (t.length < 110) return [t];
+  // a short strength that holds ", on <where it works>" or ", with <what it brings>" is still two things a buyer can test
+  if (t.length < 110 && !/^(?:\S+\s+){3,}\S+,\s+(?:on|with)\s+(?:\S+\s+){2,}\S+$/.test(t)) return [t];
   const out: string[] = [];
   for (const part of t.split(/,\s+(?=(?:on|with|under|built|backed|where|so|plus|and|using|across|from|for|instead|offering|combining|including|covering|delivering|giving|providing|while)\b)/i)) {
     const x = part.trim().replace(/^(?:and|plus)\s+/i, '');
@@ -48,6 +49,7 @@ export function trapCriterion(s: string): string {
 }
 // When a note is a clause whose verb is not one of the kinds below, its topic is found by the words in it and a question about that topic is asked.
 const TRAP_TOPICS: { re: RegExp; topic: string; q: string }[] = [
+  { re: /paperwork|forms\b|red tape|documents? (?:to|that|required)/i, topic: 'the paperwork each option asks for', q: 'How much paperwork does each option ask for, who fills it in, and how many days does it add before you can start?' },
   { re: /setup|set-up|implement|onboard|months|weeks|rollout|go-live|deploy/i, topic: 'the time from signing to the first real result', q: 'How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?' },
   { re: /manual|human[- ]judged|judg|by hand|spreadsheet|modules and platforms/i, topic: 'which decisions are made by the system and which wait for a person', q: 'Which decisions does each option make by itself and which wait for a person, and how long does each take?' },
   { re: /periodic|batch|scans?|delay|lag|stale|refresh|overnight|real[- ]time/i, topic: 'how soon each option sees a change', q: 'How soon after something changes does each option show it, and what happens in between?' },
@@ -79,6 +81,12 @@ export function trapClauses(wRaw: string): string[] {
   }
   return merged.slice(0, 3);
 }
+// A weak point that no rule below reads is asked about in the buyer's own terms; the note itself is never quoted or copied into a question.
+export const OPEN_QS = [
+  'Where has the way this is handled today let you down most often, and what did that cost you?',
+  'What do you have to work around for this today, and who does that work?',
+  'If you could change one thing about how this is handled, what would it be, and what would it be worth to you?',
+];
 // One weak point of the competitor, read by kind: returns the landmine question and the topic it is about. The note is never quoted.
 export function trapQuestion(wRaw: string, comp: string): { q: string; topic: string } {
   const esc = comp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -91,6 +99,24 @@ export function trapQuestion(wRaw: string, comp: string): { q: string; topic: st
   const tailQ = tailSubj && tailSubj.split(/\s+/).length <= 4 ? `, and what does that mean for ${tailSubj}` : '';
   const show = ' Ask the vendor to show it on your own data, not on a slide.';
   let m: RegExpMatchArray | null;
+  // Round 4: shapes of weak point that the clause cutting below would spoil, and notes that state a reviewer's or a customer's view as a flat claim
+  if ((m = w.match(/^(?:leaving|leaves|left)\s+(.+?)\s+(?:drowning|buried|swamped|bogged down|stuck)\s+(?:in|under|with)\s+(.+)$/i))) return { q: `How much of the ${m[2]} is left to ${m[1]} in each option, and how many hours a week does it take?`, topic: `how much of the ${m[2]} is left to your team` };
+  if ((m = w.match(/^(?:holding|keeping|carrying|stocking)\s+(?:extra|more|too much|excess|spare)\s+(.+)$/i))) return { q: `Does each option let you keep less ${m[1]}, and how much less, worked out on your own numbers?`, topic: `how much ${m[1]} you have to keep` };
+  if ((m = w.match(/^(?:.*?\s)?(?:gave|give|gives|offered|offers|offer|provided|provides|provide|had|have|has)\s+no\s+(?:way|means)\s+(?:to|of)\s+(.+)$/i))) {
+    const x = m[1].replace(/^see(?:ing)?\s+/i, '');
+    if (/^see(?:ing)?\s+/i.test(m[1])) return { q: `How early does each option show you ${x}, and what warning do you get before it reaches you?`, topic: `seeing ${x} early` };
+    return { q: `Does each option give you a way to ${x}? Ask for it working today, not on a roadmap.`, topic: x };
+  }
+  if ((m = w.match(/^(.+?)\s+(?:is|are|was|were)\s+not\s+(?:very\s+|always\s+|that\s+|particularly\s+|quite\s+)?(accurate|reliable|precise|consistent|stable|robust|complete|current)(?:\s+(?:or|and)\s+(accurate|reliable|precise|consistent|stable|robust|complete|current))?(?:\s+(?:for|in|when|on|at|with)\s+(.+))?$/i)) && m[1].split(/\s+/).length <= 6) {
+    const adjs = m[3] ? `${m[2].toLowerCase()} and ${m[3].toLowerCase()}` : m[2].toLowerCase();
+    return { q: `How ${adjs} is each option${m[4] ? ` for ${m[4]}` : ''}, and how would you check that on your own cases?`, topic: `how ${adjs} it is${m[4] ? ` for ${m[4]}` : ''}` };
+  }
+  if ((m = w.match(/^even\s+(?:with|when|if|though)\s+(.+)$/i))) {
+    const t0 = TRAP_TOPICS.find((x) => x.re.test(m![1]));
+    if (t0) return { q: t0.q, topic: t0.topic };
+    return { q: `What still slows each option down, and what does it cost you, even with ${m[1]}?`, topic: `what still slows it down` };
+  }
+  if ((m = w.match(/^(.+?)\s+takes?\s+(?:\w+\s+)?(?:days|weeks|months|hours|ages|a long time)\b/i)) && (PROVIDER.test(m[1]) || trapShares(m[1], comp) >= 2)) return { q: 'How long does each option take from your first request to a working result, and what holds it up along the way?', topic: 'how long it takes from the first request to a working result' };
   if ((m = main.match(/^(.+?)\s+(?:stops?|stopped|fails?|failed|breaks?|crashes|crashed|freezes?)\s+(?:working\s+|running\s+)?(?:without|when there is no|when there is not)\s+(.+)$/i)) && m[1].split(/\s+/).length <= 6) return { q: `What happens to ${m[1]} in each option without ${m[2]}, and can it be shown?`, topic: m[1] };
   if ((m = main.match(/^(?:breaks?|fails?|stalls?|stops?|slows? down|falls? over)\s+(?:down\s+)?(?:when|if|as)\s+(.+)$/i))) return { q: `What happens in each option when ${m[1]}?${tailQ ? ` And what does that mean for ${tailSubj}?` : ''} Ask the vendor to show it live.`, topic: m[1] };
   if ((m = main.match(/^(?:.*?\s)?(?:makes?|made|is|are|was|were)?\s*(?:it\s+)?(?:difficult|hard|harder|impossible|a struggle|painful|slow)\s+to\s+(.+)$/i))) return { q: `How easily can you ${m[1].replace(/\s+and\s+to\s+/g, ', and ')} in each option, and how long did the last change take?${' Ask the vendor to show it on your own data.'}`, topic: m[1] };
@@ -144,7 +170,7 @@ export function trapQuestion(wRaw: string, comp: string): { q: string; topic: st
   }
   if (main.split(/\s+/).length >= 3) {
     // a clause with a verb of its own is put to the vendor as a situation
-    if (/\b(?:that|which)\b/i.test(main)) return { q: `How does each option deal with “${main}”? Ask the vendor to show it live.`, topic: main };
+    if (/\b(?:that|which)\b/i.test(main)) return { q: OPEN_QS[0], topic: main };
     if (TRAP_CLAUSE_VERB.test(main.split(/\s+/).slice(1).join(' '))) return { q: `What happens in each option when ${main.replace(/\bwere\b/gi, 'are').replace(/\bwas\b/gi, 'is')}? Ask the vendor to show it live.`, topic: main };
   }
   if ((m = main.match(/^(.+?)\s+(?:lost|dropped|broken|missing|duplicated|reset|overwritten)\s+(?:when|if|as|whenever)\s+(.+)$/i))) return { q: `When ${m[2]}, is the ${m[1]} kept in each option, and who can see it?`, topic: m[1] };
@@ -152,7 +178,7 @@ export function trapQuestion(wRaw: string, comp: string): { q: string; topic: st
   // a weak point that opens with an adjective ("costly physical devices") is asked about by what the adjective says, not as a bare topic
   if ((m = main.match(/^(costly|expensive|slow|unreliable|inaccurate|manual|limited|outdated|rigid|fragile)\s+(.{3,60})$/i)) && !TRAP_CLAUSE_VERB.test(m[2])) {
     const [, adj, thing] = m; const a = adj.toLowerCase();
-    if (a === 'costly' || a === 'expensive') return { q: `What ${trapDo(thing)} ${thing} cost in each option over three years (buying, keeping up to date, replacing), and what sits outside the quoted price?`, topic: thing };
+    if (a === 'costly' || a === 'expensive') return { q: `What ${trapDo(thing)} ${thing} cost in each option over three years (buying, keeping up to date, replacing), and what sits outside the quoted price?`, topic: `the cost of ${thing} over three years` };
     if (a === 'slow') return { q: `How long ${trapDo(thing)} ${thing} take in each option, and what happens in between?`, topic: thing };
     if (a === 'unreliable' || a === 'inaccurate' || a === 'fragile') return { q: `How reliable and accurate is ${thing} in each option on your own cases, and where does it fail? Ask to see the failures on your data.`, topic: thing };
     if (a === 'manual') return { q: `Which steps of ${thing} wait for a person in each option, and how long does each wait?`, topic: thing };
@@ -162,7 +188,7 @@ export function trapQuestion(wRaw: string, comp: string): { q: string; topic: st
   let np = main.replace(/^(?:\d+\s+|several\s+|a few\s+|many\s+)?(?:months?|weeks?|days?|years?) of\s+/i, '').replace(/^(?:slow|manual|periodic|poor|weak|limited|high|long|late|heavy|complex|outdated|legacy|rigid|fragmented|isolated|opaque|expensive|costly|hidden|batch)\s+/i, '').trim();
   if (!np) np = main;
   if (/setup|set-up|implement|onboard|rollout|go-live|deploy|migration/i.test(np)) return { q: `How long ${trapDo(np)} ${np} take in each option, and can the vendor show a recent one from signing to the first real result?`, topic: np };
-  if (np.split(/\s+/).length > 5 || TRAP_CLAUSE_VERB.test(np) || /\b(?:prone|built|designed|made)\s+(?:to|for)\b/i.test(np)) return { q: `How does each option deal with “${np}”?${show}`, topic: np };
+  if (np.split(/\s+/).length > 5 || TRAP_CLAUSE_VERB.test(np) || /\b(?:prone|built|designed|made)\s+(?:to|for)\b/i.test(np)) return { q: OPEN_QS[0], topic: np };
   return { q: `How does each option handle ${np}?${show}`, topic: np };
 }
 export const TRAP_WANT_VERBS = /^(?:keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|get|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|price|forecast|prioriti[sz]e|verify|secure|comply|catch|clear|ship|test|release|sell|serve|support|help|let|turn|take)\b/i;
@@ -188,7 +214,7 @@ const CLAIM_WORDS = /\b(?:first and only|the only|only|world'?s (?:first|largest
 // A clause that ends in "it" or "them" takes the subject of the clause before ("insight arrives late and only analysts can get it").
 const FINE_VERB = '(?:look|looks|work|works|arrive|arrives|take|takes|cost|costs|fail|fails|break|breaks|need|needs|require|requires|lack|lacks|stop|stops|slow|slows|run|runs|get|gets|can|cannot|are|is|have|has|miss|misses|force|forces|leave|leaves|rely|relies|depend|depends|charge|charges|limit|limits|hide|hides|lock|locks|struggle|struggles|sit|sits|pile|piles|drift|drifts|go|goes|become|becomes|create|creates|cause|causes|wait|waits)';
 export function fineClauses(w: string): string[] {
-  const re = new RegExp(`,\\s+so\\s+|;\\s+|\\s+and\\s+(?!${FINE_VERB}\\b)(?=(?:\\S+\\s+){1,3}${FINE_VERB}\\b)`, 'gi');
+  const re = new RegExp(`,\\s+so\\s+|;\\s+|,\\s+(?=(?:leaving|leaves)\\s+(?:\\S+\\s+){1,7}?(?:drowning|buried|swamped|stuck)\\b)|,\\s+(?=even with\\b)|\\s+and\\s+(?=(?:holding|keeping|carrying|stocking)\\s+(?:extra|more|too much|excess|spare)\\b)|\\s+and\\s+(?!${FINE_VERB}\\b)(?=(?:\\S+\\s+){1,3}${FINE_VERB}\\b)`, 'gi');
   const pieces: string[] = [];
   let from = 0;
   for (const m of w.matchAll(re)) {
@@ -221,7 +247,7 @@ export function joinLists(cs: string[]): string[] {
   const out: string[] = [];
   for (const c of cs) {
     const verbless = !new RegExp(`\\b${FINE_VERB}\\b`, 'i').test(c) && !TRAP_CLAUSE_VERB.test(c) && !/\b(?:when|if|where|while|because|that|which|lost|switches|switch)\b/i.test(c);
-    if (out.length && verbless && c.split(/\s+/).length <= 8 && !/^(?:no|not|without|lack|lacks|missing|never)\b/i.test(c)) out[out.length - 1] += `, ${c}`;
+    if (out.length && verbless && c.split(/\s+/).length <= 8 && !/^(?:no|not|without|lack|lacks|missing|never|holding|keeping|carrying|stocking|leaving|even)\b/i.test(c)) out[out.length - 1] += `, ${c}`;
     else out.push(c);
   }
   return out;
@@ -241,7 +267,7 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
 
   const ctx = readSector(args.business_model, { seller: [yourSolution], context: [yourStrengths, competitorWeaknesses, buyerPriorities, competitor], role: [args.buyer_persona] });
   const model = ctx.model;
-  const v = ctx.v;
+  const v = fitSector(ctx.v, ctx.fixedLink, ctx.model);
   const software = model === null || model === 'saas' || model === 'hardware_software';
   const P = productOf(yourSolution, D);
   const name = P.name || P.ref;
@@ -256,15 +282,37 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
   const gerund = (h: string): string => { const w = h.split(/\s+/); return GERUND[w[0].toLowerCase()] ? `${GERUND[w[0].toLowerCase()]} ${w.slice(1).join(' ')}`.trim() : h; };
   const approachName = handleWords.length <= 7 ? gerund(alt.handle) : 'the current approach';
   const compLabel = !competitor ? 'the competitor' : isVendor ? competitor : kind === 'approach' ? 'the current approach' : approachName;
-  const here = isVendor ? competitor || 'the competitor' : kind === 'approach' ? 'the way you work today' : 'a tool of that kind';
-  const toPeers = (t: string): string => t.replace(/,?\s+and can (?:the )?(?:vendor|supplier) show[^?]*\?/i, '?').replace(/\s+in each option/g, ` in ${here}`).replace(/\beach option\b/g, here).replace(/\s*Ask (?:the vendor|for it)[^.?]*[.]/g, '').replace(/\s+/g, ' ').trim();
+  const here = isVendor ? competitor || 'the competitor' : kind === 'approach' ? 'the way you work today' : kind === 'provider' ? 'the provider you use today' : 'a tool of that kind';
+  // the open questions have no "each option" to turn into "the way you work today", so the peers get their own wording
+  const OPEN_PEER = ['Where has the way this is handled let your team down most often, and what did that cost?', 'What do you work around for this, and who does that work for you?', 'If you could change one thing about how this is handled, what would it be, and what would it be worth?'];
+  const toPeers = (t0: string): string => { const oi = OPEN_QS.indexOf(t0); const t = oi >= 0 ? OPEN_PEER[oi] : t0; return toPeers0(t); };
+  const toPeers0 = (t: string): string => t.replace(/,?\s+and can (?:the )?(?:vendor|supplier) show[^?]*\?/i, '?').replace(/\s+in each option/g, kind === 'provider' ? ` with ${here}` : ` in ${here}`).replace(/\beach option\b/g, here).replace(/\s*Ask (?:the vendor|for it)[^.?]*[.]/g, '').replace(/\s+/g, ' ').trim();
   const nonVendor = (t: string): string => t.replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]\s*$/i, '').replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]/gi, '').replace(/the vendor/g, isVendor ? 'the vendor' : 'the supplier').trim();
 
   const weaknesses = splitItems(competitorWeaknesses).map((w) => w.replace(/\s*\((?:reviewers' words|a seller's words|page words|customer quote|customer words)[^)]*\)\s*$/i, '').trim());
   const weaknessLabels = splitItems(competitorWeaknesses);
-  void weaknessLabels;
   const allStrengths = splitItems(yourStrengths);
   const isCred = (x: string) => { const m = x.match(CRED_RE); return !!m && (m.index || 0) <= 40; };
+  const nameEsc = (P.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Round 4: a strength is written for the buyer as something every option can be asked to show. What the seller says about itself ("the site says no platform can
+  // replicate it") goes to the claims to source; a slogan before a colon ("... run by <seller>, not outsourced: it owns the process") gives way to what follows it.
+  const siteSays: string[] = [];
+  const GERUND_VERB: Record<string, string> = { combining: 'combines', offering: 'offers', providing: 'provides', giving: 'gives', delivering: 'delivers', covering: 'covers', including: 'includes', connecting: 'connects', supporting: 'supports', running: 'runs', unifying: 'unifies', bringing: 'brings' };
+  const buyerForm = (claim: string): string => {
+    let c = claim.trim();
+    const says = c.match(/,?\s+(?:that\s+)?(?:the\s+)?(?:site|page|website|web ?site|brochure|vendor|company)s?\s+(?:says?|claims?|states?)\s+(.+)$/i);
+    if (says && (says.index || 0) >= 12) { siteSays.push(says[1].trim().replace(/[.]+$/, '')); c = c.slice(0, says.index).trim(); }
+    const ci = c.indexOf(': ');
+    if (ci > 0) {
+      const head = c.slice(0, ci); const tail = c.slice(ci + 2).trim();
+      if (head.split(/\s+/).length <= 9 && tail.split(/\s+/).length >= 4 && ((P.name && new RegExp(`\\b${nameEsc}\\b`, 'i').test(head)) || /\bnot\b/i.test(head))) c = tail.replace(/^(?:it|they|we|this|that)\s+/i, '');
+    }
+    if (P.name) c = c.replace(new RegExp(`\\b${nameEsc}(?:'s)?\\b`, 'g'), 'the option');
+    const g = c.split(/\s+/)[0].toLowerCase();
+    if (GERUND_VERB[g]) c = `${GERUND_VERB[g]}${c.slice(g.length)}`;
+    else if (/^(?:with|on|across|under)\b/i.test(c)) c = `works ${c}`;
+    return c.replace(/\s+/g, ' ').trim();
+  };
   // a credential is found after a long strength is cut into claims too ("..., plus Inner Circle status for ...")
   const credentials: string[] = [];
   const strengths: string[] = [];
@@ -274,10 +322,25 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
       if (isCred(claim)) { credentials.push(claim); continue; }
       // a marketing claim ("a unique approach ... with embedded ethics, privacy and security") is sourced; what follows "with" is what the buyer can test
       const tail = CLAIM_WORDS.test(claim) ? claim.match(/\s+(?:with|offering|including)\s+(.{12,})$/i) : null;
-      strengths.push(tail ? tail[1].trim() : claim);
+      const b = buyerForm(tail ? tail[1].trim() : claim);
+      if (b) strengths.push(b);
     }
   }
-  const claimsHere = allStrengths.filter((x) => CLAIM_WORDS.test(x));
+  // figures the seller states about itself (a device count, a number of countries) are listed to be sourced before the buyer asks
+  const figureClaims: string[] = [];
+  for (const text of [yourSolution, ...strengths]) {
+    for (const fm of text.matchAll(/(\d[\d,]*(?:\.\d+)?)(\+|%|x\b)?/g)) {
+      const num = fm[0]; const at = fm.index || 0;
+      if (!fm[2] && !/[\d],[\d]/.test(num)) continue;
+      if (/^(?:19|20)\d\d$/.test(num)) continue;
+      const before = text.slice(0, at).trimEnd(); const after = text.slice(at + num.length);
+      const inBrackets = /\($/.test(before) && /^\s*\)/.test(after);
+      const ctxWords = inBrackets ? before.replace(/\($/, '').trim().split(/\s+/).slice(-2).join(' ') : after.trim().split(/\s+/).slice(0, 2).join(' ').replace(/[.,;:)]+$/, '');
+      const claimText = inBrackets ? `${ctxWords} (${num})` : `${num} ${ctxWords}`.trim();
+      if (!figureClaims.includes(claimText)) figureClaims.push(claimText);
+    }
+  }
+  const claimsHere = [...allStrengths.filter((x) => CLAIM_WORDS.test(x)), ...siteSays, ...figureClaims].filter((x, i, a) => a.indexOf(x) === i);
 
   // ---- the buyer's priorities: aims (clauses) and figures with their own source label ----
   const startsWant = (x: string) => TRAP_WANT_VERBS.test(x.replace(/^(?:and|to)\s+/i, ''));
@@ -322,7 +385,7 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
     const qs = (lit.length ? lit : cl).map((c) => {
       const x = trapQuestion(c, competitor || alt.handle || 'the competitor');
       // two notes that read the same way must not give the same question twice: the second is asked about its own words
-      if (usedQ.has(x.q)) return { q: `How does each option deal with \u201c${c.replace(/[.]+$/, '')}\u201d?`, topic: c.replace(/[.]+$/, '') };
+      if (usedQ.has(x.q)) { const next = OPEN_QS.find((o) => !usedQ.has(o)); if (next) { usedQ.add(next); return { q: next, topic: c.replace(/[.]+$/, '') }; } return { q: 'What else about this has cost you time or money in the past year, and who dealt with it?', topic: c.replace(/[.]+$/, '') }; }
       usedQ.add(x.q);
       return x;
     });
@@ -357,7 +420,9 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
     `"How many sites does ${compLabel} bring live in each wave, and what is the fallback if a cut-over fails?"`, `"What is the repair time in the contract with ${compLabel}, and how are service credits paid?"`, `"What one-time charges apply per site with ${compLabel} (installation, equipment)?"`,
   ] : [
     `"How long from signing to the first real result with ${compLabel}, and how did its customers find that against the promise?"`, `"Which of your own people does the set-up with ${compLabel} take, and for how long?"`, `"What does the price from ${compLabel} include, and what is billed separately?"`,
-  ]) : kind === 'approach' ? [
+  ]) : kind === 'provider' ? [
+    `"Which ${compLabel} have you used or compared, and what did each of them not give you?"`, `"What has dealing with ${compLabel} cost you in the past year, in your people's time and in fees?"`, `"What did you have to work around, and who does that work?"`,
+  ] : kind === 'approach' ? [
     `"Who keeps ${compLabel} running today, and what happens when they are away?"`, `"What does ${compLabel} cost you in a year, in people's time and in fees?"`, `"What breaks in ${compLabel} when your volumes or your plans change?"`,
   ] : [
     `"Which tools of that kind have you tried or shortlisted, and what did the first demo not show?"`, `"What does keeping ${compLabel} running cost you in a year, in people's time and in fees?"`, `"What did you have to work around, and who does that work?"`,
@@ -368,7 +433,7 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
   const scenarioLines = (): string[] => {
     const out: string[] = [];
     read.forEach((r, wi) => {
-      const clean = r.qs.filter((x) => x.topic.length <= 70 && x.topic.split(/\s+/).length <= 9 && !/\b(?:is|are|was|were|has|have|had|does|do|can|cannot|will|would|not|make|makes)\b/i.test(x.topic));
+      const clean = r.qs.filter((x) => x.topic.length <= 70 && /^(?:how|whether|what|seeing|the)\b/i.test(x.topic) ? x.topic.split(/\s+/).length <= 12 : x.topic.length <= 70 && x.topic.split(/\s+/).length <= 9 && !/\b(?:is|are|was|were|has|have|had|does|do|can|cannot|will|would|not|make|makes)\b/i.test(x.topic));
       const lines = clean.length ? clean.map((x) => `give each option the same case that tests ${/^(?:fully|easily|quickly|optimi[sz]e|leverage|manage|handle|get|see|keep|find|build|run|track|scale|change|connect|reach|cover|use|plan|ship|launch|reduce|improve|cut|move|show|answer|report|trust|know|stay|work|deploy|integrate|automate)\b/i.test(x.topic) ? `whether it can ${x.topic}` : x.topic}, and compare what each one does with it.`) : [`give each option the same case for weak point ${wi + 1}, and compare what each one does with it.`];
       for (const l of lines) if (!out.includes(l)) out.push(l);
     });
@@ -401,11 +466,11 @@ ${credentials.length ? `\n### Credentials (mention them, do not make them criter
 
     reference_questions: () => `## Reference Call Questions
 
-${isVendor ? `Suggest the buyer ask these questions when speaking with the references of ${competitor}:` : `Suggest the buyer ask these of people who live with ${compLabel} today (their own team, or peers who work the same way):`}
+${isVendor ? `Suggest the buyer ask these questions when speaking with the references of ${competitor}:` : kind === 'provider' ? `Suggest the buyer ask these of people who use ${compLabel} today (peers at other companies, or their own team):` : `Suggest the buyer ask these of people who live with ${compLabel} today (their own team, or peers who work the same way):`}
 
 ${read.length || aims.length ? [
       ...read.flatMap((r) => r.qs.map((x) => `- "${nonVendor(isVendor ? toPeers(x.q) : toPeers(x.q))}"`)),
-      ...aims.slice(0, 2).map((a) => `- "${isVendor ? (startsWant(a) ? `Since you started with ${competitor}, has it helped you ${lowerKeep(a)}, and what did you measure?` : `Since you started with ${competitor}, how has it done on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`) : (startsWant(a) ? `Has ${compLabel} helped you ${lowerKeep(a)}, and what did you measure?` : `How does ${here} do on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`)}"`),
+      ...aims.slice(0, 2).map((a) => `- "${isVendor ? (startsWant(a) ? `Since you started with ${competitor}, has it helped you ${lowerKeep(a)}, and what did you measure?` : `Since you started with ${competitor}, how has it done on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`) : (startsWant(a) ? `${/[a-z]s$/i.test(compLabel) && !/(?:ss|us|is)$/i.test(compLabel) ? 'Have' : 'Has'} ${compLabel} helped you ${lowerKeep(a)}, and what did you measure?` : `How does ${here} do on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`)}"`),
     ].join('\n') : `- No weak points or priorities were given, so there is nothing specific to ask a reference yet. Add competitor_weaknesses or buyer_priorities.`}`,
 
     technical_requirements: () => `## ${software ? 'Technical Requirements' : 'Requirements'} (Traps)
@@ -422,7 +487,7 @@ ${read.length ? `Agree the pass mark with the buyer before each test.\n\n${scena
 
 ### ${isVendor ? 'Pricing Comparisons' : 'Cost Comparison'}
 
-${!isVendor ? `When they compare ${name} with ${compLabel}, make sure they compare:\n- What ${compLabel} costs a year in people's time, fees and the cost of its failures\n- What ${name} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare ${name} with ${competitor}, make sure they compare:
+${!isVendor ? `When they compare ${name} with ${compLabel}, make sure they compare:\n- What ${compLabel} ${/[a-z]s$/i.test(compLabel) && !/(?:ss|us|is)$/i.test(compLabel) ? 'cost' : 'costs'} a year in people's time, fees and the cost of its failures\n- What ${name} costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today` : `When they compare ${name} with ${competitor}, make sure they compare:
 ${model === 'investment' ? '- Management and performance fees\n- Minimum mandate size and lock-in\n- Reporting and transparency included\n- Exit terms' : model === 'services' ? '- The rate card and how change requests are priced\n- Transition costs\n- Service credits and how they are paid\n- Exit and handover terms' : model === 'connectivity' ? '- Monthly charge per site or link over the full term\n- One-time installation and equipment charges\n- Service credits for missed SLAs\n- Early termination charges' : '- Total cost of ownership (not just the licence)\n- Implementation and training costs\n- Support tiers\n- Costs as usage grows'}`}
 ${costWeak.length ? `\n### From your notes on ${compLabel}\n${costWeak.map((r) => `- Your note (not for the buyer): ${upperFirst(r.w)}`).join('\n')}\nFor ${costWeak.length === 1 ? 'this note' : 'these notes'}, ask for the full cost over three years in each option, including everything outside the quoted price.\n` : ''}${!isVendor ? '' : `
 ### Contract Terms to Check
@@ -431,11 +496,11 @@ Ask about the contract of ${competitor} (nothing here says ${competitor} has the
 `}
 ### Your Own Terms
 
-${(() => { const own = strengths.filter((s) => /\b(?:price|pricing|annual|monthly|fees?|free|included|contract|terms?|licen[cs]e|seats?|credits?|refund|trial|pilot|commitment)\b/i.test(s)); return own.length ? `Terms you gave among your strengths: ${own.map((s) => (s.length > 120 ? `criterion ${strengths.indexOf(s) + 1}` : q(s))).join('; ')}. Put them in the contract in the same words.` : 'No terms of your own were given among your strengths (your_strengths). Add the ones you can put in the contract and they appear here.'; })()}`,
+${(() => { const own = strengths.filter((s) => /\b(?:price|pricing|annual|monthly|fees?|free (?:trial|tier|plan|of charge|onboarding|set-?up|migration|support)|included|contract|terms?|licen[cs]e|seats?|service credits?|credits? (?:back|for)|refunds?|trial|pilot|commitment|per (?:seat|user|month|year|transaction))\b/i.test(s)); return own.length ? `Terms you gave among your strengths: ${own.map((s) => (s.length > 120 ? `criterion ${strengths.indexOf(s) + 1}` : q(s))).join('; ')}. Put them in the contract in the same words.` : 'No terms of your own were given among your strengths (your_strengths). Add the ones you can put in the contract and they appear here.'; })()}`,
   };
 
   // ---- the set-up ----
-  const kindLine = isVendor ? '' : kind === 'approach' ? ` That is the buyer's current approach (called the current approach below), a way of working and not a vendor, so there is no contract, reference list or support desk to ask about; the questions below are about how the buyer works today.` : ` That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer's own experience with them; there is no single contract or reference list to ask about.`;
+  const kindLine = isVendor ? '' : kind === 'approach' ? ` That is the buyer's current approach (called the current approach below), a way of working and not a vendor, so there is no contract, reference list or support desk to ask about; the questions below are about how the buyer works today.` : kind === 'provider' ? ` That describes the providers the buyer uses today, not one named vendor and not a tool, so the questions ask about the buyer's own experience with them; there is no demo to book and no single contract or reference list to ask about.` : ` That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer's own experience with them; there is no single contract or reference list to ask about.`;
   const longAlt = !isVendor && alt.text.toLowerCase() !== (kind === 'approach' ? approachName : compLabel).toLowerCase() && (alt.text.length > (kind === 'approach' ? approachName : compLabel).length + 3 || /[<>(){}'"\u201c]/.test(alt.text)) ? ` You described it as ${q(clip(alt.text, 200))}.` : '';
   const soldText = yourSolution && yourSolution.length <= 200 && (!P.name || /[<>"\u201c\u201d\[\]]/.test(yourSolution)) ? ` What you said you sell: ${yourSolution.replace(/[.]+$/, '')}.` : '';
   const sold = isKind(P, D) ? ` ${endSentence(isKind(P, D))}` : '';
@@ -449,7 +514,7 @@ ${yourSolution ? upperFirst(name) : 'The product'} is in ${aAn(`${stage} stage`)
 ${ctx.line}
 
 ${persona && persona.label !== 'stakeholder' ? `**Who is evaluating:** ${aAn(persona.label)}${personaName && personaName.toLowerCase() !== persona.label.toLowerCase() ? ` (${personaName})` : ''}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : (personaName ? `**Who is evaluating:** ${upperFirst(personaName)}.\n` : '')}
-${v ? `${sectorBlock(v)}\n` : ''}${allStrengths.length || weaknesses.length ? `\n### Your notes (not for the buyer)\n\n${allStrengths.length ? `**Your strengths**\n${allStrengths.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${weaknesses.length ? `**Weak points of ${compLabel}**\n${weaknesses.map((x) => `- ${x}`).join('\n')}\n` : ''}` : ''}
+${v ? `${sectorBlock(v)}\n` : ''}${allStrengths.length || weaknesses.length ? `\n### Your notes (not for the buyer)\n\n${allStrengths.length ? `**Your strengths**\n${allStrengths.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${weaknesses.length ? `**Weak points of ${compLabel}**\n${weaknessLabels.map((x) => `- ${x}`).join('\n')}\n` : ''}` : ''}
 ---
 
 `;

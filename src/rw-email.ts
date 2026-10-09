@@ -7,7 +7,7 @@
 import { parseProof, proofPhrase, familyOf, levelOf, joinList, clip, upperFirst, splitTopLevel, type ProofItem } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import type { Vertical } from './verticals.ts';
-import { readSector, productOf, isKind, partsIn, sourceOf, endSentence, sentenceCase, listItems, isNotGiven, andList, dropRepeats, type Deps, type Product, type Source } from './rw-common.ts';
+import { readSector, fitSector, productOf, isKind, doesLine, partsIn, sourceOf, endSentence, sentenceCase, listItems, isNotGiven, andList, dropRepeats, type Deps, type Product, type Source } from './rw-common.ts';
 
 export const EMAIL_COUNTS: Record<string, number> = { cold_outreach: 5, warm_follow_up: 3, post_demo: 4, re_engagement: 3, proposal_follow_up: 4, nurture: 4, event_follow_up: 3, referral_request: 3 };
 const TITLES: Record<string, string> = { cold_outreach: 'Cold Outreach', warm_follow_up: 'Warm Follow-Up', post_demo: 'Post-Demo', re_engagement: 'Re-Engagement', proposal_follow_up: 'Proposal follow up', nurture: 'Nurture', event_follow_up: 'Event follow up', referral_request: 'Referral request' };
@@ -21,6 +21,21 @@ export function painAtoms(text: string): string[] {
   const segs = clean.split(/;|\.\s+(?=[A-Z“"'])/).map((s) => s.trim().replace(/^(?:and|while|also|plus)\s+/i, '')).filter(Boolean);
   const out: string[] = [];
   const balanced = (s: string) => (s.match(/\(/g) || []).length === (s.match(/\)/g) || []).length;
+  // "<a problem>: <clause>, <clause>, and <clause>": the head is one problem and each clause of the list after the colon is another (a part with no verb joins the next one)
+  const hasVerb = (x: string): boolean => VERB.test(x.split(/\s+/).slice(0, 10).join(' '));
+  const colonList = (sg: string): string[] => {
+    const ci = sg.indexOf(': ');
+    if (ci < 0) return [sg];
+    const head = sg.slice(0, ci).trim(); const tail = sg.slice(ci + 2).trim();
+    if (head.split(/\s+/).length < 3 || !hasVerb(head.split(/\s+/).slice(1).join(' ')) || !balanced(head) || !balanced(tail)) return [sg];
+    const clauses: string[] = []; let cur = '';
+    for (const piece of tail.split(/,\s+(?:and\s+)?/).map((x) => x.trim()).filter(Boolean)) {
+      cur = cur ? `${cur}, ${piece}` : piece;
+      if (hasVerb(cur.split(/\s+/).slice(1).join(' ')) && cur.split(/\s+/).length >= 4) { clauses.push(cur); cur = ''; }
+    }
+    if (cur) { if (clauses.length) clauses[clauses.length - 1] += `, ${cur}`; else return [sg]; }
+    return clauses.length >= 2 ? [head, ...clauses] : [sg];
+  };
   const split = (s: string, depth = 0): string[] => {
     if (s.length <= 130 || depth > 2) return [s];
     for (const m of s.matchAll(/,\s+(?:and|while|but)\s+|\s+while\s+/gi)) {
@@ -30,16 +45,16 @@ export function painAtoms(text: string): string[] {
     }
     return [s];
   };
-  for (const s of segs) for (const x of split(s)) if (x.trim().length > 3 && !out.includes(x.trim())) out.push(x.trim());
+  for (const sg of segs) for (const c of colonList(sg)) for (const x of split(c)) if (x.trim().length > 3 && !out.includes(x.trim())) out.push(x.trim());
   return out.slice(0, 6);
 }
 
 const STEM_STOP = new Set(['sale', 'serv', 'cust', 'mark', 'team', 'tool', 'data', 'mana', 'syst', 'plat', 'proc', 'work', 'with', 'more', 'from', 'that', 'this', 'have', 'they', 'your', 'their', 'into', 'over', 'only', 'also', 'each', 'such', 'than', 'solu', 'prod', 'busi', 'comp', 'enab', 'help', 'real', 'time', 'fast', 'lowe', 'fewe', 'high', 'effi', 'when', 'what', 'ente', 'need', 'many', 'much', 'across']);
 const stems = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.replace(/s$/, '').slice(0, 4)).filter((w) => !STEM_STOP.has(w)));
 const overlap = (a: string, b: string): number => { const sb = stems(b); return [...stems(a)].filter((w) => sb.has(w)).length; };
-interface Atom { text: string; kind: ProofItem['kind']; label: string; src: Source; item: ProofItem; score: number }
+interface Atom { text: string; kind: ProofItem['kind']; label: string; src: Source; item: ProofItem; score: number; fit: number }
 /** A list of figures ("a 3.7%, 49% more work, 15 days faster") is cut into atoms, each used once; atoms with the same figures count as one. */
-function atomsOf(items: ProofItem[], rank: string): Atom[] {
+function atomsOf(items: ProofItem[], rank: string, fitText: string): Atom[] {
   const out: Atom[] = [];
   const sig = (t: string) => (t.match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, '')).sort().join('|');
   const seen = new Set<string>();
@@ -67,7 +82,7 @@ function atomsOf(items: ProofItem[], rank: string): Atom[] {
       let kind = it.kind;
       if (kind === 'recognition' && /["“'‘][^"”'’]{20,}["”'’]/.test(p)) kind = 'quote';
       else if (kind !== 'quote' && kind !== 'recognition' && /\b(?:partner of the year|award|winner|ranked|recogni[sz]ed|certified|named a|visionary|magic quadrant|forrester|gartner|idc\b|g2\b)/i.test(p) && !/\d\s?%/.test(p)) kind = 'recognition';
-      out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: sourceOf(it.label), item: it, score: overlap(p, rank) });
+      out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: sourceOf(it.label), item: it, score: overlap(p, rank), fit: overlap(p, fitText) });
     }
   }
   return out;
@@ -124,7 +139,8 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   let pi = 0;
   const nextPain = (): string => atomsP[pi++] || '';
   // a clause with no verb of its own ("no single view of ...", "too many tools", "slow setup") is introduced, never used as an opening line
-  const fragment = (a: string): boolean => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || /^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a);
+  // (a clause that opens with such a word but has a verb of its own, "outdated tools leave apps exposed", is a sentence)
+  const fragment = (a: string): boolean => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || (/^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a) && !VERB.test(a.split(/\s+/).slice(1, 9).join(' ')));
   const painStatement = (a: string): string => (fragment(a) ? endSentence(`The problem in short${inInd ? ` for people${inInd}` : ''}: ${a}`) : endSentence(sentenceCase(a)));
   const painRef = (a: string): string => `“${clip(a, 110)}”`;
 
@@ -142,14 +158,14 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const kindTopic = kindTopicRaw.split(/\s+/).length <= 3 && !/\b(?:single|intelligent|led|first|leading|unified|modern|next|new|smart|powerful|complete|connected|global|integrated|end|based|native)\b/i.test(kindTopicRaw) ? kindTopicRaw : '';
   const measuresRanked = vv ? vv.metrics.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.m) : [];
   // a word of the sector's own vocabulary that the user used in the pain (first) or in the value (second) names the topic best
-  const stemWords = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.slice(0, 5)));
+  const stemWords = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z]{3,}/g) || []).map((w) => (w.length > 3 ? w.replace(/s$/, '') : w).slice(0, 5)));
   const vocabHit = (text: string): string => {
     if (!vv) return '';
     const have = stemWords(text);
     let best = ''; let bestN = 0;
     for (const c of [...vv.vocabulary, ...vv.metrics]) {
       const all = (c.toLowerCase().match(/[a-z]{3,}/g) || []).filter((w) => !/^(?:per|the|and|for|off)$/.test(w));
-      const ws = all.map((w) => w.slice(0, 5));
+      const ws = all.map((w) => (w.length > 3 ? w.replace(/s$/, '') : w).slice(0, 5));
       if (!ws.length) continue;
       const hit = ws.filter((w) => have.has(w)).length;
       if (hit === 0 || hit / ws.length < 0.75 || (ws.length >= 2 && hit < 2)) continue;
@@ -162,17 +178,30 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     const pl = last && text.toLowerCase().match(new RegExp(`\\b${last}(?:s|es)\\b`));
     return pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
   };
-  // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages")
+  // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages"); a leading "high" or "rising" is dropped
+  const atom0 = atomsP[0] || '';
   const painSubject = (): string => {
-    const a = (painAtoms(painText)[0] || '').replace(/^(?:when|if|because|as|while|no|most|many|the|our|their)\s+/i, '');
+    const a = atom0.replace(/^(?:when|if|because|as|while|no|most|many|the|our|their)\s+/i, '').replace(/^(?:high|rising|growing|poor|low|long|late|outdated|legacy|excessive)\s+/i, '');
     const m = a.match(VERB);
-    const head = (m && m.index ? a.slice(0, m.index) : a).trim().split(/\s+/).slice(0, 5).join(' ').replace(/[,;:]+$/, '');
+    const cuts = [m && m.index ? m.index : a.length, a.search(/\s+for\s+/), a.search(/\s+across\s+/), a.search(/\s*\(/)].filter((i) => i > 0);
+    const head = a.slice(0, Math.min(...cuts)).trim().split(/\s+/).slice(0, 8).join(' ').replace(/[,;:]+$/, '');
     const generic = /^(?:processes|things|people|teams|companies|costs|businesses|organi[sz]ations|enterprises|customers|users|it|they|this|that|work|data|tools|systems)$/i.test(head);
     return head.length >= 5 && (head.split(/\s+/).length >= 2 || head.length >= 7) && !generic && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
   };
-  const topic = vocabHit(painText) || painSubject() || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
-  const whatIs = isKind(P, D) ? endSentence(isKind(P, D)) : '';
-  const covers = nearParts.length ? endSentence(`${whatIs ? 'It' : name} covers ${nearParts.length > 3 ? `${nearParts.slice(0, 3).join(', ')} and more` : joinList(nearParts)}`) : '';
+  const topic = vocabHit(atom0) || painSubject() || vocabHit(painText) || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
+  const kindSentence = isKind(P, D) ? endSentence(isKind(P, D)) : '';
+  // a product known only by its name and kind is also told by what it does, in the user's words ("It unifies digital interactions across SMS and voice.")
+  const does = doesLine(P);
+  const whatIs = kindSentence && does && !kindSentence.toLowerCase().includes(does.toLowerCase().replace(/^it \w+ /, '').replace(/[.]+$/, '')) ? `${kindSentence} ${does}` : kindSentence;
+  // a part written as an action ("make payouts") is not something a product "covers": it lets you do it
+  const VERB_PART = /^(?:accept|make|send|run|manage|track|create|pay|collect|automate|build|get|use|see|plan|issue|open|give|offer|file|book|buy|sell|ship|detect|block|score|route|verify|reconcile|split|monitor|protect|find|set|schedule|invite|generate|share|connect)\b/i;
+  const partsPhrase = (ps: string[]): string => (ps.length > 3 ? `${ps.slice(0, 3).join(', ')} and more` : joinList(ps));
+  const partsVerb = (ps: string[]): string => {
+    const acts = ps.filter((x) => VERB_PART.test(x)); const things = ps.filter((x) => !VERB_PART.test(x));
+    return [things.length ? `covers ${partsPhrase(things)}` : '', acts.length ? `lets you ${partsPhrase(acts)}` : ''].filter(Boolean).join(' and ');
+  };
+  const coversOf = (ps: string[], lead: string): string => endSentence(`${lead} ${partsVerb(ps)}`);
+  const covers = nearParts.length ? coversOf(nearParts, whatIs ? 'It' : name) : '';
 
   // ---- the value: the aim, and the figures that came with it ----
   const valueItems = listItems(valueText).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
@@ -186,13 +215,16 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const proofItems = parseProof(proofText);
   const rank = `${painText} ${persona} ${industry} ${(vv?.metrics || []).join(' ')}`;
   const bag0 = [...proofItems, ...valueClaims];
-  const bag = atomsOf(bag0, rank);
+  const bag = atomsOf(bag0, rank, `${painText} ${persona} ${industry}`);
   const usedItems: ProofItem[] = [];
   const usedNow = (a: Atom) => { if (!usedItems.includes(a.item)) usedItems.push(a.item); };
+  // proof about another part of the product than the one the pain is about ("set up payroll in a few hours" for a checkout pain) waits for the last email (rest) instead of being pitched in the middle ones
+  const otherParts = parts.filter((pt) => !nearAll.includes(pt));
+  const offTopic = (a: Atom): boolean => a.kind !== 'recognition' && a.fit === 0 && otherParts.some((pt) => overlap(a.text, pt) > 0);
   const take = (kinds: ProofItem['kind'][], n: number): Atom[] => {
     const out: Atom[] = [];
     for (const k of kinds) {
-      for (const a of bag.filter((x) => x.kind === k).sort((x, y) => y.score - x.score)) { if (out.length < n) { out.push(a); bag.splice(bag.indexOf(a), 1); } }
+      for (const a of bag.filter((x) => x.kind === k).sort((x, y) => y.score - x.score)) { if (out.length < n && !offTopic(a)) { out.push(a); bag.splice(bag.indexOf(a), 1); } }
     }
     out.forEach(usedNow);
     return out;
@@ -205,6 +237,9 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     if (a.kind === 'recognition') {
       if (/^named\b/i.test(t)) return endSentence(`${name} was ${lowerKeep(t)}`);
       if (/^certified\b/i.test(t)) return endSentence(`${name} is ${lowerKeep(t)}`);
+      // "Findwell Named a Market Shaper ..." is said as "Findwell was named a Market Shaper ..."
+      const own = P.name ? t.match(new RegExp(`^${P.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(named|ranked|rated|recogni[sz]ed|certified)\\b(.*)$`, 'i')) : null;
+      if (own) return endSentence(`${P.name} ${/^certified$/i.test(own[1]) ? 'is' : 'was'} ${own[1].toLowerCase()}${own[2]}`);
       return P.name && t.toLowerCase().startsWith(P.name.toLowerCase()) ? endSentence(t) : endSentence(`Recognition: ${t}`);
     }
     if (a.src.type === 'quote' || a.kind === 'quote') {
@@ -213,7 +248,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
       const spoken = /[.?!]$/.test(q.quote) ? q.quote : `${q.quote}.`;
       return q.who ? `In the words of ${q.who}${q.about ? `, on ${q.about}` : ''}: “${spoken}”` : `One customer put it this way: “${spoken}”`;
     }
-    if (a.src.type === 'title') return endSentence(`One ${name} case study carries the title “${t}”`);
+    if (a.src.type === 'title') return endSentence(`One ${P.name ? `${P.name} ` : ''}case study carries the title “${t}”`);
     if (a.src.type === 'other') return endSentence(`${sentenceCase(t)} (${a.label})`);
     // a phrase typed in small letters is a fragment, not a sentence: it gets a lead-in and keeps its words as typed
     return /^[a-z]/.test(t) && !/^[a-z]+[A-Z]/.test(t) ? endSentence(`${a.kind === 'story' ? 'One example' : 'On record'}: ${t}`) : endSentence(sentenceCase(t));
@@ -222,11 +257,15 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const facts = (as: Atom[]): string => {
     const out: string[] = [];
     const pageGroups = new Map<string, Atom[]>();
-    for (const a of as) if (a.src.type === 'page' && a.kind !== 'recognition' && a.kind !== 'quote') pageGroups.set(`${bag0.indexOf(a.item)}|${a.label}`, [...(pageGroups.get(`${bag0.indexOf(a.item)}|${a.label}`) || []), a]);
+    for (const a of as) if (a.src.type === 'page' && a.kind !== 'recognition' && a.kind !== 'quote') pageGroups.set(`${a.src.type}|${a.src.basis}`, [...(pageGroups.get(`${a.src.type}|${a.src.basis}`) || []), a]);
     for (const g of pageGroups.values()) out.push(endSentence(`${siteLead()} ${g.map((x) => lowerKeep(x.text)).join('; ')}${g[0].src.basis ? ` (${g[0].src.basis})` : ''}`));
     const rest2 = as.filter((a) => !(a.src.type === 'page' && a.kind !== 'recognition' && a.kind !== 'quote'));
     const quotes = rest2.filter((a) => a.kind === 'quote' || a.src.type === 'quote');
-    const others = rest2.filter((a) => !quotes.includes(a));
+    const others0 = rest2.filter((a) => !quotes.includes(a));
+    // case study headlines are said together once ("Two X case studies carry the titles “A” and “B”")
+    const titled = others0.filter((a) => a.src.type === 'title' && a.kind !== 'recognition');
+    const others = titled.length >= 2 ? others0.filter((a) => !titled.includes(a)) : others0;
+    if (titled.length >= 2) out.push(endSentence(`${titled.length === 2 ? 'Two' : 'Several'} ${P.name ? `${P.name} ` : ''}case studies carry the titles ${andList(titled.map((a) => `“${a.text}”`))}`));
     if (others.length) out.push(others.map(one).join(' '));
     for (const q of quotes) out.push(one(q));
     return out.join('\n\n');
@@ -243,9 +282,12 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const MOTION = /\b(?:charg\w+|pric\w+|billing|invoic\w+|ship\w*|subscription\w*|renewal\w*|before value|sign-?up|free trial|paywall)\b/i;
   const motionFit = (x: string): boolean => { const m = x.match(MOTION); return !m || new RegExp(`\\b${m[0].replace(/\w+$/, (w) => w.slice(0, Math.max(4, w.length - 2)))}`, 'i').test(ownWords); };
   const opsFit = fam !== 'operations' || !vv || ['logistics-tech', 'ites', 'vertical-saas'].includes(vv.id);
-  let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x)) : [];
-  const sectorQs = vv ? vv.discovery.filter(motionFit) : roleQs;
-  const qPool = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
+  // a question that says "they" or "that task" with nothing before it to point at is left out; the sector's questions are put in the order of how much they share with the pain
+  const askable = (x: string): boolean => !/\b(?:they|them|their)\b/i.test(x) && !/\bthat (?:task|process|work|step|activity)\b/i.test(x);
+  let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x) && askable(x)) : [];
+  const sectorQs = vv ? vv.discovery.filter((x) => motionFit(x) && askable(x)) : roleQs;
+  const qPool0 = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
+  const qPool = qPool0.map((x, i) => ({ x, i, n: overlap(x, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.x);
   let qi = 0;
   const nextQ = (): string => qPool.length ? qPool[qi++ % qPool.length] : '';
   const freshQ = (): string => (qi < qPool.length ? qPool[qi++] : '');
@@ -255,7 +297,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     : practitioner && personaPlain.length <= 80 ? endSentence(`For ${personaPlain}, the test of a change is whether it fits the tools and the work already in place`)
     : persona && rk.label !== 'stakeholder' && opsFit ? endSentence(`For ${anOf(rk.label)}, what usually matters is ${rk.cares}`) : '';
   const measuresLine = measures.length ? endSentence(`The measures${inInd ? ` ${inInd.trim()}` : ''} that usually show whether this is working are ${joinList(measures)}`) : '';
-  const roleLead = isUser ? ` to someone who works in ${famWord} every day` : practitioner && personaPlain.length <= 80 ? ` to ${/s\b/i.test(personaPlain.split(/\s+/)[0]) || /s$/i.test(personaPlain.split(/\s+(?:who|that|at|in|of)\s+/)[0]) ? '' : 'a '}${personaPlain}` : persona && rk.label !== 'stakeholder' && opsFit ? ` to ${anOf(rk.label)}` : '';
+  const roleLead = isUser ? ` to someone who works in ${famWord} every day` : practitioner && personaPlain.length <= 80 ? ` to ${/s\b/i.test(personaPlain.split(/\s+/)[0]) || /s$/i.test(personaPlain.split(/\s+(?:who|that|at|in|of)\s+/)[0]) ? '' : 'a '}${personaPlain}` : persona && rk.label !== 'stakeholder' && opsFit ? ` to ${anOf(rk.label)}${inInd}` : '';
   const qLead = (q: string): string => (q ? `The question that usually decides whether a change like this matters${roleLead} is this: ${q}` : '');
   const objs = vv ? vv.objections.slice(0, 2) : [];
   const toYou = (t: string) => t.replace(/on the buyer side/gi, 'on your side').replace(/the buyer's/gi, 'your').replace(/the buyer/gi, 'your team');
@@ -318,16 +360,21 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
         r3.length ? facts(r3) : measuresLine,
         p2 ? `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}` : (r3.length ? '' : endSentence(`A question from the same place: ${nextQ()}`)),
         !r3.length && p2 ? qLead(nextQ()) : '',
-        nearParts[0] ? endSentence(`Within ${name}, the part that speaks to this is ${nearParts[0]}`) : '',
+        nearParts[0] ? (VERB_PART.test(nearParts[0]) ? endSentence(`Within ${name}, the part that speaks to this lets you ${nearParts[0]}`) : endSentence(`Within ${name}, the part that speaks to this is ${nearParts[0]}`)) : '',
         ask(2)]);
       const roles = otherRoles.length ? andList(otherRoles.map((r) => `your ${r}`), 'or') : '';
       mail('Day 12', senior ? 'Who else?' : 'Right person?', senior ? `Who should look at ${topic} with you?` : `Who looks after ${topic}${inIndSubj}?`, [
         `I have written a few times about ${atomsP[0] && atomsP[0].length <= 120 ? `“${atomsP[0]}”` : topic} and have not heard back, so I will ask plainly: ${senior ? `is there someone on your side${roles ? `, for example ${roles},` : ''} who should look at this with you, or is it better left for now?` : `is this yours, or does it sit with someone else${roles ? `, for example ${roles}` : ''}?`}`,
         `If the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.`]);
       const r5 = lateRecognition();
-      const leftover = rest(3);
+      // two more figures at most, so the last note does not stack statistics; the rest stay on the checklist
+      const leftover = rest(2);
+      // the parts of the problem that no earlier email used are named here, once
+      const morePain = atomsP.slice(pi).filter((x) => x.length <= 150);
+      pi = atomsP.length;
       mail('Day 17', 'Questions to keep', `Questions on ${topic}${inIndSubj}`, [
-        `This is my last note. Here are the questions to ask before changing how you handle ${topic}, useful even if we never speak:\n${(() => { const f = [freshQ(), freshQ(), freshQ()].filter(Boolean); if (!f.length) f.push(nextQ()); return f.filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n'); })()}`,
+        `This is my last note. Here are the questions to ask before changing how you handle ${topic}${inInd}, useful even if we never speak:\n${(() => { const f = [freshQ(), freshQ(), freshQ()].filter(Boolean); if (!f.length) f.push(nextQ()); return f.filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n'); })()}`,
+        morePain.length ? `${morePain.length === 1 ? 'One more part of the problem' : `${['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'][morePain.length] || morePain.length} more parts of the problem`}, in case ${morePain.length === 1 ? 'it is' : 'they are'} yours too: ${morePain.map((x) => x.replace(/[.]+$/, '')).join('; ')}.` : '',
         r5.length ? facts(r5) : '', leftover,
         `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`]);
     },
@@ -346,7 +393,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     },
     post_demo: () => {
       mail('same day', 'Thank you', `Thank you for the demo of ${name}`, [
-        `Thank you for the time today. You saw ${name}${nearParts.length ? `, which covers ${nearParts.length > 3 ? `${nearParts.slice(0, 3).join(', ')} and more` : joinList(nearParts)}` : ''}.`,
+        `Thank you for the time today. You saw ${name}${nearParts.length ? `, which ${partsVerb(nearParts)}` : ''}.`,
         atomsP[0] ? `The problem we set out to address: ${atomsP[0]}.` : '', aimLine,
         `If anything about ${topic} was unclear after the demo, send me the question and I will answer it in writing.`]);
       mail('Day 2', 'Likely concerns', objs[0] ? `Before you decide: ${D.lower(objs[0].objection).replace(/[.]+$/, '')}` : `Questions after the demo of ${name}`, [
@@ -393,7 +440,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
       mail('Week 1', 'The problem', `How to look at ${topic}`, [
         a1 ? `This note is about one problem: ${a1}.` : `This note is about ${topic}.`, measuresLine, endSentence(`A question to start with: ${nextQ()}`)]);
       mail('Week 2', 'One part', nearParts[0] ? `${upperFirst(nearParts[0])}: what it does` : `What ${name} does`, [
-        [whatIs, covers].filter(Boolean).join(' '), nearParts[0] ? `For the problem above, ${nearParts[0]} is the part to look at first.` : '', aimLine, endSentence(`A question for you: ${nextQ()}`)]);
+        [whatIs, covers].filter(Boolean).join(' '), nearParts[0] ? (VERB_PART.test(nearParts[0]) ? `For the problem above, the part to look at first is the one that lets you ${nearParts[0]}.` : `For the problem above, ${nearParts[0]} is the part to look at first.`) : '', aimLine, endSentence(`A question for you: ${nextQ()}`)]);
       const r3 = take(['result', 'quote', 'story', 'scale'], 2);
       mail('Week 4', 'A customer', r3.length ? `What a customer saw on ${topic}` : `${upperFirst(topic)} for people${inInd}`, [
         r3.length ? facts(r3) : [careLine, measuresLine].filter(Boolean).join(' '), nextPain() ? `The other half of the problem: ${atomsP[pi - 1]}.` : '', r3.length ? '' : aimLine, endSentence(`A question for you: ${nextQ()}`)]);

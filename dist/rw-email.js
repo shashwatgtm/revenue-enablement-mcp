@@ -22,6 +22,33 @@ function painAtoms(text) {
     const segs = clean.split(/;|\.\s+(?=[A-Z“"'])/).map((s) => s.trim().replace(/^(?:and|while|also|plus)\s+/i, '')).filter(Boolean);
     const out = [];
     const balanced = (s) => (s.match(/\(/g) || []).length === (s.match(/\)/g) || []).length;
+    // "<a problem>: <clause>, <clause>, and <clause>": the head is one problem and each clause of the list after the colon is another (a part with no verb joins the next one)
+    const hasVerb = (x) => VERB.test(x.split(/\s+/).slice(0, 10).join(' '));
+    const colonList = (sg) => {
+        const ci = sg.indexOf(': ');
+        if (ci < 0)
+            return [sg];
+        const head = sg.slice(0, ci).trim();
+        const tail = sg.slice(ci + 2).trim();
+        if (head.split(/\s+/).length < 3 || !hasVerb(head.split(/\s+/).slice(1).join(' ')) || !balanced(head) || !balanced(tail))
+            return [sg];
+        const clauses = [];
+        let cur = '';
+        for (const piece of tail.split(/,\s+(?:and\s+)?/).map((x) => x.trim()).filter(Boolean)) {
+            cur = cur ? `${cur}, ${piece}` : piece;
+            if (hasVerb(cur.split(/\s+/).slice(1).join(' ')) && cur.split(/\s+/).length >= 4) {
+                clauses.push(cur);
+                cur = '';
+            }
+        }
+        if (cur) {
+            if (clauses.length)
+                clauses[clauses.length - 1] += `, ${cur}`;
+            else
+                return [sg];
+        }
+        return clauses.length >= 2 ? [head, ...clauses] : [sg];
+    };
     const split = (s, depth = 0) => {
         if (s.length <= 130 || depth > 2)
             return [s];
@@ -33,17 +60,18 @@ function painAtoms(text) {
         }
         return [s];
     };
-    for (const s of segs)
-        for (const x of split(s))
-            if (x.trim().length > 3 && !out.includes(x.trim()))
-                out.push(x.trim());
+    for (const sg of segs)
+        for (const c of colonList(sg))
+            for (const x of split(c))
+                if (x.trim().length > 3 && !out.includes(x.trim()))
+                    out.push(x.trim());
     return out.slice(0, 6);
 }
 const STEM_STOP = new Set(['sale', 'serv', 'cust', 'mark', 'team', 'tool', 'data', 'mana', 'syst', 'plat', 'proc', 'work', 'with', 'more', 'from', 'that', 'this', 'have', 'they', 'your', 'their', 'into', 'over', 'only', 'also', 'each', 'such', 'than', 'solu', 'prod', 'busi', 'comp', 'enab', 'help', 'real', 'time', 'fast', 'lowe', 'fewe', 'high', 'effi', 'when', 'what', 'ente', 'need', 'many', 'much', 'across']);
 const stems = (t) => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.replace(/s$/, '').slice(0, 4)).filter((w) => !STEM_STOP.has(w)));
 const overlap = (a, b) => { const sb = stems(b); return [...stems(a)].filter((w) => sb.has(w)).length; };
 /** A list of figures ("a 3.7%, 49% more work, 15 days faster") is cut into atoms, each used once; atoms with the same figures count as one. */
-function atomsOf(items, rank) {
+function atomsOf(items, rank, fitText) {
     const out = [];
     const sig = (t) => (t.match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, '')).sort().join('|');
     const seen = new Set();
@@ -76,7 +104,7 @@ function atomsOf(items, rank) {
                 kind = 'quote';
             else if (kind !== 'quote' && kind !== 'recognition' && /\b(?:partner of the year|award|winner|ranked|recogni[sz]ed|certified|named a|visionary|magic quadrant|forrester|gartner|idc\b|g2\b)/i.test(p) && !/\d\s?%/.test(p))
                 kind = 'recognition';
-            out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: (0, rw_common_ts_1.sourceOf)(it.label), item: it, score: overlap(p, rank) });
+            out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: (0, rw_common_ts_1.sourceOf)(it.label), item: it, score: overlap(p, rank), fit: overlap(p, fitText) });
         }
     }
     return out;
@@ -139,7 +167,8 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     let pi = 0;
     const nextPain = () => atomsP[pi++] || '';
     // a clause with no verb of its own ("no single view of ...", "too many tools", "slow setup") is introduced, never used as an opening line
-    const fragment = (a) => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || /^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a);
+    // (a clause that opens with such a word but has a verb of its own, "outdated tools leave apps exposed", is a sentence)
+    const fragment = (a) => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || (/^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a) && !VERB.test(a.split(/\s+/).slice(1, 9).join(' ')));
     const painStatement = (a) => (fragment(a) ? (0, rw_common_ts_1.endSentence)(`The problem in short${inInd ? ` for people${inInd}` : ''}: ${a}`) : (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.sentenceCase)(a)));
     const painRef = (a) => `“${(0, dealtext_ts_1.clip)(a, 110)}”`;
     // ---- the product ----
@@ -156,7 +185,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const kindTopic = kindTopicRaw.split(/\s+/).length <= 3 && !/\b(?:single|intelligent|led|first|leading|unified|modern|next|new|smart|powerful|complete|connected|global|integrated|end|based|native)\b/i.test(kindTopicRaw) ? kindTopicRaw : '';
     const measuresRanked = vv ? vv.metrics.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.m) : [];
     // a word of the sector's own vocabulary that the user used in the pain (first) or in the value (second) names the topic best
-    const stemWords = (t) => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.slice(0, 5)));
+    const stemWords = (t) => new Set((t.toLowerCase().match(/[a-z]{3,}/g) || []).map((w) => (w.length > 3 ? w.replace(/s$/, '') : w).slice(0, 5)));
     const vocabHit = (text) => {
         if (!vv)
             return '';
@@ -165,7 +194,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         let bestN = 0;
         for (const c of [...vv.vocabulary, ...vv.metrics]) {
             const all = (c.toLowerCase().match(/[a-z]{3,}/g) || []).filter((w) => !/^(?:per|the|and|for|off)$/.test(w));
-            const ws = all.map((w) => w.slice(0, 5));
+            const ws = all.map((w) => (w.length > 3 ? w.replace(/s$/, '') : w).slice(0, 5));
             if (!ws.length)
                 continue;
             const hit = ws.filter((w) => have.has(w)).length;
@@ -184,17 +213,31 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         const pl = last && text.toLowerCase().match(new RegExp(`\\b${last}(?:s|es)\\b`));
         return pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
     };
-    // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages")
+    // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages"); a leading "high" or "rising" is dropped
+    const atom0 = atomsP[0] || '';
     const painSubject = () => {
-        const a = (painAtoms(painText)[0] || '').replace(/^(?:when|if|because|as|while|no|most|many|the|our|their)\s+/i, '');
+        const a = atom0.replace(/^(?:when|if|because|as|while|no|most|many|the|our|their)\s+/i, '').replace(/^(?:high|rising|growing|poor|low|long|late|outdated|legacy|excessive)\s+/i, '');
         const m = a.match(VERB);
-        const head = (m && m.index ? a.slice(0, m.index) : a).trim().split(/\s+/).slice(0, 5).join(' ').replace(/[,;:]+$/, '');
+        const cuts = [m && m.index ? m.index : a.length, a.search(/\s+for\s+/), a.search(/\s+across\s+/), a.search(/\s*\(/)].filter((i) => i > 0);
+        const head = a.slice(0, Math.min(...cuts)).trim().split(/\s+/).slice(0, 8).join(' ').replace(/[,;:]+$/, '');
         const generic = /^(?:processes|things|people|teams|companies|costs|businesses|organi[sz]ations|enterprises|customers|users|it|they|this|that|work|data|tools|systems)$/i.test(head);
         return head.length >= 5 && (head.split(/\s+/).length >= 2 || head.length >= 7) && !generic && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
     };
-    const topic = vocabHit(painText) || painSubject() || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
-    const whatIs = (0, rw_common_ts_1.isKind)(P, D) ? (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.isKind)(P, D)) : '';
-    const covers = nearParts.length ? (0, rw_common_ts_1.endSentence)(`${whatIs ? 'It' : name} covers ${nearParts.length > 3 ? `${nearParts.slice(0, 3).join(', ')} and more` : (0, dealtext_ts_1.joinList)(nearParts)}`) : '';
+    const topic = vocabHit(atom0) || painSubject() || vocabHit(painText) || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
+    const kindSentence = (0, rw_common_ts_1.isKind)(P, D) ? (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.isKind)(P, D)) : '';
+    // a product known only by its name and kind is also told by what it does, in the user's words ("It unifies digital interactions across SMS and voice.")
+    const does = (0, rw_common_ts_1.doesLine)(P);
+    const whatIs = kindSentence && does && !kindSentence.toLowerCase().includes(does.toLowerCase().replace(/^it \w+ /, '').replace(/[.]+$/, '')) ? `${kindSentence} ${does}` : kindSentence;
+    // a part written as an action ("make payouts") is not something a product "covers": it lets you do it
+    const VERB_PART = /^(?:accept|make|send|run|manage|track|create|pay|collect|automate|build|get|use|see|plan|issue|open|give|offer|file|book|buy|sell|ship|detect|block|score|route|verify|reconcile|split|monitor|protect|find|set|schedule|invite|generate|share|connect)\b/i;
+    const partsPhrase = (ps) => (ps.length > 3 ? `${ps.slice(0, 3).join(', ')} and more` : (0, dealtext_ts_1.joinList)(ps));
+    const partsVerb = (ps) => {
+        const acts = ps.filter((x) => VERB_PART.test(x));
+        const things = ps.filter((x) => !VERB_PART.test(x));
+        return [things.length ? `covers ${partsPhrase(things)}` : '', acts.length ? `lets you ${partsPhrase(acts)}` : ''].filter(Boolean).join(' and ');
+    };
+    const coversOf = (ps, lead) => (0, rw_common_ts_1.endSentence)(`${lead} ${partsVerb(ps)}`);
+    const covers = nearParts.length ? coversOf(nearParts, whatIs ? 'It' : name) : '';
     // ---- the value: the aim, and the figures that came with it ----
     const valueItems = (0, rw_common_ts_1.listItems)(valueText).map((x) => (0, dealtext_ts_1.parseProof)(x)[0] || { text: x, label: '', kind: 'story' });
     const mainItem = valueItems.find((x) => !x.label) || valueItems[0];
@@ -206,15 +249,18 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const proofItems = (0, dealtext_ts_1.parseProof)(proofText);
     const rank = `${painText} ${persona} ${industry} ${(vv?.metrics || []).join(' ')}`;
     const bag0 = [...proofItems, ...valueClaims];
-    const bag = atomsOf(bag0, rank);
+    const bag = atomsOf(bag0, rank, `${painText} ${persona} ${industry}`);
     const usedItems = [];
     const usedNow = (a) => { if (!usedItems.includes(a.item))
         usedItems.push(a.item); };
+    // proof about another part of the product than the one the pain is about ("set up payroll in a few hours" for a checkout pain) waits for the last email (rest) instead of being pitched in the middle ones
+    const otherParts = parts.filter((pt) => !nearAll.includes(pt));
+    const offTopic = (a) => a.kind !== 'recognition' && a.fit === 0 && otherParts.some((pt) => overlap(a.text, pt) > 0);
     const take = (kinds, n) => {
         const out = [];
         for (const k of kinds) {
             for (const a of bag.filter((x) => x.kind === k).sort((x, y) => y.score - x.score)) {
-                if (out.length < n) {
+                if (out.length < n && !offTopic(a)) {
                     out.push(a);
                     bag.splice(bag.indexOf(a), 1);
                 }
@@ -233,6 +279,10 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 return (0, rw_common_ts_1.endSentence)(`${name} was ${lowerKeep(t)}`);
             if (/^certified\b/i.test(t))
                 return (0, rw_common_ts_1.endSentence)(`${name} is ${lowerKeep(t)}`);
+            // "Findwell Named a Market Shaper ..." is said as "Findwell was named a Market Shaper ..."
+            const own = P.name ? t.match(new RegExp(`^${P.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(named|ranked|rated|recogni[sz]ed|certified)\\b(.*)$`, 'i')) : null;
+            if (own)
+                return (0, rw_common_ts_1.endSentence)(`${P.name} ${/^certified$/i.test(own[1]) ? 'is' : 'was'} ${own[1].toLowerCase()}${own[2]}`);
             return P.name && t.toLowerCase().startsWith(P.name.toLowerCase()) ? (0, rw_common_ts_1.endSentence)(t) : (0, rw_common_ts_1.endSentence)(`Recognition: ${t}`);
         }
         if (a.src.type === 'quote' || a.kind === 'quote') {
@@ -243,7 +293,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             return q.who ? `In the words of ${q.who}${q.about ? `, on ${q.about}` : ''}: “${spoken}”` : `One customer put it this way: “${spoken}”`;
         }
         if (a.src.type === 'title')
-            return (0, rw_common_ts_1.endSentence)(`One ${name} case study carries the title “${t}”`);
+            return (0, rw_common_ts_1.endSentence)(`One ${P.name ? `${P.name} ` : ''}case study carries the title “${t}”`);
         if (a.src.type === 'other')
             return (0, rw_common_ts_1.endSentence)(`${(0, rw_common_ts_1.sentenceCase)(t)} (${a.label})`);
         // a phrase typed in small letters is a fragment, not a sentence: it gets a lead-in and keeps its words as typed
@@ -255,12 +305,17 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         const pageGroups = new Map();
         for (const a of as)
             if (a.src.type === 'page' && a.kind !== 'recognition' && a.kind !== 'quote')
-                pageGroups.set(`${bag0.indexOf(a.item)}|${a.label}`, [...(pageGroups.get(`${bag0.indexOf(a.item)}|${a.label}`) || []), a]);
+                pageGroups.set(`${a.src.type}|${a.src.basis}`, [...(pageGroups.get(`${a.src.type}|${a.src.basis}`) || []), a]);
         for (const g of pageGroups.values())
             out.push((0, rw_common_ts_1.endSentence)(`${siteLead()} ${g.map((x) => lowerKeep(x.text)).join('; ')}${g[0].src.basis ? ` (${g[0].src.basis})` : ''}`));
         const rest2 = as.filter((a) => !(a.src.type === 'page' && a.kind !== 'recognition' && a.kind !== 'quote'));
         const quotes = rest2.filter((a) => a.kind === 'quote' || a.src.type === 'quote');
-        const others = rest2.filter((a) => !quotes.includes(a));
+        const others0 = rest2.filter((a) => !quotes.includes(a));
+        // case study headlines are said together once ("Two X case studies carry the titles “A” and “B”")
+        const titled = others0.filter((a) => a.src.type === 'title' && a.kind !== 'recognition');
+        const others = titled.length >= 2 ? others0.filter((a) => !titled.includes(a)) : others0;
+        if (titled.length >= 2)
+            out.push((0, rw_common_ts_1.endSentence)(`${titled.length === 2 ? 'Two' : 'Several'} ${P.name ? `${P.name} ` : ''}case studies carry the titles ${(0, rw_common_ts_1.andList)(titled.map((a) => `“${a.text}”`))}`));
         if (others.length)
             out.push(others.map(one).join(' '));
         for (const q of quotes)
@@ -278,9 +333,12 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const MOTION = /\b(?:charg\w+|pric\w+|billing|invoic\w+|ship\w*|subscription\w*|renewal\w*|before value|sign-?up|free trial|paywall)\b/i;
     const motionFit = (x) => { const m = x.match(MOTION); return !m || new RegExp(`\\b${m[0].replace(/\w+$/, (w) => w.slice(0, Math.max(4, w.length - 2)))}`, 'i').test(ownWords); };
     const opsFit = fam !== 'operations' || !vv || ['logistics-tech', 'ites', 'vertical-saas'].includes(vv.id);
-    let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x)) : [];
-    const sectorQs = vv ? vv.discovery.filter(motionFit) : roleQs;
-    const qPool = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
+    // a question that says "they" or "that task" with nothing before it to point at is left out; the sector's questions are put in the order of how much they share with the pain
+    const askable = (x) => !/\b(?:they|them|their)\b/i.test(x) && !/\bthat (?:task|process|work|step|activity)\b/i.test(x);
+    let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x) && askable(x)) : [];
+    const sectorQs = vv ? vv.discovery.filter((x) => motionFit(x) && askable(x)) : roleQs;
+    const qPool0 = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
+    const qPool = qPool0.map((x, i) => ({ x, i, n: overlap(x, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.x);
     let qi = 0;
     const nextQ = () => qPool.length ? qPool[qi++ % qPool.length] : '';
     const freshQ = () => (qi < qPool.length ? qPool[qi++] : '');
@@ -290,7 +348,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         : practitioner && personaPlain.length <= 80 ? (0, rw_common_ts_1.endSentence)(`For ${personaPlain}, the test of a change is whether it fits the tools and the work already in place`)
             : persona && rk.label !== 'stakeholder' && opsFit ? (0, rw_common_ts_1.endSentence)(`For ${anOf(rk.label)}, what usually matters is ${rk.cares}`) : '';
     const measuresLine = measures.length ? (0, rw_common_ts_1.endSentence)(`The measures${inInd ? ` ${inInd.trim()}` : ''} that usually show whether this is working are ${(0, dealtext_ts_1.joinList)(measures)}`) : '';
-    const roleLead = isUser ? ` to someone who works in ${famWord} every day` : practitioner && personaPlain.length <= 80 ? ` to ${/s\b/i.test(personaPlain.split(/\s+/)[0]) || /s$/i.test(personaPlain.split(/\s+(?:who|that|at|in|of)\s+/)[0]) ? '' : 'a '}${personaPlain}` : persona && rk.label !== 'stakeholder' && opsFit ? ` to ${anOf(rk.label)}` : '';
+    const roleLead = isUser ? ` to someone who works in ${famWord} every day` : practitioner && personaPlain.length <= 80 ? ` to ${/s\b/i.test(personaPlain.split(/\s+/)[0]) || /s$/i.test(personaPlain.split(/\s+(?:who|that|at|in|of)\s+/)[0]) ? '' : 'a '}${personaPlain}` : persona && rk.label !== 'stakeholder' && opsFit ? ` to ${anOf(rk.label)}${inInd}` : '';
     const qLead = (q) => (q ? `The question that usually decides whether a change like this matters${roleLead} is this: ${q}` : '');
     const objs = vv ? vv.objections.slice(0, 2) : [];
     const toYou = (t) => t.replace(/on the buyer side/gi, 'on your side').replace(/the buyer's/gi, 'your').replace(/the buyer/gi, 'your team');
@@ -363,7 +421,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 r3.length ? facts(r3) : measuresLine,
                 p2 ? `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}` : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
                 !r3.length && p2 ? qLead(nextQ()) : '',
-                nearParts[0] ? (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this is ${nearParts[0]}`) : '',
+                nearParts[0] ? (VERB_PART.test(nearParts[0]) ? (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this lets you ${nearParts[0]}`) : (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this is ${nearParts[0]}`)) : '',
                 ask(2)
             ]);
             const roles = otherRoles.length ? (0, rw_common_ts_1.andList)(otherRoles.map((r) => `your ${r}`), 'or') : '';
@@ -372,10 +430,15 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 `If the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.`
             ]);
             const r5 = lateRecognition();
-            const leftover = rest(3);
+            // two more figures at most, so the last note does not stack statistics; the rest stay on the checklist
+            const leftover = rest(2);
+            // the parts of the problem that no earlier email used are named here, once
+            const morePain = atomsP.slice(pi).filter((x) => x.length <= 150);
+            pi = atomsP.length;
             mail('Day 17', 'Questions to keep', `Questions on ${topic}${inIndSubj}`, [
-                `This is my last note. Here are the questions to ask before changing how you handle ${topic}, useful even if we never speak:\n${(() => { const f = [freshQ(), freshQ(), freshQ()].filter(Boolean); if (!f.length)
+                `This is my last note. Here are the questions to ask before changing how you handle ${topic}${inInd}, useful even if we never speak:\n${(() => { const f = [freshQ(), freshQ(), freshQ()].filter(Boolean); if (!f.length)
                     f.push(nextQ()); return f.filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n'); })()}`,
+                morePain.length ? `${morePain.length === 1 ? 'One more part of the problem' : `${['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'][morePain.length] || morePain.length} more parts of the problem`}, in case ${morePain.length === 1 ? 'it is' : 'they are'} yours too: ${morePain.map((x) => x.replace(/[.]+$/, '')).join('; ')}.` : '',
                 r5.length ? facts(r5) : '', leftover,
                 `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`
             ]);
@@ -398,7 +461,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         },
         post_demo: () => {
             mail('same day', 'Thank you', `Thank you for the demo of ${name}`, [
-                `Thank you for the time today. You saw ${name}${nearParts.length ? `, which covers ${nearParts.length > 3 ? `${nearParts.slice(0, 3).join(', ')} and more` : (0, dealtext_ts_1.joinList)(nearParts)}` : ''}.`,
+                `Thank you for the time today. You saw ${name}${nearParts.length ? `, which ${partsVerb(nearParts)}` : ''}.`,
                 atomsP[0] ? `The problem we set out to address: ${atomsP[0]}.` : '', aimLine,
                 `If anything about ${topic} was unclear after the demo, send me the question and I will answer it in writing.`
             ]);
@@ -456,7 +519,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 a1 ? `This note is about one problem: ${a1}.` : `This note is about ${topic}.`, measuresLine, (0, rw_common_ts_1.endSentence)(`A question to start with: ${nextQ()}`)
             ]);
             mail('Week 2', 'One part', nearParts[0] ? `${(0, dealtext_ts_1.upperFirst)(nearParts[0])}: what it does` : `What ${name} does`, [
-                [whatIs, covers].filter(Boolean).join(' '), nearParts[0] ? `For the problem above, ${nearParts[0]} is the part to look at first.` : '', aimLine, (0, rw_common_ts_1.endSentence)(`A question for you: ${nextQ()}`)
+                [whatIs, covers].filter(Boolean).join(' '), nearParts[0] ? (VERB_PART.test(nearParts[0]) ? `For the problem above, the part to look at first is the one that lets you ${nearParts[0]}.` : `For the problem above, ${nearParts[0]} is the part to look at first.`) : '', aimLine, (0, rw_common_ts_1.endSentence)(`A question for you: ${nextQ()}`)
             ]);
             const r3 = take(['result', 'quote', 'story', 'scale'], 2);
             mail('Week 4', 'A customer', r3.length ? `What a customer saw on ${topic}` : `${(0, dealtext_ts_1.upperFirst)(topic)} for people${inInd}`, [

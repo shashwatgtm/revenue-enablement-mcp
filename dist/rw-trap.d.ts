@@ -12,6 +12,7 @@ export declare function trapCriterion(s: string): string;
 export declare function trapIng(verb: string): string;
 export declare const TRAP_CLAUSE_VERB: RegExp;
 export declare function trapClauses(wRaw: string): string[];
+export declare const OPEN_QS: string[];
 export declare function trapQuestion(wRaw: string, comp: string): {
     q: string;
     topic: string;

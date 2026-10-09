@@ -66,7 +66,7 @@ function productOf(solution, D) {
             for (const t of toks.slice(1, 3)) {
                 const w = t.replace(/[,;:]+$/, '');
                 const acronym = /^[A-Z]{2,5}$/.test(w) && !/^(?:AI|API|SMS|IOT|B2B|B2C|SAAS|CRM|ERP|HR|IT)$/.test(w);
-                const word = /^[A-Z][a-z]*[A-Z0-9.][A-Za-z0-9.&'+-]*$/.test(w) && !D.isCommon(w) && !NOT_NAME.test(w);
+                const word = /^[A-Z][a-z]*[A-Z0-9.][A-Za-z0-9.&'+]*$/.test(w) && !D.isCommon(w) && !NOT_NAME.test(w);
                 if ((acronym || word) && !/[,;:]$/.test(toks[toks.indexOf(t) - 1] || ''))
                     run.push(w);
                 else
@@ -222,7 +222,7 @@ function endSentence(s) {
         return '';
     return /[.?!]["”')]?$/.test(t) ? t : `${t}.`;
 }
-/** A sentence starts with a capital unless it starts with a name written with a small first letter (eClerx). */
+/** A sentence starts with a capital unless it starts with a name written with a small first letter (iLoop). */
 function sentenceCase(s) {
     const t = s.trim();
     if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || ''))

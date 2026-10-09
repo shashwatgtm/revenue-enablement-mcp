@@ -18,7 +18,7 @@ export declare function readSector(explicitModel: unknown, input: {
     buyer?: unknown[];
 }): SectorRead;
 export interface Product {
-    /** the name as typed ("Routelark", "Harbor BPO", "eClerx"); '' when the text gives no name */
+    /** the name as typed ("Routelark", "Harbor BPO", "iLoop"); '' when the text gives no name */
     name: string;
     /** what it is, from the description ("a route planning platform for third-party logistics providers"); '' when none */
     kind: string;
@@ -52,7 +52,7 @@ export interface Source {
 export declare function sourceOf(label: string): Source;
 /** Ends a sentence with one full stop (or keeps ? and !); never doubles one. */
 export declare function endSentence(s: string): string;
-/** A sentence starts with a capital unless it starts with a name written with a small first letter (eClerx). */
+/** A sentence starts with a capital unless it starts with a name written with a small first letter (iLoop). */
 export declare function sentenceCase(s: string): string;
 /** Splits a typed list at semicolons and new lines only. */
 export declare function listItems(s: unknown): string[];

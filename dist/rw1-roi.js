@@ -92,7 +92,7 @@ function buildRoiStructure(args, i, d) {
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
     const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
     const v = ctx.v;
-    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, i.yourSolution, [i.currentProcess, i.knownMetrics]);
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, i.yourSolution, []); // the current process and the quoted results are about the buyer's alternatives and other customers, not this seller's pricing
     const usage = mr.unit;
     const model = mr.model;
     const ctxLine = mr.line;

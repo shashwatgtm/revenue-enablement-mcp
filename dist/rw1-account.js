@@ -30,7 +30,7 @@ function buildAccountPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
-    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [notesIn, threatsIn, productsIn]);
+    const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, solutionIn, [notesIn, productsIn]); // the alternatives the account uses (competitive_threats) are other sellers' words, not this seller's pricing
     const unit = mr.unit;
     const model = mr.model;
     const ctxLine = mr.line;

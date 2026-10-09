@@ -96,7 +96,7 @@ test("win_loss_analyzer portfolio: no invented benchmark percentages", async () 
 
 // ---------------------------------------------------------------------------------------------------------------------------
 // account_plan_builder: four contacts collapsed into one "Champion" row; a CIO the user called the buyer tagged "technical influencer";
-// objections echoed with no plan; placeholders; QuantumStreet read with the corporate finance committee
+// objections echoed with no plan; placeholders; an AI native investment seller read with the corporate finance committee
 // ---------------------------------------------------------------------------------------------------------------------------
 const rowsOf = (text, header) => {
   const lines = text.split("\n");
@@ -534,7 +534,7 @@ test("an investment seller (AI native) gets no corporate finance or support-desk
   }
 });
 test("a TMS is software (not a people-delivered service) in the tools that state the model", async () => {
-  const tms = "Locus, an agentic transportation management system (TMS) and last mile delivery platform: dispatch planning, route planning, control tower and analytics, for captive, contracted, outsourced and hybrid fleets";
+  const tms = "Lanehop, an agentic transportation management system (TMS) and last mile delivery platform: dispatch planning, route planning, control tower and analytics, for captive, contracted, outsourced and hybrid fleets";
   for (const [name, args] of [["discovery_question_bank", { framework: "meddpicc", your_solution: tms }], ["competitive_trap_setter", { competitor: "Routeline", your_solution: tms }], ["pricing_negotiation_guide", { scenario: "budget_objection", your_solution: tms }]]) {
     const r = await call(name, args);
     assert.match(r.text, /Business model: software subscription/, name);

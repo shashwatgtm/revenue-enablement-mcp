@@ -26,7 +26,7 @@ function buildAccountPlan(args, d) {
     const threatsIn = str('competitive_threats');
     const solutionIn = str('your_solution');
     const notesIn = str('account_notes');
-    const ctx = d.readContext(undefined, { seller: [solutionIn || 'your solution'], context: [productsIn, notesIn, contactsText], buyer: [industryIn] });
+    const ctx = (0, rw1_common_ts_1.reframeSector)(d.readContext(undefined, { seller: [solutionIn || 'your solution'], context: [productsIn, notesIn, contactsText], buyer: [industryIn] }), solutionIn);
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
@@ -41,7 +41,8 @@ function buildAccountPlan(args, d) {
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(industryIn, (0, rw1_common_ts_1.industryFromTitle)(accountName));
     const mw = (0, rw1_common_ts_1.modelWords)(model, solutionIn, unit || undefined);
     // when the user's words changed the model read from the sector (usage or SIMs instead of fixed sites and links), the proof is the one for that model, not the sector's site pilot
-    const proofText = v ? (model !== ctx.model ? (0, rw1_common_ts_1.lowerStart)(mw.proof) : (0, rw1_common_ts_1.lowerStart)(v.proofShape).replace(/[.]+$/, '')) : '';
+    // the proof of the usage or SIM wording replaces the sector's own only where the sector's was written for another kind of seller (network sites and links); a software sector keeps its own proof
+    const proofText = v ? (model !== ctx.model && (ctx.model === 'connectivity' || model === 'sim') ? (0, rw1_common_ts_1.lowerStart)(mw.proof) : (0, rw1_common_ts_1.lowerStart)(v.proofShape).replace(/[.]+$/, '')) : '';
     const contacts = (0, dealtext_ts_1.parseContacts)(contactsText, investment).map((c) => ({ ...c, raw: c.raw.replace(/^(?:and|or)\s+/i, ''), title: c.title.replace(/^(?:and|or)\s+/i, '') }));
     const metric = v ? v.metrics[0] : '';
     // ---- the tier rule on ARR (unchanged, D80) ----
@@ -74,7 +75,7 @@ function buildAccountPlan(args, d) {
     const champ = contacts.find((c) => (0, dealtext_ts_1.tagKind)(c.tag) === 'champion');
     const buyerContacts = contacts.filter((c) => ['buyer', 'economic'].includes((0, dealtext_ts_1.tagKind)(c.tag) || ''));
     const buyer = buyerContacts[0];
-    const rctx = { P, v, metric };
+    const rctx = { P, v, metric, callContext: rw1_common_ts_1.CALL_CONTEXT.test(`${industryIn} ${accountName} ${contactsText}`) };
     const sig = (s) => s.toLowerCase().split(/[^a-z0-9]+/).map((w) => ({ cfo: 'financial', coo: 'operating', cio: investment ? 'investment' : 'information', cto: 'technology', ciso: 'security' }[w] || w)).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director', 'team', 'teams'].includes(w));
     const covered = new Set(contacts.flatMap((c) => sig(c.title)));
     const uncovered = v ? v.buyerRoles.filter((role) => !sig(role).some((w) => covered.has(w))) : [];
@@ -120,21 +121,10 @@ function buildAccountPlan(args, d) {
     // ---- the alternatives and the objections ----
     const threats = (0, rw1_common_ts_1.readThreats)(d.splitItems(threatsIn));
     const expansion = d.splitItems(expansionIn);
-    const qa = { P, parts, model, sellerText: solutionIn, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
+    const qa = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
     const answers = (0, rw1_common_ts_1.dedupeAnswers)(objections.map((o) => ({ text: o, a: (0, rw1_common_ts_1.answerQuestion)(o, qa) })));
     // ---- the parts of the product against the account's own pain ----
-    const partFor = (text) => {
-        let best = '';
-        let n = 0;
-        for (const p of parts) {
-            const s = (0, rw1_common_ts_1.shared)(text, p);
-            if (s > n) {
-                n = s;
-                best = p;
-            }
-        }
-        return best;
-    };
+    const partFor = (text) => (rw1_common_ts_1.STITCHED.test(text) && (0, rw1_common_ts_1.joiningPart)(parts, solutionIn)) || (0, rw1_common_ts_1.matchPart)(text, parts);
     const pairs = threats.map((t) => ({ t, part: partFor(t.text) })).filter((x) => x.part);
     const sponsorOf = (text) => {
         let best;

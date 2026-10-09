@@ -4,7 +4,7 @@
 // measure, and the questions for the driver chosen, worded for the buyer's industry and the seller's business model. What is missing is listed once, at the end.
 import { clip, describeWith, joinList, solutionBrief, parseProof, proofPhrase, proofSource, upperFirst } from './dealtext.ts';
 import { buyerContextFor } from './verticals.ts';
-import { briefOf, readModel, shared, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
+import { briefOf, readModel, reframeSector, matchPart, joinSplitClaims, shared, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
 
 export interface RoiStructureInput {
   customerName: string; industry: string; companySize: string; yourSolution: string; primaryValueDriver: string;
@@ -47,7 +47,8 @@ function measureOf(text: string, metrics: string[] = []): string {
   if (/return|rto|cancel|complaint|unpaid|churn|fraud|breach|incident|risk/.test(t)) return 'the cost of one incident, and how often one happens';
   if (/regression|release|deploy|test(?:ing|s)?\b|build time|merge/.test(t)) return 'the time from a change to a release today, and what a late or failed release costs';
   if (/detention|demurrage|dwell|gate wait|expedit/.test(t)) return 'the detention, wait or expedite costs the buyer pays in a year, and what causes them';
-  if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t)) return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
+  // delivery wording only for a result that itself speaks of deliveries, orders or shipments ("authentication time" holds the letters "on time" and is not a delivery result)
+  if (/\bcarrier completion\b|\bon[- ]time\b|\bdelivery rate\b|\brto\b|\bfirst[- ]attempt\b|\bundelivered\b/.test(t) && /\bdeliver\w*|\bshipments?\b|\bparcels?\b|\bcouriers?\b|\borders?\b|\brto\b|\bcarriers?\b/.test(t)) return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
   if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t)) return 'the time people lose to that step today, and what a minute of it costs across the people who do it';
   if (/audit|certif|complian|governance|access review/.test(t)) return 'the hours and outside fees the buyer spends on audit and compliance work today';
   if (/manual|automation|automat/.test(t)) return 'the hours of manual work in the process today, and what an hour costs';
@@ -57,7 +58,16 @@ function measureOf(text: string, metrics: string[] = []): string {
   let best = ''; let n = 0;
   for (const m of metrics) { const sc = shared(text, m); if (sc > n) { n = sc; best = m; } }
   if (best) return `the buyer's own ${best}, and what a change in it is worth in a year`;
+  const own = ownMeasure(text);
+  if (own) return `the buyer's own ${own} today, and what a change in it is worth in a year`;
   return 'which of the buyer\'s own numbers would change, and what that change is worth in a year';
+}
+/** The thing a quoted result changes, in the result's own words: "a 57% reduction in user authentication time" gives "user authentication time". */
+function ownMeasure(text: string): string {
+  const m = text.match(/\b(?:reduction|decrease|drop|fall|improvement|increase|gain|growth|rise|uplift|cut|saving|savings)\s+(?:of\s+[\d.,%x ]+\s+)?(?:in|of|to|on)\s+(?:the\s+|its\s+|their\s+)?([a-z][a-z \-]{3,44}?)(?=\s+(?:with|by|using|after|through|from|across|for|at|within|when|thanks)\b|[.,;:(]|$)/i)
+    || text.match(/\b(?:cut|cuts|cutting|reduced|reduces|lowered|lowers|raised|raises|boosted|boosts|improved|improves|increased|increases|saved|saves)\s+(?:its\s+|their\s+|the\s+)?([a-z][a-z \-]{3,44}?)\s+(?:by|from|to|with|after|through)\b/i);
+  const phrase = m ? m[1].trim().toLowerCase() : '';
+  return phrase && phrase.split(/\s+/).length <= 6 && !/^(?:it|that|them|this|costs?)$/.test(phrase) ? phrase : '';
 }
 
 export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructureInput, d: Deps): string {
@@ -72,7 +82,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   const brief = briefOf(args.your_solution ? i.yourSolution : '', [i.customerName, i.knownMetrics, i.currentProcess]);
   const P = brief.short || 'your solution';
   const parts = partsOf(brief);
-  const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
+  const ctx = reframeSector(d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] }), i.yourSolution);
   const v = ctx.v;
   const mr = readModel(ctx.model, ctx.line, i.yourSolution, []);   // the current process and the quoted results are about the buyer's alternatives and other customers, not this seller's pricing
   const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
@@ -81,7 +91,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   const statedModel = mr.stated && model !== 'sim';
   const industryWords = cleanIndustry(args.industry) || cleanIndustry(industryFromTitle(args.customer_name));
   const buyerCtx = buyerContextFor(args.industry, industryFromTitle(args.customer_name));
-  const proof = parseProof(i.knownMetrics);
+  const proof = parseProof(joinSplitClaims(i.knownMetrics));
   const costLines = d.splitItems(i.currentProcess.replace(/^today (?:they|the buyer) (?:handle|handles|do|does) it with\s+/i, ''));
   const lines = readThreats(costLines);
   const unit = usage;
@@ -112,7 +122,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   if (flags.length) out.push(`## Inputs to check\n\n${flags.join(' ')}`);
 
   // ---- the cost lines ----
-  const bestPart = (text: string): string => { let best = ''; let n = 0; for (const p of parts) { const sc = shared(text, p); if (sc > n) { n = sc; best = p; } } return best; };
+  const bestPart = (text: string): string => matchPart(text, parts);
   const partUse = new Set<string>();
   if (costLines.length) {
     const seen = new Map<string, number>();
@@ -127,7 +137,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   }
 
   // ---- the quoted results ----
-  const credibility = (p: { text: string }): boolean => /\bseries [a-e]\b|valuation|funding|\braised\b|\bround\b|\bipo\b|acquir\w+/i.test(p.text);
+  const credibility = (p: { text: string }): boolean => /\bseries [a-e]\b|valuation|funding|\braised\s+(?:us\$|\$|€|£|₹|rs\.?\s?\d|inr|\d[\d,.]*\s?(?:m|bn|k|million|billion|crore|cr)\b|a\s+(?:series|round)|capital)|\bfunding round\b|\bround\b(?!\s+the\s+clock)|\bipo\b|acquir\w+/i.test(p.text);   // "raised first attempt delivery rate" is a result; "raised $20M" is funding
   const usedMeasure = new Map<string, string>();
   // a quoted change ("from three days to 10 minutes", "lowered its data usage by more than 50%") is a result even when the sentence also holds a word the reader takes for a recognition or a scale ("a customer named", "more than")
   const CHANGE = /\b(?:lower\w*|dropp?\w*|cut|reduc\w+|decreas\w+|saved?|faster|shorter|increas\w+|improv\w+|grew|grow\w*|doubl\w+|halv\w+)\b|\bfrom\b.{2,40}\bto\b|\btook\b.{1,40}\b(?:days?|hours?|minutes?|weeks?)\b/i;

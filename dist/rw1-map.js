@@ -59,7 +59,7 @@ function buildMutualActionPlan(args, d) {
     // whole calendar days between the two dates (the time of day is ignored: 2026-10-09 to 2026-12-15 is 67 days at any hour)
     const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));
     const industryWords = (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(dealName));
-    const ctx = d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] });
+    const ctx = (0, rw1_common_ts_1.reframeSector)(d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] }), solutionIn);
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);
@@ -222,7 +222,7 @@ function buildMutualActionPlan(args, d) {
     const securityCovered = (processBy.evaluation || []).some((s) => s.who === 'security');
     // ---- blockers ----
     const blockerItems = d.splitItems(blockersIn);
-    const qa = { P, parts: (0, rw1_common_ts_1.partsOf)(brief), model, sellerText: solutionIn, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(rw1_common_ts_1.lowerStart), alternatives: [] };
+    const qa = { P, parts: (0, rw1_common_ts_1.partsOf)(brief), model, sellerText: solutionIn, stated: mr.stated, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(rw1_common_ts_1.lowerStart), alternatives: [] };
     const blockerAnswers = (0, rw1_common_ts_1.dedupeAnswers)(blockerItems.map((b) => ({ text: b, a: (0, rw1_common_ts_1.answerQuestion)(b, qa) })));
     const ownerFor = (id) => ({ it: `${itName} with Seller (solutions engineer)`, security: `${secName} with Seller`, price: `${ebName} with Seller`, champion: `${champName} with Seller`, se: `${champName} with Seller (solutions engineer)`, terms: `${procName} with ${ebName}`, seller: `Seller with ${champName}` }[(0, rw1_common_ts_1.ownerKind)(id)] || `Seller with ${champName}`);
     // ---- the steps of each phase ----

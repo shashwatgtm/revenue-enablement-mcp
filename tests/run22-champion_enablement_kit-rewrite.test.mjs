@@ -210,8 +210,11 @@ test("pool scenarios: every input is used, no label pasted into a sentence, no r
     assert.doesNotMatch(t, PLACEHOLDER, id);
     assert.doesNotMatch(t, /[–—]/, id);
     assert.doesNotMatch(t, /I do not have a fact|I will not guess|no fact is available/, id);
-    assert.ok(low.includes((a.champion_role || "").toLowerCase()) || !a.champion_role, `${id}: champion role`);
-    assert.ok(low.includes((a.target_stakeholder || "").toLowerCase()) || !a.target_stakeholder, `${id}: target`);
+    // a bracket that only says where a title came from (the page, the customer stories) is a source note: the memo names the title without it
+    const bare = (x) => (x || "").replace(/\s*\([^()]*\b(?:page|customer stories|source)\b[^()]*\)/gi, "").trim().toLowerCase();
+    assert.ok(low.includes(bare(a.champion_role)) || !a.champion_role, `${id}: champion role`);
+    assert.ok(low.includes(bare(a.target_stakeholder)) || !a.target_stakeholder, `${id}: target`);
+    if (bare(a.target_stakeholder) !== (a.target_stakeholder || "").toLowerCase()) assert.doesNotMatch(t.split("\n").filter((l) => /^(?:To|From|For|By):/.test(l)).join("\n"), /\((?:[^()]*)\b(?:page|customer stories|source)\b/i, `${id}: a source note is left in the To line`);
     if (a.budget_context) assert.ok(t.includes(a.budget_context.replace(/\.$/, "")), `${id}: budget`);
     for (const o of (a.known_objections || "").split("; ").filter(Boolean)) assert.ok(t.includes(o.replace(/\?$/, "")), `${id}: objection ${o}`);
     const body = t.split("## Before you forward this")[0];
@@ -225,4 +228,38 @@ test("pool scenarios: every input is used, no label pasted into a sentence, no r
     if (a.champion_role && a.target_stakeholder && a.champion_role.toLowerCase() === a.target_stakeholder.toLowerCase()) assert.doesNotMatch(t, new RegExp(`^From: ${a.champion_role}$`, "m"), `${id}: From the same as To`);
   }
   assert.ok(n >= 22, `scenarios run: ${n}`);
+});
+
+// ---- round 2: faults found on real-shaped inputs (all companies invented) ----
+const CIRCLEWORKS = {
+  asset_type: "internal_business_case", champion_role: "platform engineers", target_stakeholder: "VP of Engineering (title taken from the customer stories page)",
+  your_solution: "Buildline, a CI/CD platform that validates, tests and ships every code change: hosted in the cloud, with self-hosted runners, an MCP server, a CLI, build images, build optimization and autoscaling",
+  key_value_points: "cut test run time by a large share, find flaky tests before release, keep every pipeline on one set of rules, and spend less on idle build machines (page claims)",
+  known_objections: "Do I need the whole Buildline platform?; What if I am building open-source?; How do Buildline credits translate to build minutes?; Reliability and uptime",
+  competitive_context: "self-managed build servers", budget_context: "$25,000 a year (hypothetical annual cost)",
+};
+const round2 = await call(CIRCLEWORKS);
+test("round 2: 'do I need the whole X' is a packaging question, 'what if I am ...' asks about the case, a conversion question gets the conversion rule, uptime gets the record", () => {
+  assert.match(objBlock(round2, "Do I need the whole Buildline platform?"), /what each package includes|can be bought on its own/i);
+  const mine = objBlock(round2, "What if I am building open-source?");
+  assert.match(mine, /If we are building open-source/);
+  assert.match(mine, /same plan, price and limits/);
+  assert.doesNotMatch(mine, /the sequence, not a promise/);
+  assert.match(objBlock(round2, "How do Buildline credits translate to build minutes?"), /conversion rule from Buildline credits to build minutes/);
+  const up = objBlock(round2, "Reliability and uptime");
+  assert.match(up, /uptime of Buildline over the last twelve months|its uptime over the last twelve months/);
+  assert.doesNotMatch(up, /accuracy or error/);
+});
+test("round 2: a source note in the target title is left out of the memo, a run of claims is listed apart with its label, and a deployment mode is not a part", () => {
+  assert.match(round2, /\nTo: VP of Engineering\n/);
+  assert.doesNotMatch(round2, /customer stories page/);
+  const bullets = round2.split("## What we expect to get")[1].split("\n\n")[1].split("\n");
+  assert.equal(bullets.length, 4);
+  for (const b of bullets) assert.match(b, /\(page claims\)$/);
+  assert.doesNotMatch(round2, /covers hosted in the cloud|It covers[^.]*hosted in the cloud/i);
+});
+test("round 2: a check that starts with the product's name keeps its capital letter", () => {
+  const checks = round2.split("## Risks")[1].split("## Next steps")[0];
+  assert.doesNotMatch(checks, /confirm: buildline/);
+  assert.match(checks, /confirm: [^\n]*Buildline/);
 });

@@ -169,3 +169,62 @@ test("pool scenarios: every input is used, nothing pasted whole again and again,
   }
   assert.ok(n >= 22, `scenarios run: ${n}`);
 });
+
+// ---- round 2: reader and wording faults found on real-shaped inputs (all companies invented) ----
+const PARCELNEST = {
+  framework: "meddpicc", prospect_industry: "small online shops", prospect_role: "(not given)", deal_stage: "discovery",
+  your_solution: "Parcelnest, cloud shipping software for online shops: compare 500+ couriers, shipping rules, automatic import tax and duty calculation, branded tracking and pre-paid returns",
+  known_pain_points: "overpaying for shipping, complex international shipping with import taxes, duties and customs paperwork, and disconnected shipping tools with manual tasks such as courier selection and package sizing",
+};
+const PAYDOCK = {
+  framework: "meddpicc", prospect_industry: "startups", prospect_role: "SVP Product (title of a customer quoted on the customer stories page)", deal_stage: "discovery",
+  your_solution: "Paydock, an online payment gateway for businesses in one region: one setup for local, regional and global payment methods with hosted checkout, a unified API, tokenization, 3D Secure, refunds and payouts to local bank accounts, run from the Paydock dashboard",
+  known_pain_points: "building every local payment connection from scratch is slow; redirects to a separate authentication page cause checkout drop off, and unnecessary refunds follow cancelled orders",
+};
+const BEDLINE = {
+  framework: "meddpicc", prospect_industry: "independent hotels", prospect_role: "General Manager", deal_stage: "discovery",
+  your_solution: "Bedline, the operating system built to power modern hotels: it connects reservations, payments, housekeeping, point of sale and revenue management in one cloud-native platform (a property management system, POS and embedded payments)",
+  known_pain_points: "most hotels manage pricing and operations in separate tools; manual work and payment reconciliation take staff time away from guests",
+};
+const BUILDLINE = {
+  framework: "meddpicc", prospect_industry: "software", prospect_role: "VP of Engineering", deal_stage: "discovery",
+  your_solution: "Buildline, a CI/CD platform that validates, tests and ships every code change: hosted in the cloud, with self-hosted runners, an MCP server, a CLI, build images, build optimization and autoscaling",
+  known_pain_points: "delivery bottlenecks hold teams back as they try to ship quickly: every change still has to be validated, tested and shipped with confidence",
+};
+const round2 = { Parcelnest: await call(PARCELNEST), Paydock: await call(PAYDOCK), Bedline: await call(BEDLINE), Buildline: await call(BUILDLINE) };
+
+test("round 2: a noun list typed as one sentence is three problems, and a list after 'with' stays inside its problem", () => {
+  const t = round2.Parcelnest;
+  assert.match(t, /\n\s+1\. overpaying for shipping\n\s+2\. complex international shipping with import taxes, duties and customs paperwork\n\s+3\. disconnected shipping tools with manual tasks such as courier selection and package sizing\n/);
+  assert.doesNotMatch(t, /\n\s+\d\. duties and customs paperwork/);
+});
+test("round 2: a role filled with '(not given)' is no role, and a source note in a title is not spoken", () => {
+  const a = round2.Parcelnest;
+  assert.doesNotMatch(a, /\(not given\)|an? not given|Questions for not given/i);
+  assert.doesNotMatch(a, /Questions for (?!a buyer)/, "no role section when there is no role");
+  const b = round2.Paydock;
+  assert.match(b, /Questions for SVP Product\n/);
+  assert.doesNotMatch(b.split("## Context")[1].split("## Opening")[1], /customer stories page/, "the source note is not spoken after the context");
+  assert.match(b, /\*\*Contact Role:\*\* SVP Product \(title of a customer quoted on the customer stories page\)/, "the context keeps the title as typed");
+});
+test("round 2: the parts are the named parts: '3D Secure' is kept, an adjective run is one part, a lead-in and a deployment mode are not parts", () => {
+  const b = round2.Paydock, h = round2.Bedline, c = round2.Buildline;
+  assert.match(b, /Parts: [^\n]*3D Secure/);
+  assert.match(b, /Parts: one setup for local, regional and global payment methods; hosted checkout;/);
+  assert.doesNotMatch(h, /it connects reservations/i);
+  assert.match(h, /Parts: reservations; payments; housekeeping; point of sale; revenue management\n/);
+  assert.doesNotMatch(c, /Parts: [^\n]*hosted in the cloud/, "where it runs is not a part");
+  assert.doesNotMatch(c, /\n- Hosted in the cloud:/);
+});
+test("round 2: part questions differ by the kind of part, and no two part questions are the same sentence", () => {
+  for (const [n, t] of Object.entries(round2)) {
+    const qs = part(t, "## Questions on what").split("\n").filter((l) => l.startsWith("- ")).map((l) => l.replace(/^- [^:]+: /, ""));
+    assert.equal(new Set(qs).size, qs.length, `${n}: part questions repeat`);
+  }
+});
+test("round 2: no question assumes a free trial, and a 'Which of' question always names at least two things", () => {
+  for (const [n, t] of Object.entries(round2)) {
+    assert.doesNotMatch(t, /after a trial|a first trial/i, n);
+    for (const m of t.matchAll(/Which of ([^?]*?) would (?:matter most|be a must-have)/gi)) assert.match(m[1], /,| or | and /, `${n}: "Which of ${m[1]}" names one thing`);
+  }
+});

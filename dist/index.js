@@ -1785,8 +1785,6 @@ ${SUGGESTIONS_FOOTER}`;
 const MEASURE_STOP = new Set(['rate', 'time', 'share', 'effort', 'cost', 'number', 'count', 'average', 'total', 'per', 'and', 'the', 'for', 'with', 'from', 'that', 'this', 'your']);
 const measureStems = (t) => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !MEASURE_STOP.has(w)).map((w) => w.replace(/s$/, '').slice(0, 4)));
 // A job title in running text: each capitalised word is lowered, an acronym is kept ("Project Executive" becomes "project executive", "Head of IT" keeps IT).
-// "a" or "an" before a title or phrase; an acronym is read by its first letter's name (an HR leader, an SVP, a CFO).
-const anOfPhrase = (w) => { const t = w.trim(); const first = t.split(/\s+/)[0] || ''; const an = /^[A-Z]{2,5}$/.test(first) ? /^[AEIOFHLMNRSX]/.test(first) : /^(?:[aeiou]|8\b|8\d|11|18)/i.test(t); return `${an ? 'an' : 'a'} ${t}`; };
 const lowerRole = (r) => r.replace(/\b([A-Z])([a-z]+)\b/g, (_m, a, b) => `${a.toLowerCase()}${b}`);
 function rankMeasures(measures, pain, solution) {
     const p = measureStems(pain), d = measureStems(solution);

@@ -332,3 +332,13 @@ test("pool scenarios: every input is used, statistics are never steps, no placeh
   }
   assert.equal(n, 22);
 });
+
+// ---- round 2: a person named "the board" is not "the the board team" ----
+test("round 2: attendees written with 'the' or as a board are named once, without a doubled article", async () => {
+  const t = await call({ demo_type: "first_look", primary_audience: "CISO", attendees: "Head of Information Security, SOC analysts, the board (security reporting)", customer_industry: "manufacturing",
+    your_solution: "Phishguard, a human risk platform (adaptive phishing training, security awareness training and email incident response automation)",
+    key_pain_points: "awareness training metrics give a misleading view of human risk, and running phishing programs is busywork for security teams", demo_duration: 30 });
+  assert.doesNotMatch(t, /\bthe the\b/i);
+  assert.match(t, /and the board \(/);
+  assert.doesNotMatch(t, /the board team/);
+});

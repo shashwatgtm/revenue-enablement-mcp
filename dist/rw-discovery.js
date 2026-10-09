@@ -24,7 +24,9 @@ function buildDiscoveryBank(args, d) {
     const text = (k) => { const x = (args[k] || '').trim(); return /^\(?\s*(?:not given|not provided|not specified|n\/a)\s*\)?$/i.test(x) ? '' : x; };
     const framework = args.framework || 'meddpicc';
     const prospectIndustry = text('prospect_industry');
-    const prospectRole = text('prospect_role');
+    const prospectRoleTyped = text('prospect_role');
+    // a bracket that only says where the title came from is a source note: the questions use the title without it
+    const prospectRole = (0, rw_kit_ts_1.splitNotes)(prospectRoleTyped).text;
     const knownPainPoints = text('known_pain_points');
     const knownMetrics = text('known_metrics');
     const dealStage = args.deal_stage || 'discovery';
@@ -179,7 +181,7 @@ function buildDiscoveryBank(args, d) {
             tech: [`what would it have to connect to in what you run today, and who would set it up and look after it?`, `which of your current systems or data would it need access to, and who approves that?`, `who on your side would try it first, and what would make them keep using it?`],
             measure: [`how is this done today, and what does it cost you in time or money each month?`, `which number tells you it is working, and who looks at that number?`],
             people: [`who would use it day to day, and what would they do differently in the first week?`, `which team would feel the change most, and what are they worried about?`],
-            other: [`what would you need to see working before you trusted it?`, `what do you use for it today, and what would you want it to do that it does not?`, `who would decide whether it stays after a trial, and on what evidence?`],
+            other: [`what would you need to see working before you trusted it?`, `what do you use for it today, and what would you want it to do that it does not?`, `who would decide whether it stays, and on what evidence?`],
         };
         return `${head}: ${V[k][n % V[k].length]}`;
     };
@@ -228,7 +230,7 @@ function buildDiscoveryBank(args, d) {
         heading('E: Event and decision', [`How will you compare options for ${critA}, and who decides?`, `What could speed up or slow down a decision on ${P}?`]),
         heading('D: Decision criteria', [`How important is ${critB} to you when you choose?`, `Is there a deal-breaker on ${critA} that we should know about?`]),
     ].join('\n\n');
-    const pilotQ = `What would a first trial of ${P} have to show for you to go further?`;
+    const pilotQ = `What would a first pilot of ${P} have to show for you to go further?`;
     const challenger = `## Challenger questions\n\n` + [
         heading('Teach', [pains.length ? `You described ${X}. Where does it start: before the work reaches your team, inside it, or at the handover?` : `Where does the problem in ${critA} start: before the work reaches your team, inside it, or at the handover?`, `Which of ${Mlist} would move first if it were fixed?`, ...(v ? [`If you hold data on ${M1} across your customers, open with the pattern it shows, with its source and period. If a before-and-after exists (${d.proofOf(v)}), tell it in two sentences and name what changed. If you cannot show an insight, ask the question instead.`] : [])]),
         heading('Tailor', [`Where does ${X} cost ${youRole} most?`, `How would ${signerThe} react to seeing ${M1} next to ${critA}?`, `What is different about your situation${inInd} that we should factor in?`]),
@@ -244,7 +246,7 @@ function buildDiscoveryBank(args, d) {
     const CLOSE = {
         first_call: `Would a second call about ${critA} with ${signerThe === 'you' ? 'the people who decide' : signerThe} in it make sense?`,
         discovery: `I would suggest we put a baseline on ${M1} before the next call. Who can give it to us?`,
-        deep_dive: `Shall we agree what a trial of ${critA} must show before anyone commits?`,
+        deep_dive: `Shall we agree what a pilot of ${critA} must show before anyone commits?`,
         technical: `Who owns the systems around ${critA}, and can they join the next call?`,
         executive: `What would you need from us to take ${P} to a decision on ${critA}?`,
     };
@@ -276,7 +278,7 @@ function buildDiscoveryBank(args, d) {
 
 ## Context
 - **Prospect Industry:** ${prospectIndustry || 'not given'}
-- **Contact Role:** ${prospectRole || 'not given'}
+- **Contact Role:** ${prospectRoleTyped || 'not given'}
 - **Deal Stage:** ${dealStage.replace(/_/g, ' ')}
 - **Solution:** ${solutionLine}
 ${painContext}${knownMetrics ? `- **Known Metrics:** ${knownMetrics}\n` : ''}${gapsToFill ? `- **Information Gaps:** ${gapsToFill}\n` : ''}

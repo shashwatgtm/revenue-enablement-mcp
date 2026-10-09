@@ -7,7 +7,7 @@
 import { splitTopLevel, joinList, clip, solutionBrief, aAn } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { type Vertical, type BusinessModel } from './verticals.ts';
-import { readProduct, toCapability, productName, isStat, capText, upFirst, outcomeHead, answerObjection, dedupeAnswers, youify, wordsOf, overlap, type Capability, type Item, type AnswerCtx, type Answer } from './rw-kit.ts';
+import { readProduct, splitNotes, toCapability, productName, isStat, capText, upFirst, outcomeHead, answerObjection, dedupeAnswers, youify, wordsOf, overlap, type Capability, type Item, type AnswerCtx, type Answer } from './rw-kit.ts';
 import { familyOf } from './dealtext.ts';
 
 export interface ChampDeps {
@@ -29,9 +29,10 @@ interface Outcome { text: string; label: string; head: string; subs: string[] }
 export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): string {
   const given = (k: string): string => (typeof args[k] === 'string' ? (args[k] as string).trim() : '');
   const assetType = given('asset_type') || 'executive_brief';
-  const championRole = given('champion_role');
+  const championRole = splitNotes(given('champion_role')).text;
   const championName = given('champion_name');
-  const targetGiven = given('target_stakeholder');
+  // a bracket that only says where a title came from is a source note: the memo uses the title without it
+  const targetGiven = splitNotes(given('target_stakeholder')).text;
   const yourSolution = given('your_solution');
   const keyValuePoints = given('key_value_points');
   const knownObjections = given('known_objections');
@@ -65,16 +66,29 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const targetRole = roleFor(target, investment);
 
   // ---- the value points: once, with the vendor's claims labelled as the vendor's ----
-  const outs: Outcome[] = d.splitItems(keyValuePoints).map((raw) => {
+  // one point typed as a run of three or more claims ("a, b, c and d") is listed as separate points; a short tail ("not days") stays with the one before it
+  const runOfClaims = (text: string): string[] => {
+    if (text.includes(': ')) return [];
+    const merged: string[] = [];
+    for (const piece of splitTopLevel(text).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean)) {
+      if (merged.length && piece.split(/\s+/).length < 3) merged[merged.length - 1] = `${merged[merged.length - 1]}, ${piece}`; else merged.push(piece);
+    }
+    return merged.length >= 3 && merged.every((x) => x.split(/\s+/).length >= 3) ? merged : [];
+  };
+  const outs: Outcome[] = d.splitItems(keyValuePoints).flatMap((raw) => {
     const m = raw.replace(/[.]+$/, '').match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
     const label = m && /\b(?:claims?|headline|story|survey|quote|page|case study|customer|figures?|vendor|service level|own)\b/i.test(m[2]) ? m[2].trim() : '';
-    const text = (label ? m![1] : raw).replace(/[.]+$/, '').trim();
+    const whole = (label ? m![1] : raw).replace(/[.]+$/, '').trim();
+    const run = runOfClaims(whole);
+    return (run.length ? run : [whole]).map((text) => outcomeOf(text, label));
+  });
+  function outcomeOf(text: string, label: string): Outcome {
     const colon = text.indexOf(': ');
     const subs = colon > 0 ? splitTopLevel(text.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
     // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
     const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 8);
     return { text, label, head: outcomeHead(text), subs: plain ? subs : [] };
-  });
+  }
   const outClaims: Item[] = outs.filter((o) => o.label || isStat(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));
   const claimy = outClaims.length > 0;
   const alts = d.splitItems(competitiveContext).map((x) => x.replace(/[.]+$/, ''));

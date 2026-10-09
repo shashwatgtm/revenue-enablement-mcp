@@ -17,9 +17,10 @@ const own = (s) => s.replace(/\bthe buyer names\b/gi, 'we name').replace(/\bthe 
 function buildChampionKit(args, d) {
     const given = (k) => (typeof args[k] === 'string' ? args[k].trim() : '');
     const assetType = given('asset_type') || 'executive_brief';
-    const championRole = given('champion_role');
+    const championRole = (0, rw_kit_ts_1.splitNotes)(given('champion_role')).text;
     const championName = given('champion_name');
-    const targetGiven = given('target_stakeholder');
+    // a bracket that only says where a title came from is a source note: the memo uses the title without it
+    const targetGiven = (0, rw_kit_ts_1.splitNotes)(given('target_stakeholder')).text;
     const yourSolution = given('your_solution');
     const keyValuePoints = given('key_value_points');
     const knownObjections = given('known_objections');
@@ -53,16 +54,33 @@ function buildChampionKit(args, d) {
     const sign = championName || (sameRole ? '' : championRole);
     const targetRole = (0, answers_ts_1.roleFor)(target, investment);
     // ---- the value points: once, with the vendor's claims labelled as the vendor's ----
-    const outs = d.splitItems(keyValuePoints).map((raw) => {
+    // one point typed as a run of three or more claims ("a, b, c and d") is listed as separate points; a short tail ("not days") stays with the one before it
+    const runOfClaims = (text) => {
+        if (text.includes(': '))
+            return [];
+        const merged = [];
+        for (const piece of (0, dealtext_ts_1.splitTopLevel)(text).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean)) {
+            if (merged.length && piece.split(/\s+/).length < 3)
+                merged[merged.length - 1] = `${merged[merged.length - 1]}, ${piece}`;
+            else
+                merged.push(piece);
+        }
+        return merged.length >= 3 && merged.every((x) => x.split(/\s+/).length >= 3) ? merged : [];
+    };
+    const outs = d.splitItems(keyValuePoints).flatMap((raw) => {
         const m = raw.replace(/[.]+$/, '').match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
         const label = m && /\b(?:claims?|headline|story|survey|quote|page|case study|customer|figures?|vendor|service level|own)\b/i.test(m[2]) ? m[2].trim() : '';
-        const text = (label ? m[1] : raw).replace(/[.]+$/, '').trim();
+        const whole = (label ? m[1] : raw).replace(/[.]+$/, '').trim();
+        const run = runOfClaims(whole);
+        return (run.length ? run : [whole]).map((text) => outcomeOf(text, label));
+    });
+    function outcomeOf(text, label) {
         const colon = text.indexOf(': ');
         const subs = colon > 0 ? (0, dealtext_ts_1.splitTopLevel)(text.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
         // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
         const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 8);
         return { text, label, head: (0, rw_kit_ts_1.outcomeHead)(text), subs: plain ? subs : [] };
-    });
+    }
     const outClaims = outs.filter((o) => o.label || (0, rw_kit_ts_1.isStat)(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));
     const claimy = outClaims.length > 0;
     const alts = d.splitItems(competitiveContext).map((x) => x.replace(/[.]+$/, ''));

@@ -134,6 +134,9 @@ const VERBS = new Set(('is are was were be been being am can cannot could will w
     'export exports import imports upload uploads download downloads reconcile reconciles approve approves reject rejects remind reminds rekey rekeys enter enters chase lag lags exceed exceeds trail trails arrive pile struggle ' +
     'happen happens occur occurs reach reaches appear appears show shows turn turns end ends rise fall pick picks open opens close closes load loads freeze freezes stop crawl crawls timeout timeouts abandon leak lose').split(/\s+/));
 const hasVerb = (t) => (t.toLowerCase().match(/[a-z']+/g) || []).some((w) => VERBS.has(w));
+/** A verb that is the main verb of a statement: a word of the verb list that does not follow a preposition, an article or "to" ("with import taxes", "to import" do not count). */
+const NOUNISH_BEFORE = new Set('with of for the a an to from by in on at into per no any each every their our its your his her'.split(' '));
+const hasFiniteVerb = (t) => { const w = t.toLowerCase().match(/[a-z']+/g) || []; return w.some((x, i) => VERBS.has(x) && !(i > 0 && NOUNISH_BEFORE.has(w[i - 1]))); };
 const verbEarly = (t) => (t.toLowerCase().match(/[a-z']+/g) || []).slice(0, 4).some((w, i) => i >= 1 && VERBS.has(w));
 const gerundStart = (t) => /^[a-z]+ing\b/i.test(t.trim()) && !/^(?:during|nothing|something|anything|everything|morning|evening|building|ceiling)\b/i.test(t.trim());
 /** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
@@ -157,12 +160,15 @@ function readPains(text) {
             continue;
         }
         // a list after "across", "between" or "among" stays inside its statement
-        const guarded = chunk.replace(/\b(across|between|among)\s+([^,;]+(?:,\s+[^,;]+)*?),?\s+(and|or)\s+([^,;]+)/gi, (m, _k, _first, _c, last) => (last.trim().split(/\s+/).length <= 4 && !hasVerb(last) ? m.replace(/,/g, '\u0001') : m));
+        const guarded = chunk.replace(/\b(across|between|among|with|including|such as)\s+([^,;]+(?:,\s+[^,;]+?)*?),?\s+(and|or)\s+([^,;]+)/gi, (m, _k, _first, _c, last) => (last.trim().split(/\s+/).length <= 4 && !hasVerb(last) ? m.replace(/,/g, '\u0001') : m));
         const pieces = (0, dealtext_ts_1.splitTopLevel)(guarded).map((x) => x.replace(/\u0001/g, ','));
         const clauses = [];
         let afterSo = false;
         // a chunk with no verb at all is a list of problems typed as noun phrases: each phrase is one problem
-        if (!hasVerb(chunk) && !pieces.some((x) => gerundStart(x)) && pieces.length > 1) {
+        // (a gerund phrase followed by short fragments is one statement with a list in it)
+        const gerundList = (pieces.some((x) => gerundStart(x)) && pieces.slice(1).some((x) => x.replace(/^and\s+/i, '').split(/\s+/).length < 4)) || pieces.slice(1).some((x) => /^(?:while|without|so|because|which|that|when|where|although|though|but)\b/i.test(x));
+        if (!hasFiniteVerb(chunk) && !gerundList && pieces.length > 1) {
+            let carry = '';
             for (const p0 of pieces) {
                 const p = p0.replace(/^(?:and|but|plus|also|with)\s+/i, '').trim();
                 if (!p)
@@ -171,7 +177,13 @@ function readPains(text) {
                     out[out.length - 1] += `, ${p}`;
                     continue;
                 }
-                out.push(p);
+                // a single first word ("ageing, often inherited systems") belongs with the piece after it
+                if (p.split(/\s+/).length < 2 && !out.length && !carry) {
+                    carry = p;
+                    continue;
+                }
+                out.push(carry ? `${carry}, ${p}` : p);
+                carry = '';
             }
             continue;
         }
@@ -196,7 +208,9 @@ function readPains(text) {
             }
             if (consequence)
                 afterSo = true;
-            const newClause = longNounPhrase || (consequence && hasVerb(prev)) || (hasVerb(prev) && !prevInfinitive && (lead ? hasVerb(p) || gerundStart(p) : gerundStart(p) || verbEarly(p)));
+            // a clause that ends on "for that" or "with this" points back at the one before it: they stay one statement
+            const pointsBack = /\b(?:for|of|with|to|from|about|by)\s+(?:that|this|those|these|them)$/i.test(p);
+            const newClause = !pointsBack && (longNounPhrase || (consequence && hasVerb(prev)) || (hasVerb(prev) && !prevInfinitive && (lead ? hasVerb(p) || gerundStart(p) : gerundStart(p) || verbEarly(p))));
             if (newClause)
                 clauses.push(p);
             else

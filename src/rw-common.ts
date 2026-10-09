@@ -71,7 +71,9 @@ export function productOf(solution: string, D: Deps): Product {
         const w = t.replace(/[,;:]+$/, '');
         const acronym = /^[A-Z]{2,5}$/.test(w) && !/^(?:AI|API|SMS|IOT|B2B|B2C|SAAS|CRM|ERP|HR|IT)$/.test(w);
         const word = /^[A-Z][a-z]*[A-Z0-9.][A-Za-z0-9.&'+]*$/.test(w) && !D.isCommon(w) && !NOT_NAME.test(w);
-        if ((acronym || word) && !/[,;:]$/.test(toks[toks.indexOf(t) - 1] || '')) run.push(w); else break;
+        // a name that starts in lower case with a capital inside ("eMarker Digital") keeps a capitalised word that only says what kind of firm it is: it is part of the name as typed
+        const kindWord = /^[a-z]+[A-Z]/.test(t0) && /^(?:Digital|Data|Technologies|Technology|Tech|Services|Solutions|Software|Systems|Group|Global|Labs|Consulting|Ventures|International|Holdings|Networks|Platform|Platforms|Cloud|Analytics)$/.test(w);
+        if ((acronym || word || kindWord) && !/[,;:]$/.test(toks[toks.indexOf(t) - 1] || '')) run.push(w); else break;
       }
       name = run.join(' ');
       kind = kindFrom(full.slice(run.join(' ').length).replace(/^[,;:\s]+/, ''));

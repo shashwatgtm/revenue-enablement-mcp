@@ -35,6 +35,7 @@ function buildChampionKit(args, d) {
     const modelKey = investment ? 'investment' : v ? v.id : '';
     const brief = (0, dealtext_ts_1.solutionBrief)(yourSolution);
     const P = (0, rw_kit_ts_1.productName)(brief, yourSolution) || 'the solution';
+    const nameTyped = (0, rw_kit_ts_1.productHead)(brief, yourSolution);
     let product = (0, rw_kit_ts_1.readProduct)(yourSolution, brief.name || P);
     if (product.caps.length < 2 && brief.parts.length >= 2) {
         const fromParts = brief.parts.map((x) => (0, rw_kit_ts_1.toCapability)(x)).filter((x) => !!x);
@@ -329,7 +330,9 @@ function buildChampionKit(args, d) {
             stake,
         ].filter(Boolean).join('\n\n'),
     };
-    const body = (assets[assetType] || assets.executive_brief)();
+    const body0 = (assets[assetType] || assets.executive_brief)();
+    // the name as typed is written once, under the title, when the text calls the product by a shorter name
+    const body = nameTyped && nameTyped !== P && P !== 'the solution' ? body0.replace(/^(#[^\n]*)/, `$1\n\nThe seller's description opens with "${nameTyped}"; this note calls it ${P}.`) : body0;
     const familyKnown = (0, dealtext_ts_2.familyOf)(target, investment) !== 'other';
     void familyKnown;
     void dealtext_ts_1.clip;

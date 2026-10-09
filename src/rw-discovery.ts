@@ -8,7 +8,7 @@
 import { joinList, clip, solutionBrief, levelOf, familyOf, aAn } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
-import { readPains, splitNotes, groupsOf, painRef, painType, SHOW, readProduct, toCapability, productName, capText, upFirst, fit, wordsOf, lensFor, type Capability } from './rw-kit.ts';
+import { readPains, splitNotes, groupsOf, painRef, painType, SHOW, readProduct, toCapability, productName, productHead, capText, upFirst, fit, wordsOf, lensFor, type Capability } from './rw-kit.ts';
 
 export interface DiscoveryDeps {
   readContext: (explicitModel: unknown, input: { seller: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[] }) => { v: Vertical | null; model: BusinessModel | null; line: string };
@@ -308,7 +308,8 @@ export function buildDiscoveryBank(args: Record<string, unknown>, d: DiscoveryDe
 
   const painContext = pains.length > 1 ? `- **Known Pain Points:**\n${pains.map((p, i) => `  ${i + 1}. ${p}`).join('\n')}\n` : knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}\n` : '';
   const kindLine = product.kind && !wordsOf(product.kind, false).every((w) => wordsOf(P, false).includes(w)) ? `, ${product.kind}` : '';
-  const solutionLine = yourSolution ? `${P}${kindLine}${product.caps.length >= 2 ? `. Parts: ${product.caps.map(capText).join('; ')}` : ''}` : 'not given';
+  const nameTyped = productHead(brief, yourSolution);
+  const solutionLine = yourSolution ? `${nameTyped && nameTyped !== P ? `${nameTyped} (called ${P} in the questions)` : P}${kindLine}${product.caps.length >= 2 ? `. Parts: ${product.caps.map(capText).join('; ')}` : ''}` : 'not given';
   let output = `# Discovery Question Bank
 
 ## Context

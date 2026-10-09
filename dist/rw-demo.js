@@ -62,6 +62,7 @@ function buildDemoScript(args, d) {
     const modelKey = investment ? 'investment' : v ? v.id : '';
     const brief = (0, dealtext_ts_1.solutionBrief)(yourSolution);
     const P = (0, rw_kit_ts_1.productName)(brief, yourSolution) || 'the product';
+    const nameTyped = (0, rw_kit_ts_1.productHead)(brief, yourSolution) || P; // written once, as typed, in the first line
     let product = (0, rw_kit_ts_1.readProduct)(yourSolution, brief.name || P);
     if (product.caps.length < 2 && brief.parts.length >= 2) {
         const fromParts = brief.parts.map((x) => (0, rw_kit_ts_1.toCapability)(x)).filter((x) => !!x);
@@ -555,7 +556,7 @@ function buildDemoScript(args, d) {
     })() : '';
     const kindWords = (0, rw_kit_ts_1.wordsOf)(product.kind, false);
     const kindSentence = product.kind && kindWords.some((w) => !skipP.some((x) => x === w || w.startsWith(x) || x.startsWith(w))) ? (/^(?:a|an|the)\s/i.test(product.kind) ? `${P} is ${product.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(product.kind) ? `${P} is ${/^[aeiou]/i.test(product.kind) ? 'an' : 'a'} ${product.kind}.` : `${P} is described as ${product.kind}.`) : '';
-    const intro1 = `${P}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
+    const intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
     return `# Demo Script: ${typeLabel}
 
 ${intro1}

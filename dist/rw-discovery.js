@@ -314,7 +314,8 @@ function buildDiscoveryBank(args, d) {
     const sharpenLine = sharpen.length ? `To sharpen this, give: ${sharpen.join('; ')}.\n\n` : '';
     const painContext = pains.length > 1 ? `- **Known Pain Points:**\n${pains.map((p, i) => `  ${i + 1}. ${p}`).join('\n')}\n` : knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}\n` : '';
     const kindLine = product.kind && !(0, rw_kit_ts_1.wordsOf)(product.kind, false).every((w) => (0, rw_kit_ts_1.wordsOf)(P, false).includes(w)) ? `, ${product.kind}` : '';
-    const solutionLine = yourSolution ? `${P}${kindLine}${product.caps.length >= 2 ? `. Parts: ${product.caps.map(rw_kit_ts_1.capText).join('; ')}` : ''}` : 'not given';
+    const nameTyped = (0, rw_kit_ts_1.productHead)(brief, yourSolution);
+    const solutionLine = yourSolution ? `${nameTyped && nameTyped !== P ? `${nameTyped} (called ${P} in the questions)` : P}${kindLine}${product.caps.length >= 2 ? `. Parts: ${product.caps.map(rw_kit_ts_1.capText).join('; ')}` : ''}` : 'not given';
     let output = `# Discovery Question Bank
 
 ## Context

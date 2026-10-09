@@ -10,7 +10,7 @@ import { parseContacts, familyOf, levelOf, joinList, clip, solutionBrief, type C
 import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
 import {
-  readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, readProduct, toCapability, productName, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
+  readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
   answerObjection, dedupeAnswers, splitNotes, type Capability, type Item, type AnswerCtx, type Answer,
 } from './rw-kit.ts';
 
@@ -94,6 +94,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const modelKey = investment ? 'investment' : v ? v.id : '';
   const brief = solutionBrief(yourSolution);
   const P = productName(brief, yourSolution) || 'the product';
+  const nameTyped = productHead(brief, yourSolution) || P; // written once, as typed, in the first line
   let product = readProduct(yourSolution, brief.name || P);
   if (product.caps.length < 2 && brief.parts.length >= 2) {
     const fromParts = brief.parts.map((x) => toCapability(x)).filter((x): x is Capability => !!x);
@@ -502,7 +503,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
 
   const kindWords = wordsOf(product.kind, false);
   const kindSentence = product.kind && kindWords.some((w) => !skipP.some((x) => x === w || w.startsWith(x) || x.startsWith(w))) ? (/^(?:a|an|the)\s/i.test(product.kind) ? `${P} is ${product.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(product.kind) ? `${P} is ${/^[aeiou]/i.test(product.kind) ? 'an' : 'a'} ${product.kind}.` : `${P} is described as ${product.kind}.`) : '';
-  const intro1 = `${P}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
+  const intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
 
   return `# Demo Script: ${typeLabel}
 

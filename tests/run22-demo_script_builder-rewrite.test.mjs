@@ -390,3 +390,32 @@ test("round 3: a person is asked before the step closest to their own work, not 
   assert.ok(line, "a question for the Compliance Manager");
   assert.match(line, /Before I show Watch/);
 });
+
+// ---- round 4: a services firm whose parts are service lines; the steps follow the pains, and what is missing is said to the seller, not to the room ----
+const BRIGHTFORGE = {
+  demo_type: "first_look", primary_audience: "business leaders", attendees: "business leaders, technology leaders, product owners", customer_industry: "payments",
+  your_solution: "Brightforge technology services (digital engineering, data and AI, modern managed services), technology services that cover digital product acceleration, advisory, digital engineering, data and AI and modern managed services (application management, managed cloud, service delivery and managed security), delivered with the Forge.Flow engagement method",
+  key_pain_points: "ageing, often inherited systems and rising regulation in payments and banking; many organisations have experimented with AI only in isolated use cases and need to move beyond pilots; embarking on an agile project can be a daunting prospect",
+  competitor_context: "bolt-on AI added to legacy delivery frameworks", demo_duration: 30,
+  must_show_features: "20 years of digital transformation experience and teams in over twenty countries (page claims)",
+};
+const bright = await call(BRIGHTFORGE);
+const demoSteps = (t) => (t.split("### Part 3")[1] || "").split("### Part 4")[0].split(/\n(?=\*\*Step )/).slice(1);
+test("round 4: the room is never told the seller has no step for its problem; that goes to the seller in a note", () => {
+  assert.doesNotMatch(bright, /I have no step yet|have no step/i);
+  assert.match(bright, /Note for you, not for the room:/);
+});
+test("round 4: every problem the user gave is worked through in a step, in its own words, and a step is not content free", () => {
+  const steps = demoSteps(bright);
+  for (const w of [/ageing, often inherited systems/, /experimented with AI only in isolated use cases/, /embarking on an agile project/]) assert.ok(steps.some((b) => w.test(b)), `no step works through ${w}`);
+  // a step either works a problem of the user's, or says to the seller that it has no fact to work with
+  for (const b of steps) assert.ok(/real case of|This one is for|Take the |You told me/.test(b) || /Note for you, not for the room:/.test(b), `content free step: ${b.split("\n")[0]}`);
+  const ai = steps.find((b) => /^\*\*Step \d+: Data and AI/i.test(b));
+  assert.ok(ai && /isolated use cases/.test(ai), "the Data and AI step is for the AI pilots problem");
+});
+test("round 4: a step built from a problem with no part to show says to the seller what is missing", () => {
+  const steps = demoSteps(bright);
+  const fromPain = steps.filter((b) => /^\*\*Step \d+: A live case of/.test(b));
+  assert.ok(fromPain.length >= 1, "a step for a problem no part answers");
+  for (const b of fromPain) assert.match(b, /Note for you, not for the room: [^\n]*no part of your_solution/);
+});

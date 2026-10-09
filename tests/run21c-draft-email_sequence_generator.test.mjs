@@ -79,8 +79,9 @@ for (const type of TYPES) {
 
 test("the draft opens with what is not given, once, and no merge field is left", async () => {
   const t = await call({ sequence_type: "cold_outreach", target_persona: "COO", your_solution: "Flowdesk, a workflow tool for dispatch teams" });
-  assert.equal((t.match(/Not given:/g) || []).length, 1);
-  assert.match(t, /Not given:[^\n]*(?:call_to_action|sender_context|pain|proof|value)/i);
+  // run 22 (rev-w3): named once at the end under "To sharpen this, give:", with what each input would change
+  assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
+  assert.match(t.split("To sharpen this, give:")[1] || "", /(?:call_to_action|sender_context|pain|proof|value)[\s\S]*would change/i);
   assert.doesNotMatch(t, /\[[^\]\n]*\]|\{[^}\n]*\}/);
   assert.doesNotMatch(t, /\bmeeting next week\b.*\bmeeting next week\b/s);
   assert.ok(emails(t).length === 5);

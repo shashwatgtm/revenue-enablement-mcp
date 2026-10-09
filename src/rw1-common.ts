@@ -1,7 +1,7 @@
 // Run 22 (rewrite of account_plan_builder, mutual_action_plan_generator and roi_business_case_builder): helpers the three rewritten tools share.
 // Pure text functions: no network, no figures, no file access (rule 8, B82). They read what the user typed and the sector notes in verticals.ts;
 // where a fact about the user's own product would be needed, the text says what to bring or confirm, and never states it.
-import { clip, joinList, partLabel, sentences, solutionBrief, splitTopLevel, upperFirst, type Contact, type SolutionBrief } from './dealtext.ts';
+import { clip, isGenericWord, joinList, partLabel, sentences, solutionBrief, splitTopLevel, upperFirst, type Contact, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, namedThings, roleFor, type BlockerContext } from './answers.ts';
 import { MODEL_TRADES, type BusinessModel, type Vertical } from './verticals.ts';
 
@@ -413,8 +413,6 @@ export function dedupeAnswers<T extends { text: string; a: QAnswer }>(items: T[]
   return items;
 }
 
-const NAME_STOP = new Set(['the', 'our', 'your', 'this', 'that', 'cloud', 'route', 'enterprise', 'global', 'digital', 'smart', 'mobile', 'online', 'open', 'ai', 'api', 'saas', 'software', 'platform', 'automated', 'managed', 'integrated', 'unified', 'modern', 'secure', 'intelligent', 'connected', 'payment', 'payments', 'customer', 'customers', 'business', 'data', 'ecommerce', 'multi', 'next', 'first', 'operations', 'operating', 'retail', 'product', 'products', 'financial', 'finance', 'runtime', 'fully', 'complete', 'end', 'all', 'single', 'voice', 'agentic', 'composable', 'unified', 'real', 'full', 'new', 'one', 'any', 'every', 'fast', 'simple', 'flexible', 'powerful', 'leading', 'trusted', 'human', 'machine', 'learning', 'security', 'identity', 'network', 'networks', 'service', 'services', 'solution', 'solutions', 'system', 'systems', 'tool', 'tools', 'application', 'applications', 'analytics', 'transportation', 'logistics', 'shipping', 'freight', 'banking', 'insurance', 'marketing', 'sales', 'support', 'engineering', 'technology', 'communications', 'communication', 'infrastructure', 'management', 'monitoring', 'testing', 'developer', 'developers']);
-const NOT_NAME_SUFFIX = /(?:ic|ive|al|ous|ing|ed|tions?|ments?|ness|ics|ity|able|ible|ful|less)$/;
 const escapeRe = (x: string): string => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** True only for a word that is clearly a name: it has a capital inside or a digit or a dot (eClerx, GitLab, project44, Gnani.ai), or it is capitalised, is not a common word,
  *  adjective or noun of the trade (no hyphen, no adjective ending), and the user also wrote it that way elsewhere or typed it as "Name, a description". */
@@ -422,8 +420,7 @@ function nameLike(tok: string, evidence: string, namedByArticle: boolean): boole
   if (!tok || tok.length < 3) return false;
   if (/[a-z][A-Z]|\d|\./.test(tok)) return true;
   if (!/^[A-Z]/.test(tok) || /-/.test(tok)) return false;
-  const lower = tok.toLowerCase().replace(/'s$/, '');
-  if (NAME_STOP.has(lower) || NOT_NAME_SUFFIX.test(lower)) return false;
+  if (isGenericWord(tok)) return false;
   return namedByArticle || new RegExp(`(?<![A-Za-z])${escapeRe(tok)}(?![A-Za-z])`).test(evidence);
 }
 const capitals = (s: string): number => s.split(/\s+/).filter((w) => /^[A-Z0-9]/.test(w)).length;

@@ -405,8 +405,6 @@ function dedupeAnswers(items) {
     }
     return items;
 }
-const NAME_STOP = new Set(['the', 'our', 'your', 'this', 'that', 'cloud', 'route', 'enterprise', 'global', 'digital', 'smart', 'mobile', 'online', 'open', 'ai', 'api', 'saas', 'software', 'platform', 'automated', 'managed', 'integrated', 'unified', 'modern', 'secure', 'intelligent', 'connected', 'payment', 'payments', 'customer', 'customers', 'business', 'data', 'ecommerce', 'multi', 'next', 'first', 'operations', 'operating', 'retail', 'product', 'products', 'financial', 'finance', 'runtime', 'fully', 'complete', 'end', 'all', 'single', 'voice', 'agentic', 'composable', 'unified', 'real', 'full', 'new', 'one', 'any', 'every', 'fast', 'simple', 'flexible', 'powerful', 'leading', 'trusted', 'human', 'machine', 'learning', 'security', 'identity', 'network', 'networks', 'service', 'services', 'solution', 'solutions', 'system', 'systems', 'tool', 'tools', 'application', 'applications', 'analytics', 'transportation', 'logistics', 'shipping', 'freight', 'banking', 'insurance', 'marketing', 'sales', 'support', 'engineering', 'technology', 'communications', 'communication', 'infrastructure', 'management', 'monitoring', 'testing', 'developer', 'developers']);
-const NOT_NAME_SUFFIX = /(?:ic|ive|al|ous|ing|ed|tions?|ments?|ness|ics|ity|able|ible|ful|less)$/;
 const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** True only for a word that is clearly a name: it has a capital inside or a digit or a dot (eClerx, GitLab, project44, Gnani.ai), or it is capitalised, is not a common word,
  *  adjective or noun of the trade (no hyphen, no adjective ending), and the user also wrote it that way elsewhere or typed it as "Name, a description". */
@@ -417,8 +415,7 @@ function nameLike(tok, evidence, namedByArticle) {
         return true;
     if (!/^[A-Z]/.test(tok) || /-/.test(tok))
         return false;
-    const lower = tok.toLowerCase().replace(/'s$/, '');
-    if (NAME_STOP.has(lower) || NOT_NAME_SUFFIX.test(lower))
+    if ((0, dealtext_ts_1.isGenericWord)(tok))
         return false;
     return namedByArticle || new RegExp(`(?<![A-Za-z])${escapeRe(tok)}(?![A-Za-z])`).test(evidence);
 }

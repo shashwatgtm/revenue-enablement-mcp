@@ -354,7 +354,8 @@ function productName(brief, full) {
     if (brief.short)
         return brief.short;
     const first = full.split(/[,:(]/)[0].trim().replace(/\s+(?:from|by|on)\s+.*$/i, '');
-    return first && first.split(/\s+/).length <= 6 ? first : '';
+    // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
+    return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && (0, dealtext_ts_1.isGenericWord)(first)) ? first : '';
 }
 function cleanItem(raw) { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
 const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;

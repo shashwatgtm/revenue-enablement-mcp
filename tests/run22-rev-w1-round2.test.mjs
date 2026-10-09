@@ -99,3 +99,27 @@ test("a quoted objection is never cut in the middle", async () => {
   const t = await call("account_plan_builder", { account_name: "Orchard Bank", your_solution: "Vigilwall, a cloud attack surface platform", account_notes: `Objections: What is the real cost of a security tool beyond the licence: integration, tuning, headcount?; ${q}` });
   assert.ok(t.includes(q), "the whole objection is kept");
 });
+
+// every Revenue tool: a description with no name never gives its first word as the name (E11 "name cut to one word")
+test("no Revenue tool uses the first word of a plain description as the product name", async () => {
+  const base = (sol) => ({
+    account_plan_builder: { account_name: "Northwind Cargo", your_solution: sol, current_products: sol },
+    discovery_question_bank: { framework: "meddpicc", your_solution: sol },
+    roi_business_case_builder: { your_solution: sol, primary_value_driver: "cost_reduction" },
+    mutual_action_plan_generator: { deal_name: "Northwind deal", target_close_date: future(60), your_solution: sol },
+    win_loss_analyzer: { analysis_type: "single_deal", deal_outcome: "won", your_solution: sol, deal_details: "A national shipper chose us after a pilot." },
+    proposal_section_writer: { section_type: "executive_summary", your_solution: sol, customer_name: "Northwind Cargo" },
+    email_sequence_generator: { sequence_type: "cold_outreach", target_persona: "VP Operations", your_solution: sol },
+    demo_script_builder: { demo_type: "first_look", your_solution: sol },
+    champion_enablement_kit: { asset_type: "executive_brief", your_solution: sol },
+    competitive_trap_setter: { competitor: "Rival Systems", your_solution: sol },
+  });
+  for (const sol of ["Cloud-native, composable core banking platform that connects payments, lending and deposits", "Systematic, rules based investment strategies powered by machine learning for pension funds", "Operations, data and customer experience services for telecom and media companies", "Intelligent orchestration platform for DevSecOps teams that plans, builds and ships software"]) {
+    const first = sol.split(/[\s,]/)[0];
+    const bad = new RegExp(`(?<![\\w-])${first}(?:'s| (?:is|was|are|has|have|can|would|will|won|lost|did|does|needs|helps|covers))\\b`);
+    for (const [tool, args] of Object.entries(base(sol))) {
+      const t = await call(tool, args);
+      assert.doesNotMatch(t, bad, `${tool}: "${first}" is used as a name`);
+    }
+  }
+});

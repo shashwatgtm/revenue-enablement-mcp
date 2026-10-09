@@ -5,7 +5,7 @@
 // flows and statistics) and answer an objection from those inputs and from the business model.
 // Rules (B82, D80): no statistic, benchmark or named-company fact is written here; nothing is said about the user's product that the user did not
 // type (an answer says what to confirm instead); no network, no file access, no environment, no logging.
-import { splitTopLevel, joinList, clip, type SolutionBrief } from './dealtext.ts';
+import { isGenericWord, splitTopLevel, joinList, clip, type SolutionBrief } from './dealtext.ts';
 import { MODEL_TRADES, type BusinessModel } from './verticals.ts';
 
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -286,7 +286,8 @@ const ARCH_CLAIM = /^(?:cloud[- ]native|multi[- ]tenant|scalable|enterprise[- ]g
 export function productName(brief: SolutionBrief, full: string): string {
   if (brief.short) return brief.short;
   const first = full.split(/[,:(]/)[0].trim().replace(/\s+(?:from|by|on)\s+.*$/i, '');
-  return first && first.split(/\s+/).length <= 6 ? first : '';
+  // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
+  return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && isGenericWord(first)) ? first : '';
 }
 function cleanItem(raw: string): string { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
 const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;

@@ -59,7 +59,7 @@ function productOf(solution, D) {
     }
     else {
         const t0 = full.split(/\s+/)[0].replace(/[,;:]+$/, '');
-        const proper = /^[A-Za-z][A-Za-z0-9.&'+-]*$/.test(t0) && (/^[A-Z]/.test(t0) || /^[a-z]+[A-Z]/.test(t0)) && !D.isCommon(t0) && !NOT_NAME.test(t0) && !(/^[A-Za-z]+$/.test(t0) && sectorWord(t0));
+        const proper = /^[A-Za-z][A-Za-z0-9.&'+-]*$/.test(t0) && (/^[A-Z]/.test(t0) || /^[a-z]+[A-Z]/.test(t0)) && !D.isCommon(t0) && !NOT_NAME.test(t0) && !(0, dealtext_ts_1.isGenericWord)(t0) && !(/^[A-Za-z]+$/.test(t0) && sectorWord(t0));
         if (proper) {
             const toks = full.split(/\s+/);
             let run = [t0.replace(/'s$/, '')];

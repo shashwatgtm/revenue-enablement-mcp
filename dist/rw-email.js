@@ -301,7 +301,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 r3.length ? facts(r3) : measuresLine,
                 p2 ? `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}` : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
                 !r3.length && p2 ? qLead(nextQ()) : '',
-                nearParts[0] ? (0, rw_common_ts_1.endSentence)(`The part of ${name} that speaks to this is ${nearParts[0]}`) : '',
+                nearParts[0] ? (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this is ${nearParts[0]}`) : '',
                 ask(2)
             ]);
             const roles = otherRoles.length ? (0, rw_common_ts_1.andList)(otherRoles.map((r) => `your ${r}`), 'or') : '';

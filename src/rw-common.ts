@@ -1,7 +1,7 @@
 // Run 22 (writer rev-w3): helpers shared by the rewritten email_sequence_generator, win_loss_analyzer and competitive_trap_setter.
 // Text only: no figure, no statistic, no named company (B82), no network, file or environment access. The functions that live in
 // src/index.ts (lowerFirstIfCommon, cap, isCommonWord, money) are handed in as Deps so that this file never imports index.ts.
-import { solutionBrief, clip, upperFirst, splitTopLevel, partLabel, type SolutionBrief } from './dealtext.ts';
+import { isGenericWord, solutionBrief, clip, upperFirst, splitTopLevel, partLabel, type SolutionBrief } from './dealtext.ts';
 import { explainSector, detectModel, profileFor, MODEL_NAME, VERTICALS, type Vertical, type BusinessModel } from './verticals.ts';
 
 export interface Deps {
@@ -63,7 +63,7 @@ export function productOf(solution: string, D: Deps): Product {
   if (named) { name = brief.short; kind = kindFrom(brief.kind.replace(new RegExp(`^${brief.short.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*,?\\s*`, 'i'), '')); }
   else {
     const t0 = full.split(/\s+/)[0].replace(/[,;:]+$/, '');
-    const proper = /^[A-Za-z][A-Za-z0-9.&'+-]*$/.test(t0) && (/^[A-Z]/.test(t0) || /^[a-z]+[A-Z]/.test(t0)) && !D.isCommon(t0) && !NOT_NAME.test(t0) && !(/^[A-Za-z]+$/.test(t0) && sectorWord(t0));
+    const proper = /^[A-Za-z][A-Za-z0-9.&'+-]*$/.test(t0) && (/^[A-Z]/.test(t0) || /^[a-z]+[A-Z]/.test(t0)) && !D.isCommon(t0) && !NOT_NAME.test(t0) && !isGenericWord(t0) && !(/^[A-Za-z]+$/.test(t0) && sectorWord(t0));
     if (proper) {
       const toks = full.split(/\s+/);
       let run = [t0.replace(/'s$/, '')];

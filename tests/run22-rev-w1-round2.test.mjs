@@ -123,3 +123,37 @@ test("no Revenue tool uses the first word of a plain description as the product 
     }
   }
 });
+
+test("MAP: each requirement is tested its own way and judged by the person who can judge it", async () => {
+  const t = await call("mutual_action_plan_generator", { deal_name: "Public sector deal for Gatekeep", target_close_date: future(70), your_solution: "Gatekeep, cloud identity and access management sold as suites", buyer_champion: "IAM Engineer", technical_evaluators: "Security Lead, Compliance Auditor",
+    known_requirements: "enforce least privilege with the least friction, achieve compliance faster, and bring AI agents into the identity fabric so they can be discovered and governed" });
+  const rows = t.split("\n").filter((l) => /^\| (?:Enforce least privilege|Achieve compliance|Bring AI agents)/.test(l));
+  assert.equal(rows.length, 3);
+  assert.equal(new Set(rows.map((r) => r.split("|")[2].trim())).size, 3, "three different tests");
+  assert.match(rows[1], /Compliance Auditor/); assert.match(rows[0], /Security Lead/);
+});
+
+test("email: a figure keeps its sentence and says whose it is", async () => {
+  const t = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "VP Operations", your_solution: "Acmeco, a shipping platform for sellers",
+    social_proof: "Over 8 weeks with a leading private bank, the filter stopped over 30 million attacks (page claim); Northfield: 80% adoption across 7,000 employees, 3,400+ agents created (page claims)", num_emails: 5 });
+  assert.ok(t.includes("Over 8 weeks with a leading private bank, the filter stopped over 30 million attacks") || t.includes("over 8 weeks with a leading private bank, the filter stopped over 30 million attacks"), "the sentence is whole");
+  assert.doesNotMatch(t, /private bank\.\s/);
+  const body = t.split("## Before you send")[0];
+  assert.ok(body.includes("3,400+ agents created"));
+  for (const m of body.matchAll(/3,400\+ agents created/g)) assert.ok(body.slice(Math.max(0, m.index - 14), m.index).includes("Northfield"), "the figure says whose it is");
+});
+
+test("champion kit: a point with a colon list and a closing remark becomes a parent bullet with whole items", async () => {
+  const t = await call("champion_enablement_kit", { asset_type: "internal_business_case", your_solution: "Lanehop, a routing and dispatch platform", champion_role: "Head of Logistics", target_stakeholder: "COO",
+    key_value_points: "turn routes into an asset: cut planning time, keep vans on the road and move with greater speed, control and scale (the One Route idea)", known_objections: "How do we cut cost without hurting service?" });
+  const sec = t.split("## What we expect to get")[1].split("\n## ")[0];
+  assert.doesNotMatch(sec, /^\s*- Control and scale/m);
+  assert.match(sec, /- Turn routes into an asset \(the One Route idea\):/);
+  assert.match(sec, /Keep vans on the road and move with greater speed, control and scale/);
+});
+
+test("trap setter: a weak point that opens with an adjective is asked about by what the adjective says", async () => {
+  const t = await call("competitive_trap_setter", { competitor: "buying and maintaining physical devices", competitor_weaknesses: "costly physical devices", your_solution: "Devfarm, a cloud platform for testing apps on real devices", trap_type: "all" });
+  assert.match(t, /What do physical devices cost in each option over three years/);
+  assert.doesNotMatch(t, /How does each option handle physical devices/);
+});

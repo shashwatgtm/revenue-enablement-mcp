@@ -49,8 +49,10 @@ function measureOf(text, metrics = []) {
         return 'the cost of one incident, and how often one happens';
     if (/regression|release|deploy|test(?:ing|s)?\b|build time|merge/.test(t))
         return 'the time from a change to a release today, and what a late or failed release costs';
-    if (/detention|demurrage|dwell|gate wait|expedit|carrier completion|on[- ]time|delivery rate|rto/.test(t))
-        return 'the detention, wait or expedite charges the buyer pays in a year, and the share of orders that fail or come back';
+    if (/detention|demurrage|dwell|gate wait|expedit/.test(t))
+        return 'the detention, wait or expedite charges the buyer pays in a year, and what causes them';
+    if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t))
+        return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
     if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t))
         return 'the time people lose to that step today, and what a minute of it costs across the people who do it';
     if (/audit|certif|complian|governance|access review/.test(t))
@@ -108,7 +110,7 @@ function buildRoiStructure(args, i, d) {
     out.push(`*Your inputs are shown as you gave them. No ROI percentage, payback period or headline return is shown, because no buyer cost or value figure was given and this tool does not make one up. What follows is the business case laid out for ${customer}, so that every number their finance contact will ask for has a place.*`);
     // ---- the case in a paragraph ----
     const what = brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}${parts.length ? `, with ${(0, dealtext_ts_1.joinList)(parts)}` : ''}` : brief.short ? P : ((0, rw1_common_ts_1.sellerWords)(brief) ? `What you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}` : P);
-    out.push(`## The case in brief\n\n` + `${what}. ${model && statedModel ? `The buyer pays for it as ${mw.priced}. ` : ''}${(0, rw1_common_ts_1.cleanIndustry)(args.industry) && !customer.toLowerCase().includes((0, rw1_common_ts_1.cleanIndustry)(args.industry).toLowerCase()) ? `${(0, dealtext_ts_1.upperFirst)(customer)} is read here as a buyer in ${(0, rw1_common_ts_1.cleanIndustry)(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one' : `${costLines.length}`} cost line${costLines.length === 1 ? '' : 's'} below, each of which needs a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
+    out.push(`## The case in brief\n\n` + `${what}. ${model && statedModel ? `The buyer pays for it as ${mw.priced}. ` : ''}${(0, rw1_common_ts_1.cleanIndustry)(args.industry) && !customer.toLowerCase().includes((0, rw1_common_ts_1.cleanIndustry)(args.industry).toLowerCase()) ? `${(0, dealtext_ts_1.upperFirst)(who)} is read here as working in ${(0, rw1_common_ts_1.cleanIndustry)(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one cost line below, which needs' : `${costLines.length} cost lines below, each of which needs`} a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
     // ---- the price ----
     if (i.priceGiven && i.solutionPrice > 0) {
         out.push(`## What the buyer pays\n\nAt the annual price you gave (${money(i.solutionPrice)}), the value the buyer sees must be above ${money(i.solutionPrice)} a year for any positive return, and above ${money(i.solutionPrice * 2)} a year to return the price twice over. Over three years the buyer pays ${money(i.solutionPrice * 3)} before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first${model === 'transactions' ? `, and enter the yearly spend you expect at the buyer's volume${unit ? ` of ${unit}s` : ''}` : ''}.`);

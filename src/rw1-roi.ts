@@ -46,7 +46,8 @@ function measureOf(text: string, metrics: string[] = []): string {
   if (/coverage|calls|orders|conversion|revenue|growth|top line|market share|sales/.test(t)) return 'the revenue or volume the buyer gains or keeps from the change';
   if (/return|rto|cancel|complaint|unpaid|churn|fraud|breach|incident|risk/.test(t)) return 'the cost of one incident, and how often one happens';
   if (/regression|release|deploy|test(?:ing|s)?\b|build time|merge/.test(t)) return 'the time from a change to a release today, and what a late or failed release costs';
-  if (/detention|demurrage|dwell|gate wait|expedit|carrier completion|on[- ]time|delivery rate|rto/.test(t)) return 'the detention, wait or expedite charges the buyer pays in a year, and the share of orders that fail or come back';
+  if (/detention|demurrage|dwell|gate wait|expedit/.test(t)) return 'the detention, wait or expedite charges the buyer pays in a year, and what causes them';
+  if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t)) return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
   if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t)) return 'the time people lose to that step today, and what a minute of it costs across the people who do it';
   if (/audit|certif|complian|governance|access review/.test(t)) return 'the hours and outside fees the buyer spends on audit and compliance work today';
   if (/manual|automation|automat/.test(t)) return 'the hours of manual work in the process today, and what an hour costs';
@@ -95,7 +96,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
 
   // ---- the case in a paragraph ----
   const what = brief.kind ? `${P} ${describeWith(cleanBrief(brief))}${parts.length ? `, with ${joinList(parts)}` : ''}` : brief.short ? P : (sellerWords(brief) ? `What you sell, in your words, is ${sellerWords(brief)}` : P);
-  out.push(`## The case in brief\n\n` + `${what}. ${model && statedModel ? `The buyer pays for it as ${mw.priced}. ` : ''}${cleanIndustry(args.industry) && !customer.toLowerCase().includes(cleanIndustry(args.industry).toLowerCase()) ? `${upperFirst(customer)} is read here as a buyer in ${cleanIndustry(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one' : `${costLines.length}`} cost line${costLines.length === 1 ? '' : 's'} below, each of which needs a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
+  out.push(`## The case in brief\n\n` + `${what}. ${model && statedModel ? `The buyer pays for it as ${mw.priced}. ` : ''}${cleanIndustry(args.industry) && !customer.toLowerCase().includes(cleanIndustry(args.industry).toLowerCase()) ? `${upperFirst(who)} is read here as working in ${cleanIndustry(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one cost line below, which needs' : `${costLines.length} cost lines below, each of which needs`} a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
 
   // ---- the price ----
   if (i.priceGiven && i.solutionPrice > 0) {

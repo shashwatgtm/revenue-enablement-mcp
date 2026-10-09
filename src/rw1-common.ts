@@ -19,7 +19,7 @@ export interface Deps {
 // ---------------------------------------------------------------------------------------------------------------------------
 // Small text helpers
 // ---------------------------------------------------------------------------------------------------------------------------
-const STEM_STOP = new Set(['that', 'this', 'with', 'from', 'your', 'have', 'their', 'they', 'them', 'will', 'which', 'what', 'when', 'where', 'into', 'over', 'than', 'then', 'about', 'more', 'most', 'some', 'such', 'each', 'only', 'also', 'were', 'been', 'does', 'make', 'makes', 'much', 'many', 'every', 'other', 'platform', 'solution', 'product', 'software', 'tools', 'tool', 'work', 'works', 'time', 'team', 'teams', 'planning', 'plan', 'plans', 'management', 'manage', 'managed']);
+const STEM_STOP = new Set(['that', 'this', 'with', 'from', 'your', 'have', 'their', 'they', 'them', 'will', 'which', 'what', 'when', 'where', 'into', 'over', 'than', 'then', 'about', 'more', 'most', 'some', 'such', 'each', 'only', 'also', 'were', 'been', 'does', 'make', 'makes', 'much', 'many', 'every', 'other', 'platform', 'solution', 'product', 'software', 'tools', 'tool', 'work', 'works', 'time', 'team', 'teams', 'service', 'services', 'serviceability', 'logistics', 'logistic', 'planning', 'plan', 'plans', 'management', 'manage', 'managed']);
 export const stemsOf = (t: string): Set<string> => new Set((t.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) || []).filter((w) => !STEM_STOP.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
 // words that mean about the same thing in a buyer's pain and in a product's part (language only, no sector fact)
 const SAME: string[][] = [
@@ -63,14 +63,18 @@ export function partsOf(brief: SolutionBrief): string[] {
     .map((p) => partLabel(p).replace(/^(?:and|with|plus|including|the)\s+/i, '').replace(/[.;]+$/, '').trim())
     .filter((p) => p.length > 2 && p.split(/\s+/).length <= 14 && !/^(?:on|for|as|in|at|by|delivered|built|run|powered|backed|based|sold|used|under|through|that|which)\b/i.test(p));
   if (brief.parts.length >= 2) return clean(brief.parts).slice(0, 12);
+  // the parts a description lists after "joins", "covers", "includes" ...; a bracketed list of three or more is the fallback ("Name (a, b, c), ...")
+  const tailAt = brief.full.search(/\b(?:joins|combines|covers|covering|spans|includes|including|offers|brings together|connects|unifies|made up of)\s+/i);
+  let tailParts: string[] = [];
+  if (tailAt >= 0) {
+    const tail = brief.full.slice(tailAt).replace(/^\S+(?:\s+together)?\s+(?:of\s+)?/i, '').split(/\.\s+(?=[A-Z])/)[0].replace(/[.]+$/, '');
+    const pieces = splitTopLevel(tail);
+    if (pieces.length >= 2) tailParts = clean(pieces).slice(0, 12);
+  }
+  if (tailParts.length >= 2) return tailParts;
   const paren = brief.full.slice(0, 260).match(/\(([^()]+(?:,[^()]+){2,})\)/);
   if (paren) { const ps = clean(splitTopLevel(paren[1])); if (ps.length >= 3) return ps.slice(0, 12); }
-  const tailAt = brief.full.search(/\b(?:joins|combines|covers|covering|spans|includes|including|offers|brings together|connects|unifies|made up of)\s+/i);
-  if (tailAt < 0) return [];
-  const tail = brief.full.slice(tailAt).replace(/^\S+(?:\s+together)?\s+(?:of\s+)?/i, '').split(/\.\s+(?=[A-Z])/)[0].replace(/[.]+$/, '');
-  const pieces = splitTopLevel(tail);
-  if (pieces.length < 2) return [];
-  return clean(pieces).slice(0, 12);
+  return tailParts;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -365,7 +369,7 @@ export function ownerKind(id: string): 'it' | 'security' | 'price' | 'champion' 
 /** The buyer's industry as a clean phrase: "Financial_Services" becomes "financial services"; an empty or generic value gives ''. */
 export function cleanIndustry(s: unknown): string {
   if (typeof s !== 'string') return '';
-  const t = (/_/.test(s) ? s.toLowerCase() : s).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  const t = (/_/.test(s) || /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/.test(s.trim()) ? s.toLowerCase() : s).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
   if (!t || /^technology$/i.test(t)) return '';
   return /^[A-Z][a-z]/.test(t) && !/^[A-Z][a-z]+\s+[A-Z]/.test(t) ? lowerStart(t) : t;
 }

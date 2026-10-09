@@ -136,15 +136,22 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
     else if (body.includes(': ') && parts.length > 1) { theme = theme || parts[0]; criteria.push(...parts.slice(1).map(stripEnd)); } else criteria.push(...parts.map(stripEnd));
   }
   const evaluatorFor = (text: string): string => {
+    const t = text.toLowerCase();
+    // the kind of person who judges it: audit and compliance criteria go to a risk reviewer, access and security to security, integration to IT or engineering
+    const fams: string[][] = /compliance|audit|regulat|evidence/.test(t) ? [['risk'], ['security']] : /privilege|access|security|governed|governance|protect/.test(t) ? [['security'], ['risk'], ['it', 'engineering']] : /integrat|connect|api|import|sync|single sign|sso/.test(t) ? [['it', 'engineering', 'data']] : [];
+    for (const f of fams) { const e = evaluators.find((x) => f.includes(x.family)); if (e) return e.title; }
     let best = ''; let n = 0;
-    for (const e of evaluators) { const s = (e.title.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => text.toLowerCase().includes(w.slice(0, 5))).length; if (s > n) { n = s; best = e.title; } }
+    for (const e of evaluators) { const s = (e.title.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => t.includes(w.slice(0, 5))).length; if (s > n) { n = s; best = e.title; } }
     return best || champName;
   };
   const testFor = (c: string): string => {
     const t = c.toLowerCase();
+    if (/least privilege|entitlement|access review|excess access/.test(t)) return 'Take a sample of real accounts and list the access each holds but does not use, then show the review that removes it and the record it leaves';
+    if (/\bagents?\b/.test(t) && /govern|discover|onboard|protect|identity/.test(t)) return 'Walk one AI agent through being discovered, onboarded, protected and governed, and keep the audit record of each step';
+    if (/compliance|audit|certif/.test(t) && /faster|time|quick|speed|days|hours|weeks/.test(t)) return 'Time the preparation of one real audit or compliance report, with the current way and with the product, on the same scope';
     if (/\b(?:countries|regions?|sites?|languages?|locations?|scale|volume|users|applications|devices|branches)\b/.test(t)) return 'Test every item on real traffic or data, not a sample of one, and record which pass';
     if (/\b(?:integrat\w*|connect\w*|sso|single sign|api|import|sync)\b/.test(t)) return 'Connect it to the named systems with a real record and have the system owner check the result';
-    if (/\b(?:security|compliance|audit|regulat\w*|governance|least privilege|privacy|evidence|access)\b/.test(t)) return 'Check it against the buyer\'s own policy or control list with the reviewer present, and keep the evidence';
+    if (/\b(?:security|compliance|audit|regulat\w*|governance|privacy|evidence|access)\b/.test(t)) return 'Check it against the buyer\'s own policy or control list with the reviewer present, and keep the evidence';
     if (/\b(?:cost|cheap\w*|afford\w*|fees?|price|saving|savings|save|margin|budget|spend)\b/.test(t)) return 'Price the same activity both ways on the buyer\'s own volumes, line by line';
     if (/\b(?:seconds?|minutes?|hours?|days?|weeks?|real[- ]time|faster|quick\w*|speed|within|in under)\b/.test(t)) return 'Time it on a real case against the current way, before and after';
     if (/\b(?:accura\w*|quality|errors?|reliab\w*|false|uptime|availability)\b/.test(t)) return 'Measure it on the buyer\'s own data against a pass mark agreed first';

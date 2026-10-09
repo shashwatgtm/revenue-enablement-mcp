@@ -144,6 +144,16 @@ export function trapQuestion(wRaw: string, comp: string): { q: string; topic: st
   }
   if ((m = main.match(/^(.+?)\s+(?:lost|dropped|broken|missing|duplicated|reset|overwritten)\s+(?:when|if|as|whenever)\s+(.+)$/i))) return { q: `When ${m[2]}, is the ${m[1]} kept in each option, and who can see it?`, topic: m[1] };
   if ((m = main.match(/^to\s+(.+)$/i))) return { q: `Can each option help you to ${m[1]}? Ask the vendor to show it on your own data.`, topic: m[1] };
+  // a weak point that opens with an adjective ("costly physical devices") is asked about by what the adjective says, not as a bare topic
+  if ((m = main.match(/^(costly|expensive|slow|unreliable|inaccurate|manual|limited|outdated|rigid|fragile)\s+(.{3,60})$/i)) && !TRAP_CLAUSE_VERB.test(m[2])) {
+    const [, adj, thing] = m; const a = adj.toLowerCase();
+    if (a === 'costly' || a === 'expensive') return { q: `What ${trapDo(thing)} ${thing} cost in each option over three years (buying, keeping up to date, replacing), and what sits outside the quoted price?`, topic: thing };
+    if (a === 'slow') return { q: `How long ${trapDo(thing)} ${thing} take in each option, and what happens in between?`, topic: thing };
+    if (a === 'unreliable' || a === 'inaccurate' || a === 'fragile') return { q: `How reliable and accurate is ${thing} in each option on your own cases, and where does it fail? Ask to see the failures on your data.`, topic: thing };
+    if (a === 'manual') return { q: `Which steps of ${thing} wait for a person in each option, and how long does each wait?`, topic: thing };
+    if (a === 'limited') return { q: `What limits does each option put on ${thing}, and what does it cost to go past them?`, topic: thing };
+    return { q: `How much of ${thing} can you change yourself in each option, and how long does a change take?`, topic: thing };
+  }
   let np = main.replace(/^(?:\d+\s+|several\s+|a few\s+|many\s+)?(?:months?|weeks?|days?|years?) of\s+/i, '').replace(/^(?:slow|manual|periodic|poor|weak|limited|high|long|late|heavy|complex|outdated|legacy|rigid|fragmented|isolated|opaque|expensive|costly|hidden|batch)\s+/i, '').trim();
   if (!np) np = main;
   if (/setup|set-up|implement|onboard|rollout|go-live|deploy|migration/i.test(np)) return { q: `How long ${trapDo(np)} ${np} take in each option, and can the vendor show a recent one from signing to the first real result?`, topic: np };

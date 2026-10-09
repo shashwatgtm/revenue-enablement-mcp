@@ -102,6 +102,24 @@ function leadingCapitals(name: string): string {
   return out.slice(0, 3).join(' ') || words.slice(0, 2).join(' ');
 }
 
+// Run 22 round 2: a single word before the first comma is a name only when it is not an everyday word of the trade or an adjective ("Cloud-native, composable core
+// banking ...", "Operations, finance and ...", "Systematic, ..." and "Intelligent, ..." are the start of a description, not names). A word with a capital inside or a
+// digit or a dot (eClerx, GitLab, project44, Gnani.ai) is always a name.
+const GENERIC_WORDS = new Set(('the our your this that cloud route enterprise global digital smart mobile online open ai api saas software platform automated managed integrated unified modern secure intelligent ' +
+  'connected payment payments customer customers business data ecommerce multi next first operations operating retail product products financial finance runtime fully complete end all single voice agentic ' +
+  'composable real full new one any every fast simple flexible powerful leading trusted human machine learning security identity network networks service services solution solutions system systems tool tools ' +
+  'application applications analytics transportation logistics shipping freight banking insurance marketing sales support engineering technology communications communication infrastructure management monitoring ' +
+  'testing developer developers decision systematic predictive universal general advanced premium custom dynamic strategic specialist leading innovative scalable robust reliable').split(' '));
+const GENERIC_SUFFIX = /(?:ic|ive|ous|tions?|sions?|ics|able|ible|ful|less)$/;
+/** True for an everyday word, an adjective or a hyphenated descriptor ("Cloud-native"); false for a word that can be a name. */
+export function isGenericWord(word: string): boolean {
+  const w = word.trim();
+  if (/[a-z][A-Z]|\d|\./.test(w)) return false;
+  if (/-/.test(w)) return true;
+  const lower = w.toLowerCase().replace(/'s$/, '');
+  return GENERIC_WORDS.has(lower) || GENERIC_SUFFIX.test(lower);
+}
+
 const NOT_A_NAME = /^(?:platform|software|tool|tools|solution|solutions|product|products|app|apps|service|services|saas|suite|system|systems|ai|api|apis|our|your|the|a|an|we|this|that|my|it)$/i;
 const NAME_JOINERS = /^(?:from|by|of|for|and|&|the|de)$/i;
 
@@ -110,8 +128,11 @@ function isClearName(name: string): boolean {
   const toks = name.split(/\s+/);
   if (!toks.length || toks.length > 4) return false;
   if (/^(?:our|your|the|a|an|we|this|that|my)$/i.test(toks[0])) return false;
-  if (toks.length === 1) return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]);
+  if (toks.length === 1) return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]) && !isGenericWord(toks[0]);
   if (!/^[A-Z0-9]/.test(toks[0]) || NAME_JOINERS.test(toks[toks.length - 1])) return false;
+  // run 22 round 2: several words are a name only when at least two of them are capitalised ("Acme CRM", "Tap Payments") or the name holds "from" or "by";
+  // "Agentic transportation management system" and "AI-native business operations" are descriptions
+  if (toks.filter((t) => /^[A-Z0-9]/.test(t)).length < 2 && !toks.some((t) => /^(?:from|by)$/i.test(t))) return false;
   // a head that holds a preposition other than "from/by/of" is the start of a description ("CRM for sales, marketing and service teams"), not a name
   return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name) && !toks.slice(1).some((t) => /^(?:for|to|with|in|on|at|and|or|into|across)$/.test(t));
 }

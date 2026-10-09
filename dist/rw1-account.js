@@ -30,9 +30,9 @@ function buildAccountPlan(args, d) {
     const v = ctx.v;
     const investment = ctx.model === 'investment';
     const brief = (0, rw1_common_ts_1.briefOf)(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
-    const unit = ctx.model === 'saas' || !ctx.model ? (0, rw1_common_ts_1.usageUnit)(solutionIn, notesIn, threatsIn) : '';
-    const model = unit ? 'transactions' : ctx.model;
-    const ctxLine = unit ? (0, rw1_common_ts_1.usageLine)(ctx.line, unit) : ctx.line;
+    const unit = (0, rw1_common_ts_1.usageUnit)(solutionIn, notesIn, threatsIn);
+    const model = unit && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
+    const ctxLine = unit && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, unit) : ctx.line;
     const P = brief.short || 'your solution';
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
     const shortParts = parts.filter((p) => p.split(/\s+/).length <= 6);
@@ -107,7 +107,7 @@ function buildAccountPlan(args, d) {
         const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : (0, dealtext_ts_1.upperFirst)(r.cares);
         if (!usedCares.has(r.cares))
             usedCares.set(r.cares, c.title);
-        const stepCell = usedStep.has(step) ? `For ${c.title}: ${(0, rw1_common_ts_1.lowerStart)(step)}` : step;
+        const stepCell = usedStep.has(step) ? `As with ${usedStep.get(step)}, for their own part: ${(0, rw1_common_ts_1.lowerStart)(step)}` : step;
         if (!usedStep.has(step))
             usedStep.set(step, c.title);
         return `| ${c.raw} | ${partWord(c)} | ${caresCell} | ${stepCell} |`;
@@ -152,8 +152,8 @@ function buildAccountPlan(args, d) {
     out.push(`# Strategic account plan: ${accountName}`);
     // ---- in brief ----
     const who = existing
-        ? `${accountName} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
-        : `${accountName} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
+        ? `${(0, dealtext_ts_1.upperFirst)(accountName)} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
+        : `${(0, dealtext_ts_1.upperFirst)(accountName)} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
     const sells = solutionIn ? (brief.short ? ` This plan is about ${existing ? 'growing it' : 'winning it'} with ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}.` : ` This plan is about ${existing ? 'growing it' : 'winning it'}; what you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}.`) : '';
     const tierLine = `By this tool's rule on ARR alone the account sits in the ${tier} tier with ${potential.toLowerCase()} expansion potential; that is a rule on the number, not a view of the account.`;
     const brief1 = [`${who}.${sells}`, tierLine, ...(hypothetical ? ['Your notes mark the figures as hypothetical, so treat the ARR and the tier as test figures.'] : []), ...(noteLines.length ? [`Your notes add: ${noteLines.map(rw1_common_ts_1.quoted).join(' ')}`] : [])];
@@ -228,7 +228,7 @@ function buildAccountPlan(args, d) {
         const base = (0, answers_ts_1.roleFor)(c.title, investment);
         const n = ask.get(base.label) || 0;
         ask.set(base.label, n + 1);
-        return `Meet ${c.title} and ask: "${base.questions[n % base.questions.length]}"`;
+        return `Meet ${c.title} and ask: "${(0, rw1_common_ts_1.readRole)(c, null, rctx, investment).ask || base.questions[n % base.questions.length]}"`;
     });
     const focus = pairs[0]?.part || (expansion[0] ? partFor(expansion[0]) : '') || parts[0] || '';
     const p1 = [

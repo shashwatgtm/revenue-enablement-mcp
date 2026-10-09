@@ -29,8 +29,10 @@ const COST_ALT = [
     'Which part of this line does the buyer already count, and which part is carried by people nobody has priced?',
 ];
 // what a quoted result tells you to measure (no seat or licence idea: the business model is not assumed)
-function measureOf(text) {
+function measureOf(text, metrics = []) {
     const t = text.toLowerCase();
+    if (/credential|exposed|leak|vulnerab|phish|threat|attack|takedown|fraud/.test(t) && !/return|rto/.test(t))
+        return 'how many exposures, threats or attempts the buyer finds and closes today, how long that takes, and what one costs when it is used against them';
     if (/dispatch|planning time|planning/.test(t))
         return 'the time spent planning, and what that time costs';
     if (/reimburse|cycle|turnaround|lead time|time to|faster|days?\b|weeks?\b|hours?\b|minutes?\b/.test(t))
@@ -47,8 +49,10 @@ function measureOf(text) {
         return 'the cost of one incident, and how often one happens';
     if (/regression|release|deploy|test(?:ing|s)?\b|build time|merge/.test(t))
         return 'the time from a change to a release today, and what a late or failed release costs';
-    if (/detention|demurrage|dwell|gate wait|expedit|carrier completion|on[- ]time|delivery rate|rto/.test(t))
-        return 'the detention, wait or expedite charges the buyer pays in a year, and the share of orders that fail or come back';
+    if (/detention|demurrage|dwell|gate wait|expedit/.test(t))
+        return 'the detention, wait or expedite charges the buyer pays in a year, and what causes them';
+    if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t))
+        return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
     if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t))
         return 'the time people lose to that step today, and what a minute of it costs across the people who do it';
     if (/audit|certif|complian|governance|access review/.test(t))
@@ -59,6 +63,17 @@ function measureOf(text) {
         return 'the cases handled each month, the handling time per case, and the cost of one case';
     if (/adoption|users?|customers?/.test(t))
         return 'how much of the buyer\'s own work would run through it, and what the work around it costs today';
+    let best = '';
+    let n = 0;
+    for (const m of metrics) {
+        const sc = (0, rw1_common_ts_1.shared)(text, m);
+        if (sc > n) {
+            n = sc;
+            best = m;
+        }
+    }
+    if (best)
+        return `the buyer's own ${best}, and what a change in it is worth in a year`;
     return 'which of the buyer\'s own numbers would change, and what that change is worth in a year';
 }
 function buildRoiStructure(args, i, d) {
@@ -68,21 +83,25 @@ function buildRoiStructure(args, i, d) {
     const costGiven = i.ownCost !== null;
     const pctGiven = i.ownPct !== null;
     const customer = args.customer_name || 'your customer';
+    // a title such as "Retail account (Acme customer)" is a label for the buyer, not a name to repeat inside every question
+    const who = /\b(?:account|customer)\b/i.test(customer) ? 'the buyer' : customer;
     const brief = (0, rw1_common_ts_1.briefOf)(args.your_solution ? i.yourSolution : '', [i.customerName, i.knownMetrics, i.currentProcess]);
     const P = brief.short || 'your solution';
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
     const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
     const v = ctx.v;
-    const usage = ctx.model === 'saas' || !ctx.model ? (0, rw1_common_ts_1.usageUnit)(i.yourSolution, i.currentProcess, i.knownMetrics) : '';
-    const model = usage ? 'transactions' : ctx.model;
-    const ctxLine = usage ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
+    const usage = (0, rw1_common_ts_1.usageUnit)(i.yourSolution, i.currentProcess, i.knownMetrics);
+    const model = usage && (ctx.model === 'saas' || !ctx.model) ? 'transactions' : ctx.model;
+    const ctxLine = usage && model !== ctx.model ? (0, rw1_common_ts_1.usageLine)(ctx.line, usage) : ctx.line;
     const mw = (0, rw1_common_ts_1.modelWords)(model, i.yourSolution, usage || undefined);
+    // the way the product is priced is stated only when the user's words or inputs show it, not when the sector's usual model was assumed
+    const statedModel = !/assumed/.test(ctx.line) || !!usage;
     const industryWords = (0, rw1_common_ts_1.cleanIndustry)(args.industry) || (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(args.industry, (0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
     const proof = (0, dealtext_ts_1.parseProof)(i.knownMetrics);
     const costLines = d.splitItems(i.currentProcess.replace(/^today (?:they|the buyer) (?:handle|handles|do|does) it with\s+/i, ''));
     const lines = (0, rw1_common_ts_1.readThreats)(costLines);
-    const unit = usage || (/\b(?:messages?|sms|whatsapp|rcs)\b/i.test(i.yourSolution) ? 'message' : 'transaction');
+    const unit = usage;
     const revenueCell = i.revenueGiven ? (i.annualRevenue === 0 ? '$0 (your input)' : `${money(i.annualRevenue)} (your input)`) : 'not supplied';
     const employeesCell = i.employeesGiven ? (i.employeeCount === 0 ? '0 (your input)' : `${i.employeeCount.toLocaleString('en-US')} (your input)`) : 'not supplied';
     const priceCell = i.priceGiven ? (i.solutionPrice === 0 ? '$0 (your input)' : `${money(i.solutionPrice)} (your input)`) : 'not supplied';
@@ -90,24 +109,35 @@ function buildRoiStructure(args, i, d) {
     out.push(`# ROI Business Case: ${customer}`);
     out.push(`*Your inputs are shown as you gave them. No ROI percentage, payback period or headline return is shown, because no buyer cost or value figure was given and this tool does not make one up. What follows is the business case laid out for ${customer}, so that every number their finance contact will ask for has a place.*`);
     // ---- the case in a paragraph ----
-    const what = brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}${parts.length ? `, with ${(0, rw1_common_ts_1.some)(parts, 4)}` : ''}` : brief.short ? P : ((0, rw1_common_ts_1.sellerWords)(brief) ? `What you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}` : P);
-    out.push(`## The case in brief\n\n` + `${what}. ${model ? `The buyer pays for it as ${mw.priced}. ` : ''}${(0, rw1_common_ts_1.cleanIndustry)(args.industry) ? `${(0, dealtext_ts_1.upperFirst)(customer)} is read here as a buyer in ${(0, rw1_common_ts_1.cleanIndustry)(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one' : `${costLines.length}`} cost line${costLines.length === 1 ? '' : 's'} below, each of which needs a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
+    const what = brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}${parts.length ? `, with ${(0, dealtext_ts_1.joinList)(parts)}` : ''}` : brief.short ? P : ((0, rw1_common_ts_1.sellerWords)(brief) ? `What you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}` : P);
+    out.push(`## The case in brief\n\n` + `${what}. ${model && statedModel ? `The buyer pays for it as ${mw.priced}. ` : ''}${(0, rw1_common_ts_1.cleanIndustry)(args.industry) && !customer.toLowerCase().includes((0, rw1_common_ts_1.cleanIndustry)(args.industry).toLowerCase()) ? `${(0, dealtext_ts_1.upperFirst)(who)} is read here as working in ${(0, rw1_common_ts_1.cleanIndustry)(args.industry)}. ` : ''}${costLines.length ? `The way of working it would replace is ${costLines.length === 1 ? 'one cost line below, which needs' : `${costLines.length} cost lines below, each of which needs`} a yearly cost from the buyer.` : ''}`.replace(/\s{2,}/g, ' ') + `\n\n${ctxLine}`);
     // ---- the price ----
     if (i.priceGiven && i.solutionPrice > 0) {
-        out.push(`## What the buyer pays\n\nAt the annual price you gave (${money(i.solutionPrice)}), the value the buyer sees must be above ${money(i.solutionPrice)} a year for any positive return, and above ${money(i.solutionPrice * 2)} a year to return the price twice over. Over three years the buyer pays ${money(i.solutionPrice * 3)} before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first${model === 'transactions' ? `, and enter the yearly spend you expect at the buyer's volume of ${unit}s` : ''}.`);
+        out.push(`## What the buyer pays\n\nAt the annual price you gave (${money(i.solutionPrice)}), the value the buyer sees must be above ${money(i.solutionPrice)} a year for any positive return, and above ${money(i.solutionPrice * 2)} a year to return the price twice over. Over three years the buyer pays ${money(i.solutionPrice * 3)} before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first${model === 'transactions' ? `, and enter the yearly spend you expect at the buyer's volume${unit ? ` of ${unit}s` : ''}` : ''}.`);
     }
     if (i.revenueGiven || i.employeesGiven)
         out.push(`\`annual_revenue\` and \`employee_count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
     // ---- the cost lines ----
+    const bestPart = (text) => { let best = ''; let n = 0; for (const p of parts) {
+        const sc = (0, rw1_common_ts_1.shared)(text, p);
+        if (sc > n) {
+            n = sc;
+            best = p;
+        }
+    } return best; };
+    const partUse = new Set();
     if (costLines.length) {
         const seen = new Map();
         const rows = lines.map((l) => {
             const n = seen.get(l.id) || 0;
             seen.set(l.id, n + 1);
             const q = n === 0 ? (COST_Q[l.id] || COST_Q.general) : COST_ALT[(n - 1) % COST_ALT.length];
-            return `| ${d.cap(l.text)} | "${q}" |`;
+            const part = bestPart(l.text);
+            if (part)
+                partUse.add(part);
+            return `| ${d.cap(l.text)} | "${q}" |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`;
         });
-        out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current_annual_cost\`.\n\n| Cost line | Question to price it |\n|---|---|\n${rows.join('\n')}`);
+        out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current_annual_cost\`.\n\n| Cost line | Question to price it |${parts.length ? ` Part of ${P} that answers it |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${rows.join('\n')}`);
     }
     // ---- the quoted results ----
     const credibility = (p) => /\bseries [a-e]\b|valuation|funding|\braised\b|\bround\b|\bipo\b|acquir\w+/i.test(p.text);
@@ -115,12 +145,16 @@ function buildRoiStructure(args, i, d) {
     const results = proof.filter((p) => (p.kind === 'result' || p.kind === 'quote' || p.kind === 'story') && !credibility(p));
     const others = proof.filter((p) => p.kind === 'recognition' || p.kind === 'scale' || credibility(p));
     if (proof.length) {
-        out.push(`## Results you quoted\n\n${results.length ? `These are reference points, not this buyer's figures. Each is another organisation's result, from ${proof.some((p) => p.label) ? 'the source you labelled' : 'your notes'}; they show the buyer what to measure, and none should be entered as the buyer's own number.\n\n| Result you quoted | What it tells you to measure |\n|---|---|\n${results.map((p) => { const m = measureOf(p.text); const prev = usedMeasure.get(m); if (!prev)
-            usedMeasure.set(m, (0, dealtext_ts_1.proofPhrase)(p)); return `| ${(0, dealtext_ts_1.proofPhrase)(p)}${p.label ? ` (${(0, dealtext_ts_1.proofSource)(p)})` : ''} | ${prev ? `As for ${(0, rw1_common_ts_1.quoted)((0, dealtext_ts_1.clip)(prev, 40))}: ${m}` : (0, dealtext_ts_1.upperFirst)(m)} |`; }).join('\n')}\n` : ''}${others.length ? `\nNot value figures, so not used in the calculation: ${others.map((p) => (0, dealtext_ts_1.proofPhrase)(p)).join('; ')}. Keep them for the proposal as credibility.\n` : ''}`);
+        out.push(`## Results you quoted\n\n${results.length ? `These are reference points, not this buyer's figures. Each is another organisation's result, from ${proof.some((p) => p.label) ? 'the source you labelled' : 'your notes'}; they show the buyer what to measure, and none should be entered as the buyer's own number.\n\n| Result you quoted | What it tells you to measure |${parts.length ? ` Part of ${P} it relates to |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${results.map((p) => { const m = measureOf(p.text, v ? v.metrics : []); const part = bestPart(p.text); if (part)
+            partUse.add(part); const prev = usedMeasure.get(m); if (!prev)
+            usedMeasure.set(m, (0, dealtext_ts_1.proofPhrase)(p)); return `| ${(0, dealtext_ts_1.proofPhrase)(p)}${p.label ? ` (${(0, dealtext_ts_1.proofSource)(p)})` : ''} | ${prev ? `As for ${(0, rw1_common_ts_1.quoted)((0, dealtext_ts_1.clip)(prev, 40))}: ${m}` : (0, dealtext_ts_1.upperFirst)(m)} |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`; }).join('\n')}\n` : ''}${others.length ? `\nNot value figures, so not used in the calculation: ${others.map((p) => (0, dealtext_ts_1.proofPhrase)(p)).join('; ')}. Keep them for the proposal as credibility.\n` : ''}`);
     }
     else if (i.knownMetrics) {
         out.push(`## Results you quoted\n\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers named at the end.`);
     }
+    const placed = parts.filter((x) => !partUse.has(x));
+    if (parts.length && placed.length)
+        out.push(`## Parts not yet placed in the case\n\nNo cost line or quoted result above matches ${(0, dealtext_ts_1.joinList)(placed)} by its words. Ask the buyer which cost each one would remove, so that every part of ${P} has a place in the case.`);
     // ---- what the buyer's industry adds ----
     if (buyerCtx || v) {
         const bits = [];
@@ -140,21 +174,21 @@ function buildRoiStructure(args, i, d) {
         switch (k) {
             case 'revenue_increase': return {
                 title: 'Revenue increase',
-                where: `Revenue that ${customer} earns or keeps because of ${P}. This is the weakest kind of case unless the buyer owns the revenue number, so ask which revenue line the product touches before any figure is written down.`,
+                where: `Revenue that ${who} earns or keeps because of ${P}. This is the weakest kind of case unless the buyer owns the revenue number, so ask which revenue line the product touches before any figure is written down.`,
                 figure: 'the revenue the buyer expects to add or keep in a year because of this, or the revenue the problem costs them today',
-                qs: [`Which of ${customer}'s revenue lines does ${P} touch, and how much did that line bring in last year?`, `What did the problem${painShort ? ` (${painShort})` : ''} cost that line last year, in revenue not earned or not kept?`, `What share of it would ${P} win back, and what is that based on: their own history, a pilot, or a result quoted from another customer?`, ...(ctx.model === 'transactions' ? [`How many ${unit}s does that line send in a year, and what does one failed or late ${unit} cost in revenue?`] : v ? [`Which of ${(0, rw1_common_ts_1.some)(v.metrics, 3)} moves revenue for them, and by how much for each point of change?`] : [])],
+                qs: [`Which of ${who}'s revenue lines does ${P} touch, and how much did that line bring in last year?`, `What did the problem${painShort ? ` (${painShort})` : ''} cost that line last year, in revenue not earned or not kept?`, `What share of it would ${P} win back, and what is that based on: their own history, a pilot, or a result quoted from another customer?`, ...(model === 'transactions' && unit ? [`How many ${unit}s does that line run in a year, and what does one failed or late ${unit} cost in revenue?`] : v ? [`Which of ${(0, rw1_common_ts_1.some)(v.metrics, 3)} moves revenue for them, and by how much for each point of change?`] : [])],
             };
             case 'productivity': return {
                 title: 'Productivity',
                 where: 'Time given back to people, to spend on work that earns more or costs less.',
                 figure: 'the yearly cost of the time lost today, and the share of it the buyer expects to get back',
-                qs: [`Which team loses the time today, how many people are in it, and what does an hour of their time cost ${customer}?`, `Where does the time go${painShort ? ` (${painShort})` : ''}, and which part of it would ${P} take over?`, 'What would the team do with the time back, and is that worth money (work not hired for, faster delivery, fewer errors)?'],
+                qs: [`Which team loses the time today, how many people are in it, and what does an hour of their time cost ${who}?`, `Where does the time go${painShort ? ` (${painShort})` : ''}, and which part of it would ${P} take over?`, 'What would the team do with the time back, and is that worth money (work not hired for, faster delivery, fewer errors)?'],
             };
             case 'risk_mitigation': return {
                 title: 'Risk mitigation',
                 where: `Losses avoided: ${buyerCtx ? buyerCtx.risks : 'compliance incidents, outages, breaches, penalties, lost customers'}.`,
                 figure: 'what one incident costs the buyer, how often it happens, and the share they expect to avoid',
-                qs: [`What does one ${incident} cost ${customer} when it happens (investigation time, outside help, penalties, lost customers)?`, 'How often has one happened in the last three years, and how many near misses were there?', `What share of those would ${P} have prevented or caught earlier, and how would you show it on their own history?`, ...(buyerCtx ? [`Which of the reviews described above does the buyer's risk team run on a purchase like this, and what does each cost them in time?`] : [])],
+                qs: [`What does one ${incident} cost ${who} when it happens (investigation time, outside help, penalties, lost customers)?`, 'How often has one happened in the last three years, and how many near misses were there?', `What share of those would ${P} have prevented or caught earlier, and how would you show it on their own history?`, ...(buyerCtx ? [`Which of the reviews described above does the buyer's risk team run on a purchase like this, and what does each cost them in time?`] : [])],
             };
             default: return {
                 title: 'Cost reduction',
@@ -166,7 +200,7 @@ function buildRoiStructure(args, i, d) {
     };
     const drivers = driverKeys.map(driverText);
     const omitted = i.primaryValueDriver === 'multiple' && !driverKeys.includes('revenue_increase')
-        ? `Revenue is left out: nothing you gave ties ${P} to ${customer}'s revenue. Add the driver if the buyer claims one.\n\n` : '';
+        ? `Revenue is left out: nothing you gave ties ${P} to ${who}'s revenue. Add the driver if the buyer claims one.\n\n` : '';
     out.push(`## Value drivers${industryWords ? ` for ${industryWords}` : ''}\n\n${i.primaryValueDriver === 'multiple' ? 'You chose several drivers. Each one needs its own figure from the buyer; do not add them up until each is checked.' : 'The driver you chose is described below.'}\n\n${omitted}${drivers.map((x) => `### ${x.title}\n\n${x.where}\n\n- **The buyer's figure to ask for:** ${x.figure}.\n- **Questions to ask:**\n${x.qs.map((qq) => `  - "${qq}"`).join('\n')}`).join('\n\n')}`);
     // ---- questions to collect the figures ----
     const finance = v ? v.committee.match(/finance[^;.]*/i)?.[0] : undefined;

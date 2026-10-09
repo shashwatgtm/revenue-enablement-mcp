@@ -31,9 +31,9 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [accountName, productsIn, notesIn, contactsText, threatsIn]);
-  const unit = ctx.model === 'saas' || !ctx.model ? usageUnit(solutionIn, notesIn, threatsIn) : '';
-  const model = unit ? ('transactions' as const) : ctx.model;
-  const ctxLine = unit ? usageLine(ctx.line, unit) : ctx.line;
+  const unit = usageUnit(solutionIn, notesIn, threatsIn);
+  const model = unit && (ctx.model === 'saas' || !ctx.model) ? ('transactions' as const) : ctx.model;
+  const ctxLine = unit && model !== ctx.model ? usageLine(ctx.line, unit) : ctx.line;
   const P = brief.short || 'your solution';
   const parts = partsOf(brief);
   const shortParts = parts.filter((p) => p.split(/\s+/).length <= 6);
@@ -88,7 +88,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
     else if (k === 'blocker') step = `Find out what they fear (${base.worry}) and answer it in writing before the proposal`;
     const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : upperFirst(r.cares);
     if (!usedCares.has(r.cares)) usedCares.set(r.cares, c.title);
-    const stepCell = usedStep.has(step) ? `For ${c.title}: ${lowerStart(step)}` : step;
+    const stepCell = usedStep.has(step) ? `As with ${usedStep.get(step)}, for their own part: ${lowerStart(step)}` : step;
     if (!usedStep.has(step)) usedStep.set(step, c.title);
     return `| ${c.raw} | ${partWord(c)} | ${caresCell} | ${stepCell} |`;
   });
@@ -123,8 +123,8 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
 
   // ---- in brief ----
   const who = existing
-    ? `${accountName} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
-    : `${accountName} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
+    ? `${upperFirst(accountName)} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
+    : `${upperFirst(accountName)} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
   const sells = solutionIn ? (brief.short ? ` This plan is about ${existing ? 'growing it' : 'winning it'} with ${P}${brief.kind ? `, which ${describeWith(cleanBrief(brief))}` : ''}.` : ` This plan is about ${existing ? 'growing it' : 'winning it'}; what you sell, in your words, is ${sellerWords(brief)}.`) : '';
   const tierLine = `By this tool's rule on ARR alone the account sits in the ${tier} tier with ${potential.toLowerCase()} expansion potential; that is a rule on the number, not a view of the account.`;
   const brief1 = [`${who}.${sells}`, tierLine, ...(hypothetical ? ['Your notes mark the figures as hypothetical, so treat the ARR and the tier as test figures.'] : []), ...(noteLines.length ? [`Your notes add: ${noteLines.map(quoted).join(' ')}`] : [])];
@@ -188,7 +188,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const meet = contacts.filter((c) => c.level !== 'group' && readRole(c, null, rctx, investment).kind !== 'outside').slice(0, 4).map((c) => {
     const base = roleFor(c.title, investment);
     const n = ask.get(base.label) || 0; ask.set(base.label, n + 1);
-    return `Meet ${c.title} and ask: "${base.questions[n % base.questions.length]}"`;
+    return `Meet ${c.title} and ask: "${readRole(c, null, rctx, investment).ask || base.questions[n % base.questions.length]}"`;
   });
   const focus = pairs[0]?.part || (expansion[0] ? partFor(expansion[0]) : '') || parts[0] || '';
   const p1: string[] = [

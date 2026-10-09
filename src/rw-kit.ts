@@ -5,7 +5,7 @@
 // flows and statistics) and answer an objection from those inputs and from the business model.
 // Rules (B82, D80): no statistic, benchmark or named-company fact is written here; nothing is said about the user's product that the user did not
 // type (an answer says what to confirm instead); no network, no file access, no environment, no logging.
-import { splitTopLevel, joinList, clip, type SolutionBrief } from './dealtext.ts';
+import { isGenericWord, splitTopLevel, joinList, clip, type SolutionBrief } from './dealtext.ts';
 import { MODEL_TRADES, type BusinessModel } from './verticals.ts';
 
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -286,7 +286,8 @@ const ARCH_CLAIM = /^(?:cloud[- ]native|multi[- ]tenant|scalable|enterprise[- ]g
 export function productName(brief: SolutionBrief, full: string): string {
   if (brief.short) return brief.short;
   const first = full.split(/[,:(]/)[0].trim().replace(/\s+(?:from|by|on)\s+.*$/i, '');
-  return first && first.split(/\s+/).length <= 6 ? first : '';
+  // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
+  return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && isGenericWord(first)) ? first : '';
 }
 function cleanItem(raw: string): string { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
 const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;
@@ -909,11 +910,11 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
     }
     case 'achieve': {
       const cond = (t.match(/\b(?:without|while|but|and still)\s+(.+)$/i) || [])[1] || '';
-      const levers = c.outcomes.map((o, i) => ({ o, i, s: overlap(o, t, wordsOf(P, false)) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 2).map((x) => outcomeHead(x.o));
+      const levers = c.outcomes.map((o, i) => ({ o, i, s: overlap(o, t, wordsOf(P, false)) + (/\b(?:costs?|spend|budget|expens\w*|cheaper|saving)\b/i.test(t) && /\b(?:budget|costs?|maintenance|spend|saving|savings|fees?)\b/i.test(o) ? 2 : 0) + (/\b(?:risk|secur\w*|breach|compliance|audit)\b/i.test(t) && /\b(?:risk|secur\w*|breach|compliance|audit|control)\b/i.test(o) ? 2 : 0) + (/\b(?:fast|faster|speed|quick\w*|time)\b/i.test(t) && /\b(?:fast|faster|speed|velocity|quick\w*|time|days|hours)\b/i.test(o) ? 2 : 0) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 2).map((x) => outcomeHead(x.o));
       const lev = levers.length ? levers : c.outcomes.slice(0, 2).map(outcomeHead);
       const via = caps.length ? caps : relCaps(lev.join(' '), c, 2);
       return done([
-        lev.length ? S(`The levers I would point to are ${joinList(lev.map(lowerFirst))}${via.length ? `, through ${capsTxt(via)}` : ''}.`, `The levers we are buying are ${joinList(lev.map(lowerFirst))}${via.length ? `, through ${capsTxt(via)}` : ''}.`) : S(`I would answer it with a measure rather than a promise.`, `We should answer it with a measure rather than a promise.`),
+        lev.length ? S(`The levers I would point to, in the words of the case: ${lev.map(lowerFirst).join('; ')}${via.length ? `, through ${capsTxt(via)}` : ''}.`, `The levers we are buying, in the words of the case: ${lev.map(lowerFirst).join('; ')}${via.length ? `, through ${capsTxt(via)}` : ''}.`) : S(`I would answer it with a measure rather than a promise.`, `We should answer it with a measure rather than a promise.`),
         cond ? S(`The condition in your question, "${trimDot(youify(cond))}", is where the measure goes: agree it before the start and judge the result against it.`, `The condition in the question, "${trimDot(cond)}", is where the measure goes: we agree it before the start and judge the result against it.`) : S(`Agree the measure before the start and judge the result against it.`, `We agree the measure before the start and judge the result against it.`),
       ], S('What number would tell you it worked?', 'What number would tell us it worked?'), `the result ${P} has achieved on this question for a customer of our kind, and how it was measured`);
     }

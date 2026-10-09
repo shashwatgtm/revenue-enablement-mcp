@@ -19,6 +19,8 @@ export interface SolutionBrief {
     parts: string[];
     full: string;
 }
+/** True for an everyday word, an adjective or a hyphenated descriptor ("Cloud-native"); false for a word that can be a name. */
+export declare function isGenericWord(word: string): boolean;
 export declare function solutionBrief(input: string): SolutionBrief;
 /** The name of a part without its bracket: "prepaid cards (petty cash, fleet)" -> "prepaid cards". */
 export declare function partLabel(part: string): string;

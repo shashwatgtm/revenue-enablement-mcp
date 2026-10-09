@@ -49,9 +49,14 @@ function atomsOf(items: ProofItem[], rank: string): Atom[] {
       const stripped = it.text.replace(/^(?:the )?(?:vendor |company |product )?(?:page|pages|site|website)\s+(?:cites|claims|says|shows|reports|states)\s+/i, '').replace(/^(?:examples? (?:the )?pages? give (?:are|is)\s+)/i, '');
       const commaParts = splitTopLevel(stripped).map((x) => x.replace(/^(?:and|plus)\s+/i, '').trim());
       // a list of figures is cut; a sentence that carries several figures ("X achieved 95%, cut time by 99% and saw ...") stays whole
-      const dependent = commaParts.slice(1).some((x) => /^[a-z]/.test(x) && !/^\d/.test(x) && !/^(?:an?|the)\s/.test(x) && /^(?:saw|decreased|reduced|increased|cut|raised|improved|lowered|achieved|grew|saved|automated|added|boosted|and|which|so|with)\b/.test(x));
+      // a later part that opens with a capital ("..., ATP prevented over 30 million attacks") is the rest of one sentence, not another figure
+      // a list of figures has a figure at the start of every part after the first ("3.7%, 49% more work, 15 days faster"); any other later part is the rest of the sentence
+      const figureList = commaParts.slice(1).every((x) => /^(?:an? |the )?(?:up to |an average of |about |over |more than |nearly |almost )?[$£€]?\d/i.test(x));
+      const dependent = !figureList || commaParts.slice(1).some((x) => /^[A-Z][A-Za-z0-9]*\s/.test(x) || (/^[a-z]/.test(x) && !/^\d/.test(x) && !/^(?:an?|the)\s/.test(x) && /^(?:saw|decreased|reduced|increased|cut|raised|improved|lowered|achieved|grew|saved|automated|added|boosted|and|which|so|with)\b/.test(x)));
       const parts = dependent ? [stripped] : commaParts.flatMap((x) => { const m2 = commaParts.length >= 2 ? x.match(/^(.*\d.*?)\s+and\s+((?:\d|[a-z]+ing\b).*\d.*)$/) : null; return m2 && m2[1].split(/\s+/).length >= 3 && m2[2].split(/\s+/).length >= 3 ? [m2[1], m2[2]] : [x]; });
-      if (parts.length >= 2 && parts.every((x) => /\d/.test(x))) pieces = parts;
+      // each figure says whose it is: "Zillow: 80% adoption, 3,400+ agents created" is cut into "Zillow: 80% adoption" and "Zillow: 3,400+ agents created"
+      const lead = (stripped.match(/^([A-Z][A-Za-z0-9.&' -]{1,40}?):\s/) || [])[1];
+      if (parts.length >= 2 && parts.every((x) => /\d/.test(x))) pieces = parts.map((x, i) => (i > 0 && lead && !x.startsWith(lead) ? `${lead}: ${x}` : x));
       else pieces = [stripped];
     }
     for (const p of pieces) {
@@ -264,7 +269,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
         r3.length ? facts(r3) : measuresLine,
         p2 ? `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}` : (r3.length ? '' : endSentence(`A question from the same place: ${nextQ()}`)),
         !r3.length && p2 ? qLead(nextQ()) : '',
-        nearParts[0] ? endSentence(`The part of ${name} that speaks to this is ${nearParts[0]}`) : '',
+        nearParts[0] ? endSentence(`Within ${name}, the part that speaks to this is ${nearParts[0]}`) : '',
         ask(2)]);
       const roles = otherRoles.length ? andList(otherRoles.map((r) => `your ${r}`), 'or') : '';
       mail('Day 12', senior ? 'Who else?' : 'Right person?', senior ? `Who should look at ${topic} with you?` : `Who owns ${topic}${inIndSubj}?`, [

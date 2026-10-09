@@ -24,7 +24,7 @@ const say = (s: string): string => s.replace(/"/g, "'");
 /** A step of the stock pilot plan, said by a champion on the buyer's side. */
 const own = (s: string): string => s.replace(/\bthe buyer names\b/gi, 'we name').replace(/\bthe buyer's\b/gi, 'our').replace(/\bthe buyer\b/gi, 'we').replace(/\bbuyer's\b/gi, 'our').replace(/\bbuyer\b/gi, 'our team');
 
-interface Outcome { text: string; label: string; head: string; subs: string[] }
+interface Outcome { text: string; label: string; head: string; subs: string[]; note?: string }
 
 export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): string {
   const given = (k: string): string => (typeof args[k] === 'string' ? (args[k] as string).trim() : '');
@@ -83,11 +83,17 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     return (run.length ? run : [whole]).map((text) => outcomeOf(text, label));
   });
   function outcomeOf(text: string, label: string): Outcome {
-    const colon = text.indexOf(': ');
-    const subs = colon > 0 ? splitTopLevel(text.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
+    // a closing bracket that is a remark ("(the Zero Friction Enterprise idea)") stays with the point, not with its last item
+    const nm = text.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+    const body = nm && nm[1].includes(': ') ? nm[1] : text;
+    const colon = body.indexOf(': ');
+    const rawSubs = colon > 0 ? splitTopLevel(body.slice(colon + 2)).map((x) => x.replace(/^and\s+/i, '').trim()).filter(Boolean) : [];
+    // a short fragment that is not an action ("control and scale") is the end of the item before it
+    const ACTION = /^(?:get|keep|protect|manage|streamline|raise|cut|close|reduce|increase|improve|speed|shorten|lower|grow|win|make|plan|launch|cover|avoid|stop|simplify|automate|scale|ship|move|find|build|run|track|see|bring|boost|connect|deliver|hit|meet|stay|retain|expand|consolidate|replace|lift|gain|save|prove|show|handle|trust|know|reach|fix|end|free|prevent|detect|respond|onboard|pay|collect|bill|reclaim|shrink|turn|modernize|modernise|migrate|unify|enable|ensure|give|offer|provide|use|work|spend|drive|accelerate|eliminate|standardi[sz]e|centrali[sz]e|capture|apply|test|release|secure|comply|verify|forecast|price)\b/i;
+    const subs = rawSubs.reduce<string[]>((acc, x) => { if (acc.length && x.split(/\s+/).length <= 3 && !ACTION.test(x) && !/\d/.test(x)) acc[acc.length - 1] += `, ${x}`; else acc.push(x); return acc; }, []);
     // the pieces after a colon are listed apart only when they are plain items: a figure, a "with ..." tail or a long clause stays in the sentence
-    const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 8);
-    return { text, label, head: outcomeHead(text), subs: plain ? subs : [] };
+    const plain = subs.length >= 2 && subs.every((x) => !/\d/.test(x) && !/^with\b/i.test(x) && x.split(/\s+/).length <= 16);
+    return { text, label, head: outcomeHead(text), subs: plain ? subs : [], note: plain && nm && !label ? nm[2].trim() : '' };
   }
   const outClaims: Item[] = outs.filter((o) => o.label || isStat(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));
   const claimy = outClaims.length > 0;
@@ -121,7 +127,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const aim = outs[0] ? low(outs[0].head) : '';
   const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
   const noReturn = `No return figure is stated here, because none was given. Run roi_business_case_builder with our own cost figures and add the result.`;
-  const outBullets = outs.map((o) => `- ${upFirst(o.text)}${o.label ? ` (${o.label})` : ''}${o.subs.length ? `:\n${o.subs.map((x) => `  - ${upFirst(x)}`).join('\n')}` : ''}`).join('\n');
+  const outBullets = outs.map((o) => `- ${upFirst(o.subs.length ? o.head : o.text)}${o.label ? ` (${o.label})` : ''}${o.subs.length && o.note ? ` (${o.note})` : ''}${o.subs.length ? `:\n${o.subs.map((x) => `  - ${upFirst(x)}`).join('\n')}` : ''}`).join('\n');
   const altList = alts.length > 1 && alts.some((a) => /,|\band\b/i.test(a)) ? alts.join('; ') : joinList(alts);
   const altsSentence = alts.length ? `The alternatives we looked at are ${altList}.` : '';
   const stake = wins ? `Not for the reader. Your own stake, as you put it: "${say(wins)}".` : '';

@@ -128,8 +128,10 @@ test("the industry input is accepted as any text and used for wording only (no t
   }
   const a = await call({ ...BASE, industry: "Retail" });
   const b = await call({ ...BASE, industry: "Manufacturing" });
-  const strip = (t, i) => t.split(i).join("X");
-  assert.equal(strip(a.text, "Retail"), strip(b.text, "Manufacturing"), "the industry changes words, never figures");
+  // run 22: the buyer's industry now also changes the sentences about who reviews a purchase and what a risk case counts, so the two answers are no longer
+  // equal after the swap; what must never change is a figure: every number in the two answers is the same, in the same order
+  const nums = (t) => t.match(/\$?\d[\d,.]*%?/g) || [];
+  assert.deepEqual(nums(a.text), nums(b.text), "the industry changes words, never figures");
 });
 
 test("the uncited industry table is gone from the code", () => {

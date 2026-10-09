@@ -439,7 +439,9 @@ test("champion_enablement_kit internal_business_case: no placeholder, objections
   assert.match(r.text, /manual spreadsheet routing/); assert.match(r.text, /a legacy TMS that plans once a day/);
   assert.match(r.text, /\$150,000 a year \(hypothetical\)/);
   assert.match(r.text, /the peak season starts in November/);
-  assert.equal((r.text.match(/Confirm before you say it/g) || []).length, 3);
+  // run 22: what to confirm before forwarding is one list at the end, one line for each objection
+  const checkList = r.text.split("## Before you forward this")[1].split("\n\n###")[0];
+  assert.equal((checkList.match(/^- "/gm) || []).length, 3);
   assert.match(r.text, /operations leader/);
   assert.match(r.text, /pilot hub|pilot at one hub/i);
 });

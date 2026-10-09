@@ -130,7 +130,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const steps: Step[] = [];
   const textOf = (flow: Item | null, cap: Capability | null): string => `${flow ? flow.text : ''} ${cap ? `${cap.name} ${cap.desc}` : ''}`.trim();
   for (const f of ms.flows) {
-    const hit = capPool.map((cp, i) => ({ cp, i, s: overlap(`${cp.name} ${cp.desc}`, f.text, skipP) })).filter((x) => x.s >= 2 && overlap(x.cp.name, f.text, skipP) >= Math.min(2, wordsOf(x.cp.name).length)).sort((a, b) => b.s - a.s)[0];
+    const hit = capPool.map((cp, i) => ({ cp, i, s: overlap(`${cp.name} ${cp.desc}`, f.text, skipP) })).filter((x) => { const nw = wordsOf(x.cp.name); return (nw.length > 0 && overlap(x.cp.name, f.text, skipP) >= nw.length) || (x.s >= 2 && overlap(x.cp.name, f.text, skipP) >= Math.min(2, nw.length)); }).sort((a, b) => b.s - a.s)[0];
     const cp = hit ? capPool.splice(hit.i, 1)[0] : null;
     steps.push(newStep(upFirst(f.text), f, cp, textOf(f, cp)));
   }

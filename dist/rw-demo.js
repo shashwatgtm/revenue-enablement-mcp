@@ -104,7 +104,7 @@ function buildDemoScript(args, d) {
     const steps = [];
     const textOf = (flow, cap) => `${flow ? flow.text : ''} ${cap ? `${cap.name} ${cap.desc}` : ''}`.trim();
     for (const f of ms.flows) {
-        const hit = capPool.map((cp, i) => ({ cp, i, s: (0, rw_kit_ts_1.overlap)(`${cp.name} ${cp.desc}`, f.text, skipP) })).filter((x) => x.s >= 2 && (0, rw_kit_ts_1.overlap)(x.cp.name, f.text, skipP) >= Math.min(2, (0, rw_kit_ts_1.wordsOf)(x.cp.name).length)).sort((a, b) => b.s - a.s)[0];
+        const hit = capPool.map((cp, i) => ({ cp, i, s: (0, rw_kit_ts_1.overlap)(`${cp.name} ${cp.desc}`, f.text, skipP) })).filter((x) => { const nw = (0, rw_kit_ts_1.wordsOf)(x.cp.name); return (nw.length > 0 && (0, rw_kit_ts_1.overlap)(x.cp.name, f.text, skipP) >= nw.length) || (x.s >= 2 && (0, rw_kit_ts_1.overlap)(x.cp.name, f.text, skipP) >= Math.min(2, nw.length)); }).sort((a, b) => b.s - a.s)[0];
         const cp = hit ? capPool.splice(hit.i, 1)[0] : null;
         steps.push(newStep((0, rw_kit_ts_1.upFirst)(f.text), f, cp, textOf(f, cp)));
     }

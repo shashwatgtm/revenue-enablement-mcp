@@ -99,9 +99,14 @@ export interface Answer {
     say: string;
     ask: string;
     check: string;
-    sector: string;
+    sector: string; /** what could go wrong, in the buyer's voice (for a risk list) */
+    risk: string;
 }
 export declare function objectionKind(t0: string, sectorLabels?: string[]): string;
+/** A buyer's question put to the seller, said back in the second person ("Can we use our own model" becomes "Can you use your own model"). */
+export declare function youify(q0: string): string;
+/** The first part of a value point: what comes before a colon, else the whole point up to its first bracket. */
+export declare function outcomeHead(o: string): string;
 /** Answers one objection in the voice asked for. Each answer uses the inputs that touch the question (the product's parts, the alternatives, the pains,
  *  the statistics with their labels) and the business model; where a fact is needed that was not given, it says so in `check` instead of claiming it. */
 export declare function answerObjection(o: string, c: AnswerCtx): Answer;

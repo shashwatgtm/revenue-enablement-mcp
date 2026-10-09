@@ -152,8 +152,8 @@ function buildAccountPlan(args, d) {
     out.push(`# Strategic account plan: ${accountName}`);
     // ---- in brief ----
     const who = existing
-        ? `${accountName} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
-        : `${accountName} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
+        ? `${(0, dealtext_ts_1.upperFirst)(accountName)} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
+        : `${(0, dealtext_ts_1.upperFirst)(accountName)} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
     const sells = solutionIn ? (brief.short ? ` This plan is about ${existing ? 'growing it' : 'winning it'} with ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}.` : ` This plan is about ${existing ? 'growing it' : 'winning it'}; what you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}.`) : '';
     const tierLine = `By this tool's rule on ARR alone the account sits in the ${tier} tier with ${potential.toLowerCase()} expansion potential; that is a rule on the number, not a view of the account.`;
     const brief1 = [`${who}.${sells}`, tierLine, ...(hypothetical ? ['Your notes mark the figures as hypothetical, so treat the ARR and the tier as test figures.'] : []), ...(noteLines.length ? [`Your notes add: ${noteLines.map(rw1_common_ts_1.quoted).join(' ')}`] : [])];

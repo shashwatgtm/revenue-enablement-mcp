@@ -61,8 +61,9 @@ test("win_loss_analyzer: a deal value of 0 is shown as given, 1 day is singular,
 // section. Its intent is kept: a loss with no stated reason must say so plainly and ask for the reason, not print an empty section.
 test("win_loss_analyzer: a loss with no stated reason says what the reason would add, and prints no empty section", async () => {
   const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost" });
-  assert.match(r.text, /Not given:[^\n]*`loss_reason`/);
-  assert.match(r.text, /## What the stated reason would add\n\n\S/);
+  // run 22 (rev-w3): what is not given is named once, at the end, under "To sharpen this, give:", with what each input would change
+  assert.match(r.text, /To sharpen this, give:[\s\S]*`loss_reason`[^\n]*would change/);
+  assert.equal((r.text.match(/To sharpen this, give:/g) || []).length, 1);
   assert.doesNotMatch(r.text, /##[^\n]*\n\n(?:##|$)/);
 });
 

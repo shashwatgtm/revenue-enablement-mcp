@@ -89,8 +89,9 @@ test("no outcome: the write-up covers what the inputs allow and says once what t
     ["B", B_NOOUT, ["several separate SMS vendors", "in-house scripts that call the carrier"], ["Head of Customer Support", "IT Security Lead", "VP Operations"]]]) {
     const t = await call(args);
     hasAll(t, [...alts, ...people, "hypothetical", args.deal_value === 60000 ? "$60,000" : "$30,000", args.sales_cycle_days + " days"], name);
-    assert.match(t, /Not given:[^\n]*outcome/i, name);
-    assert.equal((t.match(/would add/gi) || []).length, 1, `${name}: the limit is said once`);
+    // run 22 (rev-w3): named once at the end under "To sharpen this, give:" with what each input would change
+    assert.match(t, /To sharpen this, give:[\s\S]*`deal_outcome`/, name);
+    assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1, `${name}: the limit is said once`);
     assert.match(t, /deal_outcome/);
     assert.match(t, /loss_reason/);
     assert.doesNotMatch(t, /\n\|---\|---\|\n\| \*\*Positioning\*\*/);
@@ -127,8 +128,8 @@ test("a construction platform and a messaging platform get different drafts", as
 
 test("a sparse call still reads well: one 'Not given' line, no placeholder", async () => {
   const t = await call({ analysis_type: "single_deal", deal_outcome: "lost" });
-  assert.match(t, /Not given:/);
-  assert.equal((t.match(/Not given:/g) || []).length, 1);
+  assert.match(t, /To sharpen this, give:/);
+  assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
   assert.doesNotMatch(t, BRACKET);
   assert.doesNotMatch(t, DASH);
   assert.doesNotMatch(t, /your solution/i);

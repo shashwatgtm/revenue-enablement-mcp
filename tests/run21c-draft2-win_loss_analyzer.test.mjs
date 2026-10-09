@@ -46,5 +46,5 @@ test("the buyer segment from the deal notes is used in a question, and the notes
   assert.doesNotMatch(t, /\n> [^\n]*roles involved/i);
   assert.doesNotMatch(t, /\n> [^\n]*alternatives buyers use are described as/i);
   assert.match(t, /hypothetical/);
-  assert.match(t, /Routewise deals with Retail/);
+  assert.match(t, /The buyer in this deal: Retail/); // run 22 (rev-w3): the segment is said in a clean sentence, not echoed as a quoted note
 });

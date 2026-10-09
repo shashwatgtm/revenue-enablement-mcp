@@ -130,7 +130,7 @@ test("every trap type is a finished section with no placeholder", async () => {
 
 test("a sparse call says once what is not given and keeps no placeholder", async () => {
   const t = await call({ competitor: "Textmint", your_solution: B.your_solution });
-  assert.equal((t.match(/Not given:/g) || []).length, 1);
+  assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1); // run 22 (rev-w3): named once at the end, with what each input would change
   assert.doesNotMatch(t, BRACKET);
   assert.doesNotMatch(t, DASH);
   assert.doesNotMatch(t, /your solution/i);

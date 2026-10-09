@@ -323,7 +323,8 @@ function buildDemoScript(args, d) {
         const fam = (0, dealtext_ts_1.familyOf)(pp.title, investment);
         const nth0 = seenFam[fam] = (seenFam[fam] ?? -1) + 1;
         const rk = (0, answers_ts_1.roleFor)(pp.title, investment);
-        const sis = stepsOf(qi);
+        // the step the person is asked about before is the one closest to their own work, not the first one they are in
+        const sis = stepsOf(qi).slice().sort((a, b) => stepFit(shown[b], personText(pp.title)).s - stepFit(shown[a], personText(pp.title)).s || a - b);
         const s = sis.length ? shown[sis[0]] : null;
         const pi = s && s.pains.length ? s.pains[0] : pains.length && !s ? 0 : -1;
         const pain = pi >= 0 ? pRef(pi) : '';

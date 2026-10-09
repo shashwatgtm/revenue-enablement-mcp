@@ -384,3 +384,9 @@ test("round 3: a step with no problem tied to it asks about its own part, never 
   assert.doesNotMatch(steps, /who steps in when it stalls/);
   for (const b of steps.split(/\n(?=\*\*Step )/).slice(1)) if (!/you told me|Take 'no single|problem as before/i.test(b)) assert.doesNotMatch(b, /that problem/i, b.split("\n")[0]);
 });
+test("round 3: a person is asked before the step closest to their own work, not before the first step they are in", () => {
+  const t = out.Ledgerwing;
+  const line = t.split("\n").find((l) => /^Ask the Compliance Manager:/.test(l));
+  assert.ok(line, "a question for the Compliance Manager");
+  assert.match(line, /Before I show Watch/);
+});

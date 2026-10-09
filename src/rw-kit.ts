@@ -297,15 +297,20 @@ export const DEMO_VERB = /^(?:send|create|track|get|see|view|search|export|impor
 const ARCH_CLAIM = /^(?:cloud[- ]native|multi[- ]tenant|scalable|enterprise[- ]grade|secure|reliable|robust|flexible|api[- ]first|ai[- ]native|saas|offline[- ]first)$/i;
 
 /** The name used for the product in running text, also when solutionBrief finds no clear name. */
-/** "Capwise digital" is the name "Capwise" followed by a word that only says what kind of firm it is (digital, services, technologies, group). */
-const DESCRIPTOR = /^(?:digital|technology|technologies|tech|services|solutions|software|systems|group|global|labs|consulting|ventures|international|holdings|networks|platform|platforms|cloud|data|analytics)$/i;
+/** "eClerx digital, data and customer experience services": the lower case word after the name only says what kind of firm it is, so the name is "eClerx".
+ *  A word written with a capital ("Quillnest Digital", "Hexa Services") is part of the name and stays. */
+const DESCRIPTOR = /^(?:digital|technology|technologies|tech|services|solutions|software|systems|group|global|labs|consulting|ventures|international|holdings|networks|platform|platforms|cloud|data|analytics)$/;
 const trimDescriptor = (name: string): string => { const w = name.trim().split(/\s+/); return w.length === 2 && /[A-Z]/.test(w[0]) && DESCRIPTOR.test(w[1]) && !isGenericWord(w[0]) ? w[0] : name; };
-export function productName(brief: SolutionBrief, full: string): string {
-  if (brief.short) return trimDescriptor(brief.short);
+function typedName(brief: SolutionBrief, full: string): string {
+  if (brief.short) return brief.short;
   const first = full.split(/[,:(]/)[0].trim().replace(/\s+(?:from|by|on)\s+.*$/i, '');
   // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
-  return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && isGenericWord(first)) ? trimDescriptor(first) : '';
+  return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && isGenericWord(first)) ? first : '';
 }
+/** The name as the user typed it at the start of the description ("eClerx digital"). It is written once in each answer, so the full name is always there. */
+export function productHead(brief: SolutionBrief, full: string): string { return typedName(brief, full); }
+/** The name used in running text: the typed name without a lower case word that only says what kind of firm it is. */
+export function productName(brief: SolutionBrief, full: string): string { return trimDescriptor(typedName(brief, full)); }
 function cleanItem(raw: string): string { return raw.replace(/^(?:and|plus|with|including|on top of|alongside|as well as|also)\s+/i, '').replace(/[.;]+$/, '').trim(); }
 const NOT_CAP_START = /^(?:so|on|in|at|to|under|via|through|across|over|by|from|within|delivered|run|powered|backed|offered|sold|built on|priced|billed|managed by)\b/i;
 export function toCapability(raw: string, product = ''): Capability | null {

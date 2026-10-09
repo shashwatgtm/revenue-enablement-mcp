@@ -7,7 +7,7 @@
 import { splitTopLevel, joinList, clip, solutionBrief, aAn } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { type Vertical, type BusinessModel } from './verticals.ts';
-import { readProduct, splitNotes, toCapability, productName, isStat, capText, upFirst, outcomeHead, answerObjection, dedupeAnswers, youify, wordsOf, overlap, type Capability, type Item, type AnswerCtx, type Answer } from './rw-kit.ts';
+import { readProduct, splitNotes, toCapability, productName, productHead, isStat, capText, upFirst, outcomeHead, answerObjection, dedupeAnswers, youify, wordsOf, overlap, type Capability, type Item, type AnswerCtx, type Answer } from './rw-kit.ts';
 import { familyOf } from './dealtext.ts';
 
 export interface ChampDeps {
@@ -47,6 +47,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const modelKey = investment ? 'investment' : v ? v.id : '';
   const brief = solutionBrief(yourSolution);
   const P = productName(brief, yourSolution) || 'the solution';
+  const nameTyped = productHead(brief, yourSolution);
   let product = readProduct(yourSolution, brief.name || P);
   if (product.caps.length < 2 && brief.parts.length >= 2) {
     const fromParts = brief.parts.map((x) => toCapability(x)).filter((x): x is Capability => !!x);
@@ -327,7 +328,9 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
       stake,
     ].filter(Boolean).join('\n\n'),
   };
-  const body = (assets[assetType] || assets.executive_brief)();
+  const body0 = (assets[assetType] || assets.executive_brief)();
+  // the name as typed is written once, under the title, when the text calls the product by a shorter name
+  const body = nameTyped && nameTyped !== P && P !== 'the solution' ? body0.replace(/^(#[^\n]*)/, `$1\n\nThe seller's description opens with "${nameTyped}"; this note calls it ${P}.`) : body0;
   const familyKnown = familyOf(target, investment) !== 'other';
   void familyKnown; void clip;
   return `${body}\n\n${sharpenLine ? `${sharpenLine}\n\n` : ''}${d.footer}`.replace(/\n{4,}/g, '\n\n\n');

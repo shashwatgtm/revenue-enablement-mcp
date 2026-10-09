@@ -51,7 +51,8 @@ function measureOf(text, metrics = []) {
         return 'the time from a change to a release today, and what a late or failed release costs';
     if (/detention|demurrage|dwell|gate wait|expedit/.test(t))
         return 'the detention, wait or expedite costs the buyer pays in a year, and what causes them';
-    if (/carrier completion|on[- ]time|delivery rate|\brto\b|first[- ]attempt|undelivered/.test(t))
+    // delivery wording only for a result that itself speaks of deliveries, orders or shipments ("authentication time" holds the letters "on time" and is not a delivery result)
+    if (/\bcarrier completion\b|\bon[- ]time\b|\bdelivery rate\b|\brto\b|\bfirst[- ]attempt\b|\bundelivered\b/.test(t) && /\bdeliver\w*|\bshipments?\b|\bparcels?\b|\bcouriers?\b|\borders?\b|\brto\b|\bcarriers?\b/.test(t))
         return 'the share of orders delivered first time and the share that come back, and what each failed delivery costs';
     if (/authenticat|log-?in|sign[- ]?in|onboarding/.test(t))
         return 'the time people lose to that step today, and what a minute of it costs across the people who do it';
@@ -76,7 +77,17 @@ function measureOf(text, metrics = []) {
     }
     if (best)
         return `the buyer's own ${best}, and what a change in it is worth in a year`;
+    const own = ownMeasure(text);
+    if (own)
+        return `the buyer's own ${own} today, and what a change in it is worth in a year`;
     return 'which of the buyer\'s own numbers would change, and what that change is worth in a year';
+}
+/** The thing a quoted result changes, in the result's own words: "a 57% reduction in user authentication time" gives "user authentication time". */
+function ownMeasure(text) {
+    const m = text.match(/\b(?:reduction|decrease|drop|fall|improvement|increase|gain|growth|rise|uplift|cut|saving|savings)\s+(?:of\s+[\d.,%x ]+\s+)?(?:in|of|to|on)\s+(?:the\s+|its\s+|their\s+)?([a-z][a-z \-]{3,44}?)(?=\s+(?:with|by|using|after|through|from|across|for|at|within|when|thanks)\b|[.,;:(]|$)/i)
+        || text.match(/\b(?:cut|cuts|cutting|reduced|reduces|lowered|lowers|raised|raises|boosted|boosts|improved|improves|increased|increases|saved|saves)\s+(?:its\s+|their\s+|the\s+)?([a-z][a-z \-]{3,44}?)\s+(?:by|from|to|with|after|through)\b/i);
+    const phrase = m ? m[1].trim().toLowerCase() : '';
+    return phrase && phrase.split(/\s+/).length <= 6 && !/^(?:it|that|them|this|costs?)$/.test(phrase) ? phrase : '';
 }
 function buildRoiStructure(args, i, d) {
     const money = d.money;
@@ -90,7 +101,7 @@ function buildRoiStructure(args, i, d) {
     const brief = (0, rw1_common_ts_1.briefOf)(args.your_solution ? i.yourSolution : '', [i.customerName, i.knownMetrics, i.currentProcess]);
     const P = brief.short || 'your solution';
     const parts = (0, rw1_common_ts_1.partsOf)(brief);
-    const ctx = d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] });
+    const ctx = (0, rw1_common_ts_1.reframeSector)(d.readContext(undefined, { seller: [i.yourSolution], context: [i.knownMetrics, i.currentProcess], buyer: [args.industry, i.customerName] }), i.yourSolution);
     const v = ctx.v;
     const mr = (0, rw1_common_ts_1.readModel)(ctx.model, ctx.line, i.yourSolution, []); // the current process and the quoted results are about the buyer's alternatives and other customers, not this seller's pricing
     const usage = mr.unit;
@@ -101,7 +112,7 @@ function buildRoiStructure(args, i, d) {
     const statedModel = mr.stated && model !== 'sim';
     const industryWords = (0, rw1_common_ts_1.cleanIndustry)(args.industry) || (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(args.industry, (0, rw1_common_ts_1.industryFromTitle)(args.customer_name));
-    const proof = (0, dealtext_ts_1.parseProof)(i.knownMetrics);
+    const proof = (0, dealtext_ts_1.parseProof)((0, rw1_common_ts_1.joinSplitClaims)(i.knownMetrics));
     const costLines = d.splitItems(i.currentProcess.replace(/^today (?:they|the buyer) (?:handle|handles|do|does) it with\s+/i, ''));
     const lines = (0, rw1_common_ts_1.readThreats)(costLines);
     const unit = usage;
@@ -131,13 +142,7 @@ function buildRoiStructure(args, i, d) {
     if (flags.length)
         out.push(`## Inputs to check\n\n${flags.join(' ')}`);
     // ---- the cost lines ----
-    const bestPart = (text) => { let best = ''; let n = 0; for (const p of parts) {
-        const sc = (0, rw1_common_ts_1.shared)(text, p);
-        if (sc > n) {
-            n = sc;
-            best = p;
-        }
-    } return best; };
+    const bestPart = (text) => (0, rw1_common_ts_1.matchPart)(text, parts);
     const partUse = new Set();
     if (costLines.length) {
         const seen = new Map();
@@ -153,7 +158,7 @@ function buildRoiStructure(args, i, d) {
         out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current_annual_cost\`.\n\n| Cost line | Question to price it |${parts.length ? ` Part of ${P} that answers it |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${rows.join('\n')}`);
     }
     // ---- the quoted results ----
-    const credibility = (p) => /\bseries [a-e]\b|valuation|funding|\braised\b|\bround\b|\bipo\b|acquir\w+/i.test(p.text);
+    const credibility = (p) => /\bseries [a-e]\b|valuation|funding|\braised\s+(?:us\$|\$|€|£|₹|rs\.?\s?\d|inr|\d[\d,.]*\s?(?:m|bn|k|million|billion|crore|cr)\b|a\s+(?:series|round)|capital)|\bfunding round\b|\bround\b(?!\s+the\s+clock)|\bipo\b|acquir\w+/i.test(p.text); // "raised first attempt delivery rate" is a result; "raised $20M" is funding
     const usedMeasure = new Map();
     // a quoted change ("from three days to 10 minutes", "lowered its data usage by more than 50%") is a result even when the sentence also holds a word the reader takes for a recognition or a scale ("a customer named", "more than")
     const CHANGE = /\b(?:lower\w*|dropp?\w*|cut|reduc\w+|decreas\w+|saved?|faster|shorter|increas\w+|improv\w+|grew|grow\w*|doubl\w+|halv\w+)\b|\bfrom\b.{2,40}\bto\b|\btook\b.{1,40}\b(?:days?|hours?|minutes?|weeks?)\b/i;

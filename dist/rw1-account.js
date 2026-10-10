@@ -124,8 +124,17 @@ function buildAccountPlan(args, d) {
     const qa = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
     const answers = (0, rw1_common_ts_1.dedupeAnswers)(objections.map((o) => ({ text: o, a: (0, rw1_common_ts_1.answerQuestion)(o, qa) })));
     // ---- the parts of the product against the account's own pain ----
-    const partFor = (text) => (rw1_common_ts_1.STITCHED.test(text) && (0, rw1_common_ts_1.joiningPart)(parts, solutionIn)) || (0, rw1_common_ts_1.matchPart)(text, parts);
-    const pairs = threats.map((t) => ({ t, part: partFor(t.text) })).filter((x) => x.part);
+    const partFor = (text) => (rw1_common_ts_1.STITCHED.test(text) && (0, rw1_common_ts_1.joiningPart)(parts, solutionIn)) || (0, rw1_common_ts_1.matchPart)(text, parts, brief.short);
+    // the line "points to ..." may name the platform and the parts the pain lists; the part used in the plan below stays one part
+    const labelFor = (text) => {
+        if (rw1_common_ts_1.STITCHED.test(text) && !(0, rw1_common_ts_1.joiningPart)(parts, solutionIn)) {
+            const named = (0, rw1_common_ts_1.namedParts)(text, parts, brief.short);
+            if (named.length)
+                return `${P} as one platform, which brings together ${(0, dealtext_ts_1.joinList)(named)}`;
+        }
+        return partFor(text);
+    };
+    const pairs = threats.map((t) => ({ t, part: partFor(t.text), label: labelFor(t.text) })).filter((x) => x.part);
     const sponsorOf = (text) => {
         let best;
         let n = 0;
@@ -179,7 +188,7 @@ function buildAccountPlan(args, d) {
     if (parts.length) {
         grow.push(`${footprint}${P} lists these parts: ${(0, dealtext_ts_1.joinList)(parts)}. ${productsIn ? 'The description does not say which of them the account already runs, so the first conversation is to find out; each part they do not use is whitespace.' : existing ? 'Find out which of them the account already runs; each part they do not use is whitespace.' : `Land with the part that answers the account's sharpest pain, then widen.`}`);
         if (pairs.length)
-            grow.push(`Where the account's own pain points to a part:\n\n${pairs.map((x) => `- ${(0, rw1_common_ts_1.quoted)(x.t.text)} points to ${x.part}.`).join('\n')}`);
+            grow.push(`Where the account's own pain points to a part:\n\n${pairs.map((x) => `- ${(0, rw1_common_ts_1.quoted)(x.t.text)} points to ${x.label}.`).join('\n')}`);
         else if (threats.length)
             grow.push(`None of the parts maps cleanly onto the alternatives you listed, so ask the champion which problem they would hand over first and start with the part that answers it.`);
     }

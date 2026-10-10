@@ -31,6 +31,9 @@ const COST_ALT = [
 // what a quoted result tells you to measure (no seat or licence idea: the business model is not assumed)
 function measureOf(text, metrics = []) {
     const t = text.toLowerCase();
+    // a study's return figure is not this buyer's: it tells you to measure the buyer's own cost and the share a change removes, whatever the product in the sentence is called
+    if (/\broi\b|\breturn on investment\b|\bpayback\b/.test(t))
+        return 'the buyer\'s own yearly cost of the current way of working and the share of it a change would remove, because a study\'s return figure is not this buyer\'s';
     if (/credential|exposed|leak|vulnerab|phish|threat|attack|takedown|fraud/.test(t) && !/return|rto/.test(t))
         return 'how many exposures, threats or attempts the buyer finds and closes today, how long that takes, and what one costs when it is used against them';
     if (/dispatch|planning time|planning/.test(t))
@@ -150,8 +153,11 @@ function buildRoiStructure(args, i, d) {
             const n = seen.get(l.id) || 0;
             seen.set(l.id, n + 1);
             const q = n === 0 ? (COST_Q[l.id] || COST_Q.general) : COST_ALT[(n - 1) % COST_ALT.length];
-            const part = bestPart(l.text);
-            if (part)
+            const named = (0, rw1_common_ts_1.namedParts)(l.text, parts, brief.short);
+            const part = named.length ? (0, dealtext_ts_1.joinList)(named) : bestPart(l.text);
+            if (named.length)
+                named.forEach((x) => partUse.add(x));
+            else if (part)
                 partUse.add(part);
             return `| ${d.cap(l.text)} | "${q}" |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`;
         });
@@ -174,8 +180,8 @@ function buildRoiStructure(args, i, d) {
         out.push(`## Results you quoted\n\n${i.knownMetrics}\n\nThese are text. They are not used in a calculation until you give them as the numbers named at the end.`);
     }
     // ---- the case written out, from the inputs only ----
-    const lineParts = lines.map((l) => ({ line: (0, rw1_common_ts_1.lowerStart)((0, rw1_common_ts_1.stripEnd)(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: bestPart(l.text) }));
-    const answered = lineParts.filter((x) => x.part).slice(0, 3);
+    const lineParts = lines.map((l) => ({ line: (0, rw1_common_ts_1.lowerStart)((0, rw1_common_ts_1.stripEnd)(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: ((n) => (n.length ? (0, dealtext_ts_1.joinList)(n) : bestPart(l.text)))((0, rw1_common_ts_1.namedParts)(l.text, parts, brief.short)) }));
+    const answered = lineParts.filter((x) => x.part).slice(0, 4);
     const measured = [...new Set(results.slice(0, 3).map((p) => measureOf(p.text, v ? v.metrics : [])))].slice(0, 2);
     if (costLines.length) {
         out.push(`## The case in words\n\n${(0, dealtext_ts_1.upperFirst)(who === 'the buyer' ? customer : who)} handles it today like this: ${(0, dealtext_ts_1.joinList)(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${(0, dealtext_ts_1.joinList)(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${measured.length === 1 ? (0, rw1_common_ts_1.lowerStart)(measured[0]) : `first, ${(0, rw1_common_ts_1.lowerStart)(measured[0])}; second, ${(0, rw1_common_ts_1.lowerStart)(measured[1])}`}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);

@@ -306,7 +306,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   }
   // the answers are read in the order they appear in the script, and no sentence is repeated from one answer to the next
   dedupeAnswers([...shown.flatMap((s) => s.objections), ...atDiscussion, ...atClose].map((o) => answers.get(o)!));
-  // a part an answer promises to show ("I will show how it handles it: Glean Protect") is shown there, so it is not listed as left out
+  // a part an answer promises to show ("I will show how it handles it: Findwell Protect") is shown there, so it is not listed as left out
   const inSteps = new Set(shown.flatMap((s) => s.objections));
   const answerOf = (n: string): string | undefined => [...answers.entries()].find(([o, a]) => inSteps.has(o) && a.say.toLowerCase().includes(n.toLowerCase()))?.[0];
   const shownInAnswer = notShownCaps0.filter((n) => answerOf(n));

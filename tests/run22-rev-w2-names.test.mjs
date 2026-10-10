@@ -23,7 +23,7 @@ const WORDS = ["Digital", "Technologies", "Technology", "Tech", "Services", "Sol
 // [company, product]: one word, two words, a descriptor second word in capitals and in lower case, camel case, dot, ampersand, hyphen, digit, a common first word, a company that differs from the product
 const SHAPES = [
   ["Zorbix", "Zorbix"], ["Dava.Flow", "Dava.Flow"], ["Fox & Hound", "Fox & Hound"], ["Re-Source", "Re-Source"], ["Route66", "Route66"], ["Bridge", "Bridge"], ["iTrackr", "iTrackr"], ["eMarker", "eMarker"],
-  ["Global Freightways", "Global Freightways"], ["Digital Harbour", "Digital Harbour"], ["North Star Analytics", "North Star"], ["Tanla Platforms", "Wisely"], ["Orbital Labs Ltd", "Orbital Cloud"], ["Open Ledger Group", "Open Ledger"],
+  ["Global Freightways", "Global Freightways"], ["Digital Harbour", "Digital Harbour"], ["North Star Analytics", "North Star"], ["Quikpay Platforms", "Quikly"], ["Orbital Labs Ltd", "Orbital Cloud"], ["Open Ledger Group", "Open Ledger"],
   ["Fox & Hound Systems", "Fox & Hound Systems"], ["Cloud Kitchens Group", "Cloud Kitchens Group"], ["Pine & Co Digital", "Pine & Co Digital"], ["Sky Global Holdings", "Sky Global Holdings"],
   ...WORDS.flatMap((w) => [[`Quillnest ${w}`, `Quillnest ${w}`], [`eMarker ${w}`, `eMarker ${w}`], [`Quillnest ${w.toLowerCase()}`, `Quillnest ${w.toLowerCase()}`], [`Quillnest`, `Quillnest ${w.toLowerCase()}`]]),
 ];

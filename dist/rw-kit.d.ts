@@ -47,7 +47,7 @@ export interface Capability {
 export declare const isStat: (t: string) => boolean;
 /** A verb a presenter can act on: an item that starts with one is a flow to run, even when it holds a number ("send two messages"). */
 export declare const DEMO_VERB: RegExp;
-/** The name as the user typed it at the start of the description ("eClerx digital"). It is written once in each answer, so the full name is always there. */
+/** The name as the user typed it at the start of the description ("Voxel digital"). It is written once in each answer, so the full name is always there. */
 export declare function productHead(brief: SolutionBrief, full: string): string;
 /** The name used in running text: the typed name without a lower case word that only says what kind of firm it is. */
 export declare function productName(brief: SolutionBrief, full: string): string;
@@ -58,7 +58,7 @@ export declare function readProduct(full: string, name: string): {
     kind: string;
     caps: Capability[];
 };
-/** The part with what the user said it does, for reference in a sentence: "Verify (check a borrower's bank account)", "Glean Intelligence for routing work". */
+/** The part with what the user said it does, for reference in a sentence: "Verify (check a borrower's bank account)", "Findwell Intelligence for routing work". */
 export declare const capText: (c: Capability) => string;
 /** The part as it is said aloud: "Verify, which checks a borrower's bank account", "Watch, sanctions and watchlist screening", "AI agents that act on exceptions". */
 export declare function capSay(c: Capability): string;

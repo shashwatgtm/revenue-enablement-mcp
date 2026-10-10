@@ -121,7 +121,7 @@ function leadingCapitals(name) {
 }
 // Run 22 round 2: a single word before the first comma is a name only when it is not an everyday word of the trade or an adjective ("Cloud-native, composable core
 // banking ...", "Operations, finance and ...", "Systematic, ..." and "Intelligent, ..." are the start of a description, not names). A word with a capital inside or a
-// digit or a dot (eClerx, GitLab, project44, Gnani.ai) is always a name.
+// digit or a dot (Voxel, Bitlane, fleet44, Voxa.ai) is always a name.
 const GENERIC_WORDS = new Set(('the our your this that cloud route enterprise global digital smart mobile online open ai api saas software platform automated managed integrated unified modern secure intelligent ' +
     'connected payment payments customer customers business data ecommerce multi next first operations operating retail product products financial finance runtime fully complete end all single voice agentic ' +
     'composable real full new one any every fast simple flexible powerful leading trusted human machine learning security identity network networks service services solution solutions system systems tool tools ' +
@@ -151,7 +151,7 @@ function isClearName(name) {
         return /^[A-Za-z0-9][A-Za-z0-9.&'+-]*$/.test(toks[0]) && !NOT_A_NAME.test(toks[0]) && !isGenericWord(toks[0]);
     if (!/^[A-Z0-9]/.test(toks[0]) || NAME_JOINERS.test(toks[toks.length - 1]))
         return false;
-    // run 22 round 2: several words are a name only when at least two of them are capitalised ("Acme CRM", "Tap Payments") or the name holds "from" or "by";
+    // run 22 round 2: several words are a name only when at least two of them are capitalised ("Acme CRM", "Pay Hub") or the name holds "from" or "by";
     // "Agentic transportation management system" and "AI-native business operations" are descriptions
     if (toks.filter((t) => /^[A-Z0-9]/.test(t)).length < 2 && !toks.some((t) => /^(?:from|by)$/i.test(t)))
         return false;

@@ -69,7 +69,7 @@ function wordHits(text: string, part: string): number {
   return seen.size;
 }
 export function matchPart(text0: string, parts: string[], product = ''): string {
-  // the product's own name is in many parts and many results ("with GitLab", "GitLab Duo") and says nothing about which part answers
+  // the product's own name is in many parts and many results ("with Bitlane", "Bitlane Duo") and says nothing about which part answers
   const nameRe = product && product.length > 2 ? new RegExp(`\\b${escapeRe(product)}\\b`, 'gi') : null;
   const text = nameRe ? text0.replace(nameRe, ' ') : text0;
   let best = ''; let n = 0; let h = 0;
@@ -606,7 +606,7 @@ export function dedupeAnswers<T extends { text: string; a: QAnswer }>(items: T[]
 }
 
 const escapeRe = (x: string): string => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** True only for a word that is clearly a name: it has a capital inside or a digit or a dot (eClerx, GitLab, project44, Gnani.ai), or it is capitalised, is not a common word,
+/** True only for a word that is clearly a name: it has a capital inside or a digit or a dot (Voxel, Bitlane, fleet44, Voxa.ai), or it is capitalised, is not a common word,
  *  adjective or noun of the trade (no hyphen, no adjective ending), and the user also wrote it that way elsewhere or typed it as "Name, a description". */
 function nameLike(tok: string, evidence: string, namedByArticle: boolean): boolean {
   if (!tok || tok.length < 3) return false;

@@ -299,7 +299,7 @@ export const DEMO_VERB = /^(?:send|create|track|get|see|view|search|export|impor
 const ARCH_CLAIM = /^(?:cloud[- ]native|multi[- ]tenant|scalable|enterprise[- ]grade|secure|reliable|robust|flexible|api[- ]first|ai[- ]native|saas|offline[- ]first)$/i;
 
 /** The name used for the product in running text, also when solutionBrief finds no clear name. */
-/** "eClerx digital, data and customer experience services": the lower case word after the name only says what kind of firm it is, so the name is "eClerx".
+/** "Voxel digital, data and customer experience services": the lower case word after the name only says what kind of firm it is, so the name is "Voxel".
  *  A word written with a capital ("Quillnest Digital", "Hexa Services") is part of the name and stays. */
 const DESCRIPTOR = /^(?:digital|technology|technologies|tech|services|solutions|software|systems|group|global|labs|consulting|ventures|international|holdings|networks|platform|platforms|cloud|data|analytics)$/;
 const trimDescriptor = (name: string): string => { const w = name.trim().split(/\s+/); return w.length === 2 && /[A-Z]/.test(w[0]) && DESCRIPTOR.test(w[1]) && !isGenericWord(w[0]) ? w[0] : name; };
@@ -309,7 +309,7 @@ function typedName(brief: SolutionBrief, full: string): string {
   // one word before the first comma is a name only when it can be one (not "Cloud-native" or "Operations"); a short phrase is used whole
   return first && first.split(/\s+/).length <= 6 && !(first.split(/\s+/).length === 1 && isGenericWord(first)) ? first : '';
 }
-/** The name as the user typed it at the start of the description ("eClerx digital"). It is written once in each answer, so the full name is always there. */
+/** The name as the user typed it at the start of the description ("Voxel digital"). It is written once in each answer, so the full name is always there. */
 export function productHead(brief: SolutionBrief, full: string): string { return typedName(brief, full); }
 /** The name used in running text: the typed name without a lower case word that only says what kind of firm it is. */
 export function productName(brief: SolutionBrief, full: string): string { return trimDescriptor(typedName(brief, full)); }
@@ -445,7 +445,7 @@ function shortKindOf(k: string): string {
   x = x.split(/\s+(?:that|which|where)\s+|[:;]\s*/i)[0].trim();
   return clip(x, 110);
 }
-/** The part with what the user said it does, for reference in a sentence: "Verify (check a borrower's bank account)", "Glean Intelligence for routing work". */
+/** The part with what the user said it does, for reference in a sentence: "Verify (check a borrower's bank account)", "Findwell Intelligence for routing work". */
 export const capText = (c: Capability): string => (!c.desc ? (c.stat && c.stat.toLowerCase().includes(c.name.toLowerCase()) ? c.stat : c.name) : /^(?:that|which|for|as)\s/i.test(c.desc) ? `${c.name} ${c.desc}` : `${c.name} (${c.desc})`);
 const SAY_VERB = /^(check|predict|send|confirm|route|draft|score|keep|screen|verify|find|link|show|track|manage|plan|build|detect|block|monitor|measure|report|create|connect|accept|make|pay|run|test|protect|secure|store|search|answer|resolve|unify|automate|identify|generate|collect|reconcile|approve|capture|convert|discover|enable|extract|forecast|issue|orchestrate|prioriti[sz]e|process|provide|record|review|scan|schedule|sync|transfer|translate|trigger|validate|read|write|speak|bring|join|help|let|give|turn|move|take|cut|raise|reduce|improve|save|speed|match|pull|push|flag|rank|alert|notify|fix|analy[sz]e|compare|enrich|clean|catch)(e?s)?\b/i;
 /** The part as it is said aloud: "Verify, which checks a borrower's bank account", "Watch, sanctions and watchlist screening", "AI agents that act on exceptions". */

@@ -305,7 +305,14 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
     const ms = v.metrics.map((x, i) => ({ x, i, n: shares(x, rank) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 3).map((o) => o.x);
     qs.push(`Did the buyer${seg ? ` (${seg})` : ''} judge the result on ${joinList(ms)}, or on something else?`);
   }
+  // the sector kind's own words (delivery rate, sender registration, throughput ...) are put to the buyer in a developer led deal, where they are what the developers test
+  if (v && devLed && v.vocabulary.length >= 3) {
+    const rankText = `${details} ${P.full}`;
+    const vs = v.vocabulary.map((x, i) => ({ x, i, n: shares(x, rankText) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 4).map((o) => D.lower(o.x));
+    qs.push(`Which of ${joinList(vs)} came up in the buyer's evaluation, and how did each option do on it?`);
+  }
   if (reason && outcome === 'lost') qs.push(`Was the reason you recorded the real reason or the polite one, and who inside the buyer first said it?`);
+  else if (!reason && outcome !== 'won' && !isPortfolio) qs.push(`In the buyer's own words, why did they decide as they did about ${name}, and who said it first?`);
   const qBlock = qs.length ? `## Questions for the review call\n\n${qs.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n\n` : '';
 
   // ---- sector notes, below the write-up ----

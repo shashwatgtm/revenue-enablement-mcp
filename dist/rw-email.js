@@ -70,6 +70,15 @@ function painAtoms(text) {
 const STEM_STOP = new Set(['sale', 'serv', 'cust', 'mark', 'team', 'tool', 'data', 'mana', 'syst', 'plat', 'proc', 'work', 'with', 'more', 'from', 'that', 'this', 'have', 'they', 'your', 'their', 'into', 'over', 'only', 'also', 'each', 'such', 'than', 'solu', 'prod', 'busi', 'comp', 'enab', 'help', 'real', 'time', 'fast', 'lowe', 'fewe', 'high', 'effi', 'when', 'what', 'ente', 'need', 'many', 'much', 'across']);
 const stems = (t) => new Set((t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.replace(/s$/, '').slice(0, 4)).filter((w) => !STEM_STOP.has(w)));
 const overlap = (a, b) => { const sb = stems(b); return [...stems(a)].filter((w) => sb.has(w)).length; };
+// Words that name the same job from the problem side and from the product side ("cart abandonment" and "checkout", "payouts" and "disbursing"): a problem and a product part, result or headline that
+// share no word but sit in one group speak to each other. Text about kinds of work only: no company, figure or claim.
+const RELATED = [
+    ['cart', 'checkout', 'basket', 'abandon'], ['payout', 'disburs', 'payable', 'remittance'], ['reconcil', 'settle', 'ledger'], ['refund', 'dispute', 'chargeback'],
+    ['fraud', 'phish', 'scam', 'spoof', 'spam'], ['scan', 'vulnerab', 'assess', 'penetrat', 'pentest', 'binar'], ['search', 'knowledge', 'retriev', 'discover'],
+    ['invoice', 'billing', 'receivable'], ['shipment', 'freight', 'tracking', 'carrier'], ['recruit', 'candidate', 'applicant', 'hiring'], ['forecast', 'demand', 'inventory'],
+];
+const hasStem = (text, stem) => new RegExp(`\\b${stem}`, 'i').test(text);
+const related = (a, b) => RELATED.some((g) => g.some((w) => hasStem(a, w)) && g.some((w) => hasStem(b, w)));
 /** A list of figures ("a 3.7%, 49% more work, 15 days faster") is cut into atoms, each used once; atoms with the same figures count as one. */
 function atomsOf(items, rank, fitText) {
     const out = [];
@@ -104,7 +113,7 @@ function atomsOf(items, rank, fitText) {
                 kind = 'quote';
             else if (kind !== 'quote' && kind !== 'recognition' && /\b(?:partner of the year|award|winner|ranked|recogni[sz]ed|certified|named a|visionary|magic quadrant|forrester|gartner|idc\b|g2\b)/i.test(p) && !/\d\s?%/.test(p))
                 kind = 'recognition';
-            out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: (0, rw_common_ts_1.sourceOf)(it.label), item: it, score: overlap(p, rank), fit: overlap(p, fitText) });
+            out.push({ text: p.replace(/[.]+$/, '').trim(), kind, label: it.label, src: (0, rw_common_ts_1.sourceOf)(it.label), item: it, score: overlap(p, rank), fit: overlap(p, fitText) + (related(p, fitText) ? 1 : 0) });
         }
     }
     return out;
@@ -243,6 +252,35 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     };
     const coversOf = (ps, lead) => (0, rw_common_ts_1.endSentence)(`${lead} ${partsVerb(ps)}`);
     const covers = nearParts.length ? coversOf(nearParts, whatIs ? 'It' : name) : '';
+    // the part that answers a given clause of the problem: the clause's own whole words first (payouts, reconciliation), the earliest of them winning a tie, then the related words; '' when none matches
+    const PART_STOP = new Set(['with', 'from', 'that', 'this', 'into', 'have', 'over', 'their', 'your', 'manual', 'hard', 'high', 'many', 'more', 'most', 'very', 'make', 'accept', 'every', 'each', 'when', 'what', 'while']);
+    const wholeWords = (t) => (t.toLowerCase().match(/[a-z]{4,}/g) || []).map((w) => w.replace(/s$/, '')).filter((w) => !PART_STOP.has(w));
+    const partFor = (a) => {
+        const aw = wholeWords(a);
+        let best = '';
+        let bestN = 0;
+        let bestAt = 99;
+        for (const pt of parts.filter(cleanPart)) {
+            const pw = new Set(wholeWords(pt));
+            const hits = aw.map((w, i) => ({ w, i })).filter((o) => pw.has(o.w));
+            const n = hits.length * 2 + (related(a, pt) ? 1 : 0);
+            const at = hits.length ? hits[0].i : 99;
+            if (n > bestN || (n === bestN && n > 0 && at < bestAt)) {
+                best = pt;
+                bestN = n;
+                bestAt = at;
+            }
+        }
+        return best;
+    };
+    const partLine = (part) => {
+        if (!part)
+            return '';
+        const k = (part.length + name.length) % 3;
+        if (VERB_PART.test(part))
+            return (0, rw_common_ts_1.endSentence)(k === 0 ? `Within ${name}, the part that speaks to this lets you ${part}` : k === 1 ? `${name} lets you ${part}, which is the part to look at for this` : `For this problem, ask how ${name} lets you ${part}`);
+        return (0, rw_common_ts_1.endSentence)(k === 0 ? `Within ${name}, the part that speaks to this is ${part}` : k === 1 ? `${(0, dealtext_ts_1.upperFirst)(part)} is the part of ${name} to look at for this` : `For this problem, the part of ${name} to ask about is ${part}`);
+    };
     // ---- the value: the aim, and the figures that came with it ----
     const valueItems = (0, rw_common_ts_1.listItems)(valueText).map((x) => (0, dealtext_ts_1.parseProof)(x)[0] || { text: x, label: '', kind: 'story' });
     const mainItem = valueItems.find((x) => !x.label) || valueItems[0];
@@ -284,12 +322,13 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const offTopic = (a) => a.kind !== 'recognition' && a.fit === 0 && otherParts.some((pt) => overlap(a.text, pt) > 0);
     const take = (kinds, n) => {
         const out = [];
-        for (const k of kinds) {
-            for (const a of bag.filter((x) => x.kind === k).sort((x, y) => y.score - x.score)) {
-                if (out.length < n && !offTopic(a)) {
-                    out.push(a);
-                    bag.splice(bag.indexOf(a), 1);
-                }
+        // proof from the reader's own sector (a financial case study for a bank) comes before proof of the same kind from another sector; otherwise the order is by kind, then by fit with the pain
+        const cands = kinds.flatMap((k, ki) => bag.filter((x) => x.kind === k).map((a) => ({ a, ki, ind: industry && overlap(a.text, industry) > 0 ? 1 : 0 })));
+        cands.sort((x, y) => y.ind - x.ind || x.ki - y.ki || y.a.score - x.a.score);
+        for (const { a } of cands) {
+            if (out.length < n && !offTopic(a)) {
+                out.push(a);
+                bag.splice(bag.indexOf(a), 1);
             }
         }
         out.forEach(usedNow);
@@ -471,8 +510,12 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const alsoPain = (p2, p3) => {
         const whole = (x) => !!x && !fragment(x) && clauseLike(x);
         const lc = (x) => lowerKeep(x).replace(/[.]+$/, '');
-        if (whole(p2))
-            return `On top of that, ${lc(p2)}.${p3 ? (whole(p3) ? ` And there is more: ${lc(p3)}.` : ` And a third part: ${p3}.`) : ''}`;
+        if (whole(p2)) {
+            const k = (p2.length + p3.length) % 3;
+            const first = k === 0 ? `On top of that, ${lc(p2)}.` : k === 1 ? `Another part of the same problem is that ${lc(p2)}.` : `Also, ${lc(p2)}.`;
+            const second = !p3 ? '' : !whole(p3) ? ` And a third part: ${p3}.` : k === 0 ? ` And there is more: ${lc(p3)}.` : k === 1 ? ` Then there is this: ${lc(p3)}.` : ` Finally, ${lc(p3)}.`;
+            return `${first}${second}`;
+        }
         return `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}`;
     };
     const stayWith = (a) => (a ? `I have written a few times about ${painRef(a)}` : `I have written a few times about ${topic}`);
@@ -489,7 +532,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                 r3.length ? facts(r3) : measuresLine,
                 p2 ? alsoPain(p2, p3) : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
                 !r3.length && p2 ? qLead(nextQ()) : '',
-                nearParts[0] ? (VERB_PART.test(nearParts[0]) ? (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this lets you ${nearParts[0]}`) : (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this is ${nearParts[0]}`)) : '',
+                partLine(p2 ? partFor(p2) : (nearParts[0] || '')),
                 controlPart ? (0, rw_common_ts_1.endSentence)(`For ${indLow}, ${controlPart} is the part to look at for risk and control`) : '',
                 ask(2)
             ]);
@@ -644,7 +687,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${(0, dealtext_ts_1.proofPhrase)(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
     // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
     const spokenTo = `${solution} ${valueText} ${proofText}`;
-    const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2);
+    const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2 && !related(a, spokenTo));
     if (atomsP.length && unspoken.length)
         checks.push(`Nothing you gave speaks to: ${unspoken.map((x) => `“${(0, dealtext_ts_1.clip)(x, 90)}”`).join('; ')}. Add a part of the product, a result or a customer line that answers ${unspoken.length === 1 ? 'it' : 'them'}; until then the emails can only name ${unspoken.length === 1 ? 'it' : 'them'}.`);
     const sharpen = [];

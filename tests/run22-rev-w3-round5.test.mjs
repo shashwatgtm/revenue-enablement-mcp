@@ -43,7 +43,7 @@ const D2C = {
   sequence_type: "cold_outreach", target_persona: "Founder", target_industry: "E-commerce and D2C",
   your_solution: "Payfern, payments and banking platform: accept online and in-store payments (100+ payment methods), make payouts, business banking through partner banks, payroll, credit and loans, and international payments",
   key_value_prop: "a fast, affordable and secure way to accept and disburse payments online and own a current account",
-  specific_pain_point: "high cart abandonment and return to origin (RTO) rates for ecommerce and D2C brands; hard vendor payouts, payment splitting and manual reconciliation",
+  specific_pain_point: "high cart abandonment and return to origin (RTO) rates for ecommerce and D2C brands; hard vendor payouts, payment splitting and manual reconciliation; slow warehouse handling of parcels",
   social_proof: "Knitwell increases order conversion rate by 100% with Payfern Magic Checkout (case study headline); Goodmart increases revenue by 22% with Payfern Payment Links (case study headline)",
   call_to_action: "20-minute call", tone: "consultative", sender_context: "Payfern sales team",
 };
@@ -53,7 +53,8 @@ test("a D2C founder: email 1 pitches the part for the problem it opens with, no 
   assert.doesNotMatch(es[0], /international payments|payouts/i, "email 1 pitches parts for another problem");
   assert.match(es[0], /accept online and in-store payments/i);
   assert.doesNotMatch(draft(t), /time to first live payment|time to go live|webhook|sandbox/i, "a developer measure for a founder");
-  assert.match(t, /Nothing you gave speaks to[^\n]*return to origin/i);
+  assert.match(t, /Nothing you gave speaks to[^\n]*slow warehouse handling of parcels/i);
+  assert.doesNotMatch(t, /Nothing you gave speaks to[^\n]*cart abandonment/i, "a checkout headline does speak to cart abandonment");
 });
 
 const KNOW = {

@@ -1,1 +1,1 @@
-{"version":3,"file":"rw-winloss.d.ts","sourceRoot":"","sources":["../src/rw-winloss.ts"],"names":[],"mappings":"AAOA,OAAO,EAAoF,KAAK,IAAI,EAAY,MAAM,gBAAgB,CAAC;AAyDvI,wBAAgB,YAAY,CAAC,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,EAAE,CAAC,EAAE,IAAI,GAAG,MAAM,CAkR3E"}
+{"version":3,"file":"rw-winloss.d.ts","sourceRoot":"","sources":["../src/rw-winloss.ts"],"names":[],"mappings":"AAOA,OAAO,EAAoF,KAAK,IAAI,EAAY,MAAM,gBAAgB,CAAC;AAyDvI,wBAAgB,YAAY,CAAC,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,EAAE,CAAC,EAAE,IAAI,GAAG,MAAM,CAwR3E"}

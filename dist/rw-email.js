@@ -146,7 +146,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const senderIn = (args.sender_context || '').trim();
     const ctx = (0, rw_common_ts_1.readSector)(undefined, { seller: [solution], context: [valueText, painText], role: [persona], buyer: [industry] });
     const P = (0, rw_common_ts_1.productOf)(solution, D);
-    const v = ctx.v;
+    const v = (0, rw_common_ts_1.fitSector)(ctx.v, ctx.fixedLink, ctx.model, solution);
     const investment = ctx.model === 'investment';
     const sellerSw = !!v && v.id === 'saas' && !/software|saas|technology|internet|app\b/i.test(industry);
     const vv = v && !sellerSw ? v : null;
@@ -174,11 +174,16 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // ---- the product ----
     const parts = (0, rw_common_ts_1.partsIn)(P);
     const painAndValue = `${painText} ${valueText}`;
-    const nearAll = parts.map((x, i) => ({ x, i, n: overlap(x, painAndValue) })).filter((o) => o.n > 0).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.x);
+    // the part that answers the problem the first email opens with counts double; a part that answers only a later clause is not pitched in email 1
+    const atom0First = atomsP[0] || '';
+    const scoredParts = parts.map((x, i) => ({ x, i, n: 2 * overlap(x, atom0First) + overlap(x, painAndValue) })).filter((o) => o.n > 0).sort((a, b) => b.n - a.n || a.i - b.i);
+    const nearAll = scoredParts.map((o) => o.x);
+    const topPart = scoredParts.length ? scoredParts[0].n : 0;
+    const nearStrong = scoredParts.filter((o) => o.n * 2 >= topPart).map((o) => o.x);
     // a part that is a cut piece of a longer item ("one setup for local" from "one setup for local, regional and global payment methods") is never a topic
     const cleanPart = (x) => x.length <= 28 && !/^(?:one|two|three|single|all|any|every)\b/i.test(x) && !/\b(?:for|to|of|with|and|or|the|a|an|on|in|local|regional|global|national|domestic|international|digital|cloud|secure|unified|single)$/i.test(x);
-    const nearClean = nearAll.filter((x) => cleanPart(x) && !/\band\b/i.test(x));
-    const nearParts = nearClean.length ? nearClean : nearAll.filter((x) => cleanPart(x) || x.length <= 40);
+    const nearClean = nearStrong.filter((x) => cleanPart(x) && !/\band\b/i.test(x));
+    const nearParts = nearClean.length ? nearClean : nearStrong.filter((x) => cleanPart(x) || x.length <= 40);
     const kindShort = P.kind ? (0, dealtext_ts_1.clip)(P.kind.replace(/^(?:a|an|the)\s+/i, '').split(/\s+(?:for|that|which|with|of|covering|including|made)\s+/i)[0], 40) : '';
     const kindTopicRaw = kindShort.replace(/\s+(?:platform|service|services|software|tool|tools|solution|solutions|system|product|products|suite|application|app)$/i, '').trim();
     // the kind is a topic only when it is a short noun phrase of plain words ("CI/CD", "IoT connectivity"), not a run of adjectives ("single API led intelligent")
@@ -241,15 +246,36 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // ---- the value: the aim, and the figures that came with it ----
     const valueItems = (0, rw_common_ts_1.listItems)(valueText).map((x) => (0, dealtext_ts_1.parseProof)(x)[0] || { text: x, label: '', kind: 'story' });
     const mainItem = valueItems.find((x) => !x.label) || valueItems[0];
-    const aim = (mainItem?.text || '').replace(/[.]+$/, '').trim();
+    let aim = (mainItem?.text || '').replace(/[.]+$/, '').trim();
+    // "<an aim in words>: 40% faster ..., 30% lower ...": the figures after the colon are proof (used once, with the same source), the aim stays short
+    const extraClaims = [];
+    const aimColon = aim.indexOf(': ');
+    if (mainItem && aimColon >= 30 && !/\d/.test(aim.slice(0, aimColon)) && /\d/.test(aim.slice(aimColon + 2))) {
+        extraClaims.push({ ...mainItem, text: aim.slice(aimColon + 2).trim(), kind: 'result' });
+        aim = aim.slice(0, aimColon).trim();
+    }
+    if (aim.length > 150) {
+        const cutAt = aim.search(/,\s+(?:with|from|so|and|while|without)\s+/);
+        if (cutAt >= 40) {
+            // what is cut off is kept when it holds a figure: it becomes proof with the same source
+            const tail = aim.slice(cutAt).replace(/^,\s+(?:with|from|so|and|while|without)\s+/i, '').trim();
+            if (mainItem && /\d/.test(tail))
+                extraClaims.push({ ...mainItem, text: tail, kind: 'result' });
+            aim = aim.slice(0, cutAt).trim();
+        }
+    }
     const aimSrc = mainItem ? (0, rw_common_ts_1.sourceOf)(mainItem.label) : (0, rw_common_ts_1.sourceOf)('');
     const aimLine = aim ? (0, rw_common_ts_1.endSentence)(aimSrc.type === 'page' ? `On its own site, ${name} puts the aim this way: ${aim}${aimSrc.basis ? ` (${aimSrc.basis})` : ''}` : `What we aim for with ${name}: ${aim}`) : '';
-    const valueClaims = valueItems.filter((x) => x.label && x !== mainItem);
+    const valueClaims = [...valueItems.filter((x) => x.label && x !== mainItem), ...extraClaims];
     // ---- the proof: split into atoms, ranked for this reader, each used once ----
     const proofItems = (0, dealtext_ts_1.parseProof)(proofText);
     const rank = `${painText} ${persona} ${industry} ${(vv?.metrics || []).join(' ')}`;
     const bag0 = [...proofItems, ...valueClaims];
     const bag = atomsOf(bag0, rank, `${painText} ${persona} ${industry}`);
+    // the sender's own headline figure (from the value proposition) is used before a customer's figure of the same weight
+    for (const a of bag)
+        if (valueClaims.includes(a.item))
+            a.score += 2;
     const usedItems = [];
     const usedNow = (a) => { if (!usedItems.includes(a.item))
         usedItems.push(a.item); };
@@ -299,6 +325,18 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         // a phrase typed in small letters is a fragment, not a sentence: it gets a lead-in and keeps its words as typed
         return /^[a-z]/.test(t) && !/^[a-z]+[A-Z]/.test(t) ? (0, rw_common_ts_1.endSentence)(`${a.kind === 'story' ? 'One example' : 'On record'}: ${t}`) : (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.sentenceCase)(t));
     };
+    // proof from another sector than the reader's (an airline for a bank) gets one sentence that says so, the first time it is used
+    const OTHER_SECTOR = [[/\bairlines?\b/i, 'airlines'], [/\bretail(?:ers?)?\b/i, 'retail'], [/\bhospitals?\b/i, 'hospitals'], [/\bmanufactur\w+/i, 'manufacturing'], [/\butilit(?:y|ies)\b/i, 'utilities'], [/\buniversit(?:y|ies)\b/i, 'universities'], [/\bgovernment\b/i, 'government'], [/\bshipping\b/i, 'shipping']];
+    let bridged = false;
+    const bridge = (as) => {
+        if (bridged || !indLow)
+            return '';
+        const hit = OTHER_SECTOR.find(([re]) => as.some((a) => re.test(a.text)) && !re.test(indLow) && !re.test(persona));
+        if (!hit)
+            return '';
+        bridged = true;
+        return (0, rw_common_ts_1.endSentence)(`Examples like this come from ${hit[1]}, not from ${indLow}, so read them as pointers and not as results for your sector`);
+    };
     // facts that share a source are said together once ("X's own site reports: a; b (basis)"), never one sentence each with the same lead
     const facts = (as) => {
         const out = [];
@@ -320,6 +358,9 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             out.push(others.map(one).join(' '));
         for (const q of quotes)
             out.push(one(q));
+        const br = bridge(as);
+        if (br)
+            out.push(br);
         return out.join('\n\n');
     };
     // ---- the people and the questions ----
@@ -342,7 +383,10 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     let qi = 0;
     const nextQ = () => qPool.length ? qPool[qi++ % qPool.length] : '';
     const freshQ = () => (qi < qPool.length ? qPool[qi++] : '');
-    const measures = vv ? vv.metrics.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${aim}`) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 3).map((o) => o.m) : [];
+    // a developer measure ("time to first live payment", "uptime") is not offered to a reader who is not a developer or an engineer
+    const DEV_METRIC = /\b(?:time to first|time to go live|time to integrate|uptime|latency|api|webhook|sandbox|error rate|deploy\w*|release frequency|build time)\b/i;
+    const metricPool = vv ? (technical || practitioner || vv.metrics.filter((x) => !DEV_METRIC.test(x)).length < 2 ? vv.metrics : vv.metrics.filter((x) => !DEV_METRIC.test(x))) : [];
+    const measures = vv ? metricPool.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${aim}`) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 3).map((o) => o.m) : [];
     const personaPlain = D.lower(persona).replace(/\s*\([^)]*\)\s*/g, ' ').trim();
     const careLine = isUser ? (0, rw_common_ts_1.endSentence)(`For someone who works in ${famWord} every day, the test of a change is whether it makes the day's work quicker and easier to record`)
         : practitioner && personaPlain.length <= 80 ? (0, rw_common_ts_1.endSentence)(`For ${personaPlain}, the test of a change is whether it fits the tools and the work already in place`)
@@ -400,6 +444,22 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     };
     const rest = (n = 3) => { const r = bag.splice(0, n); r.forEach(usedNow); return r.length ? facts(r) : ''; };
     const lateRecognition = () => take(['recognition'], 1);
+    // an executive reader gets the strongest figure in the first email: a return on investment first, then hours, cost or revenue, then any percentage
+    const cLevel = /\b(?:c[a-z]o|chief)\b/i.test(persona);
+    const strongest = () => {
+        if (!senior)
+            return '';
+        const cand = bag.filter((a) => (a.kind === 'result' || a.kind === 'scale') && !offTopic(a)).map((a) => ({ a, w: (/\bROI\b|return on investment/i.test(a.text) ? 5 : 0) + (/\b(?:hours?|saved?|saves?|cost|revenue|reduc\w+|faster|fewer)\b/i.test(a.text) ? 2 : 0) + (/\d+(?:\.\d+)?\s?%/.test(a.text) ? 1 : 0) + a.fit })).filter((o) => o.w >= (cLevel ? 3 : 5)).sort((x, y) => y.w - x.w);
+        if (!cand.length)
+            return '';
+        const a = cand[0].a;
+        bag.splice(bag.indexOf(a), 1);
+        usedNow(a);
+        return facts([a]);
+    };
+    // in a regulated industry, the part of the product that is about safe use, control or audit is named once
+    const regulated = /\b(?:financ\w*|bank\w*|insur\w*|health\w*|government|public sector)\b/i.test(industry);
+    const controlPart = regulated ? parts.find((x) => /protect|secur|govern|complian|privacy|safe|audit|control/i.test(x) && !nearParts.includes(x)) : '';
     const subjPain = (a, fallback) => (a && clauseLike(a) && a.length <= 60 ? (0, rw_common_ts_1.sentenceCase)(a) : fallback);
     const openPain = () => {
         const a = nextPain();
@@ -407,11 +467,19 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             return `I am writing${inInd ? ` to people${inInd}` : ''} about ${topic}.${nextQ() ? ` ${nextQ()}` : ''}`;
         return tone === 'provocative' ? `A direct question: ${painRef(a)} Is that true on your side?` : painStatement(a);
     };
+    // the second and third part of the problem: a clause with its own verb is added to the first in a sentence of its own; a fragment is introduced
+    const alsoPain = (p2, p3) => {
+        const whole = (x) => !!x && !fragment(x) && clauseLike(x);
+        const lc = (x) => lowerKeep(x).replace(/[.]+$/, '');
+        if (whole(p2))
+            return `On top of that, ${lc(p2)}.${p3 ? (whole(p3) ? ` And there is more: ${lc(p3)}.` : ` And a third part: ${p3}.`) : ''}`;
+        return `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}`;
+    };
     const stayWith = (a) => (a ? `I have written a few times about ${painRef(a)}` : `I have written a few times about ${topic}`);
     const builders = {
         cold_outreach: () => {
             const first = atomsP[0] || '';
-            mail('Day 1', 'Opening', subjPain(first, `A question on ${topic}`), [openPain(), [whatIs, covers].filter(Boolean).join(' '), aimLine, technical || practitioner ? (0, rw_common_ts_1.endSentence)(`A question to start with: ${nextQ()}`) : '', ask(0)]);
+            mail('Day 1', 'Opening', subjPain(first, `A question on ${topic}`), [openPain(), [whatIs, covers].filter(Boolean).join(' '), aimLine, strongest(), technical || practitioner ? (0, rw_common_ts_1.endSentence)(`A question to start with${inInd ? ` for teams${inInd}` : ''}: ${nextQ()}`) : '', ask(0)]);
             const r2 = take(technical ? ['result', 'scale', 'story'] : ['result', 'scale'], 2);
             mail('Day 3', 'Result and question', r2.length ? `A result on ${topic}` : `One question on ${topic}`, [r2.length ? facts(r2) : measuresLine, qLead(nextQ()), ask(1)]);
             const r3 = take(['quote', 'story'], 2);
@@ -419,9 +487,10 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             const p3 = nextPain();
             mail('Day 7', r3.some((x) => x.kind === 'quote') ? 'In a customer\'s words' : r3.length ? 'An example' : 'Another angle', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${topic}` : r3.length ? `An example on ${topic}` : `${(0, dealtext_ts_1.upperFirst)(topic)} on the ground`, [
                 r3.length ? facts(r3) : measuresLine,
-                p2 ? `${clauseLike(p2) ? `The second part of the problem: ${p2}.` : `The second part of the problem is this: ${p2}.`}${p3 ? ` And a third part: ${p3}.` : ''}` : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
+                p2 ? alsoPain(p2, p3) : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
                 !r3.length && p2 ? qLead(nextQ()) : '',
                 nearParts[0] ? (VERB_PART.test(nearParts[0]) ? (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this lets you ${nearParts[0]}`) : (0, rw_common_ts_1.endSentence)(`Within ${name}, the part that speaks to this is ${nearParts[0]}`)) : '',
+                controlPart ? (0, rw_common_ts_1.endSentence)(`For ${indLow}, ${controlPart} is the part to look at for risk and control`) : '',
                 ask(2)
             ]);
             const roles = otherRoles.length ? (0, rw_common_ts_1.andList)(otherRoles.map((r) => `your ${r}`), 'or') : '';
@@ -570,9 +639,14 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const checks = [`Add the recipient's name after "${hello.replace(',', '')}" if you have it; the emails do not guess it.`];
     if (sequenceType === 'event_follow_up')
         checks.push('Name the event in email 1; the emails do not guess it.');
-    const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => a.indexOf(x) === i);
+    const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
     if (everyItem.length)
         checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${(0, dealtext_ts_1.proofPhrase)(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
+    // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
+    const spokenTo = `${solution} ${valueText} ${proofText}`;
+    const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2);
+    if (atomsP.length && unspoken.length)
+        checks.push(`Nothing you gave speaks to: ${unspoken.map((x) => `“${(0, dealtext_ts_1.clip)(x, 90)}”`).join('; ')}. Add a part of the product, a result or a customer line that answers ${unspoken.length === 1 ? 'it' : 'them'}; until then the emails can only name ${unspoken.length === 1 ? 'it' : 'them'}.`);
     const sharpen = [];
     if (!persona)
         sharpen.push('`target_persona` (a role): it would change the questions and the worries in the emails from general ones to those of that role, and the subject lines to suit it.');

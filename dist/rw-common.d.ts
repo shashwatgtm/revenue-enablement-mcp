@@ -18,7 +18,7 @@ export declare function readSector(explicitModel: unknown, input: {
     role?: unknown[];
     buyer?: unknown[];
 }): SectorRead;
-export declare function fitSector(v: Vertical | null, fixedLink: boolean, model: BusinessModel | null): Vertical | null;
+export declare function fitSector(v: Vertical | null, fixedLink: boolean, model: BusinessModel | null, productText?: string): Vertical | null;
 export interface Product {
     /** the name as typed ("Routelark", "Harbor BPO", "iLoop"); '' when the text gives no name */
     name: string;

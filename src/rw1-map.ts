@@ -5,7 +5,7 @@
 import { addWorkdays, describeWith, isoDate, joinList, onOrAfterWorkday, onOrBeforeWorkday, parseContacts, solutionBrief, upperFirst, weekdayName, workdaysBetween, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
-import { answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
+import { answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, readRole, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
 
 type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
 interface Step { m: string; who: Who; owner?: string }
@@ -66,7 +66,8 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const mr = readModel(ctx.model, ctx.line, solutionIn, [], [sellerOffers(reqIn, blockersIn)]);   // the seller's own words, and of the requirements and blockers only a question from its price page; the buyer's comparisons are not the seller's pricing
   const usage = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const P = brief.short || 'the solution';
-  const mw = modelWords(model, solutionIn, usage || undefined);
+  const mw0 = modelWords(model, solutionIn, usage || undefined);
+  const mw = v?.subtype === 'core-banking' ? { ...mw0, setup: 'the test environment, the integrations and the first product on the platform' } : mw0;
   const statedModel = mr.stated;
   // an owner led deal: the champion is the owner, no procurement contact or buying process was given. The owner decides and signs; the enterprise steps are left out.
   const OWNER_WORDS = /\b(?:owners?|founders?|proprietors?|shop ?keepers?|self[- ]employed|managing partner)\b/i;
@@ -232,7 +233,16 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
       { m: 'Review the result against the baseline and agree what the rollout covers and in what order', who: 'both' },
     ],
   };
-  const baseEval: Step[] = ownerLed ? [] : [...(stock || modelEval[model || 'saas'] || modelEval.saas)];
+  // a core banking platform is proved on one product or one new brand, with a migration rehearsal and the regulator told early, not with a trial of first users
+  const coreBankingEval: Step[] = [
+    { m: `Agree the proof of concept: one product or one new brand to run on ${P}, the baseline to beat (the time and the steps it takes to launch the same product on the current core) and the pass mark`, who: 'both' },
+    { m: 'List the systems the proof of concept must connect (payments, cards, channels, data warehouse) and name an owner and an interface for each', who: 'it' },
+    { m: `Configure the product on ${P} with the buyer's product team in a test environment and record the steps and the people involved`, who: 'champion' },
+    { m: 'Run a migration rehearsal on a sample of accounts: mapping, balance reconciliation, cutover steps and the rollback plan', who: 'it' },
+    { m: "Brief the buyer's regulatory reporting team and the regulator's contact on the proof of concept (reporting, data location and outsourcing) and agree what evidence they need", who: 'both' },
+    { m: 'Review the proof of concept against the baseline and agree which products or brands move next, and in what order', who: 'both' },
+  ];
+  const baseEval: Step[] = ownerLed ? [] : [...(stock || (v?.subtype === 'core-banking' ? coreBankingEval : undefined) || modelEval[model || 'saas'] || modelEval.saas)];
   const userGroups = evaluators.filter((e) => USERISH.test(e.title) || (e.level === 'group' && ownerLed));
   const ownerEval: Step[] = [
     { m: `Choose one outlet or one team and a few real trading days for the trial, and agree what ${ownerLed ? champRef : 'the buyer'} wants to see at the end${criteria.length ? ` (${criteria.slice(0, 2).map(lowerStart).join('; ')})` : ''}`, who: 'both' },
@@ -249,6 +259,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   else evalSteps.push(brief.short ? { m: `Reference calls with similar ${P} customers (only if one has agreed)`, who: 'champion' } : { m: 'Reference calls with similar customers (only if one has agreed)', who: 'champion' });
   const dedup = (steps: Step[]) => steps.filter((s, i) => steps.findIndex((t) => t.m === s.m) === i);
   const discoveryWho = [champion, economic, ...evaluators.map((e) => e.title)].filter(Boolean);
+  const hasStage = (st: string): boolean => bounds.some((b) => b.stage === st);
   const stepsFor: Record<string, Step[]> = {
     discovery: [
       { m: discoveryWho.length ? `Hold discovery sessions with ${joinList(discoveryWho.slice(0, 5))}` : 'Hold discovery sessions with each person who will judge the deal', who: 'both' },
@@ -273,16 +284,16 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
       ...(processBy.proposal || []),
     ],
     negotiation: [
-      { m: `Agree the commercial terms (${mw.terms})`, who: 'both' },
+      { m: hasStage('proposal') ? "Turn the commercial shape agreed in the business case phase into contract terms and send the draft to the buyer's legal and procurement teams" : `Agree the commercial terms (${mw.terms})`, who: 'both' },
       { m: 'Complete the legal review and resolve the redlines', who: 'proc' },
       { m: `Confirm the implementation timeline and the owners on both sides: ${mw.setup}`, who: 'both' },
-      { m: 'Obtain the final approvals', who: 'eb' },
+      { m: hasStage('procurement') ? "Obtain the economic buyer's approval of the contract terms" : 'Obtain the final approvals', who: 'eb' },
       ...(processBy.negotiation || []),
     ],
     procurement: [
       { m: 'Complete vendor registration and submit the documents the buyer\'s process asks for', who: 'proc' },
       { m: 'Finalize the payment terms', who: 'proc' },
-      { m: 'Complete the final approvals', who: 'eb' },
+      { m: hasStage('negotiation') ? 'Complete the purchasing approvals: the purchase order and the budget code' : 'Complete the final approvals', who: 'eb' },
       ...(processBy.procurement || []),
     ],
     close: ownerLed ? [
@@ -291,7 +302,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
       { m: 'Training for the people who will use it, and a check after the first week', who: 'se' },
     ] : [
       { m: 'Contract signed', who: 'eb' },
-      { m: `Kickoff scheduled: ${mw.setup}`, who: 'both' },
+      { m: hasStage('negotiation') ? 'Kickoff scheduled, with the owners and the dates confirmed in the commercial phase' : `Kickoff scheduled: ${mw.setup}`, who: 'both' },
       { m: criteria.length ? 'Success criteria written down from the criteria above, with the pass mark for each' : 'Success criteria written down', who: 'seller' },
     ],
   };
@@ -317,7 +328,17 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   if (champion) people.push(ownerLed && !economic ? `| **Owner, champion and decision maker** | ${champion} | Decides and signs, keeps the plan alive on the buyer's side and answers the open questions with us |` : `| **Champion** | ${champion} | Keeps the plan alive on the buyer's side, gathers the evaluators and answers the open questions with us |`);
   if (economic) people.push(`| **Economic buyer** | ${economic} | Approves the business case and the final decision |`);
   const ownsOf = (e: Contact): string => USERISH.test(e.title) ? 'Tries the product on a real working day and says what slows them or goes wrong' : /\bdecision makers?\b/i.test(e.title) ? 'Decides with the owner' : upperFirst(roleFor(e.title, investment).owns);
-  for (const e of evaluators) people.push(`| **Evaluator** | ${e.title} | ${ownsOf(e)} |`);
+  // evaluators must not share one sentence: a title the role reader knows gets its own part, and any text still shared names the title
+  const ownsBase = evaluators.map(ownsOf);
+  const rctxM = { P, v, metric: '' };
+  const ownsList = evaluators.map((e, i) => {
+    const t0 = ownsBase[i];
+    if (ownsBase.filter((x) => x === t0).length < 2 && t0 !== 'Their own part of the evaluation') return t0;
+    const r = readRole(e, null, rctxM, investment);
+    const own = /^Evaluator: tests the product/.test(r.part) ? 'Tests the product on a real flow and reports what breaks' : /^Influencer: carries the developer view/.test(r.part) ? 'Carries the developer view: tries it on a real task and says what developers would adopt' : /^Reviewer who certifies/.test(r.part) ? 'Certifies on a real review request and says how long it takes and what is unclear' : /^Daily user/.test(r.part) ? 'Tries the product on a real working day and says what slows them or goes wrong' : '';
+    return own || (t0 === 'Their own part of the evaluation' ? `The part of the evaluation that touches their own work (${e.title})` : `${t0}, as it concerns ${e.title}`);
+  });
+  evaluators.forEach((e, i) => people.push(`| **Evaluator** | ${e.title} | ${ownsList[i]} |`));
   if (procurement) people.push(`| **Procurement** | ${procurement} | The buyer's purchasing steps, the contract and the payment terms |`);
   out.push(`## Key Stakeholders\n\n${people.length ? `| Role | Name | What they own in this plan |\n|------|------|-----------|\n${people.join('\n')}\n\n` : ''}On the seller side the account executive owns the deal and the plan, a solutions engineer owns the technical validation, and an executive sponsor is called in at the phase gates and for escalation.`);
 
@@ -339,7 +360,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   if (blockerAnswers.length) {
     risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${stripEnd(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${stripEnd(b.a.bring)}. | ${ownerFor(b.a.id)} | Open |`).join('\n')}`);
   } else if (v) {
-    risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${v.objections.slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);
+    risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${(v.subtype === 'core-banking' && /\b(?:neo-?banks?|challenger banks?|digital[- ]only banks?|greenfield|new banks?|fintechs?|start-?ups?)\b/i.test(`${dealName} ${reqIn} ${blockersIn}`) ? v.objections.filter((o) => !/replacing a core|legacy core/i.test(o.objection)) : v.objections).slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);
   }
   const riskList: string[] = [];
   const longest = (processBy.evaluation || [])[0] || (processBy.negotiation || [])[0];

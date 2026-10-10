@@ -48,14 +48,19 @@ export function readSector(explicitModel: unknown, input: { seller: unknown[]; c
 /** Round 4: the notes of a plain telecom entry are written for operators who sell links to sites. For a seller that is not one (no sites, links or term contracts in the inputs) the lines that
  *  name sites, links, repair time or a rollout wave are left out, so an API deal is not read through a network operator's frame. A sub-type entry is left as it is. */
 const LINK_LINE = /\b(?:wave plan|per site|per link|term contract|repair time|sites, routes or flows|a few sites|outage during the switch|service credits|rate card)\b/i;
-export function fitSector(v: Vertical | null, fixedLink: boolean, model: BusinessModel | null): Vertical | null {
+export function fitSector(v: Vertical | null, fixedLink: boolean, model: BusinessModel | null, productText = ''): Vertical | null {
+  // an API product is not measured on release frequency or build time unless the seller's own words speak of pipelines, builds or releases
+  if (v && /\bapis?\b/i.test(productText) && !/\b(?:ci\/cd|pipelines?|continuous (?:integration|delivery|deployment)|deploy\w*|build (?:system|server|tool)s?|release (?:management|automation|engineering))\b/i.test(productText)) {
+    const kept = v.metrics.filter((x) => !/\b(?:release|build|deploy|pipeline)\b/i.test(x));
+    if (kept.length >= 2 && kept.length < v.metrics.length) v = { ...v, metrics: kept };
+  }
   if (!v || v.id !== 'telecom' || v.subtype || fixedLink || model === 'connectivity') return v;
   return {
     ...v,
     objections: v.objections.filter((o) => !LINK_LINE.test(`${o.objection} ${o.response}`)),
     metrics: v.metrics.filter((x) => !/repair|service credits|incidents/i.test(x)),
     salesMotion: LINK_LINE.test(v.salesMotion) ? 'Developers and engineers evaluate first, on test traffic; a team or enterprise agreement follows.' : v.salesMotion,
-    committee: v.committee.replace(/\brate cards?\b/gi, 'prices'),
+    committee: /\bapis?\b|\bdevelopers?\b/i.test(productText) ? 'An engineering lead champions it and the developers test it first; the head of engineering or product signs; security and compliance review it; finance checks the cost per unit of service.' : v.committee.replace(/\brate cards?\b/gi, 'prices'),
     proofShape: v.proofShape.replace(/\(uptime, speed, repair time\)/i, '(uptime, speed, latency)').replace(/\brepair time\b/gi, 'latency').replace(/the same sites or traffic/i, 'the same traffic'),
   };
 }
@@ -213,11 +218,13 @@ export function handleOf(text: string): string {
   if (w.length > 11) t = w.slice(0, 9).join(' ');
   return t.replace(/\s+(?:and|or|the|a|an|of|to|for|with|in|on|by|at)$/i, '').trim();
 }
+// a thread, a wiki page, a channel or a shared document is a way of working even when it names the tool it lives in ("a Chatwell thread and Pagebook links")
+const WAY_OF_WORKING = /\b(?:threads?|links|wiki|wikis|channels?|chats?|shared (?:drive|inbox|folder|documents?)|folders?|spreadsheets?|inbox)\b/i;
 export function readAlt(text: string, D: Deps, named = false): Alt {
   const t = text.trim().replace(/[.]+$/, '');
   const handle = handleOf(t);
   let kind: AltKind;
-  if (GERUND_START.test(t) || APPROACH.test(t)) kind = 'approach';
+  if (GERUND_START.test(t) || APPROACH.test(t) || (!named && WAY_OF_WORKING.test(t) && !/\b(?:vendors?|providers?|competitors?|platforms?|suppliers?)\b/i.test(t))) kind = 'approach';
   else if (hasProperNoun(t, D) && !(CATEGORY.test(t) && !named && /^[a-z]/.test(t))) kind = 'vendor';
   else if (named && !CATEGORY.test(t)) kind = 'vendor';
   else kind = PROVIDER.test(t) && !TOOLISH.test(t) ? 'provider' : 'category';
@@ -292,7 +299,7 @@ export { splitTopLevel, clip, upperFirst };
 
 /** "It unifies digital interactions across SMS, RCS and voice": the first "that <verb>s ..." clause of the description, in the user's words; '' when there is none. */
 export function doesLine(p: Product): string {
-  const m = p.full.match(/\b(?:that|which)\s+((?:unif|connect|run|let|give|automat|help|enabl|power|deliver|provid|offer|detect|protect|manag|track|monitor|send|rout|plan|turn|bring|build|make|cover|handl|combin|replac|simplif|scan|test|assess|verif|secur|reconcil|collect|accept)\w*s)\s+(.{10,240}?)(?:,\s+(?:with|plus|built|powered|delivered)\b|;|\.(?=\s|$)|$)/i);
+  const m = p.full.match(/\b(?:that|which)\s+((?:unif|connect|run|let|give|automat|help|enabl|power|deliver|provid|offer|detect|protect|manag|track|monitor|send|rout|plan|turn|bring|build|make|cover|handl|combin|replac|simplif|scan|test|assess|verif|secur|reconcil|collect|accept)\w*s)\s+(.{10,240}?)(?:,\s+(?:with|plus|built|powered|delivered)\b|;|:\s|\.(?=\s|$)|$)/i);
   if (!m) return '';
   let rest = m[2].trim();
   // a long clause is cut where its first detail begins (", as a physical SIM (2FF ...)"), and a bracket left open is dropped

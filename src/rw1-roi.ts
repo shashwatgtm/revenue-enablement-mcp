@@ -4,7 +4,7 @@
 // measure, and the questions for the driver chosen, worded for the buyer's industry and the seller's business model. What is missing is listed once, at the end.
 import { clip, describeWith, joinList, solutionBrief, parseProof, proofPhrase, proofSource, upperFirst } from './dealtext.ts';
 import { buyerContextFor } from './verticals.ts';
-import { briefOf, readModel, reframeSector, matchPart, joinSplitClaims, shared, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
+import { briefOf, readModel, reframeSector, matchPart, namedParts, joinSplitClaims, shared, cleanBrief, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readThreats, some, stripEnd, type Deps } from './rw1-common.ts';
 
 export interface RoiStructureInput {
   customerName: string; industry: string; companySize: string; yourSolution: string; primaryValueDriver: string;
@@ -37,6 +37,8 @@ const COST_ALT = [
 // what a quoted result tells you to measure (no seat or licence idea: the business model is not assumed)
 function measureOf(text: string, metrics: string[] = []): string {
   const t = text.toLowerCase();
+  // a study's return figure is not this buyer's: it tells you to measure the buyer's own cost and the share a change removes, whatever the product in the sentence is called
+  if (/\broi\b|\breturn on investment\b|\bpayback\b/.test(t)) return 'the buyer\'s own yearly cost of the current way of working and the share of it a change would remove, because a study\'s return figure is not this buyer\'s'; 
   if (/credential|exposed|leak|vulnerab|phish|threat|attack|takedown|fraud/.test(t) && !/return|rto/.test(t)) return 'how many exposures, threats or attempts the buyer finds and closes today, how long that takes, and what one costs when it is used against them';
   if (/dispatch|planning time|planning/.test(t)) return 'the time spent planning, and what that time costs';
   if (/reimburse|cycle|turnaround|lead time|time to|faster|days?\b|weeks?\b|hours?\b|minutes?\b/.test(t)) return 'the time the process takes today, and what each day or hour costs';
@@ -129,8 +131,9 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
     const rows = lines.map((l) => {
       const n = seen.get(l.id) || 0; seen.set(l.id, n + 1);
       const q = n === 0 ? (COST_Q[l.id] || COST_Q.general) : COST_ALT[(n - 1) % COST_ALT.length];
-      const part = bestPart(l.text);
-      if (part) partUse.add(part);
+      const named = namedParts(l.text, parts, brief.short);
+      const part = named.length ? joinList(named) : bestPart(l.text);
+      if (named.length) named.forEach((x) => partUse.add(x)); else if (part) partUse.add(part);
       return `| ${d.cap(l.text)} | "${q}" |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`;
     });
     out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current_annual_cost\`.\n\n| Cost line | Question to price it |${parts.length ? ` Part of ${P} that answers it |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${rows.join('\n')}`);
@@ -151,8 +154,8 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   }
 
   // ---- the case written out, from the inputs only ----
-  const lineParts = lines.map((l) => ({ line: lowerStart(stripEnd(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: bestPart(l.text) }));
-  const answered = lineParts.filter((x) => x.part).slice(0, 3);
+  const lineParts = lines.map((l) => ({ line: lowerStart(stripEnd(l.text.replace(/\s*\([^()]*\)\s*$/, ''))), part: ((n) => (n.length ? joinList(n) : bestPart(l.text)))(namedParts(l.text, parts, brief.short)) }));
+  const answered = lineParts.filter((x) => x.part).slice(0, 4);
   const measured = [...new Set(results.slice(0, 3).map((p) => measureOf(p.text, v ? v.metrics : [])))].slice(0, 2);
   if (costLines.length) {
     out.push(`## The case in words\n\n${upperFirst(who === 'the buyer' ? customer : who)} handles it today like this: ${joinList(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${joinList(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${measured.length === 1 ? lowerStart(measured[0]) : `first, ${lowerStart(measured[0])}; second, ${lowerStart(measured[1])}`}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);

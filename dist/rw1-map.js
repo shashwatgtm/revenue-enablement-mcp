@@ -82,7 +82,7 @@ function buildMutualActionPlan(args, d) {
     const champName = champion || 'Buyer champion';
     const own = ownerLed ? champName : '';
     const itName = (pick(['it', 'engineering', 'data']) || pick(['security']))?.title || own || 'Buyer IT reviewer';
-    const secName = (pick(['security']) || pick(['it', 'engineering']) || pick(['risk']))?.title || own || 'Buyer security reviewer';
+    const secName = (pick(['security']) || pick(['it']) || pick(['risk']) || pick(['engineering']))?.title || own || 'Buyer security reviewer';
     const riskName = (pick(['risk']) || pick(['security']))?.title || own || 'Buyer risk and compliance reviewer';
     const finName = pick(['finance'])?.title || own || 'Buyer finance contact';
     const ebName = economic || own || 'Economic buyer';
@@ -225,6 +225,14 @@ function buildMutualActionPlan(args, d) {
     const blockerItems = d.splitItems(blockersIn);
     const qa = { P, parts: (0, rw1_common_ts_1.partsOf)(brief), model, sellerText: solutionIn, stated: mr.stated, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(rw1_common_ts_1.lowerStart), alternatives: [] };
     const blockerAnswers = (0, rw1_common_ts_1.dedupeAnswers)(blockerItems.map((b) => ({ text: b, a: (0, rw1_common_ts_1.answerQuestion)(b, qa) })));
+    // a question about one kind of buyer (banks) in a deal with another (an insurer) is said so, since the reason may not carry over
+    const KINDS = [[/\bbanks?\b/i, /bank|lend/i, 'banks'], [/\binsurers?\b|\binsurance (?:companies|firms)\b/i, /insur/i, 'insurers'], [/\bretailers?\b/i, /retail|commerce/i, 'retailers'], [/\bmanufacturers?\b/i, /manufactur|automotive/i, 'manufacturers'], [/\bhospitals?\b/i, /health|hospital/i, 'hospitals']];
+    for (const it of blockerAnswers) {
+        const asked = KINDS.find(([q]) => q.test(it.text));
+        const dealKind = KINDS.find(([, ind]) => ind.test(dealName));
+        if (asked && dealKind && asked !== dealKind && !asked[1].test(dealName))
+            it.a.answer += ` The question is about ${asked[2]} and this deal is with ${dealKind[2]}: ask whether the same reasoning holds for them before you answer.`;
+    }
     const ownerFor = (id) => ({ it: `${itName} with Seller (solutions engineer)`, security: `${secName} with Seller`, price: `${ebName} with Seller`, champion: `${champName} with Seller`, se: `${champName} with Seller (solutions engineer)`, terms: `${procName} with ${ebName}`, seller: `Seller with ${champName}` }[(0, rw1_common_ts_1.ownerKind)(id)] || `Seller with ${champName}`);
     // ---- the steps of each phase ----
     const stock = d.stockEval(v, investment);

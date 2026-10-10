@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sentences = exports.CALL_CONTEXT = exports.some = exports.quoted = exports.stripEnd = exports.lowerStart = exports.STITCHED = exports.stemsOf = void 0;
 exports.shared = shared;
 exports.matchPart = matchPart;
+exports.namedParts = namedParts;
 exports.joiningPart = joiningPart;
 exports.joinSplitClaims = joinSplitClaims;
 exports.plural = plural;
@@ -10,6 +11,7 @@ exports.partsOf = partsOf;
 exports.modelWords = modelWords;
 exports.readRole = readRole;
 exports.readThreats = readThreats;
+exports.shortAlt = shortAlt;
 exports.answerQuestion = answerQuestion;
 exports.ownerKind = ownerKind;
 exports.cleanIndustry = cleanIndustry;
@@ -112,6 +114,21 @@ function matchPart(text0, parts, product = '') {
     }
     return best;
 }
+/** The parts a pain names by words that belong to one part only ("planning, source control, CI/CD" names three parts; "security and compliance scanners" two). Words that several parts share
+ *  (speech, voice, data) name no part by themselves. At least two parts are needed, else the list is empty and the single best part is used. */
+function namedParts(text, parts, product = '') {
+    const nameRe = product && product.length > 2 ? new RegExp(`\\b${escapeRe(product)}\\b`, 'gi') : null;
+    const clean = (s) => (nameRe ? s.replace(nameRe, ' ') : s);
+    // every word counts here, even the common ones that stemsOf leaves out ("planning" is a part)
+    const NOT_WORDS = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'such', 'are', 'not', 'but', 'one', 'all', 'any', 'per', 'other', 'than', 'only', 'built', 'into', 'out']);
+    const stemSet = (s) => new Set((normText(clean(s)).match(/[a-z][a-z0-9]{2,}/g) || []).filter((w) => !NOT_WORDS.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
+    const tStems = stemSet(text);
+    const pStems = parts.map((p) => stemSet(p));
+    const freq = new Map();
+    pStems.forEach((ss) => ss.forEach((s) => freq.set(s, (freq.get(s) || 0) + 1)));
+    const hit = parts.filter((_, i) => [...pStems[i]].some((s) => freq.get(s) === 1 && tStems.has(s)));
+    return hit.length >= 2 ? hit.slice(0, 4) : [];
+}
 /** A pain about pieces that are stitched together is answered by the part that joins them, when the description says one does ("a unified Voice Agent API"). */
 exports.STITCHED = /\b(?:stitched|piecemeal|point (?:tools?|solutions?)|separate (?:tools|components|vendors|systems|pieces)|disconnected|multiple (?:tools|components|vendors)|silos?|siloed|best-of-breed|patchwork)\b/i;
 function joiningPart(parts, full) {
@@ -140,7 +157,7 @@ function joinSplitClaims(text) {
     }
     return out.join('; ');
 }
-const lowerStart = (s) => ((/^[A-Z][a-z]/.test(s) || /^(?:A|An)\s/.test(s)) && !/^(?:I|AI|API|ERP|CRM|SMS|IT|HR|QA)\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+const lowerStart = (s) => ((/^[A-Z][a-z]/.test(s) || /^(?:A|An)\s/.test(s)) && !/^(?:I|AI|API|ERP|CRM|SMS|IT|HR|QA)\b/.test(s) && !/^[A-Z][a-z]+[A-Z0-9]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 exports.lowerStart = lowerStart;
 const stripEnd = (s) => s.trim().replace(/[\s.;:,!?]+$/, '');
 exports.stripEnd = stripEnd;
@@ -253,6 +270,13 @@ function modelWords(model, _sellerText, unit) {
 }
 exports.CALL_CONTEXT = /\b(?:contact cent(?:re|er)s?|call cent(?:re|er)s?|ccaas|customer (?:service|support|experience)|support (?:teams?|desks?|cent(?:re|er)s?)|help ?desks?|bpo|agents? (?:coach\w*|assist)|coach\w* agents|supervisors?)\b/i;
 const ROLE_PATTERNS = [
+    // in a freight or shipment visibility deal the sales and customer service teams are not support agents: they answer customers about where goods are
+    { re: /\bcustomer (?:service|support|care|experience)\b/i, when: (c) => c.v?.id === 'logistics-tech', part: 'Daily user: answers customers about their goods', kind: 'user', ask: 'How many customer enquiries a week are about where an order or a shipment is, and how long does one take to answer?',
+        cares: 'how fast they can tell a customer where the goods are, and how many calls and emails a late shipment causes',
+        step: (c) => `Give them ${c.P}'s tracking view for a sample of real enquiries about late shipments, and note how often they can answer without asking operations` },
+    { re: /\bsales\b/i, when: (c) => c.v?.id === 'logistics-tech', part: 'Daily user: promises delivery dates to customers', kind: 'user', ask: 'How often do you have to ask operations where an order is before you can answer a customer?',
+        cares: 'whether they can see order status and promise a date without asking operations, and how often a promise is missed',
+        step: (c) => `Show them the order and shipment status in ${c.P} for three real customer orders, and ask which question they would no longer have to send to operations` },
     { re: /\b(?:suppliers?|vendors?|carriers?|couriers?|partners?|distributors?|subcontractors?|auditors?|regulators?)\b/i, part: 'Outside the buying group', kind: 'outside',
         cares: 'how the change reaches them in their own work, and what evidence or data they will be asked for',
         step: (c) => `Do not sell to them; find out where ${c.P} touches their work and tell them early, so they do not become a surprise for the people who decide` },
@@ -265,7 +289,7 @@ const ROLE_PATTERNS = [
     { re: /\b(?:software developers?|developers?|engineers?|programmers?)\b/i, part: 'Daily user', kind: 'user', ask: 'Which part of your day-to-day work with the current tools costs you the most time?',
         cares: 'whether it fits the way they already work and saves time on a real task',
         step: (c) => `Pick a real task from their backlog, do it with ${c.P} alongside them, and write down what they say in their own words` },
-    { re: /\b(?:product (?:manager|owner|lead)|head of product|vp product)\b/i, part: 'Influencer: owns the requirements', ask: 'What takes longest between a request and a change going live, and who else has to approve it?', kind: 'influencer',
+    { re: /\b(?:product (?:managers?|owners?|leads?)|head of product|vp product)\b/i, part: 'Influencer: owns the requirements', ask: 'What takes longest between a request and a change going live, and who else has to approve it?', kind: 'influencer',
         cares: 'how fast a change reaches customers and how much of it waits for engineering',
         step: () => 'Walk through one real change from request to live and time it together' },
     { re: /\b(?:cso|chief security officer|chief security)\b/i, part: 'Security decision maker', ask: 'Which security risk would you most want to see smaller a year from now, and what would you accept as proof?', kind: 'influencer',
@@ -321,7 +345,7 @@ const CALL_QUALITY = { re: /./, part: 'Evaluator: checks the quality and complia
     step: (c) => `Ask them to bring a sample of calls they have already scored and compare ${c.P}'s results with their own scores` };
 function readRole(c, kind, ctx, investment) {
     const qa = /\b(?:qa|quality assurance|quality)\b/i.test(c.title) && !/\b(?:software|release|test automation|sdet|engineers?|developers?)\b/i.test(c.title);
-    const hit = qa && (ctx.callContext || /\b(?:compliance|calls?|agents?|coach\w*|contact cent\w+)\b/i.test(c.title)) ? CALL_QUALITY : ROLE_PATTERNS.find((p) => p.re.test(c.title));
+    const hit = qa && (ctx.callContext || /\b(?:compliance|calls?|agents?|coach\w*|contact cent\w+)\b/i.test(c.title)) ? CALL_QUALITY : ROLE_PATTERNS.find((p) => p.re.test(c.title) && (!p.when || p.when(ctx)));
     const base = (0, answers_ts_1.roleFor)(c.title, investment);
     const part = hit ? hit.part : c.level === 'group' ? 'A group of users or evaluators' : c.level === 'exec' ? 'Senior leader' : (0, dealtext_ts_1.upperFirst)(base.label);
     const cares = hit ? hit.cares : base.cares;
@@ -366,6 +390,12 @@ const unitFor = (text, ctx) => {
         return ''; // only the sector's usual model: no way of paying is named
     return { transactions: 'per unit of usage', connectivity: 'per site', services: 'per FTE, per ticket or fixed', hardware_software: 'per device plus the software', marketplace: 'as a take rate', investment: 'as a fee on assets', saas: 'as a subscription' }[ctx.model || ''] || '';
 };
+/** A long alternative the user typed ("collections of separate point tools for planning, source control, CI/CD, artifact storage and delivery") as a short name for a sentence: its first words, cut before "for", "such as" or a comma. */
+function shortAlt(s) {
+    const head = (0, exports.lowerStart)(s).split(/\s+(?:for|such as|that|which|with|whose|like)\s|[,;(:]/)[0].trim();
+    const words = head.split(/\s+/);
+    return words.length > 7 ? words.slice(0, 7).join(' ') : head || (0, exports.lowerStart)(s);
+}
 /** Answers one objection or blocker. The answer says what to do and what to bring; it states no fact about the user's product. */
 function answerQuestion(raw, ctx) {
     const text = (0, exports.stripEnd)(raw.replace(/^["“]|["”]$/g, ''));
@@ -447,7 +477,7 @@ function answerQuestion(raw, ctx) {
         return mk('price', `Answer with how ${P} is priced${unit ? ` (${unit})` : ''} and one worked example on the buyer's own volumes, with every charge on the page. Then set the figure next to what the problem costs them today${ctx.alternatives.length ? ` (${(0, exports.lowerStart)(ctx.alternatives[0])})` : ''}, so the price is read against their own cost and not on its own.`, `${P}'s price list and exactly what it includes; use a competitor's price only from a quote the buyer shows you`, 'What would this need to be compared with for the price to make sense to you?');
     }
     if (/\bwhy not\b|\balready (?:have|use|has|got|own)\b|\bextend (?:the|our|what)\b|\bwe (?:have|use|built|run) (?:a|an|our|the)\b|\bin-?house\b|\bbuild (?:it|this)\b|\bour (?:own )?(?:erp|crm|tms|wms|system|tool)s? (?:already|has|does)\b/i.test(t)) {
-        const cur = ctx.alternatives.length ? ` (${(0, exports.lowerStart)(ctx.alternatives[0])})` : '';
+        const cur = ctx.alternatives.length ? ` (${shortAlt(ctx.alternatives[0])})` : '';
         return mk('incumbent', `Start from what their current setup does not do${cur}, in their words, and what that gap costs them. Position ${P} alongside it where you can and replace it only where the gap is clear. Draw the overlap line by line and honestly, including what the current tool does better.`, `what ${P} covers that the current setup does not, and what the current setup covers that ${P} does not`, 'What does the current setup not do today, and what does that cost you?');
     }
     const deployAsked = [...new Set((text.match(/\bon-?prem\w*|\bprivate cloud\b|\bself-?host\w*|\bhybrid\b|\bvpc\b|\bair-?gapped\b|\bdedicated (?:cloud|instance|tenant)\b|\bon our own servers\b/gi) || []).map((x) => x.toLowerCase()))];
@@ -459,7 +489,7 @@ function answerQuestion(raw, ctx) {
     if (integ) {
         const sys = named.filter((s) => !/^(?:ERP|CRM)$/i.test(s) || named.length === 1);
         const list = sys.length ? ` (${(0, dealtext_ts_1.joinList)(sys)})` : '';
-        return mk('integration', `Answer system by system${list}: for each, say whether the link is built in, goes through an API or needs a file transfer, who builds it and who owns it on the buyer's side. ${relevant ? `Your description lists ${(0, exports.lowerStart)(relevant)}, so show that part working with their data rather than describe it. ` : ''}Offer a technical call with their IT owner and agree which data moves, in which direction and how often.`, `which of ${sys.length ? (0, dealtext_ts_1.joinList)(sys) : 'the buyer\'s systems'} ${P} connects to today, in what way and with what limits, from your integration documentation`, 'Which system is the master record for this data today, and who owns the connection?');
+        return mk('integration', `Answer system by system${list}: for each, say whether the link is built in, goes through an API or needs a file transfer, who builds it and who owns it on the buyer's side. ${relevant ? `Your description lists ${relevant.startsWith(P) ? relevant : (0, exports.lowerStart)(relevant)}, so show that part working with their data rather than describe it. ` : ''}Offer a technical call with their IT owner and agree which data moves, in which direction and how often.`, `which of ${sys.length ? (0, dealtext_ts_1.joinList)(sys) : 'the buyer\'s systems'} ${P} connects to today, in what way and with what limits, from your integration documentation`, 'Which system is the master record for this data today, and who owns the connection?');
     }
     const std = (text.match(/\b(?:asc ?606|ifrs ?\d*|gaap|gdpr|dpdp|soc ?[12]|iso ?\d{4,5}|pci(?:[- ]dss)?|rbi|sebi|fedramp|hipaa|nist|gst|e-?invoic\w*)\b/gi) || []).map((x) => x.toUpperCase().replace(/\s+/g, ' '));
     if (std.length || /\b(?:compliance|regulat\w*|certif\w*|statutory)\b/i.test(t)) {
@@ -474,8 +504,8 @@ function answerQuestion(raw, ctx) {
         const m = text.match(/\bwhy (?:do|does|did|would|should|will|can) (?:[a-z][a-z-]*(?: [a-z][a-z-]*){0,2}) (?:choose|pick|prefer|select|buy|use|go with|trust|hire|appoint|engage|opt for) (.+?) (?:over|instead of|rather than|versus|vs\.?) (?:a |an |the )?(.+)$/i)
             || text.match(/\bwhy (?:do |should |would |choose )?(.+?) (?:over|instead of|rather than) (?:a |an |the )?(.+)$/i) || text.match(/\bhow (?:does|do|is|are) (?:a |an |the )?(.+?) (?:differ|different) from (?:a |an |the )?(.+)$/i) || text.match(/\bbetween (.+?) and (.+)$/i);
         const a = m ? (0, exports.stripEnd)(m[1]).replace(/^(?:(?:i|we|you|they|customers?|buyers?|[a-z-]+s)\s+)?(?:choose|pick|prefer|select|buy|use|go with|trust|hire|engage)\s+/i, '') : P;
-        const b = m ? (0, exports.stripEnd)(m[2]) : (ctx.alternatives[0] ? (0, exports.lowerStart)(ctx.alternatives[0]) : 'the other option');
-        return mk('difference', `Answer it as a difference in what ${a} and ${b} are each for, on the points this buyer cares about${needs ? ` (${needs})` : ''}, and not as a feature list. Set ${a} and ${b} side by side on those points, show each on the buyer's own case, and say plainly when ${b} is the better choice for something.`, `what ${a} and ${b} each do today, from your own documentation; do not claim a difference you cannot show`, 'What are you trying to get done with it, and what have you tried so far?');
+        const b = m ? (0, exports.stripEnd)(m[2]) : (ctx.alternatives[0] ? shortAlt(ctx.alternatives[0]) : 'the other option');
+        return mk('difference', `Answer it as a difference in what ${a} and ${b} are each for, on the points this buyer cares about${needs ? ` (${needs})` : ''}, and not as a feature list. Set ${a} next to ${b} on those points, show each on the buyer's own case, and say plainly when ${b} is the better choice for something.`, `what ${a} and ${b} each do today, from your own documentation; do not claim a difference you cannot show`, 'What are you trying to get done with it, and what have you tried so far?');
     }
     if (/\b(?:can|do|does|will|could) (?:we|you|it|i|they)\b.{0,40}\b(?:all|every|each|any)\b|\b(?:countries|regions|cities|languages|markets|currencies)\b/i.test(t) && /^(?:can|do|does|will|could|is|are)\b/i.test(t)) {
         return mk('coverage', `Answer item by item, not with "all": for each country, region, language or case in the buyer's list, say whether it is supported today, supported after set-up or approval, or not supported, and what that costs. Ask for their list first and send it back marked up.`, `which of the buyer's items ${P} supports today, which need set-up or approval and how long that takes, and which it does not support`, 'Which of these matter first, and which could wait for a later wave?');

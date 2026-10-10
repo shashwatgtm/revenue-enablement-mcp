@@ -5,7 +5,7 @@
 import { describeWith, isoDate, joinList, onOrBeforeWorkday, parseContacts, partLabel, sentences, solutionBrief, tagKind, upperFirst, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
-import { CALL_CONTEXT, STITCHED, joiningPart, matchPart, answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
+import { CALL_CONTEXT, STITCHED, joiningPart, matchPart, namedParts, answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
 
 const HYPOTHETICAL = /\s*All figures in this input are hypothetical[^.]*\.\s*/i;
 
@@ -104,8 +104,16 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const answers = dedupeAnswers(objections.map((o) => ({ text: o, a: answerQuestion(o, qa) })));
 
   // ---- the parts of the product against the account's own pain ----
-  const partFor = (text: string): string => (STITCHED.test(text) && joiningPart(parts, solutionIn)) || matchPart(text, parts);
-  const pairs = threats.map((t) => ({ t, part: partFor(t.text) })).filter((x) => x.part);
+  const partFor = (text: string): string => (STITCHED.test(text) && joiningPart(parts, solutionIn)) || matchPart(text, parts, brief.short);
+  // the line "points to ..." may name the platform and the parts the pain lists; the part used in the plan below stays one part
+  const labelFor = (text: string): string => {
+    if (STITCHED.test(text) && !joiningPart(parts, solutionIn)) {
+      const named = namedParts(text, parts, brief.short);
+      if (named.length) return `${P} as one platform, which brings together ${joinList(named)}`;
+    }
+    return partFor(text);
+  };
+  const pairs = threats.map((t) => ({ t, part: partFor(t.text), label: labelFor(t.text) })).filter((x) => x.part);
   const sponsorOf = (text: string): Contact | undefined => {
     let best: Contact | undefined; let n = 0;
     for (const c of contacts) { const s = shared(text, `${c.title} ${readRole(c, null, rctx, investment).cares}`); if (s > n) { n = s; best = c; } }
@@ -152,7 +160,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const footprint = productsIn ? `They use ${productsIn} today (in your words). ` : '';
   if (parts.length) {
     grow.push(`${footprint}${P} lists these parts: ${joinList(parts)}. ${productsIn ? 'The description does not say which of them the account already runs, so the first conversation is to find out; each part they do not use is whitespace.' : existing ? 'Find out which of them the account already runs; each part they do not use is whitespace.' : `Land with the part that answers the account's sharpest pain, then widen.`}`);
-    if (pairs.length) grow.push(`Where the account's own pain points to a part:\n\n${pairs.map((x) => `- ${quoted(x.t.text)} points to ${x.part}.`).join('\n')}`);
+    if (pairs.length) grow.push(`Where the account's own pain points to a part:\n\n${pairs.map((x) => `- ${quoted(x.t.text)} points to ${x.label}.`).join('\n')}`);
     else if (threats.length) grow.push(`None of the parts maps cleanly onto the alternatives you listed, so ask the champion which problem they would hand over first and start with the part that answers it.`);
   } else {
     grow.push(`${footprint}${existing ? `Find out what exactly the account uses of ${P} today and what it still does by other means; the gap between the two is the whitespace.` : `Choose the part of ${P} that answers the account's sharpest pain and land with that.`}`);

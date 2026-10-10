@@ -26,6 +26,9 @@ export declare const stemsOf: (t: string) => Set<string>;
 /** How many ideas two texts share: a shared word stem, or two words that mean about the same thing. */
 export declare function shared(a: string, b: string): number;
 export declare function matchPart(text0: string, parts: string[], product?: string): string;
+/** The parts a pain names by words that belong to one part only ("planning, source control, CI/CD" names three parts; "security and compliance scanners" two). Words that several parts share
+ *  (speech, voice, data) name no part by themselves. At least two parts are needed, else the list is empty and the single best part is used. */
+export declare function namedParts(text: string, parts: string[], product?: string): string[];
 /** A pain about pieces that are stitched together is answered by the part that joins them, when the description says one does ("a unified Voice Agent API"). */
 export declare const STITCHED: RegExp;
 export declare function joiningPart(parts: string[], full: string): string;
@@ -98,6 +101,8 @@ export interface QAnswer {
     bring: string;
     ask: string;
 }
+/** A long alternative the user typed ("collections of separate point tools for planning, source control, CI/CD, artifact storage and delivery") as a short name for a sentence: its first words, cut before "for", "such as" or a comma. */
+export declare function shortAlt(s: string): string;
 /** Answers one objection or blocker. The answer says what to do and what to bring; it states no fact about the user's product. */
 export declare function answerQuestion(raw: string, ctx: QACtx): QAnswer;
 /** The owner of an answer in a deal plan, by the kind of question (a key of the roles the caller knows). */

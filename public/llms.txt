@@ -8,6 +8,7 @@
 - Docs (MCP and REST, every field): https://revenue-enablement.gtmhelix.com/docs/
 - FAQ: https://revenue-enablement.gtmhelix.com/faq/
 - Privacy policy: https://revenue-enablement.gtmhelix.com/privacy/
+- Terms of use: https://revenue-enablement.gtmhelix.com/terms/
 - Local npm package: @shashwatgtmalpha/revenue-enablement-mcp
 - Source code: https://github.com/shashwatgtm/revenue-enablement-mcp
 - Built by: Shashwat Ghosh, Helix GTM Consulting (https://www.gtmexpert.com)

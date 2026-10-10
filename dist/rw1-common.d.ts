@@ -25,7 +25,7 @@ export interface Deps {
 export declare const stemsOf: (t: string) => Set<string>;
 /** How many ideas two texts share: a shared word stem, or two words that mean about the same thing. */
 export declare function shared(a: string, b: string): number;
-export declare function matchPart(text: string, parts: string[]): string;
+export declare function matchPart(text0: string, parts: string[], product?: string): string;
 /** A pain about pieces that are stitched together is answered by the part that joins them, when the description says one does ("a unified Voice Agent API"). */
 export declare const STITCHED: RegExp;
 export declare function joiningPart(parts: string[], full: string): string;

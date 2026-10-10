@@ -35,7 +35,8 @@ const verticals_ts_1 = require("./verticals.js");
 // Small text helpers
 // ---------------------------------------------------------------------------------------------------------------------------
 const STEM_STOP = new Set(['the', 'and', 'for', 'are', 'not', 'you', 'our', 'can', 'its', 'has', 'was', 'but', 'any', 'all', 'per', 'via', 'how', 'who', 'why', 'one', 'two', 'new', 'use', 'get', 'set', 'on', 'that', 'this', 'with', 'from', 'your', 'have', 'their', 'they', 'them', 'will', 'which', 'what', 'when', 'where', 'into', 'over', 'than', 'then', 'about', 'more', 'most', 'some', 'such', 'each', 'only', 'also', 'were', 'been', 'does', 'make', 'makes', 'much', 'many', 'every', 'other', 'platform', 'solution', 'product', 'software', 'tools', 'tool', 'work', 'works', 'time', 'team', 'teams', 'service', 'services', 'serviceability', 'logistics', 'logistic', 'planning', 'plan', 'plans', 'management', 'manage', 'managed']);
-const stemsOf = (t) => new Set((t.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) || []).filter((w) => !STEM_STOP.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
+const normText = (t) => t.toLowerCase().replace(/\bci\s*\/\s*cd\b/g, 'cicd');
+const stemsOf = (t) => new Set((normText(t).match(/[a-z][a-z0-9-]{2,}/g) || []).filter((w) => !STEM_STOP.has(w)).map((w) => w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)));
 exports.stemsOf = stemsOf;
 // words that mean about the same thing in a buyer's pain and in a product's part (language only, no sector fact)
 const SAME = [
@@ -52,6 +53,8 @@ const SAME = [
     ['courier', 'couriers', 'shipping', 'shipment', 'parcel', 'delivery', 'freight', 'serviceability', 'rates', 'rate', 'carrier', 'ship', 'ships', 'shipped', 'fulfilment', 'fulfillment', 'warehouse', 'warehousing'],
     ['sim', 'sims', 'esim', 'softsim', 'roaming', 'device', 'devices', 'iot', 'connectivity'],
     ['conversion', 'conversions', 'checkout', 'cart', 'carts', 'abandonment', 'purchase', 'purchases', 'basket'],
+    ['deploy', 'deploys', 'deployed', 'deployment', 'deployments', 'release', 'releases', 'releasing', 'cicd', 'pipeline', 'pipelines'],
+    ['merge', 'merges', 'request', 'requests', 'repository', 'repositories', 'commit', 'commits', 'branch', 'branches', 'code', 'source'],
     ['authentication', 'authenticated', 'authenticate', 'authenticating', 'login', 'logins', 'signin', 'sign-in', 'sign-on', 'sign', 'mfa', 'sso', 'passwordless', 'password', 'passwords'],
     ['review', 'reviews', 'reviewed', 'sample', 'samples', 'sampling', 'analytics', 'analysis', 'analyse', 'scoring', 'score', 'scores'],
 ];
@@ -61,8 +64,8 @@ function shared(a, b) {
     const sa = (0, exports.stemsOf)(a);
     const sb = (0, exports.stemsOf)(b);
     let n = 2 * [...sa].filter((x) => sb.has(x)).length;
-    const ga = new Set((a.toLowerCase().match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
-    const gb = new Set((b.toLowerCase().match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
+    const ga = new Set((normText(a).match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
+    const gb = new Set((normText(b).match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
     n += [...ga].filter((g) => gb.has(g)).length;
     return n;
 }
@@ -73,16 +76,19 @@ const READS_SPEECH = /speech[- ]to[- ]text|transcri\w+|recogni\w+|\basr\b|\bstt\
 /** How many different words of the text mean something the part also says (a shared stem or a word of the same group): the tie-break between parts that share the same number of ideas. */
 function wordHits(text, part) {
     const ps = (0, exports.stemsOf)(part);
-    const pg = new Set((part.toLowerCase().match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
+    const pg = new Set((normText(part).match(/[a-z-]{3,}/g) || []).map(groupOf).filter((g) => g >= 0));
     const seen = new Set();
-    for (const w of text.toLowerCase().match(/[a-z-]{3,}/g) || []) {
+    for (const w of normText(text).match(/[a-z-]{3,}/g) || []) {
         const g = groupOf(w);
         if (ps.has(w.replace(/(?:ing|ed|es|s)$/, '').slice(0, 5)) || (g >= 0 && pg.has(g)))
             seen.add(w);
     }
     return seen.size;
 }
-function matchPart(text, parts) {
+function matchPart(text0, parts, product = '') {
+    // the product's own name is in many parts and many results ("with GitLab", "GitLab Duo") and says nothing about which part answers
+    const nameRe = product && product.length > 2 ? new RegExp(`\\b${escapeRe(product)}\\b`, 'gi') : null;
+    const text = nameRe ? text0.replace(nameRe, ' ') : text0;
     let best = '';
     let n = 0;
     let h = 0;
@@ -90,12 +96,14 @@ function matchPart(text, parts) {
         // the ways the product is run answer a text about where it may run, not one about how fast something is deployed
         if (/^deployment options \(/.test(p) && !/\b(?:deployment options|cloud[- ]only|on-?prem\w*|self[- ]?(?:managed|hosted)|dedicated|air-?gapped|hybrid|private cloud|single tenant|data residency|sovereign\w*)\b/i.test(text))
             continue;
-        let s = shared(text, p);
+        // what a result or a cost line is mainly about is said first: its first clause counts double
+        const pp = nameRe ? p.replace(nameRe, ' ') : p;
+        let s = shared(text, pp) + 3 * shared(text.split(/[,;]|\band\b/)[0], pp);
         if (s > 0 && SPEECH_IN.test(text) && READS_SPEECH.test(p))
             s += 1;
         if (s === 0)
             continue;
-        const hits = wordHits(text, p);
+        const hits = wordHits(text, pp);
         if (s > n || (s === n && hits > h)) {
             n = s;
             h = hits;
@@ -184,7 +192,7 @@ function partsOf(brief) {
     if (rich.length >= 4)
         return rich;
     const base = partsOfBase(brief);
-    const colon = brief.full.slice(0, 200).match(/^[^:]{3,140}:\s*(.+)$/s);
+    const colon = /^[^:]{3,140}:/.test(brief.full.slice(0, 200)) ? brief.full.match(/^[^:]{3,140}:\s*(.+)$/s) : null;
     if (!base.length && colon) {
         const tail = colon[1].split(/\.\s+(?=[A-Z])/)[0].replace(/,?\s+(?:run|runs|available|delivered|deployed|offered|hosted|sold)\s+(?:as|in|on|via)\b.*$/i, '');
         const items = splitLastAnd((0, dealtext_ts_1.splitTopLevel)(tail)).map((x) => (0, dealtext_ts_1.partLabel)(x).replace(/[.;]+$/, '').trim()).filter((p) => p.length > 2 && p.split(/\s+/).length <= 8);
@@ -260,6 +268,12 @@ const ROLE_PATTERNS = [
     { re: /\b(?:product (?:manager|owner|lead)|head of product|vp product)\b/i, part: 'Influencer: owns the requirements', ask: 'What takes longest between a request and a change going live, and who else has to approve it?', kind: 'influencer',
         cares: 'how fast a change reaches customers and how much of it waits for engineering',
         step: () => 'Walk through one real change from request to live and time it together' },
+    { re: /\b(?:cso|chief security officer|chief security)\b/i, part: 'Security decision maker', ask: 'Which security risk would you most want to see smaller a year from now, and what would you accept as proof?', kind: 'influencer',
+        cares: 'the security risk the change removes, the evidence an auditor will accept and what the team must run afterwards',
+        step: (c) => `Agree the one security risk ${c.P} is meant to reduce, the proof they would accept and who on their side owns the result` },
+    { re: /\b(?:managers? who (?:certify|approve|attest|review)|certif(?:y|iers?)|access (?:reviewers?|owners?)|attest\w+)\b/i, part: 'Reviewer who certifies', ask: 'How long does one review request take you today, and what makes you approve it without checking?', kind: 'user',
+        cares: 'how clear each request is, how much time a review takes and whether they can sign without guessing',
+        step: (c) => `Show them one real review request in ${c.P} and time how long it takes them to certify it` },
     { re: /\b(?:ciso|chief information security|security|infosec|soc\b|threat|brand protection|cyber)\b/i, part: 'Security reviewer', ask: 'What does your review need to see before a new tool is approved, and who signs it off?', kind: 'influencer',
         cares: 'where data is held and who can reach it, how findings are ranked, and the evidence they can show an auditor',
         step: (c) => `Send the security documents first, then agree a short proof of ${c.P} on their own environment with the measure written down` },

@@ -38,6 +38,10 @@ const TYPE_OPEN: Record<string, string> = {
   expansion_upsell: 'You already know part of this, so today is about what else it can do for you.',
   proof_of_concept: 'Today I will walk through what a proof would test, so we can agree it before it starts.',
 };
+const AI_COST = /\b(?:ai|llm|inference|tokens?)\b[^.;]{0,40}\b(?:costs?|spend|spending|bills?|expens\w+|pric\w+)\b|\b(?:costs?|spend|bills?)\b[^.;]{0,40}\b(?:ai|llm|inference|tokens?)\b/i;
+const MODEL_ROUTE = /\brout(?:e|es|ing|er)\b|\bllms?\b|model (?:choice|selection|mix)|across \d+\+? (?:unique )?(?:llms?|models)/i;
+// the groups whose sector words name a workflow (front desk for reservations, rate plan for pricing)
+const WORKFLOW_GROUPS = new Set(['reservations', 'housekeeping', 'pricing', 'logistics', 'build']);
 const WEAK_GROUPS = new Set(['money', 'data', 'cost', 'speed', 'experience']);
 const NO_PAIN = {
   screen: ['Take one real case through it from its start to the result the user sees.', 'Pick one live example from your side and run it through from the beginning.', 'Run a case you chose, not one I prepared, and stop at the first thing that looks wrong.'],
@@ -168,7 +172,9 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     const ng = s.cap ? [...groupsOf(s.cap.name)].filter((x) => gt.has(x)).length : 0;
     // the groups every payments or reporting product touches (money, data, cost, speed, experience) do not tie a part to a problem on their own
     const ngSpecific = s.cap ? [...groupsOf(s.cap.name)].filter((x) => gt.has(x) && !WEAK_GROUPS.has(x)).length : 0;
-    return { w: f.w, g: f.g, ng, ngSpecific, s: f.s + bonus + ng };
+    // a part that routes work across models answers a problem of AI cost, though the two share no word
+    const route = AI_COST.test(target) && MODEL_ROUTE.test(s.text) ? 1 : 0;
+    return { w: f.w + route, g: f.g, ng, ngSpecific: ngSpecific + route, s: f.s + bonus + ng + 3 * route };
   };
   const assign = (): void => {
     for (const s of steps) { s.pains = []; s.painScore = {}; s.people = []; s.secondary = false; }
@@ -250,8 +256,10 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
 
   // ---- proof lines: a statistic belongs beside the part it is about ----
   const unattached: Item[] = [];
+  const riskClaims: Item[] = [];
+  let riskQi = -1;
   const pool: { item: Item; own: number }[] = claimsAll.map((item) => ({ item, own: -1 }));
-  shown.forEach((s, si) => { if (s.cap && s.cap.stat && !claimsAll.some((c) => overlap(c.text, s.cap!.stat, skipP) >= 2)) pool.push({ item: { text: `${s.cap.name} covers ${s.cap.stat}`, label: 'from the description you gave' }, own: si }); });
+  shown.forEach((s, si) => { if (s.cap && s.cap.stat && !claimsAll.some((c) => overlap(c.text, s.cap!.stat, skipP) >= 2)) pool.push({ item: { text: new RegExp(`\\b${s.cap.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(s.cap.stat) ? s.cap.stat : `${s.cap.name} covers ${s.cap.stat}`, label: 'from the description you gave' }, own: si }); });
   for (const { item, own } of pool) {
     let best = own, bs = own >= 0 ? 99 : 0;
     // a claim belongs beside a part when it names the part, or shares two words with it (a single common word is not enough)
@@ -264,8 +272,8 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     // a credential (SOC 2, ISO, compliance) is said in the step the security or risk person is in, so the evidence they came for is heard by them
     if (best < 0 && /\bsoc ?[12]|\biso ?\d|gdpr|dpdp|hipaa|pci|complian|certif|audit/i.test(item.text)) {
       const rq = people.findIndex((pp) => ['security', 'risk'].includes(familyOf(pp.title, investment)));
-      const si = rq >= 0 ? Math.max(0, shown.findIndex((st) => st.people.includes(rq))) : -1;   // a risk person with no step of their own hears it in the first one
-      if (si >= 0 && shown.length) best = si;
+      // the evidence is put to the risk person in the question that asks what they need, not tucked into a demo step
+      if (rq >= 0) { riskClaims.push(item); riskQi = rq; continue; }
     }
     if (best >= 0) shown[best].claims.push(item); else unattached.push(item);
   }
@@ -385,7 +393,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const confirm = [
     keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so before I show anything: what is the one thing you most want solved?"`,
     untied.length ? `Ask: "Which part of ${P} would you most want to see for ${joinList(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your_solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
-    ...people.map((_p, qi) => askFor(qi)),
+    ...people.map((_p, qi) => (qi === riskQi && riskClaims.length ? `Say: "For ${personRef(qi)}, here is the evidence the page claims: ${say(claimSay(riskClaims))} Which of these match what you ask for, and what else would you need?" *(${claimLabels(riskClaims)}; have the source ready)*\n\n${askFor(qi)}` : askFor(qi))),
     lens ? `Ask: "${lens.checks[0]}"` : '',
     `Ask: "${typeQuestion[demoType] || typeQuestion.first_look}"`,
   ].filter(Boolean).join('\n\n');
@@ -416,6 +424,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   // a problem in its own words, whole when it is not too long; cut at a clean place otherwise
   const painWords = (pi: number): string => say(pains[pi].split(/\s+/).length <= 26 ? low(pains[pi]) : painShort(low(pains[pi])));
   const seenPain = new Set<number>();
+  const usedSectorWords = new Set<string>();
   const typeUse: Record<string, number> = {};
   const usedLines = new Set<string>();
   const stepBlocks = shown.map((s, i) => {
@@ -436,7 +445,10 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     const forLine = s.people.length ? `Step ${i + 1} is for ${joinList(s.people.map(personRef))}${painNow.length ? '' : `, because ${ref(s)} is the part closest to their work`}.` : '';
     const what = s.fromPain ? `${P} on one real case of "${say(pains[main] ?? s.title)}"` : s.flow && s.cap ? (s.flow.text.toLowerCase().includes(s.cap.name.toLowerCase()) ? s.flow.text : `${s.flow.text}, in ${capText(s.cap)}`) : s.cap ? capText(s.cap) : s.flow ? s.flow.text : `${P} on one real case of "${say(pains[main] ?? s.title)}"`;
     const caseOf = (main >= 0 && !s.fromPain ? `, run on one real case of ${say(pRef(main))}${pRef(main).startsWith('"') ? '' : ` (${say(pains[main].split(/\s+/).length <= 24 ? low(pains[main]) : painShort(low(pains[main])))})`}` : '') + (i === 0 && customerIndustry ? `${main >= 0 && !s.fromPain ? ', using' : ', using'} an example from ${customerIndustry}` : '');
-    const screen = `On screen: ${what}${caseOf}. ${sh.screen}${s.flow && s.flow.label ? ` Run it only if it works live (${s.flow.label}).` : ''}`;
+    // a part given by name only is run in the words this sector's buyers use for the work it touches (front desk and channel manager for reservations)
+    const sectorWords = v && s.cap && !s.cap.desc && !s.flow ? v.vocabulary.filter((w) => !usedSectorWords.has(w) && [...groupsOf(w)].some((g) => WORKFLOW_GROUPS.has(g) && groupsOf(s.cap!.name).has(g))).slice(0, 2) : [];
+    sectorWords.forEach((w) => usedSectorWords.add(w));
+    const screen = `On screen: ${what}${caseOf}. ${sh.screen}${sectorWords.length ? ` Use the words this sector's buyers use for it: ${joinList(sectorWords)}.` : ''}${s.flow && s.flow.label ? ` Run it only if it works live (${s.flow.label}).` : ''}`;
     let intro2: string;
     if (s.flow) intro2 = `Here is what you asked to see: ${say(s.flow.text)}${IMPERATIVE.test(s.flow.text) ? '' : ''}.`;
     else if (s.cap) intro2 = `This is ${say(capSay(s.cap))}.`;

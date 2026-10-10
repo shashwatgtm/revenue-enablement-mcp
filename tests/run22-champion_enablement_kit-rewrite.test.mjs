@@ -430,3 +430,14 @@ test("round 6: refund, cancellation, recurrence and limit questions name what to
   assert.match(objBlock(t, "Do you support refunds or cancellations?"), /what can be refunded or cancelled/);
   assert.match(objBlock(t, "Is there a minimum or maximum purchase amount for credits?"), /the smallest and the largest purchase amount for credits/);
 });
+
+// ---- round 7: a missing term is answered from what the inputs do hold (the parts that bear on it, the budget), then one question ----
+const buildloop7 = await call({ ...BUILDWELL, your_solution: "Buildloop, a CI platform: hosted in the cloud or on self-hosted runners, with build images, build optimization and autoscaling", budget_context: "$12,000 a year (hypothetical annual cost)", known_objections: "What are credits?; What are concurrent job runs?" });
+test("round 7: a credits or concurrency answer starts from what the inputs hold and then names the one fact to get", () => {
+  const credits = objBlock(buildloop7, "What are credits?");
+  assert.match(credits, /What we do hold:[^.]*\$12,000 a year/);
+  assert.match(credits, /is the fact to get|so that is the fact to get/);
+  const conc = objBlock(buildloop7, "What are concurrent job runs?");
+  assert.match(conc, /What we do hold:[^.]*(autoscaling|build optimization)/);
+  assert.match(conc, /Ask Buildloop: "How many concurrent job runs/);
+});

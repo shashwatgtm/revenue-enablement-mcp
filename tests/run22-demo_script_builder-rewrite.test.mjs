@@ -511,9 +511,8 @@ test("round 6: a hotel buyer is not asked a pipeline question before point of sa
   const res = stepList(hostbeam).find((b) => /^\*\*Step \d+: Reservations/.test(b));
   assert.ok(res && /overbookings/.test(res), "the overbooking problem is worked in the reservations step");
 });
-test("round 6: the credentials the risk team came for are said in its step, and a billing question gets the facts to put in writing, readable", () => {
-  const mine = stepList(lingua).find((b) => /SOC 2 Type II/.test(b));
-  assert.ok(mine, "a step says the credentials");
+test("round 6: the credentials the risk team came for are said to it (round 7: in its own question), and a billing question gets the facts to put in writing, readable", () => {
+  assert.match(lingua, /For the risk team, here is the evidence the page claims: SOC 2 Type II/);
   assert.match(lingua, /whether the charge repeats/);
   assert.match(lingua, /what can be refunded or cancelled/);
   assert.match(lingua, /the smallest and the largest purchase amount for credits/);
@@ -525,4 +524,54 @@ test("round 6: a part tied by a word group of the money kind only is not tied to
   const t = await call({ ...ASKWELL, must_show_features: "3 billion searches and 99.9% uptime across core search (page claims)", known_objections: "Is Askwell more secure than a general chat assistant?" });
   const ans = t.slice(t.indexOf('Buyer may ask: "Is Askwell more secure'));
   assert.doesNotMatch(ans.split("\n").slice(0, 3).join("\n"), /uptime|billion searches/);
+});
+
+// ---- round 7: a list of years is one claim, a count is not read back as the part's name, a part that routes work across models answers an AI cost problem,
+// the risk team is shown the evidence in its own question, and a part given by name only is run in the words of its sector ----
+const STAYWELL7 = {
+  demo_type: "first_look", primary_audience: "General Manager", attendees: "Revenue Managers, Front Office Managers, F&B Managers", customer_industry: "independent hotels",
+  your_solution: "Staywell, the operating system built to power modern hotels: it connects reservations, payments, housekeeping, point of sale and revenue management in one cloud platform",
+  key_pain_points: "most hotels manage pricing and operations in separate tools; separate distribution systems cause mistakes that lead to overbookings and disgruntled guests",
+  demo_duration: 30,
+  must_show_features: "named Best Hotel Platform in the StayAwards 2023, 2024 and 2025; founded in 2011 by a former hotelier together with a CEO who is also a former hotelier; over 9,000 properties use it (page claims)",
+};
+const FINDLY7 = {
+  demo_type: "first_look", primary_audience: "CIO", attendees: "engineering, customer service", customer_industry: "Financial services",
+  your_solution: "Findly, an enterprise AI platform that connects to company tools and data: Findly Search, Findly Helper (an AI coworker), Findly Context, 200+ app connectors, and Findly Router for routing work across 30+ models",
+  key_pain_points: "company knowledge spreads across tools and documents, so people cannot find what they need to do their jobs, and AI costs rise faster than adoption",
+  demo_duration: 30, must_show_features: "200+ connectors and 30+ models (page claims)",
+};
+const VOXLY7 = {
+  demo_type: "first_look", primary_audience: "Chief Digital Officer", attendees: "risk team", customer_industry: "Financial services",
+  your_solution: "Voxly, a sovereign AI platform: speech, translation models for regional languages, APIs and voice agents",
+  key_pain_points: "enterprises need high-volume customer engagement in regional and mixed-language conversations without linear increases in cost",
+  demo_duration: 30, must_show_features: "SOC 2 Type II, ISO 27001 and DPDP compliant; 5B+ tokens served (page claims)",
+};
+const staywell7 = await call(STAYWELL7), findly7 = await call(FINDLY7), voxly7 = await call(VOXLY7);
+test("round 7: a list of years in an award is one claim, not split at its commas", () => {
+  assert.match(staywell7, /StayAwards 2023, 2024 and 2025/);
+  assert.doesNotMatch(staywell7, /^- 2024 and 2025/m);
+  assert.doesNotMatch(staywell7, /; 2024 and 2025[ ;(]/);
+});
+test("round 7: a count in the description is not read back as 'the part covers its own name'", () => {
+  assert.doesNotMatch(findly7, /app connectors covers 200\+ app connectors/);
+  assert.doesNotMatch(findly7, /Say: "For the record: [^"]*connectors covers 200/);
+});
+test("round 7: a part that routes work across models answers the problem of AI cost, so it is not left in 'Not shown'", () => {
+  assert.doesNotMatch(findly7, /Not shown:[^\n]*Findly Router/);
+  const step = stepList(findly7).find((b) => /^\*\*Step \d+: Findly Router/.test(b)) || "";
+  assert.match(step, /AI costs rise faster than adoption/);
+});
+test("round 7: the credentials the risk team came for are put to it in its own question, not tucked into step 1", () => {
+  const lines = voxly7.split("\n");
+  const i = lines.findIndex((l) => /^Say: "For the risk team, here is the evidence the page claims: SOC 2 Type II/.test(l));
+  assert.ok(i > 0, "the evidence is said to the risk team");
+  assert.match(lines.slice(i, i + 4).join("\n"), /^Ask the risk team:/m);
+  const demo = voxly7.split("### Part 3")[1].split("### Part 4")[0];
+  assert.doesNotMatch(demo, /SOC 2 Type II/);
+});
+test("round 7: a part given by name only is run in the words of its sector", () => {
+  const res = staywell7.split("\n").find((l) => /^On screen: reservations/.test(l)) || "";
+  assert.match(res, /front desk/);
+  assert.match(res, /channel manager/);
 });

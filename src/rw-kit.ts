@@ -485,6 +485,8 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
       if (carry) { x = `${carry}, ${x}`; carry = ''; }
       if (/^(?:in|on|at|for|with|of|across|by|among|from)\b/i.test(x) && x.split(/\s+/).length <= 3 && !isStat(x)) { carry = x; continue; }
       const prev = pieces[pieces.length - 1];
+      // a list of years ("... 2024, 2025 and 2026") is one item, not three
+      if (prev && /^(?:19|20)\d\d(?:\s+and\s+(?:19|20)\d\d)?$/.test(x) && /\b(?:19|20)\d\d$/.test(prev)) { pieces[pieces.length - 1] = `${prev}, ${x}`; continue; }
       // a short fragment without a number of its own belongs to the item before it ("FMS or TMS in weeks" joins)
       if (prev && x.split(/\s+/).length <= 2 && !isStat(x) && /^[A-Z]{2,6}\b/.test(x)) pieces[pieces.length - 1] = `${prev}, ${x}`; else pieces.push(x);
     }
@@ -710,6 +712,12 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
   const painCase = painRel ? (painRel.startsWith('"') ? `the case ${painRel}` : painRel) : '';
   const caps = relCaps(t, c, 2);
   const capsTxt = (xs: Capability[]): string => joinList(xs.map(capText));
+  // what the inputs do hold on a term that is missing: the parts that bear on it and the budget, in the user's own words (champion voice)
+  const heldFor = (re: RegExp): string => {
+    const ps = c.caps.filter((x) => re.test(`${x.name} ${x.desc}`)).slice(0, 2);
+    const bits = [ps.length ? `the parts ${capsTxt(ps)}` : '', c.budget ? `a budget of ${trimDot(c.budget)}` : ''].filter(Boolean);
+    return bits.length ? `What we do hold: ${bits.join(' and ')}. ` : '';
+  };
   const altRaw = bestAlt(t, c);
   const alt = altRaw ? trimDot(altRaw) : '';
   // the field a specialist is asked about ("domain expertise in banking"); with none named, the question is read as a comparison
@@ -825,7 +833,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       if (exp) {
         const X = exp[1].trim();
         return done([
-          S(`I will put in writing whether unused ${X} carry over and when they lapse, on one page.`, `The inputs do not say whether unused ${X} carry over, so that is the fact to get: whether unused ${X} carry over to the next period and when they lapse. Ask ${P}: "Do unused ${X} carry over, and when do they lapse?"`),
+          S(`I will put in writing whether unused ${X} carry over and when they lapse, on one page.`, `${heldFor(/$^/) ? `${heldFor(/$^/)}Whether unused ${X} carry over to the next period and when they lapse is not in the inputs, so that is the fact to get.` : `The inputs do not say whether unused ${X} carry over, so that is the fact to get: whether unused ${X} carry over to the next period and when they lapse.`} Ask ${P}: "Do unused ${X} carry over, and when do they lapse?"`),
         ], S(`Would you use ${X} evenly through the period, or in bursts?`, `Would we use ${X} evenly through the period, or in bursts?`), `${Ps} written terms on whether unused ${X} carry over and when they lapse`);
       }
       // what each part of the question asks to have in writing, in its own words
@@ -1047,18 +1055,18 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
       if (conv) {
         const from = conv[1].trim(), to = conv[2].trim(), f1 = single(from.replace(/^.*\b(\w+ credits?|\w+ seats?)$/i, '$1').split(/\s+/).slice(-1)[0] || from);
         return done([
-          S(`I will put the rate from ${from} to ${to} in writing, for each plan, with one worked example.`, `The inputs do not give the rate from ${from} to ${to}, so that is the fact to get. Ask ${P}: "How many ${to} does one ${f1} give, for each plan?"`),
+          S(`I will put the rate from ${from} to ${to} in writing, for each plan, with one worked example.`, `${heldFor(/build|optimi|minute|usage|metered/i) ? `${heldFor(/build|optimi|minute|usage|metered/i)}The rate from ${from} to ${to} is not in the inputs, so that is the fact to get.` : `The inputs do not give the rate from ${from} to ${to}, so that is the fact to get.`} Ask ${P}: "How many ${to} does one ${f1} give, for each plan?"`),
         ], S(`Which plan would you start on?`, `Which plan would we start on?`), `the rate from ${from} to ${to} for each plan, from the current price list, with one worked example`);
       }
       if (subj && CONC.test(subj)) {
         return done([
-          S(`I will put in writing how many ${subj} each plan allows at once and what happens above that.`, `The inputs do not say how many ${subj} each plan allows, so that is the fact to get. Ask ${P}: "How many ${subj} does each plan allow at once, and what happens above that?"`),
+          S(`I will put in writing how many ${subj} each plan allows at once and what happens above that.`, `${heldFor(/scal|optimi|runner|parallel|concurr|capacity|hosted/i) ? `${heldFor(/scal|optimi|runner|parallel|concurr|capacity|hosted/i)}How many ${subj} each plan allows is not in the inputs, so that is the fact to get.` : `The inputs do not say how many ${subj} each plan allows, so that is the fact to get.`} Ask ${P}: "How many ${subj} does each plan allow at once, and what happens above that?"`),
         ], S('How many would you need at your busiest hour?', 'How many would we need at our busiest hour?'), `how many ${subj} each plan allows at once and what happens above that, from the current price list`);
       }
       if (subj && UNIT.test(subj)) {
         const u = single((subj.match(UNIT) || [subj])[0].toLowerCase());
         return done([
-          S(`I will put in writing what one ${u} pays for and how many each plan includes.`, `The inputs do not define ${subj}, so that is the fact to get: what one ${u} pays for and how many each plan includes. Ask ${P}: "What does one ${u} pay for, and how many does each plan include?"`),
+          S(`I will put in writing what one ${u} pays for and how many each plan includes.`, `${heldFor(/build|optimi|minute|usage|metered/i) ? `${heldFor(/build|optimi|minute|usage|metered/i)}What ${subj} are is not in the inputs, so that is the fact to get: what one ${u} pays for and how many each plan includes.` : `The inputs do not define ${subj}, so that is the fact to get: what one ${u} pays for and how many each plan includes.`} Ask ${P}: "What does one ${u} pay for, and how many does each plan include?"`),
         ], S(`How many would you expect to use in a month?`, `How many would we expect to use in a month?`), `what one ${u} pays for and how many each plan includes, from the current price list`);
       }
       const sub = subj || `the rule for ${t.replace(/^how (?:do|does|is|are)\s+/i, 'how ')}`;

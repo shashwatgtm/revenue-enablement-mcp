@@ -122,7 +122,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   if (flags.length) out.push(`## Inputs to check\n\n${flags.join(' ')}`);
 
   // ---- the cost lines ----
-  const bestPart = (text: string): string => matchPart(text, parts);
+  const bestPart = (text: string): string => matchPart(text, parts, brief.short);
   const partUse = new Set<string>();
   if (costLines.length) {
     const seen = new Map<string, number>();
@@ -155,7 +155,7 @@ export function buildRoiStructure(args: Record<string, unknown>, i: RoiStructure
   const answered = lineParts.filter((x) => x.part).slice(0, 3);
   const measured = [...new Set(results.slice(0, 3).map((p) => measureOf(p.text, v ? v.metrics : [])))].slice(0, 2);
   if (costLines.length) {
-    out.push(`## The case in words\n\n${upperFirst(who === 'the buyer' ? customer : who)} handles it today like this: ${joinList(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${joinList(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${joinList(measured.map(lowerStart))}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);
+    out.push(`## The case in words\n\n${upperFirst(who === 'the buyer' ? customer : who)} handles it today like this: ${joinList(lineParts.map((x) => x.line))}. Each of these has a yearly cost that the buyer can name. ${answered.length ? `${P} answers ${joinList(answered.map((x) => `"${x.line}" with ${x.part}`))}. ` : ''}${i.priceGiven && i.solutionPrice > 0 ? `The price you gave is ${money(i.solutionPrice)} a year, so the case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above that.` : `The case holds only if the cost of the ways of working above, less the share ${P} removes, comes out clearly above the price.`}${measured.length ? ` The results you quoted show what other organisations measured: ${measured.length === 1 ? lowerStart(measured[0]) : `first, ${lowerStart(measured[0])}; second, ${lowerStart(measured[1])}`}.` : ''} The buyer supplies the two numbers that turn this into a return: the yearly cost and the share removed.`);
   }
 
   const placed = parts.filter((x) => !partUse.has(x));

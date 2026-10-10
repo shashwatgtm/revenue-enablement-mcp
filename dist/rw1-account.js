@@ -164,8 +164,12 @@ function buildAccountPlan(args, d) {
         gaps.push(`Find a champion first: the person who feels the problem and is measured on it${v ? ` (in ${v.name}: ${(v.committee.split(';').find((x) => /champion/i.test(x)) || v.committee.split(';')[1] || v.committee).trim().replace(/[.]+$/, '')})` : ''}.`);
     if (!hasBuyer)
         gaps.push(`Find out who signs this off and who controls the budget${v ? ` (in ${v.name}: ${v.committee.split(';')[0].trim().replace(/[.]+$/, '')})` : ''}.`);
-    if (v)
-        gaps.push(`Usual buying committee (${v.name}): ${v.committee}${uncovered.length ? ` None of your contacts covers ${(0, dealtext_ts_1.joinList)(uncovered.slice(0, 4))}, so ask the champion who holds each part here.` : ''}`);
+    // a senior contact the user named already stands for the decision: the sector's "who signs" clause is then not repeated beside it
+    const seniorNamed = hasBuyer || contacts.some((c) => c.level === 'exec');
+    if (v) {
+        const committee = seniorNamed ? v.committee.split(';').filter((x) => !/\bsigns?\b/i.test(x)).map((x) => x.trim()).filter(Boolean).join('; ') : v.committee;
+        gaps.push(`Usual buying committee (${v.name}): ${seniorNamed ? (0, dealtext_ts_1.upperFirst)(committee) : committee}${uncovered.length ? ` None of your contacts covers ${(0, dealtext_ts_1.joinList)(uncovered.slice(0, 4))}, so ask the champion who holds each part here.` : ''}`);
+    }
     if (gaps.length)
         people.push(gaps.join(' '));
     out.push(people.join('\n\n'));

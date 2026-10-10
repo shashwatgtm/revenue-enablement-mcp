@@ -406,3 +406,27 @@ test("round 5: the sentence that says what the seller is described as appears on
   const n = (gridforge.match(/is described as an engineering services firm/g) || []).length;
   assert.ok(n <= 1, `the description sentence is repeated ${n} times`);
 });
+
+// ---- round 6: facts to get are said once, the parts closest to the points come from the value points, no tool name is printed as prose ----
+const buildwell6 = await call({ ...BUILDWELL, known_objections: "What are credits?; Do credits expire?; Is there a minimum or maximum purchase amount for credits?", competitive_context: "self-managed CI servers where you maintain the servers; CI tools without test splitting",
+  your_solution: "Buildwell, a CI platform: an MCP server, a CLI, build images, build optimization and autoscaling" });
+test("round 6: a fact to get is said in the answer and in the checklist, not a third time in the risks", () => {
+  const n = (buildwell6.match(/what one credit pays for/g) || []).length;
+  assert.ok(n <= 2, `said ${n} times`);
+  const risks = buildwell6.split("## Risks")[1].split("## Next steps")[0];
+  assert.doesNotMatch(risks, /what one credit pays for/);
+  assert.match(risks, /not yet in hand/i);
+});
+test("round 6: the parts closest to the points come from the value points, not from a word of the alternatives", () => {
+  const prop = buildwell6.split("## What we propose")[1].split("##")[0];
+  assert.doesNotMatch(prop, /closest to our points[^.]*MCP server/);
+});
+test("round 6: no tool name is printed as if it were prose", () => {
+  for (const t of [buildwell6, gridforge, parcel]) assert.doesNotMatch(t, /roi_business_case_builder|account_plan_builder|mutual_action_plan_generator|email_sequence_generator|win_loss_analyzer|competitive_trap_setter|demo_script_builder|discovery_question_bank/);
+});
+test("round 6: refund, cancellation, recurrence and limit questions name what to put in writing", async () => {
+  const t = await call({ ...BUILDWELL, known_objections: "Do I need to pay again next month?; Do you support refunds or cancellations?; Is there a minimum or maximum purchase amount for credits?" });
+  assert.match(objBlock(t, "Do I need to pay again next month?"), /whether the charge repeats/);
+  assert.match(objBlock(t, "Do you support refunds or cancellations?"), /what can be refunded or cancelled/);
+  assert.match(objBlock(t, "Is there a minimum or maximum purchase amount for credits?"), /the smallest and the largest purchase amount for credits/);
+});

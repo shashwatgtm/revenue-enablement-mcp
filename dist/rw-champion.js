@@ -136,8 +136,9 @@ function buildChampionKit(args, d) {
     const answers = objections.map((o) => ({ o, a: (0, rw_kit_ts_1.answerObjection)(o, actx) }));
     (0, rw_kit_ts_1.dedupeAnswers)(answers.map((x) => x.a));
     // ---- pieces of text ----
-    const relText = `${keyValuePoints} ${knownObjections} ${competitiveContext}`;
-    const rel = product.caps.filter((c) => (0, rw_kit_ts_1.overlap)(`${c.name} ${c.desc}`, relText, (0, rw_kit_ts_1.wordsOf)(P, false)) > 0).slice(0, 3);
+    // the parts closest to the points are chosen by the value points and the objections; what the buyer has today (the alternatives) is not a reason to call a part close, and when nothing matches no part is called close
+    const relOf = (text) => product.caps.filter((c) => (0, rw_kit_ts_1.overlap)(`${c.name} ${c.desc}`, text, (0, rw_kit_ts_1.wordsOf)(P, false)) > 0).slice(0, 3);
+    const rel = relOf(`${keyValuePoints} ${knownObjections}`);
     const kind = product.kind;
     const kindSentence = !kind || (0, rw_kit_ts_1.wordsOf)(kind, false).every((w) => (0, rw_kit_ts_1.wordsOf)(P, false).includes(w)) ? '' : /^(?:a|an|the)\s/i.test(kind) ? `${(0, rw_kit_ts_1.upFirst)(P)} is ${kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(kind) ? `${(0, rw_kit_ts_1.upFirst)(P)} is ${(0, dealtext_ts_1.aAn)(kind)}.` : `${(0, rw_kit_ts_1.upFirst)(P)} is described as ${kind}.`;
     const partsSentence = product.caps.length >= 2 ? `It covers ${(0, dealtext_ts_1.joinList)(product.caps.slice(0, 8).map(rw_kit_ts_1.capText))}.${rel.length && rel.length < product.caps.length ? ` The ${rel.length === 1 ? 'part' : 'parts'} closest to our points ${rel.length === 1 ? 'is' : 'are'} ${(0, dealtext_ts_1.joinList)(rel.map((c) => c.name))}.` : ''}` : '';
@@ -153,8 +154,8 @@ function buildChampionKit(args, d) {
     const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
     const quotedReturn = outClaims.find((c) => /\b(?:roi|return on investment|payback|return)\b/i.test(c.text));
     const noReturn = quotedReturn
-        ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [(0, dealtext_ts_1.clip)(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Run roi_business_case_builder with our own cost figures and add the result.`
-        : `No return figure is stated here, because none was given. Run roi_business_case_builder with our own cost figures and add the result.`;
+        ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [(0, dealtext_ts_1.clip)(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Work out the return from our own cost figures and add it.`
+        : `No return figure is stated here, because none was given. Work out the return from our own cost figures and add it.`;
     const outBullets = outs.map((o) => `- ${(0, rw_kit_ts_1.upFirst)(o.subs.length ? o.head : o.text)}${o.label ? ` (${o.label})` : ''}${o.subs.length && o.note ? ` (${o.note})` : ''}${o.subs.length ? `:\n${o.subs.map((x) => `  - ${(0, rw_kit_ts_1.upFirst)(x)}`).join('\n')}` : ''}`).join('\n');
     const altList = alts.length > 1 && alts.some((a) => /,|\band\b/i.test(a)) ? alts.join('; ') : (0, dealtext_ts_1.joinList)(alts);
     const altsSentence = alts.length ? `The alternatives we looked at are ${altList}.` : '';
@@ -163,11 +164,15 @@ function buildChampionKit(args, d) {
     const memoLines = (subject) => [subject, `To: ${target}`, fromLine ? `From: ${fromLine}` : ''].filter(Boolean).join('\n');
     const qa = (full = true) => answers.map((x) => `### ${x.o}\n\n${x.a.say}${full && x.a.sector && v ? `\n\nUsual answer in ${v.name}: ${x.a.sector}` : ''}`).join('\n\n');
     const sectorRisks = v ? v.objections.filter((o) => !answers.some((x) => x.a.sector === o.response)).slice(0, 3) : [];
+    const FACT_KINDS = new Set(['define', 'billing', 'planchoice']);
+    const factAnswers = answers.filter((x) => FACT_KINDS.has(x.a.kind) || (x.a.kind === 'terms' && /\bcarry over\b/.test(x.a.say)));
     const riskBlock = () => {
         const settled = new Set();
         const risksSeen = new Set();
         return [
-            ...answers.map((x) => {
+            // questions whose answer is a fact still to get (what a credit is, whether it expires, how billing works) are one risk, not one risk for each: the facts are listed in the checklist at the end
+            ...(factAnswers.length ? [`### Risk: figures and terms not yet in hand\n\nThe inputs do not give the facts behind ${(0, dealtext_ts_1.joinList)(factAnswers.map((x) => `"${x.o.replace(/[?]+$/, '')}"`))}. Until they are in hand, no figure or term on these should be quoted from this note; the list at the end says what to get.`] : []),
+            ...answers.filter((x) => !factAnswers.includes(x)).map((x) => {
                 const chk = lcCheck(x.a.check);
                 const settle = settled.has(chk) ? '' : ` To settle it, confirm: ${chk}.`;
                 settled.add(chk);

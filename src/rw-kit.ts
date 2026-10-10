@@ -21,7 +21,7 @@ function norm(w: string): string {
 }
 /** "across marketing, sales and service" names the scope of a problem, not its topic: the function names in such a list are not matched as words. */
 const SCOPE_LIST = /\bacross\s+(?:the\s+)?(?:(?:marketing|sales|service|services|support|finance|operations|ops|hr|it|engineering|product|legal|procurement)(?:\s*,\s*(?:and\s+)?|\s+and\s+|\s*&\s*|\s+or\s+)?)+/gi;
-const withoutScope = (t: string): string => t.replace(SCOPE_LIST, ' ');
+const withoutScope = (t: string): string => t.replace(SCOPE_LIST, ' ').replace(/\bpoint[- ]of[- ]sales?\b/gi, 'pos'); // "point of sale" is one thing, not the word sales
 export function wordsOf(t: string, dropGeneric = true): string[] {
   const out: string[] = [];
   for (const m of withoutScope(t).toLowerCase().match(/[a-z][a-z0-9]{2,}|\b(?:ai|ml)\b/g) || []) {
@@ -39,7 +39,7 @@ export function overlap(a: string, b: string, skip?: string[]): number {
 }
 // Word groups: two texts that touch the same group are about the same kind of thing, even with no word in common.
 const GROUPS: [string, RegExp][] = [
-  ['identity', /authent|log-?in|sign.?in|\bsso\b|verif|identit|\bkyc\b|onboard|credential|\bmfa\b|password|directory/],
+  ['identity', /\bauth\b|authent|log-?in|sign.?in|\bsso\b|verif|identit|\bkyc\b|onboard|credential|\bmfa\b|password|directory/],
   ['risk', /fraud|\brisk|scam|phish|abuse|chargeback|return|signal|threat|attack|breach|spoof|\baml\b|watchlist|sanction|screen|suspic|exposure|vulnerab|detect|\bfail|default|predict/],
   ['compliance', /complian|audit|regulat|governance|evidence|consent|polic|certif|control|privacy|gdpr|dpdp|\baml\b|watchlist|sanction|attest/],
   ['money', /payment|payout|transfer|\bach\b|settle|checkout|acquir|invoice|billing|refund|collect|remit|fund|balance|ledger|reconcil|card|expens|repay|loan/],
@@ -58,6 +58,8 @@ const GROUPS: [string, RegExp][] = [
   // one record of the customer across the business: a "360 view" pain meets the CRM, the lead and the contact, not the field app
   ['record', /360|single view|one view|unified view|complete view|customer view|view of (?:the |your )?customers?|golden record|customer record|customer data|customer profile|\bcrm\b|lead and opportunit|opportunit|contact (?:management|record)|account management|lead entity|custom fields?|\bprofiles?\b/],
   ['operate', /aiops|\bsre\b|application (?:management|support|maintenance|operations)|incident|observab|uptime|maintenance|run and maintain|keep (?:the )?applications up|managed service/],
+  ['reservations', /reservation|booking|distribution|channel manager|overbook|availability|check.?in|front desk/],
+  ['housekeeping', /housekeep|cleaning|turnover|room status/],
   ['pricing', /pricing|revenue|\brates?\b|yield|forecast|\bprices?\b/],
   ['voice', /voice|speech|spoken|conversation|multilingual|mixed.language|regional language|dialect|translat|\bcalls?\b/],
   ['ai', /\bai\b|artificial intelligence|machine learning|\bml\b|genai|\bllm|copilot|agentic|isolated use cases|beyond pilots/],
@@ -230,7 +232,7 @@ export function painRef(p: string, i: number, headClause = false): string {
 }
 export type PainType = 'speed' | 'risk' | 'manual' | 'experience' | 'cost' | 'compliance' | 'visibility' | 'general';
 export function painType(p: string): PainType {
-  const t = p.toLowerCase();
+  const t = p.toLowerCase().replace(/\bwithout\b.*$/, ''); // "... without linear increases in cost" names a limit, not the problem
   if (/\bdays\b|delay|slow|wait|late\b|weeks|hours|backlog|settle/.test(t)) return 'speed';
   if (/fraud|scam|phish|attack|breach|threat|return|fail|abuse|risk|exposure/.test(t)) return 'risk';
   if (/manual|spreadsheet|by hand|retype|rework|re-?enter|chase|email|paper|separate|silo|disconnect|fragment|isolat|multiple (?:tools|systems|consoles)|correlat/.test(t)) return 'manual';
@@ -713,7 +715,7 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
   // the field a specialist is asked about ("domain expertise in banking"); with none named, the question is read as a comparison
   const dm = (alt.match(/\b(?:expertise|experience|specialists?|specialis\w+|knowledge|focus)\s+(?:in|on|for)\s+([a-z][a-z-]*(?: [a-z][a-z-]*){0,2}?)(?=$|[,.;]| and | or )/i) || t.match(/\bspecialist\s+([a-z]+(?: [a-z]+)?)\s+(?:partners?|firms?|vendors?|providers?|tools?|software)\b/i) || [])[1] || '';
   if (kind === 'expertise' && !dm) kind = 'compare';
-  const SEC_CLAIM = /secur|complian|\bsoc\b|soc ?[12]|iso|pci|gdpr|dpdp|certif|audit|privacy|encrypt|uptime|sla\b/i;
+  const SEC_CLAIM = /secur|complian|\bsoc\b|soc ?[12]|iso|pci|gdpr|dpdp|certif|audit|privacy|encrypt/i; // uptime and service levels are about reliability, not security
   const claimMatches = c.claims.filter((x) => {
     const n = overlap(x.text, t, wordsOf(P, false));
     if (kind === 'securecompare' || kind === 'security' || kind === 'compliance') return SEC_CLAIM.test(x.text) && (n >= 1 || kind !== 'compliance');
@@ -826,11 +828,17 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
           S(`I will put in writing whether unused ${X} carry over and when they lapse, on one page.`, `The inputs do not say whether unused ${X} carry over, so that is the fact to get: whether unused ${X} carry over to the next period and when they lapse. Ask ${P}: "Do unused ${X} carry over, and when do they lapse?"`),
         ], S(`Would you use ${X} evenly through the period, or in bursts?`, `Would we use ${X} evenly through the period, or in bursts?`), `${Ps} written terms on whether unused ${X} carry over and when they lapse`);
       }
-      const nouns = [...new Set((t.match(/set-?up fee|annual maintenance fee|maintenance fee|annual fee|refunds?|cancell?ations?|minimum[^,?]*?(?:volume|commitment|purchase amount|spend)|maximum[^,?]*?(?:amount|volume)|commitment|renewal|lock-?in|notice period|pay again(?: next month)?/gi) || []).map((x) => lowerFirst(x.trim())))];
-      const list = nouns.length ? joinList(nouns) : 'the payment and exit terms';
+      // what each part of the question asks to have in writing, in its own words
+      const asks: string[] = [];
+      if (/\bpay again|next month|recurring|auto.?renew|each month|every month|repeat/i.test(t)) asks.push('whether the charge repeats each month or is a single purchase, and how it is stopped');
+      if (/\brefunds?|cancell?(?:ation)?s?|notice period|lock-?in|exit/i.test(t)) asks.push('what can be refunded or cancelled, by when, at what cost, and how it is requested');
+      const lim = t.match(/\b(?:minimum|maximum)(?:\s+or\s+(?:minimum|maximum))?\s+(.+?)$/i);
+      if (/\b(?:minimum|maximum)\b/i.test(t)) asks.push(`the smallest and the largest ${(lim ? lim[1] : 'amount').replace(/[?.]+$/, '').replace(/^(?:amount|purchase amount)$/i, (m) => m)} that can be bought at one time, and what happens outside them`);
+      for (const m of t.match(/set-?up fee|annual maintenance fee|maintenance fee|annual fee|renewal/gi) || []) asks.push(`whether there is a ${lowerFirst(m.trim())} and when it is charged`);
+      const list = asks.length ? joinList([...new Set(asks)]) : 'the payment and exit terms: whether each applies, when it is charged and how it ends';
       return done([
-        S(`On ${list}: I will put each in writing on one page, with whether it applies, when it is charged and how you end it.`, `On ${list}: I will ask ${P} to put each in writing on one page, with whether it applies, when it is charged and how we end it.`),
-        S(`I will not say "none" about ${nouns[0] || 'any of them'} unless the written terms say so.`, `I will not rely on anything about ${nouns[0] || 'the terms'} that the written terms do not say.`),
+        S(`I will put these in writing on one page: ${list}.`, `We should ask ${P} to put these in writing on one page: ${list}.`),
+        S(`I will not say "none" to any of them unless the written terms say so.`, `We should not rely on any of them being "none" unless the written terms say so.`),
       ], pick([S('What would you need the terms to say for this to be an easy yes?', 'What would we need the terms to say for this to be an easy yes?'), S('Which of those would be a problem for you if it applied?', 'Which of those would be a problem for us if it applied?')]), `${Ps} written terms on ${list}; never say "none" or "fully refundable" unless they say so`);
     }
     case 'switchcost': {

@@ -26,6 +26,7 @@ const TYPE_OPEN = {
     expansion_upsell: 'You already know part of this, so today is about what else it can do for you.',
     proof_of_concept: 'Today I will walk through what a proof would test, so we can agree it before it starts.',
 };
+const WEAK_GROUPS = new Set(['money', 'data', 'cost', 'speed', 'experience']);
 const NO_PAIN = {
     screen: ['Take one real case through it from its start to the result the user sees.', 'Pick one live example from your side and run it through from the beginning.', 'Run a case you chose, not one I prepared, and stop at the first thing that looks wrong.'],
     say: ['I will take one real case through it from its start to the result the user sees.', 'I will pick one live example from your side and run it through from the beginning.', 'I will run a case you choose, not one I prepared.'],
@@ -135,18 +136,21 @@ function buildDemoScript(args, d) {
         // the part's own name belongs to a word group the target touches ("Search" for a pain about finding things)
         const gt = (0, rw_kit_ts_1.groupsOf)(target);
         const ng = s.cap ? [...(0, rw_kit_ts_1.groupsOf)(s.cap.name)].filter((x) => gt.has(x)).length : 0;
-        return { w: f.w, g: f.g, ng, s: f.s + bonus + ng };
+        // the groups every payments or reporting product touches (money, data, cost, speed, experience) do not tie a part to a problem on their own
+        const ngSpecific = s.cap ? [...(0, rw_kit_ts_1.groupsOf)(s.cap.name)].filter((x) => gt.has(x) && !WEAK_GROUPS.has(x)).length : 0;
+        return { w: f.w, g: f.g, ng, ngSpecific, s: f.s + bonus + ng };
     };
     const assign = () => {
         for (const s of steps) {
             s.pains = [];
             s.painScore = {};
             s.people = [];
+            s.secondary = false;
         }
         // each pain goes to the one step that answers it best (it must share a word with it); each person to the step or two that suit the role
         pains.forEach((p, pi) => {
             let best = -1, bs = 0;
-            steps.forEach((s, si) => { const f = stepFit(s, p); const key = (f.w >= 1 ? 100 : 0) + f.s; if ((f.w >= 1 || f.ng >= 1) && (key > bs || (key === bs && best >= 0 && steps[si].pains.length < steps[best].pains.length))) {
+            steps.forEach((s, si) => { const f = stepFit(s, p); const key = (f.w >= 1 || f.ngSpecific >= 1 ? 100 : 0) + f.s + 3 * f.ngSpecific; if ((f.w >= 1 || f.ng >= 1) && (key > bs || (key === bs && best >= 0 && steps[si].pains.length < steps[best].pains.length))) {
                 bs = key;
                 best = si;
             } });
@@ -160,13 +164,14 @@ function buildDemoScript(args, d) {
             if (s.pains.length || s.fromPain || !s.cap)
                 continue;
             let bp = -1, bsc = 0;
-            pains.forEach((p, pi) => { const f = stepFit(s, p); if ((f.w >= 1 || f.ng >= 1) && f.s > bsc) {
+            pains.forEach((p, pi) => { const f = stepFit(s, p); if ((f.w >= 1 || f.ngSpecific >= 1) && f.s > bsc) {
                 bsc = f.s;
                 bp = pi;
             } });
             if (bp >= 0) {
                 s.pains.push(bp);
                 s.painScore[bp] = bsc;
+                s.secondary = true;
             }
         }
         for (const s of steps)
@@ -196,8 +201,9 @@ function buildDemoScript(args, d) {
                 }
                 else if (f.w >= 1) {
                     const cur = Math.max(...steps.map((st) => (st.pains.includes(pi) ? (st.painScore[pi] ?? 0) - 100 : 0)));
-                    if (f.s > cur)
-                        g += 3 * (f.s - cur);
+                    const mine = f.s + 3 * f.ngSpecific;
+                    if (mine > cur)
+                        g += 3 * (mine - cur);
                 } // a better answer to a pain already covered
                 else if (f.ng >= 1 && steps.length < maxSteps && !ms.flows.length)
                     g += 0.5; // room is left, and the part's own name is about the same kind of thing as a problem already covered
@@ -249,7 +255,7 @@ function buildDemoScript(args, d) {
     }
     // the flows the user listed come first, in the order they listed them; the parts added for the other problems follow, the first problem first
     const minPain = (x) => (x.pains.length ? Math.min(...x.pains) : 99);
-    steps.sort((a, b) => (a.flow ? 0 : 1) - (b.flow ? 0 : 1) || (a.flow && b.flow ? ms.flows.indexOf(a.flow) - ms.flows.indexOf(b.flow) : minPain(a) - minPain(b)));
+    steps.sort((a, b) => (a.flow ? 0 : 1) - (b.flow ? 0 : 1) || (a.flow && b.flow ? ms.flows.indexOf(a.flow) - ms.flows.indexOf(b.flow) : minPain(a) - minPain(b) || (a.secondary ? 1 : 0) - (b.secondary ? 1 : 0)));
     const shown = steps.slice(0, maxSteps);
     const notShownFlows = steps.slice(maxSteps).map((s) => (s.flow ? s.flow.text : s.title));
     const notShownCaps0 = capPool.map((x) => x.name);
@@ -278,6 +284,13 @@ function buildDemoScript(args, d) {
                     best = si;
                 }
             });
+        // a credential (SOC 2, ISO, compliance) is said in the step the security or risk person is in, so the evidence they came for is heard by them
+        if (best < 0 && /\bsoc ?[12]|\biso ?\d|gdpr|dpdp|hipaa|pci|complian|certif|audit/i.test(item.text)) {
+            const rq = people.findIndex((pp) => ['security', 'risk'].includes((0, dealtext_ts_1.familyOf)(pp.title, investment)));
+            const si = rq >= 0 ? Math.max(0, shown.findIndex((st) => st.people.includes(rq))) : -1; // a risk person with no step of their own hears it in the first one
+            if (si >= 0 && shown.length)
+                best = si;
+        }
         if (best >= 0)
             shown[best].claims.push(item);
         else
@@ -292,7 +305,8 @@ function buildDemoScript(args, d) {
     const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
     const secPerson = people.find((p) => p.contact && (p.contact.family === 'security' || p.contact.family === 'risk'))?.title || '';
     const dsWho = (t0) => { const t = t0.replace(/^the\s+/i, ''); return (/\b(?:svp|evp|cio|cto|ciso|cfo|ceo|coo|cmo|cro|board|council|panel|manager|director|head|lead|leader|leaders|chief|officer|vp|vice|president|engineer|engineers|analyst|analysts|architect|owner|owners|founder|executive|executives|controller|counsel|team|teams|committee|group|auditors?|reviewers?|administrators?|admins?|developers?|users?|agents|staff|partners?|programs?)\b/i.test(t) || (/^[A-Z]{2,5}$/.test(t) && !/^(?:IT|HR|QA|PR|GTM|R&D)$/.test(t)) ? `the ${t}` : `the ${t} team`); };
-    const altItems = d.splitItems(competitorContext).map((x) => x.replace(/[.]+$/, ''));
+    // a comma list ("separate point tools for pricing, operations, payments and distribution") is one alternative; only a semicolon or a new line separates alternatives
+    const altItems = (competitorContext.includes(';') || competitorContext.includes('\n') ? d.splitItems(competitorContext) : competitorContext ? [competitorContext] : []).map((x) => x.replace(/[.]+$/, ''));
     const actx = {
         P, kind: product.kind, caps: product.caps, alts: altItems.length ? altItems : competitorContext ? [competitorContext] : [],
         pains, claims: claimsAll, outcomes: outcomeText ? [outcomeText] : [], model: ctx.model, voice: 'seller', shown: shown.filter((s) => !s.fromPain).map((s) => (s.cap ? s.cap.name : s.title)),
@@ -367,7 +381,10 @@ function buildDemoScript(args, d) {
         const pp = people[qi];
         const fam = (0, dealtext_ts_1.familyOf)(pp.title, investment);
         const nth0 = seenFam[fam] = (seenFam[fam] ?? -1) + 1;
-        const rk = (0, answers_ts_1.roleFor)(pp.title, investment);
+        const rk0 = (0, answers_ts_1.roleFor)(pp.title, investment);
+        // a stock question about the sales pipeline is asked only when the product is about sales (point of sale is not)
+        const salesProduct = /\b(?:sales|pipeline|leads?|crm|quota|forecast\w*)\b/i.test(yourSolution.replace(/point[- ]of[- ]sales?/gi, ''));
+        const rk = { ...rk0, questions: (rk0.questions.filter((q) => salesProduct || !/pipeline|quota|\bdeals?\b|forecast/i.test(q)).length ? rk0.questions.filter((q) => salesProduct || !/pipeline|quota|\bdeals?\b|forecast/i.test(q)) : rk0.questions) };
         // the step the person is asked about before is the one closest to their own work, not the first one they are in
         const sis = stepsOf(qi).slice().sort((a, b) => stepFit(shown[b], personText(pp.title)).s - stepFit(shown[a], personText(pp.title)).s || a - b);
         const s = sis.length ? shown[sis[0]] : null;
@@ -427,6 +444,13 @@ function buildDemoScript(args, d) {
         };
         return V[k][(n + i) % V[k].length];
     };
+    // a step with a named part and no problem tied to it is put against the user's problem words, one wording for each step so none repeats
+    const againstProblems = (s, i) => {
+        const list = pains.slice(0, 3).map((_p, k) => `'${painWords(k)}'`).join('; ');
+        return [` I will put ${ref(s)} against the problems you named (${list}) and say plainly which of them it touches.`, ` Of the problems you named (${list}), I will say which ${ref(s)} touches and which it does not.`, ` I will go through ${ref(s)} with the problems you named in front of us (${list}), and mark where it helps.`][i % 3];
+    };
+    // a problem in its own words, whole when it is not too long; cut at a clean place otherwise
+    const painWords = (pi) => say(pains[pi].split(/\s+/).length <= 26 ? low(pains[pi]) : (0, rw_kit_ts_1.painShort)(low(pains[pi])));
     const seenPain = new Set();
     const typeUse = {};
     const usedLines = new Set();
@@ -457,7 +481,7 @@ function buildDemoScript(args, d) {
             intro2 = `This is ${say((0, rw_kit_ts_1.capSay)(s.cap))}.`;
         else
             intro2 = `This one is for ${say(painNow[0] || 'the problems you named')}.`;
-        const told = s.fromPain ? ` ${sh.say}` : main >= 0 && isMarket(pains[main]) && !painNow[0].startsWith('the same') ? ` On ${say(painNow[0])}, which is common across ${customerIndustry || 'the market'}: ${sh.say}` : painNow.length ? (painNow[0].startsWith('the same') ? ' This is for the same problem.' : (painNow[0].startsWith('the ') ? ` Take ${say(painNow[0])}: ${sh.say}` : ` You told me ${say(painNow[0])}, so ${lowFirst(sh.say)}`)) : ` ${sh.say}`;
+        const told = s.fromPain ? ` ${sh.say}` : main >= 0 && isMarket(pains[main]) && !painNow[0].startsWith('the same') ? ` On ${say(painNow[0])}, which is common across ${customerIndustry || 'the market'}: ${sh.say}` : painNow.length ? (painNow[0].startsWith('the same') ? ` Back to '${painWords(main)}': ${sh.say}` : (painNow[0].startsWith('the ') ? ` Take ${say(painNow[0])}: ${sh.say}` : ` You told me ${say(painNow[0])}, so ${lowFirst(sh.say)}`)) : (pains.length && s.cap ? againstProblems(s, i) : ` ${sh.say}`);
         const lines = [head, ...(forLine ? [forLine] : []), screen, `Say: "${intro2}${told}"`];
         // a second problem this step bears on is said too, so it is not only a name in the table
         const second = s.pains[1];
@@ -486,7 +510,13 @@ function buildDemoScript(args, d) {
         notShownCaps.length ? `Say: "There is more behind this than I showed today: ${say((0, dealtext_ts_1.joinList)(notShownCaps))}. Tell me which of your problems they would help with and I will cover them next time."` : '',
     ].filter(Boolean).join('\n\n');
     const withPain = shown.filter((s) => s.pains.length), withoutPain = shown.filter((s) => !s.pains.length);
-    const recap = shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...withPain.map((s) => (s.fromPain && shown.some((x) => !x.fromPain) ? `For ${say(pRef(s.pains[0]))} you saw a live case run through ${P}.` : `For ${say(pRef(s.pains[0]))} you saw ${ref(s)}.`)), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
+    // each problem is named once in the recap, with all the parts that were shown for it
+    const byPain = new Map();
+    for (const st of withPain) {
+        const k = st.pains[0];
+        byPain.set(k, [...(byPain.get(k) || []), st.fromPain && shown.some((x) => !x.fromPain) ? 'a live case run through ' + P : ref(st)]);
+    }
+    const recap = shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...[...byPain.entries()].map(([k, refs]) => `For ${say(pRef(k))} you saw ${(0, dealtext_ts_1.joinList)(refs)}.`), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
     const rest = unattached.slice(3);
     const nextOpt = v ? low(d.stock(v, modelKey).next) : '';
     const closeBlock = [

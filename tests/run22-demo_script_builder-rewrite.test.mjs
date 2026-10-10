@@ -465,3 +465,64 @@ test("round 5: the search step works the finding problem, the assistant is not t
   if (assistant) assert.doesNotMatch(assistant, /AI costs rise faster than adoption/);
   for (const who of ["customer service", "people team"]) { const l = askwell.split("\n").find((x) => x.startsWith(`Ask the ${who}`)); if (l) assert.doesNotMatch(l, /AI costs rise faster/, who); }
 });
+
+// ---- round 6: no hollow spoken line, the recap groups the steps, the hotel buyers see their parts, the risk team sees its evidence, billing questions are readable ----
+const HOSTBEAM = {
+  demo_type: "first_look", primary_audience: "General Manager", attendees: "Revenue Managers, Finance Teams, F&B Managers, Sales and MICE Managers", customer_industry: "independent hotels",
+  your_solution: "Hostbeam, the operating system built for modern hotels: it connects reservations, payments, housekeeping, point of sale, revenue management and guest journeys in one cloud-native platform",
+  key_pain_points: "separate distribution systems cause mistakes that lead to overbookings; manual work and payment reconciliation take staff time away from guests",
+  competitor_context: "separate point tools for pricing, operations, payments and distribution", demo_duration: 30,
+  must_show_features: "over 15,000 properties use it (page claims)", known_objections: "What if I want to keep parts of my current tech stack?",
+};
+const LINGUA = {
+  demo_type: "first_look", primary_audience: "Chief Digital Officer", attendees: "risk team", customer_industry: "financial services",
+  your_solution: "Lingua, a sovereign AI platform for regional languages: speech, translation and document models, APIs, voice agents and work agents, with forward deployed engineers",
+  key_pain_points: "enterprises need high-volume customer engagement in regional and mixed-language conversations without linear increases in cost or effort",
+  demo_duration: 30, must_show_features: "SOC 2 Type II and ISO 27001 compliant; 100ms median latency (page claims)",
+  known_objections: "Do I need to pay again next month?; Do you support refunds or cancellations?; Is there a minimum or maximum purchase amount for credits?",
+};
+const BANKLINE = {
+  demo_type: "first_look", primary_audience: "SVP Product", attendees: "Compliance Manager", customer_industry: "fintech",
+  your_solution: "Bankline, a financial data network: Auth (verify bank account and routing numbers), Balance, Signal (predict return risk), Link",
+  key_pain_points: "bank payments come with bad authentication experiences; returns and settlement delays", demo_duration: 30,
+};
+const [hostbeam, lingua, bankline] = [await call(HOSTBEAM), await call(LINGUA), await call(BANKLINE)];
+const stepList = (t) => (t.split("### Part 3")[1] || "").split("### Part 4")[0].split(/\n(?=\*\*Step )/).slice(1);
+test("round 6: no spoken line of a step is hollow: each says something beyond 'This is X.' and never 'This is for the same problem'", () => {
+  for (const [n, t] of [["Hostbeam", hostbeam], ["Lingua", lingua], ["Bankline", bankline]]) {
+    assert.doesNotMatch(t, /This is for the same problem/, n);
+    for (const b of stepList(t)) {
+      const say = b.split("\n").find((l) => /^Say: "This is /.test(l)) || b.split("\n").find((l) => /^Say: "/.test(l)) || "";
+      const rest = say.replace(/^Say: "This is [^.]+\.\s*/, "").replace(/"$/, "");
+      assert.ok(rest.split(/\s+/).filter(Boolean).length >= 8, `${n}: hollow spoken line in ${b.split("\n")[0]}: ${say}`);
+    }
+  }
+});
+test("round 6: the recap names each problem once, and a competitor list is not cut at its first comma", () => {
+  const recap = lingua.split("\n").find((l) => /^Say: "Here is what we covered/.test(l)) || "";
+  assert.ok((recap.match(/For the first problem you described/g) || []).length <= 1, recap);
+  const ov = hostbeam.split("\n").find((l) => /which you described as/.test(l)) || "";
+  assert.match(ov, /separate point tools for pricing, operations, payments and distribution/);
+});
+test("round 6: a hotel buyer is not asked a pipeline question before point of sale, and an overbooking problem is not given to guest journeys", () => {
+  assert.doesNotMatch(hostbeam.split("\n").filter((l) => /^Ask the Sales and MICE/.test(l)).join("\n"), /pipeline/i);
+  const gj = stepList(hostbeam).find((b) => /^\*\*Step \d+: Guest journeys/.test(b));
+  if (gj) assert.doesNotMatch(gj, /overbookings/);
+  const res = stepList(hostbeam).find((b) => /^\*\*Step \d+: Reservations/.test(b));
+  assert.ok(res && /overbookings/.test(res), "the overbooking problem is worked in the reservations step");
+});
+test("round 6: the credentials the risk team came for are said in its step, and a billing question gets the facts to put in writing, readable", () => {
+  const mine = stepList(lingua).find((b) => /SOC 2 Type II/.test(b));
+  assert.ok(mine, "a step says the credentials");
+  assert.match(lingua, /whether the charge repeats/);
+  assert.match(lingua, /what can be refunded or cancelled/);
+  assert.match(lingua, /the smallest and the largest purchase amount for credits/);
+  assert.doesNotMatch(lingua, /On pay again next month|On minimum or maximum/);
+});
+test("round 6: a part tied by a word group of the money kind only is not tied to an authentication problem, and a security answer does not lean on uptime or search figures", async () => {
+  const bal = stepList(bankline).find((b) => /^\*\*Step \d+: Balance/.test(b));
+  if (bal) assert.doesNotMatch(bal, /You told me|run on one real case of/);
+  const t = await call({ ...ASKWELL, must_show_features: "3 billion searches and 99.9% uptime across core search (page claims)", known_objections: "Is Askwell more secure than a general chat assistant?" });
+  const ans = t.slice(t.indexOf('Buyer may ask: "Is Askwell more secure'));
+  assert.doesNotMatch(ans.split("\n").slice(0, 3).join("\n"), /uptime|billion searches/);
+});

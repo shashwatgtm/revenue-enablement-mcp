@@ -81,7 +81,7 @@ function buildWinLoss(args, D) {
     const hasV = args.deal_value !== undefined && args.deal_value !== null && args.deal_value !== '';
     const hasD = args.sales_cycle_days !== undefined && args.sales_cycle_days !== null && args.sales_cycle_days !== '';
     const ctx = (0, rw_common_ts_1.readSector)(undefined, { seller: [solution], context: [details, reason, stakeText, multiple] });
-    const v = (0, rw_common_ts_1.fitSector)(ctx.v, ctx.fixedLink, ctx.model);
+    const v = (0, rw_common_ts_1.fitSector)(ctx.v, ctx.fixedLink, ctx.model, solution);
     const investment = ctx.model === 'investment';
     const P = (0, rw_common_ts_1.productOf)(solution, D);
     const name = P.name || P.ref;
@@ -92,6 +92,9 @@ function buildWinLoss(args, D) {
     // ---- the people: from the stakeholders input, or from "roles involved" in the notes ----
     const rolesInNotes = (details.match(/\broles involved:\s*([^;.]+)/i) || [])[1] || '';
     const contacts = wlContacts(stakeText.trim() ? stakeText : rolesInNotes, investment);
+    // a deal for an API or a developer tool, with developers or engineers as most of the people involved, is a developer led deal: the roles to ask about are engineering roles
+    const devRole = (c) => /\b(?:developers?|engineers?|devops|sre|architects?|programmers?)\b/i.test(c.title);
+    const devLed = contacts.length > 0 && contacts.filter(devRole).length * 2 >= contacts.length && /\b(?:apis?|sdks?|developers?)\b/i.test(`${solution} ${details}`);
     const against = contacts.filter((p) => (0, dealtext_ts_1.tagKind)(p.tag) === 'blocker');
     const backing = contacts.filter((p) => (0, dealtext_ts_1.tagKind)(p.tag) === 'champion' || /support/.test(p.tag || ''));
     const deciders = contacts.filter((p) => ['economic', 'buyer'].includes((0, dealtext_ts_1.tagKind)(p.tag) || ''));
@@ -325,9 +328,11 @@ function buildWinLoss(args, D) {
             const ACR = { cfo: 'financial', coo: 'operating', cio: investment ? 'investment' : 'information', cto: 'technology', ciso: 'security', cmo: 'marketing', cro: 'revenue' };
             const sig = (t) => t.toLowerCase().split(/[^a-z0-9]+/).map((w) => ACR[w] || w).filter((w) => w.length > 1 && !['chief', 'officer', 'head', 'of', 'manager', 'lead', 'and', 'the', 'senior', 'sr', 'vp', 'director', 'owner', 'or'].includes(w));
             const given = new Set(contacts.flatMap((c) => sig(c.title)));
-            const notNamed = v.buyerRoles.filter((role) => !/\b(?:the (?:function|team|process|business function)|who uses|that uses|that answers|the agent)\b/i.test(role) && !sig(role).some((w) => given.has(w)));
+            const notNamed = devLed ? [] : v.buyerRoles.filter((role) => !/\b(?:the (?:function|team|process|business function)|who uses|that uses|that answers|the agent)\b/i.test(role) && !sig(role).some((w) => given.has(w)));
             if (notNamed.length)
                 missing = ` This sector usually also involves ${(0, dealtext_ts_1.joinList)(notNamed.slice(0, 3).map(lowerRole))}; you did not list them. Were they part of the deal, and what did they think?`;
+            else if (devLed)
+                missing = ' A developer led deal usually also involves an engineering lead and whoever approves the spend; you did not list them. Were they part of the deal, and what did they think?';
         }
         para.push(`**The people.** ${contacts.length === 1 ? 'One stakeholder was' : `${contacts.length} stakeholders were`} involved: ${(0, dealtext_ts_1.joinList)(contacts.map((c) => c.raw))}. ${groups.join(' ')}${missing}`);
     }
@@ -345,11 +350,15 @@ function buildWinLoss(args, D) {
     if (described)
         qs.push(`You described the alternative as ${q(described.text)}: did the buyer see that difference from ${name} for themselves, and what did ${contacts.length ? refs(contacts.slice(0, 2)) : 'the people involved'} say about it?`);
     // a buyer that runs many sites is asked whether it chose for the whole or site by site
-    const siteWord = `${solution} ${details}`.match(/\b(plants?|sites?|branch(?:es)?|stores?|locations?|factories|warehouses?|regions?|countries|offices)\b/i);
+    const siteWord = `${solution} ${details}`.match(/\b(plants?|sites?|branch(?:es)?|stores?|locations?|factories|warehouses?|offices)\b/i);
     if (siteWord && !isPortfolio) {
         const one = siteWord[1].toLowerCase().replace(/ies$/, 'y').replace(/(?:ches)$/, 'ch').replace(/s$/, '');
         qs.push(`${seg ? `Did the ${seg.toLowerCase()} buyer` : 'Did the buyer'} decide for the whole buyer or ${one} by ${one}, and who owned the choice for each?`);
     }
+    if (devLed)
+        qs.push(`${(0, dealtext_ts_1.upperFirst)(refs(contacts.filter(devRole).slice(0, 2)))} evaluated this: what did ${contacts.filter(devRole).length === 1 ? 'they' : 'they'} test first, and how long did it take to get a first working result?`);
+    if (/\b(?:financ\w*|bank\w*|insur\w*|payments?|lending|capital markets)\b/i.test(seg))
+        qs.push(`The buyer is in ${seg.toLowerCase()}: did a security, compliance or data handling review sit between the evaluation and the decision, and who ran it?`);
     if (hasD)
         qs.push(`The deal ran ${days(cycle)}: which stage took longest, and was that the buyer's process or a stall you could have moved?`);
     if (hasV)

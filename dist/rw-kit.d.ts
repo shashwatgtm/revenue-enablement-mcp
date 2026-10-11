@@ -28,6 +28,13 @@ export declare function splitNotes(text: string): {
     text: string;
     notes: string[];
 };
+export declare function splitGiven(text: string): {
+    q: string;
+    given: string;
+};
+/** Items cut at a semicolon where the second only makes sense with the first ("We are moving from another tool; can you help with that?")
+ *  are one item again: a piece that starts in lower case with a question or a pointer back to the piece before it. */
+export declare function joinBack(items: string[]): string[];
 /** How a pain is named after it has been played back: its own words in quotes when it is short, else "the first problem you described". */
 export declare function painRef(p: string, i: number, headClause?: boolean): string;
 export type PainType = 'speed' | 'risk' | 'manual' | 'experience' | 'cost' | 'compliance' | 'visibility' | 'general';
@@ -111,7 +118,7 @@ export declare function youify(q0: string): string;
 export declare function outcomeHead(o: string): string;
 /** Answers one objection in the voice asked for. Each answer uses the inputs that touch the question (the product's parts, the alternatives, the pains,
  *  the statistics with their labels) and the business model; where a fact is needed that was not given, it says so in `check` instead of claiming it. */
-export declare function answerObjection(o: string, c: AnswerCtx): Answer;
+export declare function answerObjection(o0: string, c: AnswerCtx): Answer;
 /** Removes a sentence of 40 characters or more that an earlier answer already holds, and an ask that was already put, so no answer repeats another word for word. */
 export declare function dedupeAnswers(list: {
     say: string;

@@ -133,6 +133,16 @@ function buildDemoScript(args, d) {
         const cp = hit ? capPool.splice(hit.i, 1)[0] : null;
         steps.push(newStep((0, rw_kit_ts_1.upFirst)(f.text), f, cp, textOf(f, cp)));
     }
+    // Run 27B: a must-show item said as a figure ("camera analytics that flag 9+ kinds of event") still asks for the part it is about to be shown
+    for (const c of ms.claims) {
+        if (steps.length >= maxSteps)
+            break;
+        const hit = capPool.map((cp, i) => ({ i, s: (0, rw_kit_ts_1.overlap)(`${cp.name} ${cp.desc}`, c.text, skipP) })).filter((x) => x.s >= 2).sort((a, b) => b.s - a.s)[0];
+        if (hit) {
+            const cp = capPool.splice(hit.i, 1)[0];
+            steps.push(newStep((0, rw_kit_ts_1.upFirst)(cp.name), null, cp, textOf(null, cp)));
+        }
+    }
     // how well a step answers a text: the words and groups it shares, and a bonus when the part's own name is one of the words
     const stepFit = (s, target, withPains = false) => {
         const f = (0, rw_kit_ts_1.fit)(withPains ? `${s.text} ${s.pains.map((i) => pains[i]).join(' ')}` : s.text, target, skipP);
@@ -310,7 +320,9 @@ function buildDemoScript(args, d) {
     const claimSay = (items) => `${items.map((c) => c.text.replace(/[.]+$/, '')).join('; ')}.`;
     const claimLabels = (items) => [...new Set(items.map((c) => c.label || 'a claim you gave'))].join('; ');
     // ---- objections ----
-    const typed = d.splitItems(knownObjections).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+    const typed = (0, rw_kit_ts_1.joinBack)(d.splitItems(knownObjections)).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+    // the question as the buyer asks it, without the answer the user typed beside it (that answer is said in the reply)
+    const asked = (o) => (0, rw_kit_ts_1.splitGiven)(o).q || o;
     const fromSector = !typed.length && !!v;
     const objections = typed.length ? typed : fromSector ? v.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
     const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
@@ -351,7 +363,8 @@ function buildDemoScript(args, d) {
     const notShownCaps = notShownCaps0.filter((n) => !shownInAnswer.includes(n));
     const objectionBlock = (o) => {
         const a = answers.get(o);
-        return `Buyer may ask: "${o.replace(/[?.]+$/, '')}${/\?$/.test(o) ? '?' : ''}"\nSay: "${say(a.say)}"${a.ask ? `\nAsk: "${say(a.ask)}"` : ''}${a.sector ? `\nPlaybook for ${v ? v.name : 'this sector'}, not for saying aloud: ${a.sector}` : ''}`;
+        const oq = asked(o);
+        return `Buyer may ask: "${oq.replace(/[?.]+$/, '')}${/\?$/.test(oq) ? '?' : ''}"\nSay: "${say(a.say)}"${a.ask ? `\nAsk: "${say(a.ask)}"` : ''}${a.sector ? `\nPlaybook for ${v ? v.name : 'this sector'}, not for saying aloud: ${a.sector}` : ''}`;
     };
     // ---- times ----
     const partMinutes = (n) => (n > 0 ? `${n} minute${n === 1 ? '' : 's'}` : 'under a minute');
@@ -544,10 +557,10 @@ function buildDemoScript(args, d) {
     ].filter(Boolean).join('\n\n');
     // ---- the end: what to send, what to confirm, what would sharpen the draft ----
     const afterLines = [
-        objections.length ? `- Send the written answers to: ${objections.map((o) => o.replace(/[?.]+$/, '')).join('; ')}.` : '',
+        objections.length ? `- Send the written answers to: ${objections.map((o) => asked(o).replace(/[?.]+$/, '')).join('; ')}.` : '',
         `- Send the summary promised in the close, and brief your champion separately.`,
     ].filter(Boolean).join('\n');
-    const checks = [...answers.entries()].map(([o, a]) => `- "${o.replace(/[?.]+$/, '')}": ${a.check}.`);
+    const checks = [...answers.entries()].map(([o, a]) => `- "${asked(o).replace(/[?.]+$/, '')}": ${a.check}.`);
     const noDesc = shown.filter((s) => s.cap && !s.cap.desc && !s.flow).map((s) => s.cap.name);
     const sharpen = [];
     if (!primaryAudience)

@@ -29,6 +29,7 @@ import {
 import { neutraliseDeep } from './echo-safe.ts';
 import { splitFeatureList, type ListItem, aAn, describeWith, painClauses, solutionBrief, capitaliseSolutionPhrase, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
+import { splitGiven, joinBack } from './rw-kit.ts';
 import { buildAccountPlan } from './rw1-account.ts';
 import { buildMutualActionPlan } from './rw1-map.ts';
 import { buildRoiStructure } from './rw1-roi.ts';
@@ -1392,14 +1393,15 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
   }
 
   if (blockers) {
-    const items = splitItems(blockers);
+    // Run 27B: a blocker and its follow-up question stay one blocker; the answer the user typed in brackets is kept apart and used
+    const items = joinBack(splitItems(blockers));
     specificRecs += `
 ### Blocker Mitigation
 
 Each blocker you typed is answered on its own. Where the answer needs a fact about ${P}, it says what to confirm instead of stating one.
 
-${items.map((b, i) => `**Blocker ${i + 1}: ${q(b)}**
-${blockerLines(b, bctx).join('\n')}`).join('\n\n')}
+${items.map((b0, i) => { const g = splitGiven(b0); const b = g.q || b0; return `**Blocker ${i + 1}: ${q(b)}**
+${[...(g.given ? [`- **The answer you gave:** ${g.given} (from your input; put it in the proposal in those words and confirm it is current before you send it).`] : []), ...blockerLines(b, bctx)].join('\n')}`; }).join('\n\n')}
 
 **For any blocker that is a person:** find out whether they are threatened by the change, own a competing option or have a fair concern; answer their concern too, and ask your champion or an executive sponsor for cover only after that.
 
@@ -1439,7 +1441,7 @@ ${[
     `- **Champion:** ${championStatus === 'no_champion' ? 'none yet. Finding one comes before anything else.' : championStatus === 'potential_champion' ? 'a potential champion. Test them: do they have access to the buyer and a reason to push?' : championStatus === 'confirmed_champion' ? 'confirmed. Give them the material to sell internally.' : 'several contacts engaged (multi-threaded). Keep each one informed.'}`,
     `- **Economic buyer:** ${economicBuyer ? economicBuyer : `unknown.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}.` : ''}`}`,
     compItems.length ? `- **Competition:** ${compItems.length} named (${joinList(compItems.map((c) => clip(c, 60)))}). Each is a row in the competitive table below.` : '- **Competition:** none named. Ask what they do today, including doing it by hand.',
-    blockers ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
+    blockers ? `- **Blockers:** ${joinBack(splitItems(blockers)).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
     dealCtx.v ? `- **How deals usually run in ${dealCtx.v.name}:** ${dealCtx.v.salesMotion}` : '',
   ].filter(Boolean).join('\n')}
 
@@ -1456,7 +1458,7 @@ ${specificRecs}
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
 ${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
-3. **Advance the deal**: ${nextSteps || (blockers ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
+3. **Advance the deal**: ${nextSteps || (blockers ? `Answer ${joinBack(splitItems(blockers)).length === 1 ? 'the blocker' : `the ${joinBack(splitItems(blockers)).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
 4. **Update CRM**: Document all new information
 
 ### This Week

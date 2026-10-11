@@ -9,6 +9,7 @@ const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
 const rw1_common_ts_1 = require("./rw1-common.js");
+const rw_kit_ts_1 = require("./rw-kit.js");
 const HYPOTHETICAL = /\s*All figures in this input are hypothetical[^.]*\.\s*/i;
 /** The sentence of a note, quoted whole: never cut inside a clause. */
 function noteSentences(note) {
@@ -67,7 +68,7 @@ function buildAccountPlan(args, d) {
     const existing = arr > 0;
     // ---- the notes: objections (after "Objections:") and the rest ----
     const m = notesIn.match(/objections?\s*:\s*([\s\S]*)$/i);
-    const objections = m ? d.splitItems(m[1].replace(/[.]+\s*$/, '')) : [];
+    const objections = m ? (0, rw_kit_ts_1.joinBack)(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
     const noteRest = m ? notesIn.slice(0, m.index).trim() : notesIn;
     const hypothetical = HYPOTHETICAL.test(notesIn);
     const noteLines = noteSentences(noteRest);
@@ -122,7 +123,8 @@ function buildAccountPlan(args, d) {
     const threats = (0, rw1_common_ts_1.readThreats)(d.splitItems(threatsIn));
     const expansion = d.splitItems(expansionIn);
     const qa = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
-    const answers = (0, rw1_common_ts_1.dedupeAnswers)(objections.map((o) => ({ text: o, a: (0, rw1_common_ts_1.answerQuestion)(o, qa) })));
+    // Run 27B: an objection typed with its answer in brackets is answered on its own words; the answer the user gave is said first, as theirs
+    const answers = (0, rw1_common_ts_1.dedupeAnswers)(objections.map((o) => { const g = (0, rw_kit_ts_1.splitGiven)(o); return { text: g.q || o, given: g.given, a: (0, rw1_common_ts_1.answerQuestion)(g.q || o, qa) }; }));
     // ---- the parts of the product against the account's own pain ----
     const partFor = (text) => (rw1_common_ts_1.STITCHED.test(text) && (0, rw1_common_ts_1.joiningPart)(parts, solutionIn)) || (0, rw1_common_ts_1.matchPart)(text, parts, brief.short);
     // the line "points to ..." may name the platform and the parts the pain lists; the part used in the plan below stays one part
@@ -226,7 +228,7 @@ function buildAccountPlan(args, d) {
     out.push(comp.join('\n\n'));
     // ---- objections ----
     if (answers.length) {
-        out.push(`## Objections to expect\n\n${answers.map((x, i) => `### ${i + 1}. ${(0, rw1_common_ts_1.quoted)(x.text)}\n${x.a.answer}\n- **Confirm before you say it:** ${(0, rw1_common_ts_1.stripEnd)(x.a.bring)}.${x.a.ask ? `\n- **Ask first:** "${x.a.ask}"` : ''}`).join('\n\n')}`);
+        out.push(`## Objections to expect\n\n${answers.map((x, i) => `### ${i + 1}. ${(0, rw1_common_ts_1.quoted)(x.text)}\n${x.given ? `- **The answer you gave:** ${x.given} (from your input; say it in those words and confirm it is current for this account).\n` : ''}${x.a.answer}\n- **Confirm before you say it:** ${(0, rw1_common_ts_1.stripEnd)(x.a.bring)}.${x.a.ask ? `\n- **Ask first:** "${x.a.ask}"` : ''}`).join('\n\n')}`);
     }
     // ---- 90 days ----
     const ask = new Map();

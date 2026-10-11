@@ -137,10 +137,26 @@ export function readPains(text: string): PainSet {
   const pointsBackAtFigures = /\b(?:on|across|for|in|with)\s+(?:all|each|every one|both)$|\b(?:all|each|any|both) of them$/i.test(tail.trim());
   if (!pointsBackAtFigures) t = t.replace(/:\s+((?:over |more than |nearly )?\d[^;]*?)(?=,\s+(?:and|while|but|so)\s+[a-z]|;|$)/i, (_m, ev: string) => { evidence.push(ev.trim()); return ';'; });
   const out: string[] = [];
-  for (const chunk of t.split(/\n|;/).map((x) => x.trim()).filter(Boolean)) {
+  // Run 27B: "X does not stall because of A; it stalls because of B" names one problem, B, with X as its subject: the denial is not a problem
+  const chunks0 = t.split(/\n|;/).map((x) => x.trim()).filter(Boolean);
+  const chunks: string[] = [];
+  for (let k = 0; k < chunks0.length; k++) {
+    const den = chunks0[k].match(/^(.{3,60}?)\s+(?:does|do|did|is|are|was|were|has|have|will|can)(?: not|n't)\b/i);
+    const next = chunks0[k + 1];
+    if (den && next && /^(?:it|they)\s+\w/i.test(next)) { chunks.push(next.replace(/^(?:it|they)\s+/i, `${den[1]} `)); notes.push(chunks0[k]); k++; continue; }
+    chunks.push(chunks0[k]);
+  }
+  for (const chunk0 of chunks) {
+    let chunk = chunk0;
     // a statement that explains itself after a colon ("X is slow: a, b, and c") is one problem
     const colonAt = chunk.indexOf(': ');
-    if (colonAt > 0 && chunk.slice(0, colonAt).trim().split(/\s+/).length >= 3) { out.push(chunk); continue; }
+    if (colonAt > 0 && chunk.slice(0, colonAt).trim().split(/\s+/).length >= 3) {
+      // Run 27B: a figure before the colon ("<a count of vendors in the market> and none fixed it: a, b and c") is the seller's
+      // claim about the market; the problems are the ones listed after it
+      const head = chunk.slice(0, colonAt).trim(), tail = chunk.slice(colonAt + 2).trim();
+      if (/\d/.test(head) && /,/.test(tail)) { evidence.push(head); chunk = tail; }
+      else { out.push(chunk); continue; }
+    }
     // a list after "across", "between" or "among" stays inside its statement
     const guarded = chunk.replace(/\b(across|between|among|with|including|such as)\s+([^,;]+(?:,\s+[^,;]+?)*?),?\s+(and|or)\s+([^,;]+)/gi, (m, _k: string, _first: string, _c: string, last: string) => (last.trim().split(/\s+/).length <= 4 && !hasVerb(last) ? m.replace(/,/g, '\u0001') : m));
     const pieces = splitTopLevel(guarded).map((x) => x.replace(/\u0001/g, ','));
@@ -207,6 +223,27 @@ export function splitNotes(text: string): { text: string; notes: string[] } {
   const notes: string[] = [];
   const out = (text || '').replace(/\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g, (m, inner: string) => { if (/\b(?:implied|page|claims?|citing|source|stated by|according to|customer stories|seller'?s words|promises?)\b/i.test(inner)) { notes.push(inner.trim()); return ''; } return m; }).replace(/\s+/g, ' ').trim();
   return { text: out, notes };
+}
+// Run 27B (faults traced in independent-audit/run27b/trace.md: dropped input, field parsing). "Are funds held in escrow? (the page answers that ...)"
+// holds the buyer's question and the answer the user typed. The question is read on its own words; the answer is kept and said as the user's,
+// and its words never decide what kind of question it is.
+const GIVEN_RE = /\s*\(\s*(?:the |our |your |their |its )?(?:[a-z]+ )?(?:page|site|website|faq|docs|documentation|help (?:center|centre))\s+(?:answers|says|states|replies)\b\s*(?:that\s+|:\s*)?((?:[^()]|\([^()]*\))*)\)\s*[.?!]?\s*$/i;
+export function splitGiven(text: string): { q: string; given: string } {
+  const t = (text || '').trim();
+  const m = GIVEN_RE.exec(t);
+  if (!m || !m[1].trim() || m.index === 0) return { q: t, given: '' };
+  return { q: t.slice(0, m.index).trim(), given: m[1].trim().replace(/[.\s]+$/, '') };
+}
+/** Items cut at a semicolon where the second only makes sense with the first ("We are moving from another tool; can you help with that?")
+ *  are one item again: a piece that starts in lower case with a question or a pointer back to the piece before it. */
+export function joinBack(items: string[]): string[] {
+  const out: string[] = [];
+  for (const it of items) {
+    const prev = out[out.length - 1];
+    if (prev !== undefined && /^(?:do|does|can|could|will|would|is|are|how|what)\s+(?:you|we|it|they|i)\b[^?]*\b(?:that|this|it|them|those)\b|^(?:and|but|so)\s/.test(it) && !GIVEN_RE.test(prev)) out[out.length - 1] = `${prev}; ${it}`;
+    else out.push(it);
+  }
+  return out;
 }
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
 /** How a pain is named after it has been played back: its own words in quotes when it is short, else "the first problem you described". */
@@ -352,7 +389,11 @@ function splitCapList(src: string, product = ''): Capability[] {
   const raw = splitTopLevel(src.replace(/[.]+$/, ''));
   // "one setup for local, regional and global payment methods": a short run of adjectives is not three parts
   const segs: string[] = [];
+  let openList = false;
   for (let k = 0; k < raw.length; k++) {
+    // Run 27B: one to three lower case words after "from a prompt" ("link", "document or slides") continue that list; they are not parts
+    if (segs.length && /^[a-z][a-z-]*(?:\s+(?:or|and)\s+[a-z][a-z-]*)?$/.test(raw[k].trim()) && (openList || /\b(?:from|to|into|as|of|via)\s+(?:an?|the|any)\s+[a-z][a-z-]*$/i.test(segs[segs.length - 1]))) { segs[segs.length - 1] = `${segs[segs.length - 1]}, ${raw[k].trim()}`; openList = true; continue; }
+    openList = false;
     if (segs.length && SCOPE_WORD.test(segs[segs.length - 1]) && /^[a-z]+\s+and\s+[a-z-]+\s+[a-z]/.test(raw[k]) && !/^(?:and|plus|with)\s/i.test(raw[k])) {
       const joined = `${segs[segs.length - 1]}, ${raw[k]}`, w = joined.split(/\s+with\s+/i);
       if (joined.split(/\s+/).length > 10 && w.length === 2) segs.splice(segs.length - 1, 1, w[0], w[1]); else segs[segs.length - 1] = joined;
@@ -466,6 +507,7 @@ export const upFirst = (s: string): string => s.charAt(0).toUpperCase() + s.slic
 // The must-show list: flows the seller can run live, and statistics or credentials, which are said, never shown
 // ---------------------------------------------------------------------------------------------------------------------------
 export interface Item { text: string; label: string }
+const COMPANY_FACT = /^(?:named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
 export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
   const flows: Item[] = [], claims: Item[] = [];
   const t = (text || '').trim();
@@ -488,13 +530,17 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
       // a list of years ("... 2024, 2025 and 2026") is one item, not three
       if (prev && /^(?:19|20)\d\d(?:\s+and\s+(?:19|20)\d\d)?$/.test(x) && /\b(?:19|20)\d\d$/.test(prev)) { pieces[pieces.length - 1] = `${prev}, ${x}`; continue; }
       // a short fragment without a number of its own belongs to the item before it ("FMS or TMS in weeks" joins)
-      if (prev && x.split(/\s+/).length <= 2 && !isStat(x) && /^[A-Z]{2,6}\b/.test(x)) pieces[pieces.length - 1] = `${prev}, ${x}`; else pieces.push(x);
+      if (prev && x.split(/\s+/).length <= 2 && !isStat(x) && /^[A-Z]{2,6}\b/.test(x)) pieces[pieces.length - 1] = `${prev}, ${x}`;
+      // Run 27B: names that continue a list of places or names ("offices in Lisbon, Oslo, Tallinn and Riga") are not items of their own
+      else if (prev && /^[A-Z][\w.'-]*(?:\s+(?:and|or|&)?\s*[A-Z][\w.'-]*)*$/.test(x) && !DEMO_VERB.test(x) && /\b(?:in|at|from|across|including|such as|like)\s+[A-Z][\w.'-]*(?:\s+[A-Z][\w.'-]*)?(?:,\s+[A-Z][\w.'-]*(?:\s+(?:and|or)\s+[A-Z][\w.'-]*)?)*$/.test(prev)) pieces[pieces.length - 1] = `${prev}, ${x}`;
+      else pieces.push(x);
     }
     if (carry) pieces.push(carry);
     for (const p of pieces) {
       const item = { text: p.replace(/[.]+$/, ''), label };
       // a figure, a credential or a benchmark is said, not shown; so is any item that holds a number and does not start with something a presenter can do
-      if (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !DEMO_VERB.test(p.trim()))) claims.push(item); else flows.push(item);
+      // Run 27B: a fact about the company ("named on a startup list", "founded in ...", "offices in ...") is said, not shown
+      if (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !DEMO_VERB.test(p.trim())) || COMPANY_FACT.test(p.trim())) claims.push(item); else flows.push(item);
     }
   }
   // a figure with no label of its own takes the label the list ends with ("... (page claims)")
@@ -698,7 +744,18 @@ const trimDot = (s: string): string => s.replace(/[.\s]+$/, '');
 
 /** Answers one objection in the voice asked for. Each answer uses the inputs that touch the question (the product's parts, the alternatives, the pains,
  *  the statistics with their labels) and the business model; where a fact is needed that was not given, it says so in `check` instead of claiming it. */
-export function answerObjection(o: string, c: AnswerCtx): Answer {
+export function answerObjection(o0: string, c: AnswerCtx): Answer {
+  const g = splitGiven(o0);
+  const a = answerObjectionCore(g.q || o0, c);
+  if (!g.given) return a;
+  // the answer the user typed is said first, as theirs; the tool adds only how to back it, and what to confirm
+  const P = c.P || 'the product';
+  const Ps = /s$/i.test(P) ? `${P}'` : `${P}'s`;
+  const lead = c.voice === 'seller' ? `As our own page puts it: ${g.given}.` : `As ${Ps} own page puts it: ${g.given}.`;
+  const back = c.voice === 'seller' ? 'I will send the page or the document that says it, so your team can check it against your own case.' : `We should ask ${P} for the page or document that says it, and check it against our own case.`;
+  return { ...a, say: `${lead} ${back}`, check: `the answer you gave ("${g.given}"): confirm it on ${Ps} current page or in the contract before it is said`, sector: '' };
+}
+function answerObjectionCore(o: string, c: AnswerCtx): Answer {
   const sellerV = c.voice === 'seller';
   const P = c.P || 'the product';
   const Ps = /s$/i.test(P) ? `${P}'` : `${P}'s`;

@@ -56,7 +56,7 @@ function buildDiscoveryBank(args, d) {
     const indLow = prospectIndustry ? low(prospectIndustry) : '';
     const inInd = indLow && !(roleTxt && roleTxt.includes(indLow)) ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
     // the prospect signs when the title says so: a president, an owner, a founder, a chief executive, or a chief of finance
-    const isSigner = !!prospectRole && (/\b(?:president|owner|founder|ceo|chief executive|managing director|chairman|cfo|chief financial)\b/i.test(prospectRole) || ((0, dealtext_ts_1.levelOf)(prospectRole) === 'exec' && (roleFam === 'finance' || roleFam === 'executive')));
+    const isSignerTitle = !!prospectRole && (/\b(?:president|owner|founder|ceo|chief executive|managing director|chairman|cfo|chief financial)\b/i.test(prospectRole) || ((0, dealtext_ts_1.levelOf)(prospectRole) === 'exec' && (roleFam === 'finance' || roleFam === 'executive')));
     // ---- the pains, separate and named by their own words ----
     const painSet = (0, rw_kit_ts_1.readPains)(knownPainPoints);
     const pains = painSet.pains.length ? painSet.pains : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
@@ -73,6 +73,8 @@ function buildDiscoveryBank(args, d) {
     const otherRoles = v ? v.buyerRoles.filter((r) => (0, dealtext_ts_1.familyOf)(r, investment) !== roleFam && (aboutSecurity || !['security', 'risk'].includes((0, dealtext_ts_1.familyOf)(r, investment)))).sort((x, y) => Number(/ or /.test(x)) - Number(/ or /.test(y))).slice(0, 2).map(lowerRole) : [];
     const otherTxt = otherRoles.length ? (0, dealtext_ts_1.joinList)(otherRoles.map((r) => `your ${r}`), 'or') : 'someone else on your side';
     const signerClause = v ? low(v.committee.split(';')[0]).replace(/\s+signs?$/i, '') : '';
+    // Run 27B: the person in the room signs when the sector's signer is their own role ("The CISO signs" and a CISO in the room): they are not asked to invite themselves
+    const isSigner = isSignerTitle || (!!roleTxt && !!signerClause && new RegExp(`^(?:the\\s+)?${roleTxt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i').test(signerClause.trim()));
     const signer = isSigner ? 'you' : signerClause && signerClause.length <= 40 ? signerClause : 'the person who signs';
     const signerThe = isSigner ? 'you' : `the ${signer.replace(/^the\s+/, '')}`;
     // ---- the parts, closest to the pains and the role first ----

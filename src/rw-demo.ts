@@ -11,7 +11,7 @@ import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
 import {
   readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
-  answerObjection, dedupeAnswers, splitNotes, type Capability, type Item, type AnswerCtx, type Answer,
+  answerObjection, dedupeAnswers, splitNotes, splitGiven, joinBack, type Capability, type Item, type AnswerCtx, type Answer,
 } from './rw-kit.ts';
 
 export interface DemoDeps {
@@ -163,6 +163,12 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     const cp = hit ? capPool.splice(hit.i, 1)[0] : null;
     steps.push(newStep(upFirst(f.text), f, cp, textOf(f, cp)));
   }
+  // Run 27B: a must-show item said as a figure ("camera analytics that flag 9+ kinds of event") still asks for the part it is about to be shown
+  for (const c of ms.claims) {
+    if (steps.length >= maxSteps) break;
+    const hit = capPool.map((cp, i) => ({ i, s: overlap(`${cp.name} ${cp.desc}`, c.text, skipP) })).filter((x) => x.s >= 2).sort((a, b) => b.s - a.s)[0];
+    if (hit) { const cp = capPool.splice(hit.i, 1)[0]; steps.push(newStep(upFirst(cp.name), null, cp, textOf(null, cp))); }
+  }
   // how well a step answers a text: the words and groups it shares, and a bonus when the part's own name is one of the words
   const stepFit = (s: Step, target: string, withPains = false): { w: number; g: number; ng: number; ngSpecific: number; s: number } => {
     const f = fit(withPains ? `${s.text} ${s.pains.map((i) => pains[i]).join(' ')}` : s.text, target, skipP);
@@ -281,7 +287,9 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const claimLabels = (items: Item[]): string => [...new Set(items.map((c) => c.label || 'a claim you gave'))].join('; ');
 
   // ---- objections ----
-  const typed = d.splitItems(knownObjections).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+  const typed = joinBack(d.splitItems(knownObjections)).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+  // the question as the buyer asks it, without the answer the user typed beside it (that answer is said in the reply)
+  const asked = (o: string): string => splitGiven(o).q || o;
   const fromSector = !typed.length && !!v;
   const objections = typed.length ? typed : fromSector ? v!.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
   const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
@@ -313,7 +321,8 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const notShownCaps = notShownCaps0.filter((n) => !shownInAnswer.includes(n));
   const objectionBlock = (o: string): string => {
     const a = answers.get(o)!;
-    return `Buyer may ask: "${o.replace(/[?.]+$/, '')}${/\?$/.test(o) ? '?' : ''}"\nSay: "${say(a.say)}"${a.ask ? `\nAsk: "${say(a.ask)}"` : ''}${a.sector ? `\nPlaybook for ${v ? v.name : 'this sector'}, not for saying aloud: ${a.sector}` : ''}`;
+    const oq = asked(o);
+    return `Buyer may ask: "${oq.replace(/[?.]+$/, '')}${/\?$/.test(oq) ? '?' : ''}"\nSay: "${say(a.say)}"${a.ask ? `\nAsk: "${say(a.ask)}"` : ''}${a.sector ? `\nPlaybook for ${v ? v.name : 'this sector'}, not for saying aloud: ${a.sector}` : ''}`;
   };
 
   // ---- times ----
@@ -493,10 +502,10 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
 
   // ---- the end: what to send, what to confirm, what would sharpen the draft ----
   const afterLines = [
-    objections.length ? `- Send the written answers to: ${objections.map((o) => o.replace(/[?.]+$/, '')).join('; ')}.` : '',
+    objections.length ? `- Send the written answers to: ${objections.map((o) => asked(o).replace(/[?.]+$/, '')).join('; ')}.` : '',
     `- Send the summary promised in the close, and brief your champion separately.`,
   ].filter(Boolean).join('\n');
-  const checks = [...answers.entries()].map(([o, a]) => `- "${o.replace(/[?.]+$/, '')}": ${a.check}.`);
+  const checks = [...answers.entries()].map(([o, a]) => `- "${asked(o).replace(/[?.]+$/, '')}": ${a.check}.`);
   const noDesc = shown.filter((s) => s.cap && !s.cap.desc && !s.flow).map((s) => s.cap!.name);
   const sharpen: string[] = [];
   if (!primaryAudience) sharpen.push('primary_audience (it would change who the opening speaks to and the first question)');

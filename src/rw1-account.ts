@@ -6,6 +6,7 @@ import { describeWith, isoDate, joinList, onOrBeforeWorkday, parseContacts, part
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
 import { CALL_CONTEXT, STITCHED, joiningPart, matchPart, namedParts, answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
+import { splitGiven, joinBack } from './rw-kit.ts';
 
 const HYPOTHETICAL = /\s*All figures in this input are hypothetical[^.]*\.\s*/i;
 
@@ -55,7 +56,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
 
   // ---- the notes: objections (after "Objections:") and the rest ----
   const m = notesIn.match(/objections?\s*:\s*([\s\S]*)$/i);
-  const objections = m ? d.splitItems(m[1].replace(/[.]+\s*$/, '')) : [];
+  const objections = m ? joinBack(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
   const noteRest = m ? notesIn.slice(0, m.index).trim() : notesIn;
   const hypothetical = HYPOTHETICAL.test(notesIn);
   const noteLines = noteSentences(noteRest);
@@ -101,7 +102,8 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const threats = readThreats(d.splitItems(threatsIn));
   const expansion = d.splitItems(expansionIn);
   const qa: QACtx = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
-  const answers = dedupeAnswers(objections.map((o) => ({ text: o, a: answerQuestion(o, qa) })));
+  // Run 27B: an objection typed with its answer in brackets is answered on its own words; the answer the user gave is said first, as theirs
+  const answers = dedupeAnswers(objections.map((o) => { const g = splitGiven(o); return { text: g.q || o, given: g.given, a: answerQuestion(g.q || o, qa) }; }));
 
   // ---- the parts of the product against the account's own pain ----
   const partFor = (text: string): string => (STITCHED.test(text) && joiningPart(parts, solutionIn)) || matchPart(text, parts, brief.short);
@@ -191,7 +193,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
 
   // ---- objections ----
   if (answers.length) {
-    out.push(`## Objections to expect\n\n${answers.map((x, i) => `### ${i + 1}. ${quoted(x.text)}\n${x.a.answer}\n- **Confirm before you say it:** ${stripEnd(x.a.bring)}.${x.a.ask ? `\n- **Ask first:** "${x.a.ask}"` : ''}`).join('\n\n')}`);
+    out.push(`## Objections to expect\n\n${answers.map((x, i) => `### ${i + 1}. ${quoted(x.text)}\n${x.given ? `- **The answer you gave:** ${x.given} (from your input; say it in those words and confirm it is current for this account).\n` : ''}${x.a.answer}\n- **Confirm before you say it:** ${stripEnd(x.a.bring)}.${x.a.ask ? `\n- **Ask first:** "${x.a.ask}"` : ''}`).join('\n\n')}`);
   }
 
   // ---- 90 days ----

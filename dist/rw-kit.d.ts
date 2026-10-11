@@ -31,7 +31,22 @@ export declare function splitNotes(text: string): {
 export declare function splitGiven(text: string): {
     q: string;
     given: string;
+    fromPage: boolean;
 };
+/** The entries of an optional list field, trimmed; anything that is not a list gives no entries. */
+export declare function listItems(v: unknown): string[];
+/** Questions with the answer the user already has (an objection or a blocker), from an optional list field. */
+export declare function qaItems(v: unknown): {
+    q: string;
+    a: string;
+}[];
+/** One question as a typed line that the readers keep whole: its own semicolons become commas, and its answer goes in a bracket that splitGiven reads. */
+export declare const typedQA: (x: {
+    q: string;
+    a: string;
+}) => string;
+/** The parts of a product from a list field: each entry is one part; a long entry keeps its head as the name and the rest as what it does. */
+export declare function capsFromList(items: string[]): Capability[];
 /** Items cut at a semicolon where the second only makes sense with the first ("We are moving from another tool; can you help with that?")
  *  are one item again: a piece that starts in lower case with a question or a pointer back to the piece before it. */
 export declare function joinBack(items: string[]): string[];
@@ -75,6 +90,11 @@ export interface Item {
     label: string;
 }
 export declare function readMustShow(text: string): {
+    flows: Item[];
+    claims: Item[];
+};
+/** Run 27B (b): the must-show list given one entry at a time: each entry is one flow or one claim, never cut. */
+export declare function readMustShowItems(items: string[]): {
     flows: Item[];
     claims: Item[];
 };

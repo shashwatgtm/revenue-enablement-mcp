@@ -8,7 +8,7 @@
 import { joinList, clip, solutionBrief, levelOf, familyOf, aAn } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
-import { readPains, splitNotes, groupsOf, painRef, painType, SHOW, readProduct, toCapability, productName, productHead, capText, upFirst, fit, wordsOf, lensFor, type Capability } from './rw-kit.ts';
+import { readPains, splitNotes, groupsOf, painRef, painType, SHOW, readProduct, toCapability, productName, productHead, capText, upFirst, fit, wordsOf, lensFor, listItems, capsFromList, type Capability } from './rw-kit.ts';
 
 export interface DiscoveryDeps {
   readContext: (explicitModel: unknown, input: { seller: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[] }) => { v: Vertical | null; model: BusinessModel | null; line: string };
@@ -36,7 +36,9 @@ export function buildDiscoveryBank(args: Record<string, unknown>, d: DiscoveryDe
   const prospectRoleTyped = text('prospect_role');
   // a bracket that only says where the title came from is a source note: the questions use the title without it
   const prospectRole = splitNotes(prospectRoleTyped).text;
-  const knownPainPoints = text('known_pain_points');
+  // Run 27B (b): optional list fields, each entry read whole; they win over the free text fields when given
+  const painList = listItems(args.pain_points_list), partsList = listItems(args.product_parts);
+  const knownPainPoints = painList.length ? painList.join('. ') : text('known_pain_points');
   const knownMetrics = text('known_metrics');
   const dealStage = (args.deal_stage as string) || 'discovery';
   const yourSolution = text('your_solution');
@@ -53,6 +55,7 @@ export function buildDiscoveryBank(args: Record<string, unknown>, d: DiscoveryDe
     const fromParts = brief.parts.map((x) => toCapability(x)).filter((x): x is Capability => !!x);
     if (fromParts.length >= 2) product = { kind: product.kind, caps: fromParts };
   }
+  if (partsList.length) product = { kind: product.kind, caps: capsFromList(partsList) };
   const investment = ctx.model === 'investment';
   const lens = buyerLens(prospectIndustry);
   const roleKnow = prospectRole ? roleFor(prospectRole, investment) : null;
@@ -67,7 +70,7 @@ export function buildDiscoveryBank(args: Record<string, unknown>, d: DiscoveryDe
   const isSignerTitle = !!prospectRole && (/\b(?:president|owner|founder|ceo|chief executive|managing director|chairman|cfo|chief financial)\b/i.test(prospectRole) || (levelOf(prospectRole) === 'exec' && (roleFam === 'finance' || roleFam === 'executive')));
 
   // ---- the pains, separate and named by their own words ----
-  const painSet = readPains(knownPainPoints);
+  const painSet = painList.length ? { pains: painList.slice(0, 7), evidence: [] as string[], notes: [] as string[] } : readPains(knownPainPoints);
   const pains = painSet.pains.length ? painSet.pains : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
   const pRef = (i: number): string => (pains[i] ? painRef(low(pains[i]), i, true) : 'the problem you came to fix');
   const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];

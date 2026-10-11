@@ -262,6 +262,16 @@ const tools = {
                 account_notes: {
                     type: 'string',
                     description: 'Any additional context about the account'
+                },
+                product_parts: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The parts or modules of your product, one per entry, each with a few words on what it does. Each entry is read whole; your_solution still works without it.'
+                },
+                objections_list: {
+                    type: 'array',
+                    items: { type: 'object', properties: { question: { type: 'string' }, answer: { type: 'string', description: 'The answer you already have, if any' } }, required: ['question'] },
+                    description: 'Optional. The objections, one per entry, each with the answer you already have if any. Each entry is read whole; used instead of the objections in account_notes when given.'
                 }
             },
             required: ['account_name']
@@ -321,6 +331,16 @@ const tools = {
                 your_solution: {
                     type: 'string',
                     description: 'What you are selling'
+                },
+                blockers_list: {
+                    type: 'array',
+                    items: { type: 'object', properties: { blocker: { type: 'string' }, answer: { type: 'string', description: 'The answer you already have, if any' } }, required: ['blocker'] },
+                    description: 'Optional. The blockers, one per entry, each with the answer you already have if any. Each entry is read whole; used instead of blockers when given.'
+                },
+                competitors_list: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The competitors or alternatives, one per entry. Each entry is read whole; used instead of competitors when given.'
                 }
             },
             required: ['deal_name', 'deal_stage']
@@ -366,6 +386,16 @@ const tools = {
                 gaps_to_fill: {
                     type: 'string',
                     description: 'Specific information gaps to address'
+                },
+                product_parts: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The parts or modules of your product, one per entry, each with a few words on what it does. Each entry is read whole; your_solution still works without it.'
+                },
+                pain_points_list: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The pain points, one per entry. Each entry is read whole; used instead of the free text pain points when given.'
                 }
             },
             required: ['framework']
@@ -726,6 +756,26 @@ const tools = {
                 desired_outcome: {
                     type: 'string',
                     description: 'What you want to achieve from this demo'
+                },
+                product_parts: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The parts or modules of your product, one per entry, each with a few words on what it does. Each entry is read whole; your_solution still works without it.'
+                },
+                pain_points_list: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The pain points, one per entry. Each entry is read whole; used instead of the free text pain points when given.'
+                },
+                must_show_list: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional. The flows or features that must be shown, one per entry. Each entry is read whole; used instead of must_show_features when given.'
+                },
+                objections_list: {
+                    type: 'array',
+                    items: { type: 'object', properties: { question: { type: 'string' }, answer: { type: 'string', description: 'The answer you already have, if any' } }, required: ['question'] },
+                    description: 'Optional. The known objections, one per entry, each with the answer you already have if any. Each entry is read whole; used instead of known_objections when given.'
                 }
             },
             required: ['demo_type', 'your_solution']
@@ -1064,8 +1114,9 @@ function executeDealStrategyCoach(args) {
     const daysInStage = args.days_in_stage || 0;
     const championStatus = args.champion_status || 'no_champion';
     const economicBuyer = args.economic_buyer || '';
-    const competitors = args.competitors || '';
-    const blockers = args.blockers || '';
+    // Run 27B (b): blockers_list and competitors_list, one entry each, win over the free text fields when given
+    const competitors = (0, rw_kit_ts_1.listItems)(args.competitors_list).length ? (0, rw_kit_ts_1.listItems)(args.competitors_list).map((x) => x.replace(/;/g, ',')).join('\n') : args.competitors || '';
+    const blockers = (0, rw_kit_ts_1.qaItems)(args.blockers_list).length ? (0, rw_kit_ts_1.qaItems)(args.blockers_list).map(rw_kit_ts_1.typedQA).join('\n') : args.blockers || '';
     const nextSteps = args.next_steps || '';
     const closeDate = args.close_date || '';
     const yourSolution = args.your_solution || 'your solution';

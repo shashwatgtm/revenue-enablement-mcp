@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.lensFor = void 0;
+exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.typedQA = exports.lensFor = void 0;
 exports.wordsOf = wordsOf;
 exports.overlap = overlap;
 exports.groupsOf = groupsOf;
@@ -10,6 +10,9 @@ exports.readPains = readPains;
 exports.painShort = painShort;
 exports.splitNotes = splitNotes;
 exports.splitGiven = splitGiven;
+exports.listItems = listItems;
+exports.qaItems = qaItems;
+exports.capsFromList = capsFromList;
 exports.joinBack = joinBack;
 exports.painRef = painRef;
 exports.painType = painType;
@@ -19,6 +22,7 @@ exports.toCapability = toCapability;
 exports.readProduct = readProduct;
 exports.capSay = capSay;
 exports.readMustShow = readMustShow;
+exports.readMustShowItems = readMustShowItems;
 exports.objectionKind = objectionKind;
 exports.youify = youify;
 exports.outcomeHead = outcomeHead;
@@ -301,13 +305,40 @@ function splitNotes(text) {
 // Run 27B (faults traced in independent-audit/run27b/trace.md: dropped input, field parsing). "Are funds held in escrow? (the page answers that ...)"
 // holds the buyer's question and the answer the user typed. The question is read on its own words; the answer is kept and said as the user's,
 // and its words never decide what kind of question it is.
-const GIVEN_RE = /\s*\(\s*(?:the |our |your |their |its )?(?:[a-z]+ )?(?:page|site|website|faq|docs|documentation|help (?:center|centre))\s+(?:answers|says|states|replies)\b\s*(?:that\s+|:\s*)?((?:[^()]|\([^()]*\))*)\)\s*[.?!]?\s*$/i;
+const GIVEN_RE = /\s*\(\s*(?:(?:the |our |your |their |its )?(?:[a-z]+ )?(?:page|site|website|faq|docs|documentation|help (?:center|centre))\s+(?:answers|says|states|replies)\b\s*(?:that\s+|:\s*)?|(answer:\s*))((?:[^()]|\([^()]*\))*)\)\s*[.?!]?\s*$/i;
 function splitGiven(text) {
     const t = (text || '').trim();
     const m = GIVEN_RE.exec(t);
-    if (!m || !m[1].trim() || m.index === 0)
-        return { q: t, given: '' };
-    return { q: t.slice(0, m.index).trim(), given: m[1].trim().replace(/[.\s]+$/, '') };
+    if (!m || !m[2].trim() || m.index === 0)
+        return { q: t, given: '', fromPage: false };
+    return { q: t.slice(0, m.index).trim(), given: m[2].trim().replace(/[.\s]+$/, ''), fromPage: !m[1] };
+}
+// Run 27B (b): optional named list fields. A list the user gives is read one entry at a time: no entry is ever cut at a comma or a semicolon.
+const entryText = (x) => (typeof x === 'string' ? x : x && typeof x === 'object' ? String(x.text ?? x.question ?? x.blocker ?? x.objection ?? x.name ?? '') : '');
+/** The entries of an optional list field, trimmed; anything that is not a list gives no entries. */
+function listItems(v) {
+    return Array.isArray(v) ? v.map(entryText).map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 20) : [];
+}
+/** Questions with the answer the user already has (an objection or a blocker), from an optional list field. */
+function qaItems(v) {
+    if (!Array.isArray(v))
+        return [];
+    return v.map((x) => ({ q: entryText(x).replace(/\s+/g, ' ').trim(), a: x && typeof x === 'object' && typeof x.answer === 'string' ? x.answer.replace(/\s+/g, ' ').trim() : '' })).filter((x) => x.q).slice(0, 20);
+}
+/** One question as a typed line that the readers keep whole: its own semicolons become commas, and its answer goes in a bracket that splitGiven reads. */
+const typedQA = (x) => `${x.q.replace(/;/g, ',')}${x.a ? ` (answer: ${x.a.replace(/[()]/g, '').replace(/;/g, ',')})` : ''}`;
+exports.typedQA = typedQA;
+/** The parts of a product from a list field: each entry is one part; a long entry keeps its head as the name and the rest as what it does. */
+function capsFromList(items) {
+    return items.map((x) => {
+        const c = toCapability(x);
+        if (c)
+            return c;
+        const w = x.split(/\s+/);
+        const cut = w.findIndex((y, i) => i >= 2 && i <= 6 && /^(?:with|that|which|for|to|in|from|across|so|by)$/i.test(y));
+        const n = cut > 0 ? cut : Math.min(5, w.length);
+        return { name: w.slice(0, n).join(' ').replace(/[,:;]$/, ''), desc: w.slice(n).join(' '), stat: '' };
+    });
 }
 /** Items cut at a semicolon where the second only makes sense with the first ("We are moving from another tool; can you help with that?")
  *  are one item again: a piece that starts in lower case with a question or a pointer back to the piece before it. */
@@ -712,6 +743,24 @@ function readMustShow(text) {
             c.label = lastLabel;
     return { flows, claims };
 }
+/** Run 27B (b): the must-show list given one entry at a time: each entry is one flow or one claim, never cut. */
+function readMustShowItems(items) {
+    const flows = [], claims = [];
+    for (const raw of items) {
+        let label = '', body = raw.trim();
+        const lm = body.match(/\s*\(([^()]*\b(?:claims?|words|quote|figures?|title|headline)\b[^()]*)\)\s*[.]?$/i);
+        if (lm) {
+            label = lm[1].trim();
+            body = body.slice(0, lm.index).trim();
+        }
+        const item = { text: body.replace(/[.]+$/, ''), label };
+        if ((0, exports.isStat)(body) || ARCH_CLAIM.test(body) || (/\d/.test(body) && !exports.DEMO_VERB.test(body)) || COMPANY_FACT.test(body))
+            claims.push(item);
+        else
+            flows.push(item);
+    }
+    return { flows, claims };
+}
 const RISK = {
     define: 'We could budget on a term that has not been defined for us.',
     included: 'A cost charged on top of the price could be left out of the comparison.',
@@ -930,7 +979,7 @@ function answerObjection(o0, c) {
     // the answer the user typed is said first, as theirs; the tool adds only how to back it, and what to confirm
     const P = c.P || 'the product';
     const Ps = /s$/i.test(P) ? `${P}'` : `${P}'s`;
-    const lead = c.voice === 'seller' ? `As our own page puts it: ${g.given}.` : `As ${Ps} own page puts it: ${g.given}.`;
+    const lead = !g.fromPage ? (c.voice === 'seller' ? `The short answer: ${g.given}.` : `Their answer: ${g.given}.`) : c.voice === 'seller' ? `As our own page puts it: ${g.given}.` : `As ${Ps} own page puts it: ${g.given}.`;
     const back = c.voice === 'seller' ? 'I will send the page or the document that says it, so your team can check it against your own case.' : `We should ask ${P} for the page or document that says it, and check it against our own case.`;
     return { ...a, say: `${lead} ${back}`, check: `the answer you gave ("${g.given}"): confirm it on ${Ps} current page or in the contract before it is said`, sector: '' };
 }

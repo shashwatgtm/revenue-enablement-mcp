@@ -27,7 +27,9 @@ function buildDiscoveryBank(args, d) {
     const prospectRoleTyped = text('prospect_role');
     // a bracket that only says where the title came from is a source note: the questions use the title without it
     const prospectRole = (0, rw_kit_ts_1.splitNotes)(prospectRoleTyped).text;
-    const knownPainPoints = text('known_pain_points');
+    // Run 27B (b): optional list fields, each entry read whole; they win over the free text fields when given
+    const painList = (0, rw_kit_ts_1.listItems)(args.pain_points_list), partsList = (0, rw_kit_ts_1.listItems)(args.product_parts);
+    const knownPainPoints = painList.length ? painList.join('. ') : text('known_pain_points');
     const knownMetrics = text('known_metrics');
     const dealStage = args.deal_stage || 'discovery';
     const yourSolution = text('your_solution');
@@ -45,6 +47,8 @@ function buildDiscoveryBank(args, d) {
         if (fromParts.length >= 2)
             product = { kind: product.kind, caps: fromParts };
     }
+    if (partsList.length)
+        product = { kind: product.kind, caps: (0, rw_kit_ts_1.capsFromList)(partsList) };
     const investment = ctx.model === 'investment';
     const lens = (0, verticals_ts_1.buyerLens)(prospectIndustry);
     const roleKnow = prospectRole ? (0, answers_ts_1.roleFor)(prospectRole, investment) : null;
@@ -58,7 +62,7 @@ function buildDiscoveryBank(args, d) {
     // the prospect signs when the title says so: a president, an owner, a founder, a chief executive, or a chief of finance
     const isSignerTitle = !!prospectRole && (/\b(?:president|owner|founder|ceo|chief executive|managing director|chairman|cfo|chief financial)\b/i.test(prospectRole) || ((0, dealtext_ts_1.levelOf)(prospectRole) === 'exec' && (roleFam === 'finance' || roleFam === 'executive')));
     // ---- the pains, separate and named by their own words ----
-    const painSet = (0, rw_kit_ts_1.readPains)(knownPainPoints);
+    const painSet = painList.length ? { pains: painList.slice(0, 7), evidence: [], notes: [] } : (0, rw_kit_ts_1.readPains)(knownPainPoints);
     const pains = painSet.pains.length ? painSet.pains : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
     const pRef = (i) => (pains[i] ? (0, rw_kit_ts_1.painRef)(low(pains[i]), i, true) : 'the problem you came to fix');
     const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];

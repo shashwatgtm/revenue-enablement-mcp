@@ -11,7 +11,7 @@ import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
 import {
   readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
-  answerObjection, dedupeAnswers, splitNotes, splitGiven, joinBack, type Capability, type Item, type AnswerCtx, type Answer,
+  answerObjection, dedupeAnswers, splitNotes, splitGiven, joinBack, listItems, qaItems, typedQA, capsFromList, readMustShowItems, type Capability, type Item, type AnswerCtx, type Answer,
 } from './rw-kit.ts';
 
 export interface DemoDeps {
@@ -84,15 +84,17 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const attendees = given('attendees');
   const customerIndustry = given('customer_industry');
   const yourSolution = given('your_solution');
-  const keyPainPoints = given('key_pain_points');
+  // Run 27B (b): the optional list fields win over the free text fields when given; each entry is read whole
+  const painList = listItems(args.pain_points_list), mustList = listItems(args.must_show_list), qaList = qaItems(args.objections_list), partsList = listItems(args.product_parts);
+  const keyPainPoints = painList.length ? painList.join('. ') : given('key_pain_points');
   const competitorGiven = given('competitor_context').replace(/[.]+$/, '');
   const competitorSplit = splitNotes(competitorGiven);
   const competitorContext = competitorSplit.text;
   const demoDuration = (args.demo_duration as number) || 30;
   const durationGiven = hasValue(args.demo_duration) && demoDuration === args.demo_duration;
   const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
-  const mustShowFeatures = given('must_show_features');
-  const knownObjections = given('known_objections');
+  const mustShowFeatures = mustList.length ? mustList.join('; ') : given('must_show_features');
+  const knownObjections = qaList.length ? qaList.map(typedQA).join('\n') : given('known_objections');
   const outcomeText = given('desired_outcome').replace(/[.]+$/, '');
 
   const ctx = d.readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
@@ -107,17 +109,18 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     const fromParts = brief.parts.map((x) => toCapability(x)).filter((x): x is Capability => !!x);
     if (fromParts.length >= 2) product = { kind: product.kind, caps: fromParts };
   }
+  if (partsList.length) product = { kind: product.kind, caps: capsFromList(partsList) };
   const lens = buyerLens(customerIndustry);
   const low = d.lowerFirstIfCommon;
 
   // ---- the inputs, read ----
-  const painSet = readPains(keyPainPoints);
+  const painSet = painList.length ? { pains: painList.slice(0, 7), evidence: [] as string[], notes: [] as string[] } : readPains(keyPainPoints);
   const sourceNotes: string[] = [...painSet.notes, ...competitorSplit.notes];
   const pains = painSet.pains;
   const painWord = (i: number): string => low(pains[i]);
   // a short pain is named by its own words; a long one by "the first problem you described" (its words were played back once in the opening)
   const pRef = (i: number): string => painRef(low(pains[i]), i);
-  const ms = readMustShow(mustShowFeatures);
+  const ms = mustList.length ? readMustShowItems(mustList) : readMustShow(mustShowFeatures);
   const claimsAll: Item[] = [...ms.claims];
   for (const e of painSet.evidence) claimsAll.push({ text: e, label: 'from your pain points' });
   const people: { title: string; given: string; contact: Contact | null; primary: boolean }[] = [];

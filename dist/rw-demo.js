@@ -51,15 +51,17 @@ function buildDemoScript(args, d) {
     const attendees = given('attendees');
     const customerIndustry = given('customer_industry');
     const yourSolution = given('your_solution');
-    const keyPainPoints = given('key_pain_points');
+    // Run 27B (b): the optional list fields win over the free text fields when given; each entry is read whole
+    const painList = (0, rw_kit_ts_1.listItems)(args.pain_points_list), mustList = (0, rw_kit_ts_1.listItems)(args.must_show_list), qaList = (0, rw_kit_ts_1.qaItems)(args.objections_list), partsList = (0, rw_kit_ts_1.listItems)(args.product_parts);
+    const keyPainPoints = painList.length ? painList.join('. ') : given('key_pain_points');
     const competitorGiven = given('competitor_context').replace(/[.]+$/, '');
     const competitorSplit = (0, rw_kit_ts_1.splitNotes)(competitorGiven);
     const competitorContext = competitorSplit.text;
     const demoDuration = args.demo_duration || 30;
     const durationGiven = hasValue(args.demo_duration) && demoDuration === args.demo_duration;
     const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
-    const mustShowFeatures = given('must_show_features');
-    const knownObjections = given('known_objections');
+    const mustShowFeatures = mustList.length ? mustList.join('; ') : given('must_show_features');
+    const knownObjections = qaList.length ? qaList.map(rw_kit_ts_1.typedQA).join('\n') : given('known_objections');
     const outcomeText = given('desired_outcome').replace(/[.]+$/, '');
     const ctx = d.readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
     const v = ctx.v;
@@ -74,16 +76,18 @@ function buildDemoScript(args, d) {
         if (fromParts.length >= 2)
             product = { kind: product.kind, caps: fromParts };
     }
+    if (partsList.length)
+        product = { kind: product.kind, caps: (0, rw_kit_ts_1.capsFromList)(partsList) };
     const lens = (0, verticals_ts_1.buyerLens)(customerIndustry);
     const low = d.lowerFirstIfCommon;
     // ---- the inputs, read ----
-    const painSet = (0, rw_kit_ts_1.readPains)(keyPainPoints);
+    const painSet = painList.length ? { pains: painList.slice(0, 7), evidence: [], notes: [] } : (0, rw_kit_ts_1.readPains)(keyPainPoints);
     const sourceNotes = [...painSet.notes, ...competitorSplit.notes];
     const pains = painSet.pains;
     const painWord = (i) => low(pains[i]);
     // a short pain is named by its own words; a long one by "the first problem you described" (its words were played back once in the opening)
     const pRef = (i) => (0, rw_kit_ts_1.painRef)(low(pains[i]), i);
-    const ms = (0, rw_kit_ts_1.readMustShow)(mustShowFeatures);
+    const ms = mustList.length ? (0, rw_kit_ts_1.readMustShowItems)(mustList) : (0, rw_kit_ts_1.readMustShow)(mustShowFeatures);
     const claimsAll = [...ms.claims];
     for (const e of painSet.evidence)
         claimsAll.push({ text: e, label: 'from your pain points' });

@@ -36,7 +36,8 @@ function buildAccountPlan(args, d) {
     const model = mr.model;
     const ctxLine = mr.line;
     const P = brief.short || 'your solution';
-    const parts = (0, rw1_common_ts_1.partsOf)(brief);
+    const partsList = (0, rw_kit_ts_1.listItems)(args.product_parts);
+    const parts = partsList.length ? partsList : (0, rw1_common_ts_1.partsOf)(brief);
     const shortParts = parts.filter((p) => p.split(/\s+/).length <= 6);
     const industry = (0, rw1_common_ts_1.cleanIndustry)(industryIn) || (0, rw1_common_ts_1.cleanIndustry)((0, rw1_common_ts_1.industryFromTitle)(accountName));
     const buyerCtx = (0, verticals_ts_1.buyerContextFor)(industryIn, (0, rw1_common_ts_1.industryFromTitle)(accountName));
@@ -68,7 +69,9 @@ function buildAccountPlan(args, d) {
     const existing = arr > 0;
     // ---- the notes: objections (after "Objections:") and the rest ----
     const m = notesIn.match(/objections?\s*:\s*([\s\S]*)$/i);
-    const objections = m ? (0, rw_kit_ts_1.joinBack)(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
+    // Run 27B (b): objections_list, one entry each with the answer the user has, wins over the objections typed in the notes
+    const qaList = (0, rw_kit_ts_1.qaItems)(args.objections_list);
+    const objections = qaList.length ? qaList.map(rw_kit_ts_1.typedQA) : m ? (0, rw_kit_ts_1.joinBack)(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
     const noteRest = m ? notesIn.slice(0, m.index).trim() : notesIn;
     const hypothetical = HYPOTHETICAL.test(notesIn);
     const noteLines = noteSentences(noteRest);

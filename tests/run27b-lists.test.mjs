@@ -1,4 +1,4 @@
-// Run 27B (b): optional named list fields for four tools (owner decision "(g) and (b) together"; input schemas of these tools only).
+// Run 27B (b): optional named list fields for two tools (demo_script_builder, discovery_question_bank: the tools of this server whose top fault on pool P5 after fix (g) was still input ignored, cut or garbled) (owner decision "(g) and (b) together"; input schemas of these tools only).
 // Each list entry is read whole: never cut at a comma or a semicolon, and an objection or blocker keeps the answer the user already has.
 // The old free text fields still work (every older test passes unchanged). Plain words only, no real company (rule B81).
 // Tested in-process through netlify/functions/mcp.mjs (no network). Run: node --test tests/run27b-lists.test.mjs
@@ -16,9 +16,10 @@ const rpc = async (method, params) => {
 };
 const call = async (name, args) => { const r = await rpc("tools/call", { name, arguments: args }); return { isError: !!r.isError, text: r.content.map((c) => c.text).join("\n") }; };
 
-test("tools/list: the four tools offer the new list fields as optional inputs", async () => {
+test("tools/list: the two tools offer the new list fields as optional inputs, and the two others do not", async () => {
   const tools = (await rpc("tools/list", {})).tools;
-  const want = { demo_script_builder: ["product_parts", "pain_points_list", "must_show_list", "objections_list"], discovery_question_bank: ["product_parts", "pain_points_list"], account_plan_builder: ["product_parts", "objections_list"], deal_strategy_coach: ["blockers_list", "competitors_list"] };
+  const want = { demo_script_builder: ["product_parts", "pain_points_list", "must_show_list", "objections_list"], discovery_question_bank: ["product_parts", "pain_points_list"] };
+  for (const name of ["account_plan_builder", "deal_strategy_coach"]) assert.ok(!Object.keys(tools.find((x) => x.name === name).inputSchema.properties).some((k) => /_list$|^product_parts$/.test(k)), name);
   for (const [name, fields] of Object.entries(want)) {
     const t = tools.find((x) => x.name === name);
     for (const f of fields) { assert.equal(t.inputSchema.properties[f].type, "array", `${name}.${f}`); assert.ok(!t.inputSchema.required.includes(f), `${name}.${f} optional`); }
@@ -49,28 +50,4 @@ test("discovery_question_bank: each pain point entry is asked about whole, and t
   assert.equal(r.isError, false);
   assert.match(r.text, /store tasks arrive by email, chat and phone; nobody knows what is done/);
   assert.match(r.text, /^- Task manager/m);
-});
-
-test("deal_strategy_coach: each blocker entry is one blocker with the answer the user has", async () => {
-  const r = await call("deal_strategy_coach", {
-    deal_name: "store operations deal", deal_value: 20000, deal_stage: "proposal", your_solution: "Shelfwise, store operations software",
-    blockers_list: [{ blocker: "We are moving from another tool; can you move our old checklists?", answer: "checklists are imported for free" }, { blocker: "Is there a minimum contract?" }],
-    competitors_list: ["spreadsheets, email and phone calls", "a task app built in house"],
-  });
-  assert.equal(r.isError, false);
-  assert.match(r.text, /\*\*Blocker 1: "We are moving from another tool, can you move our old checklists\?"\*\*/);
-  assert.match(r.text, /answer you gave[^\n]*checklists are imported for free/i);
-  assert.doesNotMatch(r.text, /\*\*Blocker 3:/);
-  assert.match(r.text, /\| Spreadsheets, email and phone calls \|/);
-});
-
-test("account_plan_builder: objections_list and product_parts are used as given", async () => {
-  const r = await call("account_plan_builder", {
-    account_name: "regional grocery chain", industry: "retail", current_arr: 30000, known_contacts: "Head of Operations (buyer)",
-    your_solution: "Shelfwise, store operations software", product_parts: ["Task manager for store tasks", "Audit app for store visits"],
-    objections_list: [{ question: "Can store staff use it on shared phones; or do they need their own?", answer: "shared phones work with a store login" }],
-  });
-  assert.equal(r.isError, false);
-  assert.match(r.text, /### 1\. "Can store staff use it on shared phones, or do they need their own\?"/);
-  assert.match(r.text, /answer you gave[^\n]*shared phones work with a store login/i);
 });

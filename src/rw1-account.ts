@@ -6,7 +6,7 @@ import { describeWith, isoDate, joinList, onOrBeforeWorkday, parseContacts, part
 import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
 import { CALL_CONTEXT, STITCHED, joiningPart, matchPart, namedParts, answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, partsOf, quoted, readRole, readThreats, shared, some, stripEnd, type Deps, type QACtx, type ThreatRead } from './rw1-common.ts';
-import { splitGiven, joinBack, listItems, qaItems, typedQA } from './rw-kit.ts';
+import { splitGiven, joinBack } from './rw-kit.ts';
 
 const HYPOTHETICAL = /\s*All figures in this input are hypothetical[^.]*\.\s*/i;
 
@@ -35,8 +35,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const mr = readModel(ctx.model, ctx.line, solutionIn, [productsIn], [sellerOffers(notesIn)]);   // the seller's own words, and of the notes only a question from its price page ("What is available on pay as you go?"); the buyer's comparisons and alternatives are not the seller's pricing
   const unit = mr.unit; const model = mr.model; const ctxLine = mr.line;
   const P = brief.short || 'your solution';
-  const partsList = listItems(args.product_parts);
-  const parts = partsList.length ? partsList : partsOf(brief);
+  const parts = partsOf(brief);
   const shortParts = parts.filter((p) => p.split(/\s+/).length <= 6);
   const industry = cleanIndustry(industryIn) || cleanIndustry(industryFromTitle(accountName));
   const buyerCtx = buyerContextFor(industryIn, industryFromTitle(accountName));
@@ -57,9 +56,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
 
   // ---- the notes: objections (after "Objections:") and the rest ----
   const m = notesIn.match(/objections?\s*:\s*([\s\S]*)$/i);
-  // Run 27B (b): objections_list, one entry each with the answer the user has, wins over the objections typed in the notes
-  const qaList = qaItems(args.objections_list);
-  const objections = qaList.length ? qaList.map(typedQA) : m ? joinBack(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
+  const objections = m ? joinBack(d.splitItems(m[1].replace(/[.]+\s*$/, ''))) : [];
   const noteRest = m ? notesIn.slice(0, m.index).trim() : notesIn;
   const hypothetical = HYPOTHETICAL.test(notesIn);
   const noteLines = noteSentences(noteRest);

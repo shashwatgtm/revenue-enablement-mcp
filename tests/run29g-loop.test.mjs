@@ -11,6 +11,7 @@ const call = async (name, args) => {
   return (await r.json()).result.content.map((c) => c.text).join("\n");
 };
 const part = (t, a, b) => t.split(a)[1].split(b)[0];
+const DEFAULT_TOOL = "deal_strategy_coach", DEFAULT_ARGS = { deal_name: "regional chain rollout", deal_value: 20000, deal_stage: "proposal", your_solution: "Shelfwise, store operations software for retail chains: task manager, audit app and dashboards" };
 const emptyHeadings = (s3) => { const l = s3.split("\n"); return l.filter((x, i) => x.startsWith("#### ") && (() => { const n = l.slice(i + 1).find((y) => y.trim()); return !n || n.startsWith("#"); })()); };
 
 test("discovery_question_bank: the lead-in of a sector block moves with its heading", async () => {
@@ -20,4 +21,30 @@ test("discovery_question_bank: the lead-in of a sector block moves with its head
   assert.deepEqual(emptyHeadings(s3), [], "a sector heading left empty in section 3");
   assert.doesNotMatch(s2, /questions are about a software company's own customers/, "a sector paragraph left in section 2 without its heading");
   assert.match(s3, /questions are about a software company's own customers/);
+});
+
+// Round 2 (from the judges' reasons on pools P5 and P6): a must-show list the user labels as claims ("(page claims)") is said as claims, never
+// turned into demo steps ("hundreds of partners use ...", "most customers up and running within two weeks", "works for ...").
+test("demo_script_builder: items labelled as claims are claims to prove, not steps to show", async () => {
+  const t = await call("demo_script_builder", { demo_type: "first_look", primary_audience: "Head of Operations",
+    your_solution: "Gridmark, billing software for electrical subcontractors: pay applications, lien waivers, compliance documents and collections",
+    key_pain_points: "pay applications are rebuilt by hand every month",
+    must_show_features: "launched in 2019; hundreds of partners use Gridmark; most customers up and running within two weeks; works for electrical, mechanical and plumbing subcontractors (page claims)" });
+  const s2 = part(t, "\n## 2. The framework applied\n", "\n## 3. Sector checks\n");
+  const steps = (s2.split("## Demo Script")[1] || "").split(/\n### Part 4/)[0];
+  for (const c of ["hundreds of partners use Gridmark", "most customers up and running within two weeks", "works for electrical"]) {
+    assert.doesNotMatch(steps, new RegExp(`^#### [^\\n]*${c}`, "im"), `a claim turned into a demo step: ${c}`);
+    assert.doesNotMatch(steps, new RegExp(`On screen: [^\\n]*${c}`, "i"), `a claim put on screen: ${c}`);
+  }
+  assert.match(s2, /## Claims to prove before you say them[\s\S]*hundreds of partners use Gridmark/);
+});
+
+// Round 2 (judges on pools P5 and P6 read the imperative note to the assistant as an instruction inside a tool answer, rule B86): the note says
+// what each section holds; it gives no order.
+test("the note to the assistant states what the sections hold and gives no order", async () => {
+  const t = await call(DEFAULT_TOOL, DEFAULT_ARGS);
+  const note = t.split("\n## 6. Note to the assistant\n")[1];
+  assert.ok(note && note.trim().split("\n").length >= 2);
+  for (const l of note.trim().split("\n")) assert.doesNotMatch(l, /^(?:Write|Use|Add|Ask|Keep|Invent|Do not|Don't)\b/, `an order in the note: ${l}`);
+  assert.match(note, /^Section 2 is /m);
 });

@@ -68,3 +68,13 @@ test("demo_script_builder: funding and customer location facts are claims, not s
   const steps = (part(t, "\n## 2. The framework applied\n", "\n## 3. Sector checks\n").split("## Demo Script")[1] || "").split(/\n### Part 4/)[0];
   for (const c of ["Profitable and bootstrapped", "mostly in North America and Europe"]) assert.doesNotMatch(steps, new RegExp(`On screen: [^\\n]*${c}`, "i"), `a company fact put on screen: ${c}`);
 });
+
+// Round 5 (judge MJ1 on pool P6: "CTOs and CXOs who put their own money in" and "leadership from enterprise software companies" stayed demo steps):
+// a list of plural acronyms cut at semicolons is one item, and a fact about the leadership team is a claim.
+test("demo_script_builder: investor and leadership facts cut at semicolons stay one claim, never a step", async () => {
+  const t = await call("demo_script_builder", { demo_type: "first_look", primary_audience: "Head of Operations",
+    your_solution: "Gridmark, billing software for electrical subcontractors: pay applications, lien waivers, compliance documents and collections",
+    must_show_features: "backed by investors alongside 30+ CIOs; CTOs and CXOs who put their own money in; leadership from enterprise software companies; pay applications (page claims)" });
+  const steps = (part(t, "\n## 2. The framework applied\n", "\n## 3. Sector checks\n").split("## Demo Script")[1] || "").split(/\n### Part 4/)[0];
+  for (const c of ["CTOs and CXOs", "leadership from enterprise software companies"]) assert.doesNotMatch(steps, new RegExp(`On screen: [^\\n]*${c}`, "i"), `a company fact put on screen: ${c}`);
+});

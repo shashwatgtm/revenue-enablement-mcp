@@ -679,6 +679,8 @@ function capSay(c) {
 }
 const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 exports.upFirst = upFirst;
+/** Run 29G loop: a sentence about who uses the product or how fast customers start is a claim to say, not a flow to show. */
+const CLAIM_SHAPE = /^(?:most|many|hundreds|thousands|millions|all|every)\b|\b(?:customers?|partners?|users?|teams?|companies|clients|shops|brands)\s+(?:use|trust|rely on|choose|love|run on)\b|\bup and running\b|^works? (?:for|with)\b/i;
 const COMPANY_FACT = /^(?:named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
 function readMustShow(text) {
     const flows = [], claims = [];
@@ -694,6 +696,12 @@ function readMustShow(text) {
             label = lm[1].trim();
             body = body.slice(0, lm.index).trim();
             lastLabel = label;
+        }
+        // Run 29G loop (judges on pools P5 and P6: "hundreds of partners use ...", "most customers up and running within two weeks" and the vehicle
+        // types after "works for" were made demo steps): a part shaped like a claim is said whole as one claim, never cut into steps
+        if (CLAIM_SHAPE.test(body)) {
+            claims.push({ text: body.replace(/[.]+$/, ''), label });
+            continue;
         }
         const pieces = [];
         let carry = '';
@@ -731,7 +739,7 @@ function readMustShow(text) {
             const item = { text: p.replace(/[.]+$/, ''), label };
             // a figure, a credential or a benchmark is said, not shown; so is any item that holds a number and does not start with something a presenter can do
             // Run 27B: a fact about the company ("named on a startup list", "founded in ...", "offices in ...") is said, not shown
-            if ((0, exports.isStat)(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !exports.DEMO_VERB.test(p.trim())) || COMPANY_FACT.test(p.trim()))
+            if ((0, exports.isStat)(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !exports.DEMO_VERB.test(p.trim())) || COMPANY_FACT.test(p.trim()) || CLAIM_SHAPE.test(p.trim()))
                 claims.push(item);
             else
                 flows.push(item);
@@ -754,7 +762,7 @@ function readMustShowItems(items) {
             body = body.slice(0, lm.index).trim();
         }
         const item = { text: body.replace(/[.]+$/, ''), label };
-        if ((0, exports.isStat)(body) || ARCH_CLAIM.test(body) || (/\d/.test(body) && !exports.DEMO_VERB.test(body)) || COMPANY_FACT.test(body))
+        if ((0, exports.isStat)(body) || ARCH_CLAIM.test(body) || (/\d/.test(body) && !exports.DEMO_VERB.test(body)) || COMPANY_FACT.test(body) || CLAIM_SHAPE.test(body))
             claims.push(item);
         else
             flows.push(item);

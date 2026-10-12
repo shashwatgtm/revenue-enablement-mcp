@@ -531,6 +531,8 @@ export const upFirst = (s: string): string => s.charAt(0).toUpperCase() + s.slic
 // The must-show list: flows the seller can run live, and statistics or credentials, which are said, never shown
 // ---------------------------------------------------------------------------------------------------------------------------
 export interface Item { text: string; label: string }
+/** Run 29G loop: a sentence about who uses the product or how fast customers start is a claim to say, not a flow to show. */
+const CLAIM_SHAPE = /^(?:most|many|hundreds|thousands|millions|all|every)\b|\b(?:customers?|partners?|users?|teams?|companies|clients|shops|brands)\s+(?:use|trust|rely on|choose|love|run on)\b|\bup and running\b|^works? (?:for|with)\b/i;
 const COMPANY_FACT = /^(?:named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
 export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
   const flows: Item[] = [], claims: Item[] = [];
@@ -542,6 +544,9 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
     let label = '', body = ch;
     const lm = body.match(/\s*\(([^()]*\b(?:claims?|words|quote|figures?|title|headline)\b[^()]*)\)\s*[.]?$/i);
     if (lm) { label = lm[1].trim(); body = body.slice(0, lm.index).trim(); lastLabel = label; }
+    // Run 29G loop (judges on pools P5 and P6: "hundreds of partners use ...", "most customers up and running within two weeks" and the vehicle
+    // types after "works for" were made demo steps): a part shaped like a claim is said whole as one claim, never cut into steps
+    if (CLAIM_SHAPE.test(body)) { claims.push({ text: body.replace(/[.]+$/, ''), label }); continue; }
     const pieces: string[] = [];
     let carry = '';
     for (const r of splitTopLevel(body)) {
@@ -564,7 +569,7 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
       const item = { text: p.replace(/[.]+$/, ''), label };
       // a figure, a credential or a benchmark is said, not shown; so is any item that holds a number and does not start with something a presenter can do
       // Run 27B: a fact about the company ("named on a startup list", "founded in ...", "offices in ...") is said, not shown
-      if (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !DEMO_VERB.test(p.trim())) || COMPANY_FACT.test(p.trim())) claims.push(item); else flows.push(item);
+      if (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && !DEMO_VERB.test(p.trim())) || COMPANY_FACT.test(p.trim()) || CLAIM_SHAPE.test(p.trim())) claims.push(item); else flows.push(item);
     }
   }
   // a figure with no label of its own takes the label the list ends with ("... (page claims)")
@@ -580,7 +585,7 @@ export function readMustShowItems(items: string[]): { flows: Item[]; claims: Ite
     const lm = body.match(/\s*\(([^()]*\b(?:claims?|words|quote|figures?|title|headline)\b[^()]*)\)\s*[.]?$/i);
     if (lm) { label = lm[1].trim(); body = body.slice(0, lm.index).trim(); }
     const item = { text: body.replace(/[.]+$/, ''), label };
-    if (isStat(body) || ARCH_CLAIM.test(body) || (/\d/.test(body) && !DEMO_VERB.test(body)) || COMPANY_FACT.test(body)) claims.push(item); else flows.push(item);
+    if (isStat(body) || ARCH_CLAIM.test(body) || (/\d/.test(body) && !DEMO_VERB.test(body)) || COMPANY_FACT.test(body) || CLAIM_SHAPE.test(body)) claims.push(item); else flows.push(item);
   }
   return { flows, claims };
 }

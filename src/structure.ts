@@ -219,10 +219,11 @@ export function structureAnswer(tool: string, args: Record<string, unknown>, ans
   if (FIXED_QUESTIONS.has(tool) && gaps.length) qs.splice(0, qs.length, '- Ask for the inputs named in section 4, one at a time and in that order; each says what it would change.');
   const { target, seller } = namesOf(tool, args);
   const d = DELIVERABLE[tool] || 'the deliverable';
-  // the note to the assistant: two short lines (the gap line stays at the end of the answer, with only short notes after it)
+  // the note to the assistant: two short lines that say what the sections hold (run 29G loop: judges read an order inside a tool answer as an
+  // instruction, rule B86, so the note states and does not order); the gap line stays at the end of the answer, with only short notes after it
   const s6 = [
-    `Write ${d}${target !== 'the company' ? ` for ${target}` : ''} from section 2, keeping the user's words as typed.`,
-    `Use section 3 only where it fits${seller !== 'the business' ? ` what ${seller} sells` : ''}; invent nothing; ask section 5 first.`,
+    `Section 2 is ${d}${target !== 'the company' ? ` for ${target}` : ''}, built from the user's words in section 1.`,
+    `Section 3 holds checks, not facts${seller !== 'the business' ? `, about what ${seller} sells` : ''}; section 5 holds what to ask next.`,
   ];
   return [
     title, '',

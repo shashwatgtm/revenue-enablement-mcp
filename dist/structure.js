@@ -156,7 +156,7 @@ function splitAnswer(answer) {
     const title = lines[0].startsWith('# ') ? lines[0] : '';
     const body = title ? lines.slice(1) : lines;
     const framework = [], sectorParts = [], gaps = [];
-    let inSector = 0, gapLine = '';
+    let inSector = 0, gapLine = '', leadIn = false;
     const keepEmpty = new Set();
     for (let i = 0; i < body.length; i++) {
         const l = body[i];
@@ -166,13 +166,18 @@ function splitAnswer(answer) {
         const sh = l.match(SECTOR_HEAD);
         if (sh) {
             inSector = sh[1].length;
+            leadIn = true;
             sectorParts.push(l);
             continue;
         }
-        // a sector block holds its bullets, numbered lines, indented lines, italic notes and blank lines; a rule, a gap line or a plain paragraph ends it
-        if (inSector && (l.trim() === '---' || GAP_LINE.test(l.trim()) || (l.trim() && !/^\s*(?:[-*]|\d+\.)\s|^\s{2,}|^\*/.test(l))))
+        // a sector block holds its lead-in lines (plain lines before its first list item), its bullets, numbered lines, indented lines, italic notes
+        // and blank lines; a rule, a gap line or a plain paragraph after its list ends it
+        const listy = /^\s*(?:[-*]|\d+\.)\s|^\s{2,}|^\*/.test(l);
+        if (inSector && (l.trim() === '---' || GAP_LINE.test(l.trim()) || (l.trim() && !listy && !leadIn)))
             inSector = 0;
         if (inSector) {
+            if (l.trim() && listy)
+                leadIn = false;
             sectorParts.push(l);
             continue;
         }

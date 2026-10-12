@@ -118,17 +118,19 @@ export function splitAnswer(answer: string): Split {
   const title = lines[0].startsWith('# ') ? lines[0] : '';
   const body = title ? lines.slice(1) : lines;
   const framework: string[] = [], sectorParts: string[] = [], gaps: string[] = [];
-  let inSector = 0, gapLine = '';
+  let inSector = 0, gapLine = '', leadIn = false;
   const keepEmpty = new Set<number>();
   for (let i = 0; i < body.length; i++) {
     const l = body[i];
     const h = l.match(/^(#{1,4}) /);
     if (h && inSector && h[1].length <= inSector) inSector = 0;
     const sh = l.match(SECTOR_HEAD);
-    if (sh) { inSector = sh[1].length; sectorParts.push(l); continue; }
-    // a sector block holds its bullets, numbered lines, indented lines, italic notes and blank lines; a rule, a gap line or a plain paragraph ends it
-    if (inSector && (l.trim() === '---' || GAP_LINE.test(l.trim()) || (l.trim() && !/^\s*(?:[-*]|\d+\.)\s|^\s{2,}|^\*/.test(l)))) inSector = 0;
-    if (inSector) { sectorParts.push(l); continue; }
+    if (sh) { inSector = sh[1].length; leadIn = true; sectorParts.push(l); continue; }
+    // a sector block holds its lead-in lines (plain lines before its first list item), its bullets, numbered lines, indented lines, italic notes
+    // and blank lines; a rule, a gap line or a plain paragraph after its list ends it
+    const listy = /^\s*(?:[-*]|\d+\.)\s|^\s{2,}|^\*/.test(l);
+    if (inSector && (l.trim() === '---' || GAP_LINE.test(l.trim()) || (l.trim() && !listy && !leadIn))) inSector = 0;
+    if (inSector) { if (l.trim() && listy) leadIn = false; sectorParts.push(l); continue; }
     if (SECTOR_LINE.test(l.trim()) || SECTOR_BULLET.test(l.trim())) { sectorParts.push(l.trim()); continue; }
     if (/^#{2,4} to sharpen this\s*$/i.test(l.trim())) continue;
     if (GAP_LINE.test(l.trim())) {

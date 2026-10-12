@@ -681,13 +681,23 @@ const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 exports.upFirst = upFirst;
 /** Run 29G loop: a sentence about who uses the product, where its customers are, how fast they start, how the company is funded or a press quote is a claim to say, not a flow to show. */
 const CLAIM_SHAPE = /\bprofitab\w*|\bbootstrapped\b|\bventure capital\b|\b(?:customers?|clients|users)\s+(?:mostly\s+)?in\s+[A-Z]|^mostly in\b|\bseries [a-f]\b|\b[a-f]-round\b|\bfunding round\b|\bpress quotes?\b|^(?:most|many|hundreds|thousands|millions|all|every)\b|\b(?:customers?|partners?|users?|teams?|companies|clients|shops|brands)\s+(?:use|trust|rely on|choose|love|run on)\b|\bup and running\b|^works? (?:for|with)\b/i;
-const COMPANY_FACT = /^(?:named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
+const COMPANY_FACT = /^(?:leadership|leaders|executives|team of|named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
 function readMustShow(text) {
     const flows = [], claims = [];
     const t = (text || '').trim();
     if (!t)
         return { flows, claims };
-    const chunks = /[\n;]/.test(t) ? t.split(/\n|;/) : [t];
+    const chunks0 = /[\n;]/.test(t) ? t.split(/\n|;/) : [t];
+    // Run 29G loop round 5 (judge MJ1: "CTOs and CXOs who put their own money in" became a step): a part that starts with a plural acronym after a
+    // part that ends with one ("... 30+ CIOs; CTOs and CXOs who ...") continues it, and a part that starts with a company fact is one claim
+    const chunks = [];
+    for (const c of chunks0) {
+        const prev = chunks[chunks.length - 1];
+        if (prev && /\b[A-Z]{2,5}s\s*$/.test(prev) && /^\s*[A-Z]{2,5}s\b/.test(c))
+            chunks[chunks.length - 1] = `${prev.trimEnd()}, ${c.trim()}`;
+        else
+            chunks.push(c);
+    }
     let lastLabel = '';
     for (const ch of chunks.map((x) => x.trim()).filter(Boolean)) {
         let label = '', body = ch;
@@ -699,7 +709,7 @@ function readMustShow(text) {
         }
         // Run 29G loop (judges on pools P5 and P6: "hundreds of partners use ...", "most customers up and running within two weeks" and the vehicle
         // types after "works for" were made demo steps): a part shaped like a claim is said whole as one claim, never cut into steps
-        if (CLAIM_SHAPE.test(body)) {
+        if (CLAIM_SHAPE.test(body) || COMPANY_FACT.test(body)) {
             claims.push({ text: body.replace(/[.]+$/, ''), label });
             continue;
         }

@@ -28,6 +28,7 @@ const echo_safe_ts_1 = require("./echo-safe.js");
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const rw_kit_ts_1 = require("./rw-kit.js");
+const structure_ts_1 = require("./structure.js");
 const rw1_account_ts_1 = require("./rw1-account.js");
 const rw1_map_ts_1 = require("./rw1-map.js");
 const rw1_roi_ts_1 = require("./rw1-roi.js");
@@ -1843,7 +1844,17 @@ function executeWinLossAnalyzer(args) {
     return (0, rw_winloss_ts_1.buildWinLoss)(args, RW_DEPS);
 }
 // Placeholder for tools 7-12 - will be completed in next part
+// Run 29G: the four tools of this server among the ten weakest return the six-section structure (src/structure.ts)
+const STRUCTURED = new Set(['demo_script_builder', 'discovery_question_bank', 'account_plan_builder', 'deal_strategy_coach']);
 function executeTool(name, args) {
+    const out = executeToolText(name, args);
+    if (!STRUCTURED.has(name) || !tools[name])
+        return out;
+    const schema = tools[name].inputSchema;
+    const optional = Object.keys(schema.properties || {}).filter((k) => !(schema.required || []).includes(k));
+    return (0, structure_ts_1.structureAnswer)(name, args, out, optional);
+}
+function executeToolText(name, args) {
     switch (name) {
         case 'account_plan_builder':
             return executeAccountPlanBuilder(args);

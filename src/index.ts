@@ -30,6 +30,7 @@ import { neutraliseDeep } from './echo-safe.ts';
 import { splitFeatureList, type ListItem, aAn, describeWith, painClauses, solutionBrief, capitaliseSolutionPhrase, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
 import { splitGiven, joinBack } from './rw-kit.ts';
+import { structureAnswer } from './structure.ts';
 import { buildAccountPlan } from './rw1-account.ts';
 import { buildMutualActionPlan } from './rw1-map.ts';
 import { buildRoiStructure } from './rw1-roi.ts';
@@ -1880,7 +1881,16 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
 }
 
 // Placeholder for tools 7-12 - will be completed in next part
+// Run 29G: the four tools of this server among the ten weakest return the six-section structure (src/structure.ts)
+const STRUCTURED = new Set(['demo_script_builder', 'discovery_question_bank', 'account_plan_builder', 'deal_strategy_coach']);
 function executeTool(name: string, args: Record<string, unknown>): string {
+  const out = executeToolText(name, args);
+  if (!STRUCTURED.has(name) || !tools[name]) return out;
+  const schema = tools[name].inputSchema as { properties?: Record<string, unknown>; required?: string[] };
+  const optional = Object.keys(schema.properties || {}).filter((k) => !(schema.required || []).includes(k));
+  return structureAnswer(name, args, out, optional);
+}
+function executeToolText(name: string, args: Record<string, unknown>): string {
   switch (name) {
     case 'account_plan_builder':
       return executeAccountPlanBuilder(args);

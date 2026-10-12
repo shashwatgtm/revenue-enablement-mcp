@@ -679,8 +679,8 @@ function capSay(c) {
 }
 const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 exports.upFirst = upFirst;
-/** Run 29G loop: a sentence about who uses the product, how fast customers start, a funding round or a press quote is a claim to say, not a flow to show. */
-const CLAIM_SHAPE = /\bseries [a-f]\b|\b[a-f]-round\b|\bfunding round\b|\bpress quotes?\b|^(?:most|many|hundreds|thousands|millions|all|every)\b|\b(?:customers?|partners?|users?|teams?|companies|clients|shops|brands)\s+(?:use|trust|rely on|choose|love|run on)\b|\bup and running\b|^works? (?:for|with)\b/i;
+/** Run 29G loop: a sentence about who uses the product, where its customers are, how fast they start, how the company is funded or a press quote is a claim to say, not a flow to show. */
+const CLAIM_SHAPE = /\bprofitab\w*|\bbootstrapped\b|\bventure capital\b|\b(?:customers?|clients|users)\s+(?:mostly\s+)?in\s+[A-Z]|^mostly in\b|\bseries [a-f]\b|\b[a-f]-round\b|\bfunding round\b|\bpress quotes?\b|^(?:most|many|hundreds|thousands|millions|all|every)\b|\b(?:customers?|partners?|users?|teams?|companies|clients|shops|brands)\s+(?:use|trust|rely on|choose|love|run on)\b|\bup and running\b|^works? (?:for|with)\b/i;
 const COMPANY_FACT = /^(?:named|founded|recogni[sz]ed|ranked|awarded|award|winner|won|backed|funded|raised|headquartered|offices?|listed|featured|certified|trusted by|rated|a leader|leader in|part of|member of|employees|staff)\b/i;
 function readMustShow(text) {
     const flows = [], claims = [];

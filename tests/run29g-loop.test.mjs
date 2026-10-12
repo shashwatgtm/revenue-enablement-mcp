@@ -48,3 +48,13 @@ test("the note to the assistant states what the sections hold and gives no order
   for (const l of note.trim().split("\n")) assert.doesNotMatch(l, /^(?:Write|Use|Add|Ask|Keep|Invent|Do not|Don't)\b/, `an order in the note: ${l}`);
   assert.match(note, /^Section 2 is /m);
 });
+
+// Round 3 (judges on pools P5 and P6): a funding round named anywhere in a must-show item ("a Series A funding", "Khosla Ventures led its A-round")
+// is a claim, never a demo step.
+test("demo_script_builder: a funding round is a claim, not a step", async () => {
+  const t = await call("demo_script_builder", { demo_type: "first_look", primary_audience: "Head of Operations",
+    your_solution: "Gridmark, billing software for electrical subcontractors: pay applications, lien waivers, compliance documents and collections",
+    must_show_features: "pay applications; a Series A funding; Northpeak Ventures led its A-round (page claims)" });
+  const steps = (part(t, "\n## 2. The framework applied\n", "\n## 3. Sector checks\n").split("## Demo Script")[1] || "").split(/\n### Part 4/)[0];
+  for (const c of ["a Series A funding", "Northpeak Ventures led its A-round"]) assert.doesNotMatch(steps, new RegExp(`On screen: [^\\n]*${c}`, "i"), `a funding fact put on screen: ${c}`);
+});

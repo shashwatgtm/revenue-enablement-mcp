@@ -6021,7 +6021,8 @@ const ONE_AMOUNT = {};
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
-        return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+        // Run 32D (30D-1): the name the caller sent is made inert before it is repeated.
+        return `Unknown tool: ${(0, echo_safe_ts_1.neutraliseText)(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
     }
     const required = tool.inputSchema.required ?? [];
     // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -6078,7 +6079,7 @@ function createServer() {
         const safeArgs = (0, echo_safe_ts_1.neutraliseDeep)(request.params.arguments);
         const problem = checkRequiredInputs(request.params.name, safeArgs);
         if (problem) {
-            return { content: [{ type: 'text', text: problem }], isError: true };
+            return { content: [{ type: 'text', text: (0, echo_safe_ts_1.neutraliseAnswer)(problem) }], isError: true };
         }
         const { name } = request.params;
         const args = safeArgs;
@@ -6088,7 +6089,8 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: result.replace(/\n{3,}/g, '\n\n'),
+                        // Run 32D (30D-5): the finished answer is made inert again where the tool joined two inert pieces into markup.
+                        text: (0, echo_safe_ts_1.neutraliseAnswer)(result.replace(/\n{3,}/g, '\n\n')),
                     },
                 ],
             };
@@ -6099,7 +6101,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: `Error executing ${name}: ${errorMessage}`,
+                        text: (0, echo_safe_ts_1.neutraliseAnswer)(`Error executing ${name}: ${errorMessage}`),
                     },
                 ],
                 isError: true,

@@ -26,7 +26,7 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { neutraliseDeep } from './echo-safe.ts';
+import { neutraliseDeep, neutraliseText, neutraliseAnswer } from './echo-safe.ts';
 import { detectVertical, detectModel, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
@@ -6126,7 +6126,8 @@ const ONE_AMOUNT: Record<string, string[]> = {};
 function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
   const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
-    return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+    // Run 32D (30D-1): the name the caller sent is made inert before it is repeated.
+    return `Unknown tool: ${neutraliseText(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
   }
   const required = tool.inputSchema.required ?? [];
   // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -6184,7 +6185,7 @@ export function createServer(): Server {
     const safeArgs = neutraliseDeep(request.params.arguments) as Record<string, unknown> | undefined;
     const problem = checkRequiredInputs(request.params.name, safeArgs);
     if (problem) {
-      return { content: [{ type: 'text', text: problem }], isError: true };
+      return { content: [{ type: 'text', text: neutraliseAnswer(problem) }], isError: true };
     }
     const { name } = request.params;
     const args = safeArgs;
@@ -6195,7 +6196,8 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: result.replace(/\n{3,}/g, '\n\n'),
+            // Run 32D (30D-5): the finished answer is made inert again where the tool joined two inert pieces into markup.
+            text: neutraliseAnswer(result.replace(/\n{3,}/g, '\n\n')),
           },
         ],
       };
@@ -6205,7 +6207,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: `Error executing ${name}: ${errorMessage}`,
+            text: neutraliseAnswer(`Error executing ${name}: ${errorMessage}`),
           },
         ],
         isError: true,

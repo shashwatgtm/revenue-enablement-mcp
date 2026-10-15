@@ -229,7 +229,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read-only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.26.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.27.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -278,13 +278,13 @@
 <tr><td>1.2.20</td><td>2 October 2026</td><td>GitHub, commit f608cb0</td></tr>
 <tr><td>1.2.21</td><td>2 October 2026</td><td>GitHub, commit e1fc180</td></tr>
 <tr><td>1.2.24</td><td>11 October 2026</td><td>safety fix only: the instruction echo safeguard; tool list and answers otherwise unchanged</td></tr>
-<tr><td>1.2.26 (this site)</td><td>15 October 2026</td><td>safety fix only, safeguard runs 2 and 3: names a caller makes up are made inert where repeated, markup formed by joined inputs is made inert, an instruction to state a made up fact or set a score is quoted; run 3: the finished answer, every refusal and every REST reply are read with a CommonMark and GFM parser, and every image, raw HTML, a link to an address that is not https or mailto, or a query or fragment on a web address that it finds is shown as plain text; MCP SDK 1.31.0; tool list unchanged; ordinary answers unchanged on the parity sets</td></tr>
+<tr><td>1.2.27 (this site)</td><td>15 October 2026</td><td>safety fix only, safeguard runs 2, 3 and 4: names a caller makes up are made inert where repeated, markup formed by joined inputs is made inert, an instruction to state a made up fact or set a score is quoted; run 3: the finished answer, every refusal and every REST reply are read with a CommonMark and GFM parser, and every image, raw HTML, a link to an address that is not https or mailto, or a query or fragment on a web address that it finds is shown as plain text; run 4: a lone carriage return is read as a line end, every removed query is followed by a new reading, an answer over the parse budget is read part by part so ordinary text keeps its bytes, and the slow shapes found by the run 3 audits stay under a second; MCP SDK 1.31.0; tool list unchanged; ordinary answers unchanged on the parity sets</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.26.</p>
+  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.27.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>

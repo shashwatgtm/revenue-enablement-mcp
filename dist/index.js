@@ -4412,7 +4412,12 @@ function executeCompetitiveTrapSetter(args) {
     const software = model === null || model === 'saas' || model === 'hardware_software';
     // Run 19 D80 (problem 2): a weakness is the seller's own note. It is never read out to the buyer inside a question; the
     // question asks the buyer to test the topic the weakness is about. The competitor's name is taken off the front of the note.
-    const strip = (w) => w.trim().replace(new RegExp('^' + competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i'), (m) => m.replace(competitor, '').trimStart() ? m.replace(new RegExp(competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trimStart() : '');
+    // Run 40S3 (40S2-2): the two patterns are made once per call, not once per weakness (the same patterns as before; with every
+    // field filled to its limit, compiling them again for each item took most of the call)
+    const competitorPattern = competitor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const leadRe = new RegExp('^' + competitorPattern + '\\s*(?:is|has|needs|struggles|lacks|relies)?\\s*', 'i');
+    const nameRe = new RegExp(competitorPattern, 'i');
+    const strip = (w) => w.trim().replace(leadRe, (m) => m.replace(competitor, '').trimStart() ? m.replace(nameRe, '').trimStart() : '');
     const weaknesses = splitItems(competitorWeaknesses);
     const strengths = splitItems(yourStrengths);
     const topicOf = (w) => {

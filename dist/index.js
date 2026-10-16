@@ -5195,7 +5195,7 @@ function executeEmailSequenceGenerator(args) {
     const senderContext = args.sender_context || '';
     // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
     const ctx = readContext(undefined, yourSolution, targetIndustry, targetPersona, specificPainPoint, keyValueProp);
-    const cta = callToAction.trim().replace(/[.?!]$/, '');
+    const cta = (0, escape_inputs_ts_1.dropLoneBackslash)(callToAction.trim().replace(/[.?!]$/, ''));
     const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
         : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
             : /^(a|an|the|one|our)\b/i.test(cta) ? `Would ${lowerFirstIfCommon(cta)} next week make sense?` : `Would a ${lowerFirstIfCommon(cta)} next week make sense?`;
@@ -6021,7 +6021,7 @@ const ONE_AMOUNT = {};
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
-        return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
     }
     const required = tool.inputSchema.required ?? [];
     // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -6099,7 +6099,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: `Error executing ${name}: ${errorMessage}`,
+                        text: `Error executing ${(0, escape_inputs_ts_1.escapeText)(String(name))}: ${errorMessage}`,
                     },
                 ],
                 isError: true,

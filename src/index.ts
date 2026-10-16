@@ -26,7 +26,7 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { cleanDeep, escapeDeep } from './escape-inputs.ts';
+import { cleanDeep, escapeDeep, escapeText, dropLoneBackslash } from './escape-inputs.ts';
 import { detectVertical, detectModel, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
@@ -5286,7 +5286,7 @@ function executeEmailSequenceGenerator(args: Record<string, unknown>): string {
   const senderContext = (args.sender_context as string) || '';
   // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
   const ctx = readContext(undefined, yourSolution, targetIndustry, targetPersona, specificPainPoint, keyValueProp);
-  const cta = callToAction.trim().replace(/[.?!]$/, '');
+  const cta = dropLoneBackslash(callToAction.trim().replace(/[.?!]$/, ''));
   const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
     : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
     : /^(a|an|the|one|our)\b/i.test(cta) ? `Would ${lowerFirstIfCommon(cta)} next week make sense?` : `Would a ${lowerFirstIfCommon(cta)} next week make sense?`;
@@ -6126,7 +6126,7 @@ const ONE_AMOUNT: Record<string, string[]> = {};
 function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
   const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
-    return `Unknown tool: ${name}. Available tools: ${Object.keys(tools).join(', ')}.`;
+    return `Unknown tool: ${escapeText(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
   }
   const required = tool.inputSchema.required ?? [];
   // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -6205,7 +6205,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: `Error executing ${name}: ${errorMessage}`,
+            text: `Error executing ${escapeText(String(name))}: ${errorMessage}`,
           },
         ],
         isError: true,

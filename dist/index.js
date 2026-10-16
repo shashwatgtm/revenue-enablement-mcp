@@ -204,6 +204,13 @@ function cap(phrase) {
         return (0, escape_inputs_ts_1.escapePiece)(t);
     return (0, escape_inputs_ts_1.escapePiece)(t.charAt(0).toUpperCase() + t.slice(1));
 }
+// Run 40S3 (40S2-4): proposal_section_writer puts implementation_approach alone at the start of its own line and then its own
+// ".", so a value of only 1 to 9 digits ("2024") became a numbered item. Such a value gets a backslash before its first digit
+// ("\\2024."), the same visible backslash the escape pass writes before a digits line the caller started. Any other value is
+// returned as it is (ordinary answers do not change).
+function lineStartDigits(v) {
+    return /^[0-9]{1,9}$/.test(v) ? `\\${v}` : v;
+}
 // ============================================================================
 // TOOL DEFINITIONS
 // ============================================================================
@@ -4650,7 +4657,7 @@ ${successMetrics ? successMetrics : `Within 12 months of implementation ${EXAMPL
 
 ### How We Will Get There
 
-${implementationApproach ? `${cap(implementationApproach.trim().replace(/[.]$/, ''))}.` : '[Your rollout plan: phases, who is involved on both sides and when value starts]'}
+${implementationApproach ? `${lineStartDigits(cap(implementationApproach.trim().replace(/[.]$/, '')))}.` : '[Your rollout plan: phases, who is involved on both sides and when value starts]'}
 
 ### Investment Overview
 

@@ -167,15 +167,15 @@ function keepsFirstCapital(word, next, third = '') {
 function lowerFirstIfCommon(phrase) {
     const t = fixNames(phrase.trim());
     if (isJobTitle(t))
-        return lowerJobTitle(t);
+        return (0, escape_inputs_ts_1.escapePiece)(lowerJobTitle(t));
     const parts = t.split(/(\s+)/);
     if (keepsFirstCapital(parts[0] || '', parts[2] || '', parts[4] || ''))
-        return t;
+        return (0, escape_inputs_ts_1.escapePiece)(t);
     parts[0] = parts[0].replace(/[A-Z]/, c => c.toLowerCase());
     // Run 11: after a lowered first word, a capitalised common second word is lowered too ("why forecasting matters now").
     if (parts[2] && isCommonWord(parts[2]))
         parts[2] = parts[2].charAt(0).toLowerCase() + parts[2].slice(1);
-    return parts.join('');
+    return (0, escape_inputs_ts_1.escapePiece)(parts.join(''));
 }
 // The same for a whole phrase (this replaces a plain toLowerCase(), which also lowered names and acronyms): the first
 // word follows the rule above, and a later word is lowered only when it is a common word. A capitalised word straight
@@ -185,24 +185,24 @@ function lowerCommonWords(phrase) {
     let first = true;
     const t = fixNames(phrase.trim());
     if (isJobTitle(t))
-        return lowerJobTitle(t);
+        return (0, escape_inputs_ts_1.escapePiece)(lowerJobTitle(t));
     const parts = t.split(/(\s+)/);
-    return parts.map((w, i) => {
+    return (0, escape_inputs_ts_1.escapePiece)(parts.map((w, i) => {
         if (!w.trim())
             return w;
         const lower = first ? !keepsFirstCapital(w, parts[i + 2] || '', parts[i + 4] || '') : !afterName && isCommonWord(w);
         first = false;
         afterName = !lower && /^[A-Z]/.test(w);
         return lower ? w.replace(/[A-Z]/, c => c.toLowerCase()) : w;
-    }).join('');
+    }).join(''));
 }
 // Text only (run 9): a phrase that starts a sentence, a heading or a table cell starts with a capital. A first word
 // written with a small letter and an inner capital (iPhone, eBay) is a name and is kept as typed.
 function cap(phrase) {
     const t = fixNames(phrase.trim());
     if (/^[a-z]+[A-Z]/.test(t.split(/\s+/)[0] || ''))
-        return t;
-    return t.charAt(0).toUpperCase() + t.slice(1);
+        return (0, escape_inputs_ts_1.escapePiece)(t);
+    return (0, escape_inputs_ts_1.escapePiece)(t.charAt(0).toUpperCase() + t.slice(1));
 }
 // ============================================================================
 // TOOL DEFINITIONS
@@ -953,7 +953,7 @@ function splitItems(s) {
 }
 // Text typed by the user, quoted when it is placed inside one of the tool's own sentences, so a clause never breaks the grammar.
 function q(s) {
-    return `"${s.trim().replace(/^"|"$/g, '').replace(/[.]$/, '')}"`;
+    return `"${(0, escape_inputs_ts_1.escapePiece)(s.trim().replace(/^"|"$/g, '').replace(/[.]$/, ''))}"`;
 }
 // The sector and the business model read from the inputs (src/verticals.ts), with one line saying how they were read.
 function readContext(explicitModel, ...texts) {
@@ -1051,7 +1051,7 @@ Based on the contacts provided, here's the stakeholder analysis:
 
 | Contact you gave | Likely role in the decision | Next step |
 |---|---|---|
-${contacts.map((c) => `| ${c} | ${/champion/i.test(c) ? 'Champion' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Economic buyer' : /it\b|cto|cio|engineer|technical|security/i.test(c) ? 'Technical influencer' : 'To confirm'} | ${/champion/i.test(c) ? 'Test their power and give them material to sell internally' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Agree the outcome they are measured on and get a meeting before the proposal' : 'Ask what they need from this decision'} |`).join('\n')}
+${contacts.map((c) => `| ${(0, escape_inputs_ts_1.escapePiece)(c)} | ${/champion/i.test(c) ? 'Champion' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Economic buyer' : /it\b|cto|cio|engineer|technical|security/i.test(c) ? 'Technical influencer' : 'To confirm'} | ${/champion/i.test(c) ? 'Test their power and give them material to sell internally' : /economic buyer|cfo|ceo|coo|budget/i.test(c) ? 'Agree the outcome they are measured on and get a meeting before the proposal' : 'Ask what they need from this decision'} |`).join('\n')}
 
 ${hasChampion ? '' : `**Potential Champions:**
 - Who has the problem you solve?
@@ -2905,7 +2905,7 @@ function executeWinLossAnalyzer(args) {
     if (/relationship|incumbent|existing|renew|stayed/.test(r))
         readings.push('**Incumbent advantage:** the buyer stayed with what they know. Ask what the incumbent fixed or promised during your evaluation.');
     const readingBlock = lossReason ? `### What the Stated Reason Points To\n\n${readings.length ? readings.join('\n\n') : `The stated reason (${q(lossReason)}) matches none of the usual patterns: ask the buyer what sat behind it.`}\n\n` : '';
-    const peopleBlock = people.length ? `### Who Stood Where\n\n| Stakeholder | Position you recorded | What to learn |\n|---|---|---|\n${people.map((p) => `| ${p.who} | ${p.stance || 'not recorded'} | ${/against|blocker|opposed/.test(p.stance) ? 'What did they need that we did not give them, and when did they turn against us?' : /support|champion|sponsor/.test(p.stance) ? 'Did they have the power and the material to sell this internally?' : 'What would have moved them to support us?'} |`).join('\n')}\n` : '';
+    const peopleBlock = people.length ? `### Who Stood Where\n\n| Stakeholder | Position you recorded | What to learn |\n|---|---|---|\n${people.map((p) => `| ${(0, escape_inputs_ts_1.escapePiece)(p.who)} | ${p.stance ? (0, escape_inputs_ts_1.escapePiece)(p.stance) : 'not recorded'} | ${/against|blocker|opposed/.test(p.stance) ? 'What did they need that we did not give them, and when did they turn against us?' : /support|champion|sponsor/.test(p.stance) ? 'Did they have the power and the material to sell this internally?' : 'What would have moved them to support us?'} |`).join('\n')}\n` : '';
     const yesNo = (v, why) => (v === null ? `Not known from your input: check (${why})` : v ? `Yes (from your input: ${why})` : `No (from your input: ${why})`);
     const execNamed = people.some((p) => /\b(ceo|cfo|coo|cio|cto|ciso|chief|vp|vice president|managing director|head)\b/i.test(p.who));
     const ebNamed = people.some((p) => /\b(cfo|ceo|coo|economic buyer|budget)\b/i.test(p.who + ' ' + p.stance));
@@ -3010,7 +3010,7 @@ ${lossReason?.toLowerCase().includes('timing') || lossReason?.toLowerCase().incl
 - Was the status quo acceptable to them?
 ` : ''}
 
-${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Against you:** ${against.map((p) => p.who).join(', ')}. Their view is the first thing to learn in the loss review.\n\n` : ''}${wlCtx.v ? sectorNotes(wlCtx.v, 'committee') + '\n\n' : ''}### Loss Categories
+${readingBlock}${peopleBlock ? peopleBlock + '\n' : ''}${against.length ? `**Against you:** ${against.map((p) => (0, escape_inputs_ts_1.escapePiece)(p.who)).join(', ')}. Their view is the first thing to learn in the loss review.\n\n` : ''}${wlCtx.v ? sectorNotes(wlCtx.v, 'committee') + '\n\n' : ''}### Loss Categories
 
 *Check first: set by this tool's rule (High when no stakeholders were given for Champion Failure, or when a competitor won for Competitive Loss; otherwise Medium). It is not a finding about your deal.*
 
@@ -3096,10 +3096,10 @@ ${stakeholdersInvolved}
 ### Engagement Assessment
 | Question | Check |
 |----------|-------|
-| Did we have an executive sponsor? | ${execNamed ? `Possibly: a senior role is named (${people.filter((p) => /\b(ceo|cfo|coo|cio|cto|ciso|chief|vp|vice president|managing director|head)\b/i.test(p.who)).map((p) => p.who).join(', ')}); confirm they sponsored the deal` : 'Not known from your input: no senior role named'} |
+| Did we have an executive sponsor? | ${execNamed ? `Possibly: a senior role is named (${people.filter((p) => /\b(ceo|cfo|coo|cio|cto|ciso|chief|vp|vice president|managing director|head)\b/i.test(p.who)).map((p) => (0, escape_inputs_ts_1.escapePiece)(p.who)).join(', ')}); confirm they sponsored the deal` : 'Not known from your input: no senior role named'} |
 | Was economic buyer engaged? | ${ebNamed ? 'Possibly: the economic buyer is named in your input; confirm how often they were met' : 'Not known from your input: no economic buyer named'} |
 | Did we multi-thread? | ${yesNo(people.length >= 3 ? true : people.length ? false : null, `${people.length} stakeholder${people.length === 1 ? '' : 's'} named`)} |
-| Was there a true champion? | ${support.length ? `Possibly: ${support.map((p) => p.who).join(', ')} recorded as supporter; test whether they had power and material` : 'Not known from your input: nobody recorded as supporter or champion'} |` : '### Stakeholder Information Needed\n\nFor better analysis, provide:\n- Names and titles\n- Their positions on the deal\n- Engagement level\n- Who we didn\'t reach'}
+| Was there a true champion? | ${support.length ? `Possibly: ${support.map((p) => (0, escape_inputs_ts_1.escapePiece)(p.who)).join(', ')} recorded as supporter; test whether they had power and material` : 'Not known from your input: nobody recorded as supporter or champion'} |` : '### Stakeholder Information Needed\n\nFor better analysis, provide:\n- Names and titles\n- Their positions on the deal\n- Engagement level\n- Who we didn\'t reach'}
 
 ---
 
@@ -3311,7 +3311,7 @@ function executePricingNegotiationGuide(args) {
 
 At ${hasValue(args.deal_value) ? dealValueText : '[deal value]'}, that's a [your ROI multiple, for example X:1] return on investment."`
         : `
-"Before we discuss price, let's revisit what this has already delivered: ${valueDelivered.trim().replace(/[.]$/, '')}.
+"Before we discuss price, let's revisit what this has already delivered: ${(0, escape_inputs_ts_1.escapePiece)(valueDelivered.trim().replace(/[.]$/, ''))}.
 ${hasValue(args.deal_value) ? `At ${dealValueText}, is that result worth more to you than the ${hasValue(args.discount_requested) ? `${discountRequested}%` : 'discount'} you are asking for?"` : 'What is that result worth to you in a year?" (add the deal value to compare the price with it)'}`;
     const scenarioGuides = {
         discount_request: () => `# Pricing Negotiation Guide: Discount Request
@@ -3987,7 +3987,7 @@ ${SUGGESTIONS_FOOTER}`,
 ---
 
 ${knownObjections ? `## Anticipated Objections\n\n${objectionItems.map(obj => `
-### Objection: "${obj.trim()}"
+### Objection: "${(0, escape_inputs_ts_1.escapePiece)(obj.trim())}"
 
 **Response:**
 ${answerFor(obj, champCtx.v)}
@@ -4138,7 +4138,7 @@ ${urgencyDrivers ? `\n**Timing:**\n"We should move now because ${urgencyDrivers}
 ## Q&A Prep
 
 **Expected Questions:**
-${knownObjections ? objectionItems.map(o => `- "${o.trim()}" → ${answerFor(o, champCtx.v)}`).join('\n') : '- Budget questions → Point to ROI\n- Timeline questions → Show implementation plan\n- Risk questions → Discuss mitigation'}
+${knownObjections ? objectionItems.map(o => `- "${(0, escape_inputs_ts_1.escapePiece)(o.trim())}" → ${answerFor(o, champCtx.v)}`).join('\n') : '- Budget questions → Point to ROI\n- Timeline questions → Show implementation plan\n- Risk questions → Discuss mitigation'}
 
 ---
 
@@ -4473,7 +4473,7 @@ ${strengths.length ? `Based on your strengths, suggest these as requirements (on
 
 ### How to Suggest Criteria
 
-"Before you evaluate anyone, it helps to agree the criteria. ${strengths.length ? `I'd suggest these: ${strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; ')}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared questions to ask every vendor?"`,
+"Before you evaluate anyone, it helps to agree the criteria. ${strengths.length ? `I'd suggest these: ${(0, escape_inputs_ts_1.escapePiece)(strengths.slice(0, 3).map((s) => lowerFirstIfCommon(s)).join('; '))}.` : 'I would suggest starting with the outcomes you need.'} Would it help if I shared questions to ask every vendor?"`,
         reference_questions: `## Reference Call Questions
 
 Suggest the buyer ask these questions when speaking with ${competitor}'s references:
@@ -4636,13 +4636,13 @@ ${toneStyle.opening} how ${yourSolution} can help ${customerName} with ${custome
 
 ### The Opportunity
 
-${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map(c => `- ${c.trim()}`).join('\n')}` : `[The challenges ${customerName} named, in their words]`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map(c => `- ${(0, escape_inputs_ts_1.escapePiece)(c.trim())}`).join('\n')}` : `[The challenges ${customerName} named, in their words]`}
 
 ### Our Recommendation
 
 What ${yourSolution} offers ${customerName}:
 
-${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- **${d.trim()}**`).join('\n') : `- [Outcome you can prove]\n- [How it fits their current systems: only if true]\n- [What changes for their team]`}
+${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- **${(0, escape_inputs_ts_1.escapePiece)(d.trim())}**`).join('\n') : `- [Outcome you can prove]\n- [How it fits their current systems: only if true]\n- [What changes for their team]`}
 
 ### Expected Outcomes
 
@@ -4675,7 +4675,7 @@ We recommend the following path forward:
 
 ## Current State at ${customerName}
 
-${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** [How this affects their team and results, in their words]\n\n**Root Cause:** [process gaps, technology limits or resource constraints: what they told you]\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `*Example challenges (not from your input): keep only the ones ${customerName} named, in their words.*\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${splitItems(customerChallenges).map((c, i) => `### Challenge ${i + 1}: ${(0, escape_inputs_ts_1.escapePiece)(c.trim())}\n\n**Impact:** [How this affects their team and results, in their words]\n\n**Root Cause:** [process gaps, technology limits or resource constraints: what they told you]\n\n**Cost of Inaction:** Without addressing this, ${customerName} risks [specific consequences].\n`).join('\n')}` : `*Example challenges (not from your input): keep only the ones ${customerName} named, in their words.*\n\n### Operational Complexity\nYour current processes require significant manual effort, creating bottlenecks and increasing the risk of errors.\n\n### Visibility Gaps\nWithout real-time insights, decision-making is delayed and often based on incomplete information.\n\n### Scalability Constraints\nAs ${customerName} grows, current systems and processes may not scale effectively.\n\n### Competitive Pressure\nThe market is evolving rapidly, and staying ahead requires modern tools and approaches.`}
 
 ## The Cost of the Current State
 
@@ -4709,7 +4709,7 @@ ${customerName} envisions a future where:
 
 #### Core Capabilities${keyDifferentiators ? '' : ' (example capabilities: replace them with your own)'}
 
-${keyDifferentiators ? splitItems(keyDifferentiators).map((d, i) => `**${i + 1}. ${d.trim()}**\n[How this capability solves one of their challenges]\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
+${keyDifferentiators ? splitItems(keyDifferentiators).map((d, i) => `**${i + 1}. ${(0, escape_inputs_ts_1.escapePiece)(d.trim())}**\n[How this capability solves one of their challenges]\n`).join('\n') : `**1. Automation & Efficiency**\nEliminate manual processes and streamline workflows.\n\n**2. Real-Time Visibility**\nGain instant access to insights that drive better decisions.\n\n**3. Scalable Architecture**\nGrow without constraints or performance degradation.\n\n**4. Integration Ecosystem**\nConnect seamlessly with your existing technology stack.`}
 
 ### How It Works
 
@@ -4735,9 +4735,9 @@ ${keyDifferentiators ? splitItems(keyDifferentiators).map((d, i) => `**${i + 1}.
 
 | Your Challenge | Our Capability | Business Value |
 |----------------|----------------|----------------|
-| ${splitItems(customerChallenges)[0]?.trim() || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
-| ${splitItems(customerChallenges)[1]?.trim() || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
-| ${splitItems(customerChallenges)[2]?.trim() || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
+| ${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[0]?.trim() || '') || '[Challenge 1]'} | [Feature A] | [Outcome 1] |
+| ${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[1]?.trim() || '') || '[Challenge 2]'} | [Feature B] | [Outcome 2] |
+| ${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[2]?.trim() || '') || '[Challenge 3]'} | [Feature C] | [Outcome 3] |
 
 ### Security & Compliance
 
@@ -5030,7 +5030,7 @@ To help organizations like ${customerName} achieve [mission statement].
 
 ### Our Differentiators
 
-${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- ${d.trim()}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
+${keyDifferentiators ? splitItems(keyDifferentiators).map(d => `- ${(0, escape_inputs_ts_1.escapePiece)(d.trim())}`).join('\n') : `- [Your technology strength]\n- [Your domain expertise]\n- [Your methodology]\n- [Your support model]`}
 
 ### Industry Recognition
 
@@ -5058,7 +5058,7 @@ Your ${customerName} team includes:
 ### Example 1: [Similar Company in ${args.customer_industry ? customerIndustry : "the customer's industry"}]
 
 **Challenge:**
-Faced similar challenges to ${customerName} including ${splitItems(customerChallenges)[0] || 'operational inefficiency'}.
+Faced similar challenges to ${customerName} including ${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[0] || '') || 'operational inefficiency'}.
 
 **Solution:**
 Implemented ${yourSolution} to address core challenges.
@@ -5078,7 +5078,7 @@ ${EXAMPLES}
 ### Example 2: [Another Similar Company]
 
 **Challenge:**
-Needed to address ${splitItems(customerChallenges)[1] || 'scaling challenges'}.
+Needed to address ${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[1] || '') || 'scaling challenges'}.
 
 **Solution:**
 Deployed ${yourSolution} across their organization.
@@ -5097,7 +5097,7 @@ ${EXAMPLES}
 ### Example 3: [Third Similar Company]
 
 **Challenge:**
-${splitItems(customerChallenges)[2] || 'Integration and visibility challenges'}.
+${(0, escape_inputs_ts_1.escapePiece)(splitItems(customerChallenges)[2] || '') || 'Integration and visibility challenges'}.
 
 **Solution:**
 Full implementation of ${yourSolution} with integrations.
@@ -5175,11 +5175,11 @@ function pluralOf(persona) {
     const p = lowerFirstIfCommon(persona);
     // Run 12: a function name is not a plural title ("Many sales I speak with" becomes "Many people in sales roles").
     if (/^(sales|marketing|finance|operations|hr|it|engineering|procurement|product|revops|legal|security)$/i.test(p.trim()))
-        return `people in ${p.trim()} roles`;
+        return `people in ${(0, escape_inputs_ts_1.escapePiece)(p.trim())} roles`;
     const m = p.match(/^([A-Za-z]+)( of .+)$/);
     if (m)
-        return /s$/i.test(m[1]) ? p : `${m[1]}s${m[2]}`;
-    return /s$/i.test(p) ? p : `${p}s`;
+        return /s$/i.test(m[1]) ? p : (0, escape_inputs_ts_1.escapePiece)(`${m[1]}s${m[2]}`);
+    return /s$/i.test(p) ? p : (0, escape_inputs_ts_1.escapePiece)(`${p}s`);
 }
 function executeEmailSequenceGenerator(args) {
     const sequenceType = args.sequence_type || 'cold_outreach';
@@ -5195,7 +5195,7 @@ function executeEmailSequenceGenerator(args) {
     const senderContext = args.sender_context || '';
     // Run 19 D80 (problem 2): typed phrases are never pasted into a fixed sentence that only fits one shape of phrase.
     const ctx = readContext(undefined, yourSolution, targetIndustry, targetPersona, specificPainPoint, keyValueProp);
-    const cta = (0, escape_inputs_ts_1.dropLoneBackslash)(callToAction.trim().replace(/[.?!]$/, ''));
+    const cta = (0, escape_inputs_ts_1.escapePiece)(callToAction.trim().replace(/[.?!]$/, ''));
     const ctaQuestion = callToAction === 'meeting' ? 'Would it make sense to talk about how we might help?'
         : /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(cta) ? `Would you like to ${lowerFirstIfCommon(cta)}?`
             : /^(a|an|the|one|our)\b/i.test(cta) ? `Would ${lowerFirstIfCommon(cta)} next week make sense?` : `Would a ${lowerFirstIfCommon(cta)} next week make sense?`;
@@ -5239,7 +5239,7 @@ ${specificPainPoint ? `[Only if true and provable: Many ${pluralOf(targetPersona
 
 ${valueLine}
 
-${socialProof ? `For context: ${socialProof.trim().replace(/[.]$/, '')}.` : ''}
+${socialProof ? `For context: ${(0, escape_inputs_ts_1.escapePiece)(socialProof.trim().replace(/[.]$/, ''))}.` : ''}
 
 ${ctaQuestion}
 
@@ -5262,7 +5262,7 @@ I wanted to share [resource/insight/case study] for ${pluralOf(targetPersona)} d
 
 [1-2 sentence description of the value]
 
-${socialProof ? `One result we can point to: ${socialProof.trim().replace(/[.]$/, '')}.` : 'Would be happy to share how this might apply to your situation.'}
+${socialProof ? `One result we can point to: ${(0, escape_inputs_ts_1.escapePiece)(socialProof.trim().replace(/[.]$/, ''))}.` : 'Would be happy to share how this might apply to your situation.'}
 
 Worth a conversation?
 
@@ -5280,7 +5280,7 @@ Hi [First Name],
 
 [Only if true and provable: a real customer story you may share.] Wanted to share a quick story.
 
-${socialProof ? `The challenge was the one you may know: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}. With ${yourSolution}, the result was this: ${socialProof.trim().replace(/[.]$/, '')}.` : `[Similar company] was facing the same challenge: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}.
+${socialProof ? `The challenge was the one you may know: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}. With ${yourSolution}, the result was this: ${(0, escape_inputs_ts_1.escapePiece)(socialProof.trim().replace(/[.]$/, ''))}.` : `[Similar company] was facing the same challenge: ${specificPainPoint ? q(lowerFirstIfCommon(specificPainPoint)) : '[describe pain]'}.
 
 After implementing ${yourSolution}, they achieved:
 - [Result 1]
@@ -5759,7 +5759,7 @@ Does that work for everyone?"
 
 "Before I show you anything, let me confirm what I've learned to make sure the demo is relevant:
 
-${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${p.trim()}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `From what I understand so far, you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
+${keyPainPoints ? `From our conversations, it sounds like:\n${keyPainPoints.split(/\n|,(?!\d{3}(?!\d))/).map((p, i) => `${i + 1}. ${(0, escape_inputs_ts_1.escapePiece)(p.trim())}`).join('\n')}\n\nDid I get that right? Anything to add?"` : `From what I understand so far, you're dealing with [pain points].\n\nDid I capture that correctly? What would you add?`}"
 
 **[Listen and adjust demo focus based on responses]**
 

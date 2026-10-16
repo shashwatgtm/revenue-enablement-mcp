@@ -6159,7 +6159,7 @@ function checkRequiredInputs(name: string, args: Record<string, unknown> | undef
   }
   if (name === "mutual_action_plan_generator" && typeof args?.target_close_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.target_close_date.trim())) {
     const close = new Date(args.target_close_date.trim() + "T23:59:59Z");
-    if (!isNaN(close.getTime()) && close.getTime() < Date.now()) problems.push(`target_close_date ${args.target_close_date.trim()} is in the past; use a future date in the format YYYY-MM-DD`);
+    if (!isNaN(close.getTime()) && close.getTime() < Date.now()) problems.push(`target_close_date ${escapeText(args.target_close_date.trim())} is in the past; use a future date in the format YYYY-MM-DD`);
   }
   if (problems.length > 0) {
     return `Invalid input for ${name}: ${problems.join("; ")}.`;

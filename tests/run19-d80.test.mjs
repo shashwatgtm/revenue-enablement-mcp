@@ -74,7 +74,7 @@ test("email_sequence_generator: no pasted clause in a fixed sentence; proof used
     social_proof: "first-attempt deliveries up at Example Logistics Co", call_to_action: "20-minute call", sender_context: "Account Executive at Lanehop" });
   assert.doesNotMatch(r.text, /Quick thought on dispatchers/);
   assert.doesNotMatch(r.text, /conversation about 20-minute call/);
-  assert.match(r.text, /\[Your name\]\nAccount Executive at Lanehop/); // in the signature, not a bare line in the body
+  assert.match(r.text, /Regards,\nAccount Executive at Lanehop/); // in the signature, not a bare line in the body (run 21c: draft rewrite: no [Your name] merge field, the sender line is the signature)
   assert.doesNotMatch(r.text, /\n\nAccount Executive at Lanehop\n\n/);
   assert.doesNotMatch(r.text, /struggling with dispatchers/);
   const e3 = r.text.split("### Email 3")[1].split("### Email 4")[0];
@@ -167,6 +167,7 @@ test("account_plan_builder: given contacts are used, not asked for; sector notes
 });
 
 // Run 19 R19-36 (ledger B16-18): a revenue or employee count you give is labelled as yours, and its row is not called an estimate.
+// Run 20 round 1 (B81): nothing is estimated any more, so a size you did not give says "not supplied" and no row is called "Est.".
 test("roi_business_case_builder: given revenue and employees are labelled as your input, estimated ones keep Est.", async () => {
   const row = (text, start) => text.split("\n").find((l) => l.startsWith(start)) || "";
   const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",

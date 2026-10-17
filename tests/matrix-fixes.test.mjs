@@ -37,14 +37,15 @@ test("email_sequence_generator: num_emails 0 is shown as given, not replaced by 
 
 test("demo_script_builder: demo_duration 0 falls back to the labelled default; 1 minute is singular", async () => {
   const r = await call("demo_script_builder", { demo_type: "first_look", your_solution: "FlowOps", demo_duration: 0 });
-  assert.match(r.text, /\| \*\*Duration\*\* \| 30 minutes \(default\) \|/);
+  // run 22: the length is said in the opening line of the script (a default is labelled), not in a configuration table
+  assert.match(r.text, /FlowOps, first look, 30 minutes \(default\)/);
   const one = await call("demo_script_builder", { demo_type: "first_look", your_solution: "FlowOps", demo_duration: 1 });
-  assert.match(one.text, /\| \*\*Duration\*\* \| 1 minute \|/);
+  assert.match(one.text, /FlowOps, first look, 1 minute\b(?!s)/);
   assert.doesNotMatch(one.text, /1 minutes/);
 });
 
 test("roi_business_case_builder: negative money prints as -$, not $-", async () => {
-  const r = await call("roi_business_case_builder", { your_solution: "FlowOps", primary_value_driver: "revenue_increase", company_size: "smb", annual_revenue: 1, employee_count: 1, solution_price: 1 });
+  const r = await call("roi_business_case_builder", { your_solution: "FlowOps", primary_value_driver: "revenue_increase", company_size: "smb", annual_value_estimate: 0.02, annual_revenue: 1, employee_count: 1, solution_price: 1 });
   assert.doesNotMatch(r.text, /\$-\d/);
   assert.match(r.text, /\| \*\*Net Annual Benefit\*\* \| -\$0\.98 /);
 });
@@ -57,10 +58,14 @@ test("win_loss_analyzer: a deal value of 0 is shown as given, 1 day is singular,
   assert.match(big.text, /\| \*\*Sales Cycle\*\* \| 1,000,000,000,000 days \|/);
 });
 
-test("win_loss_analyzer: a loss with no stated reason still has something under 'Common Root Causes to Investigate'", async () => {
+// run 21c: draft rewrite. The old check read the text under the heading "Common Root Causes to Investigate"; the write-up has no such outline
+// section. Its intent is kept: a loss with no stated reason must say so plainly and ask for the reason, not print an empty section.
+test("win_loss_analyzer: a loss with no stated reason says what the reason would add, and prints no empty section", async () => {
   const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost" });
-  const after = r.text.split("**Common Root Causes to Investigate:**")[1].trim();
-  assert.doesNotMatch(after, /^### Loss Categories/);
+  // run 22 (rev-w3): what is not given is named once, at the end, under "To sharpen this, give:", with what each input would change
+  assert.match(r.text, /To sharpen this, give:[\s\S]*`loss_reason`[^\n]*would change/);
+  assert.equal((r.text.match(/To sharpen this, give:/g) || []).length, 1);
+  assert.doesNotMatch(r.text, /##[^\n]*\n\n(?:##|$)/);
 });
 
 // Run 19 (D80, problem 2): a weakness is the seller's own note and is never read out inside a question to the buyer, so this
@@ -70,6 +75,8 @@ test("competitive_trap_setter: each weakness gets its own landmine question", as
   const qs = [...r.text.matchAll(/\*\*Landmine Question:\*\* "([^"]+)"/g)].map((m) => m[1]);
   assert.equal(qs.length, 2);
   assert.notEqual(qs[0], qs[1]);
-  assert.doesNotMatch(qs[0], /text reminders/);
+  // run 21c: draft rewrite. The question now names the topic of its note ("text reminders") as the buyer would, so the check is that it
+  // never reads the whole note out; the intent (the weakness is a note for the seller, shown as given) is kept.
+  assert.doesNotMatch(qs[0], /Charges extra for text reminders/i);
   assert.match(r.text, /Charges extra for text reminders/);
 });

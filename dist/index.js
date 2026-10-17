@@ -1532,7 +1532,11 @@ function executeRoiBusinessCaseBuilder(args) {
     // this tool calculates no ROI, payback or value. It no longer applies built-in example hours, headcount, hourly rates or shares of revenue. The answer
     // explains the method, uses the figures the input does give only as stated and labelled, and asks for at most three missing numbers (src/rw1-roi.ts).
     if (userValue === null) {
-        return (0, rw1_roi_ts_1.buildRoiStructure)(args, { customerName, industry, companySize, yourSolution, primaryValueDriver, knownMetrics, currentProcess, implementationTimeline, revenueGiven, employeesGiven, annualRevenue, employeeCount, priceGiven, solutionPrice, ownCost, ownPct }, RW1_DEPS);
+        const structure = (0, rw1_roi_ts_1.buildRoiStructure)(args, { customerName, industry, companySize, yourSolution, primaryValueDriver, knownMetrics, currentProcess, implementationTimeline, revenueGiven, employeesGiven, annualRevenue, employeeCount, priceGiven, solutionPrice, ownCost, ownPct }, RW1_DEPS);
+        // the sector's buying committee, words and proof shape (no figures, B82), as the calculated answer carries them
+        const sc = readContext(undefined, { seller: [yourSolution], context: [knownMetrics, currentProcess], buyer: [args.industry, customerName] });
+        const notes = sc.v ? sectorNotes(sc.v, 'committee') : '';
+        return notes && structure.includes('\n## What you gave') ? structure.replace('\n## What you gave', `\n${notes}\n\n## What you gave`) : structure;
     }
     // Industry benchmarks for ROI calculations
     const benchmarks = {

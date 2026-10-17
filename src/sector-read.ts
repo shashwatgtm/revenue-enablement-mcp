@@ -56,7 +56,8 @@ export function sectorSetPhrase(v: Vertical | null): string {
  *  set sector's usual model. A generic software word ("platform", "products", "technology") is not a charge word, and the usual model of a
  *  sector read from the text is not the set sector's: a services firm set as ITeS that mentions agentic products is still sold as services.
  *  A model read from specific words (a payment gateway, managed services, connectivity) is kept. Nothing changes when your_sector is not set. */
-const CHARGE_SAAS = /\b(?:saas|subscriptions?|subscribe|per seat|per user|per month|monthly plan|annual plan|licen[cs]e[sd]?|pricing plans?)\b/i;
+// a feature for the buyer's own customers ("AutoPay subscriptions", "recurring subscriptions") is not how the seller is paid
+const CHARGE_SAAS = /\b(?:saas|(?:a|an annual|a monthly|a yearly)\s+subscription|subscription (?:fees?|pricing|plans?|prices?|basis)|sold as (?:a )?subscription|by subscription|per seat|per user|per month|monthly plans?|annual plans?|licen[cs]e (?:fees?|costs?)|licen[cs]ed|pricing plans?)\b/i;
 export function modelUnderSetSector(m: { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' }, v: Vertical | null, input: Record<string, unknown>): { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' } {
   if (!forced || forced === 'other' || !v || m.how === 'input') return m;
   const seller = (Array.isArray(input.seller) ? input.seller : []).filter((x): x is string => typeof x === 'string').join(' . ');

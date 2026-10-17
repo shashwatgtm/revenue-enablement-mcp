@@ -92,3 +92,9 @@ test("trap: a claim to source never ends mid phrase, and a plain list of strengt
   const crit = (t.match(/^- Criterion \d+:/gm) || []).length;
   assert.ok(crit >= 3, "criteria: " + crit);
 });
+
+test("an adoption, access or accuracy concern is not settled by a yes or no from the documentation", async () => {
+  const t = await call("demo_script_builder", { demo_type: "first_look", primary_audience: "VP of Sales", your_solution: "Murmur, a meeting assistant: live transcription and summaries with action items",
+    key_pain_points: "teams lose follow-ups after meetings", demo_duration: 30, your_sector: "ai_native" });
+  assert.doesNotMatch(t, /a yes or no on "(?:AI gets answers wrong|Where does our data go|It needs access|We tried a copilot)/);
+});

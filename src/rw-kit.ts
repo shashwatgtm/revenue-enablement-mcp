@@ -1125,11 +1125,18 @@ export function answerObjection(o: string, c: AnswerCtx): Answer {
               S(`If ${P} does not cover it, I will say so rather than stretch the answer.`, `If ${P} does not cover it, we should hear that rather than a stretched answer.`),
               S(`Show me a case and I will tell you straight whether ${P} handles it.`, `We should put a case to ${P} and hear straight whether it handles it.`)]),
         nearAlt ? S(`The option in front of you that comes closest is ${nearAlt}.`, `The option in front of us that comes closest is ${nearAlt}.`) : '',
-      ], pick([S('What would make that answer enough for you?', 'What would make that answer enough for us?'), S('What decision does the answer change for you?', 'What decision does the answer change for us?'), S('Who else needs to hear that answer before you can move?', 'Who else needs to hear that answer before we can move?')]), rel.length ? `what ${capsTxt(rel)} does on "${clip(t, 80)}", shown on a real case of ours rather than described` : `a yes or no on "${clip(t, 80)}" from ${Ps} own documentation, with the case it was proved on`, 'general');
+      ], pick([S('What would make that answer enough for you?', 'What would make that answer enough for us?'), S('What decision does the answer change for you?', 'What decision does the answer change for us?'), S('Who else needs to hear that answer before you can move?', 'Who else needs to hear that answer before we can move?')]), rel.length ? `what ${capsTxt(rel)} does on "${clip(t, 80)}", shown on a real case of ours rather than described` : confirmFor(t, P, Ps, clip), 'general');
     }
   }
 }
 
+/** Run 42Q: what to confirm for a concern no part answers, by what the concern is about; a yes or no from the documentation fits only a question of capability. */
+function confirmFor(t: string, P: string, Ps: string, clipFn: (s: string, n: number) => string): string {
+  if (/\b(?:tried|stopped using|stop using|adoption|won't use|will not use|nobody uses|people stopped|shelfware)\b/i.test(t)) return `how a team like ours used ${P} after the first few weeks (who used it, how often, and what made them stay or stop), from a reference customer or a pilot`;
+  if (/\baccess\b|\bour systems\b|\bour data\b|\bpermissions?\b|\bprivacy\b/i.test(t)) return `the systems, data and permissions ${P} needs, what it can change, and who can revoke its access, from ${Ps} security documentation`;
+  if (/same way every time|\bconsisten\w*|\bhallucinat\w*|wrong answers?|answers? wrong|gets? (?:it|things) wrong/i.test(t)) return `how ${P} behaves on the same case run several times, and how a wrong answer is caught and corrected, on a case of ours`;
+  return `a yes or no on "${clipFn(t, 80)}" from ${Ps} own documentation, with the case it was proved on`;
+}
 /** Removes a sentence of 40 characters or more that an earlier answer already holds, and an ask that was already put, so no answer repeats another word for word. */
 export function dedupeAnswers(list: { say: string; ask: string }[]): void {
   const seen = new Set<string>();

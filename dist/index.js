@@ -966,7 +966,7 @@ function splitItems(s) {
         // a sentence with a comma ("the first and only X, built to replace Y") is not a list: a first fragment that opens with an article and runs
         // to four words or more, or a fragment that opens with a participle or a linking word, makes it one item
         const sentenceLike = /^(?:the|a|an)\s/i.test(c[0] || '') && (c[0] || '').split(/\s+/).length >= 4;
-        if (c.length > 1 && !sentenceLike && c.every((x) => x.split(/\s+/).length <= 6) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x)))
+        if (c.length > 1 && !sentenceLike && c.every((x) => /^[A-Z0-9]/.test(x) && x.split(/\s+/).length <= 4) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x)))
             return c;
     }
     return parts;

@@ -16,23 +16,33 @@ export function setYourSector(value: unknown): void {
 export function sectorIsSet(): boolean { return forced !== undefined; }
 
 export interface SellerSectorRead { vertical: Vertical | null; source: 'seller' | 'context' | 'role' | 'buyer' | null; set: boolean }
+/** A sub industry (a kind of company inside the sector, with its own notes) is used only when the seller's own words name it; otherwise the sector's general entry is used. */
+function generalUnlessClear(v: Vertical | null, input: Record<string, unknown>): Vertical | null {
+  if (!v || !v.subtype) return v;
+  const sellerTexts = Array.isArray(input.seller) ? input.seller : [];
+  const a = explainSector({ seller: sellerTexts, context: [], role: [], buyer: [] });
+  const b = explainSector({ seller: [], context: [], role: [], buyer: sellerTexts });
+  const same = (x: Vertical | null) => !!x && x.id === v.id && x.subtype === v.subtype;
+  if (same(a.vertical) || same(b.vertical)) return v;
+  return VERTICALS.find((x) => x.id === v.id) ?? v;
+}
 export function readSellerSector(input: Record<string, unknown>): SellerSectorRead {
   if (forced) {
     let v = forced === 'other' ? null : VERTICALS.find((x) => x.id === ID[forced!]) ?? null;
     // the kind of company inside the chosen sector (a sub-type) is kept when the seller's own words name it
     if (v) {
       const r = explainSector(input);
-      if (r.vertical && r.source === 'seller' && r.vertical.id === v.id) v = r.vertical;
+      if (r.vertical && r.source === 'seller' && r.vertical.id === v.id) v = generalUnlessClear(r.vertical, input);
     }
     return { vertical: v, source: 'seller', set: true };
   }
   const r = explainSector(input);
   // a sector read from the deal text, the job titles or the customer's industry is not the seller's: neutral wording instead
-  if (r.source === 'seller') return { vertical: r.vertical, source: 'seller', set: false };
+  if (r.source === 'seller') return { vertical: generalUnlessClear(r.vertical, input), source: 'seller', set: false };
   // The reader moves the part of the seller's own description that follows "for ..." to the buyer side. Those words are still the
   // seller's own, so they are read on their own, and count when they name a sector at least twice.
   const own = explainSector({ seller: [], context: [], role: [], buyer: Array.isArray(input.seller) ? input.seller : [] });
-  if (own.vertical && own.strong.length >= 2) return { vertical: own.vertical, source: 'seller', set: false };
+  if (own.vertical && own.strong.length >= 2) return { vertical: generalUnlessClear(own.vertical, input), source: 'seller', set: false };
   return { vertical: null, source: null, set: false };
 }
 /** profileFor reads the text again (a money manager, an AI support seller); when the sector was set it is left as set. */

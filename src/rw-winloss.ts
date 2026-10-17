@@ -29,7 +29,7 @@ function splitList(s: string): string[] {
   if (parts.length === 1 && /,/.test(parts[0])) {
     const c = parts[0].split(/,(?!\d{3}(?!\d))/).map((x) => x.trim()).filter(Boolean);
     const sentenceLike = /^(?:the|a|an)\s/i.test(c[0] || '') && (c[0] || '').split(/\s+/).length >= 8;
-    if (c.length > 1 && !sentenceLike && c.every((x) => x.split(/\s+/).length <= 7) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x))) return c;
+    if (c.length > 1 && !sentenceLike && c.every((x) => /^[A-Z0-9]/.test(x) && x.split(/\s+/).length <= 4) && !c.some((x) => /^(not|but|and|or|so|which|that|built|designed|made|powered|backed|offering|with|using|including|plus|replacing)\b/i.test(x))) return c;
   }
   return parts;
 }

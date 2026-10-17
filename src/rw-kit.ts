@@ -187,7 +187,7 @@ export function readPains(text: string): PainSet {
     }
   }
   const uniq: string[] = [];
-  for (const o of out.map((x) => x.replace(/^[\s,]+|[\s,.]+$/g, '').trim()).filter((x) => x.length > 3)) if (!uniq.includes(o)) uniq.push(o);
+  for (const o of out.map((x) => x.replace(/^[\s,]+|[\s,.]+$/g, '').trim()).filter((x) => typedLength(x) > 3)) if (!uniq.includes(o)) uniq.push(o);
   return { pains: uniq.slice(0, 7), evidence, notes };
 }
 const BOUNDARY = new Set(['for', 'across', 'without', 'because', 'so', 'while', 'with', 'in', 'on', 'by', 'from', 'that', 'which', 'as', 'when', 'where', 'between', 'into']);

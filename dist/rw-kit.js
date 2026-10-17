@@ -244,7 +244,7 @@ function readPains(text) {
         }
     }
     const uniq = [];
-    for (const o of out.map((x) => x.replace(/^[\s,]+|[\s,.]+$/g, '').trim()).filter((x) => x.length > 3))
+    for (const o of out.map((x) => x.replace(/^[\s,]+|[\s,.]+$/g, '').trim()).filter((x) => (0, dealtext_ts_1.typedLength)(x) > 3))
         if (!uniq.includes(o))
             uniq.push(o);
     return { pains: uniq.slice(0, 7), evidence, notes };

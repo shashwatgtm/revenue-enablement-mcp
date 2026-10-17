@@ -46,6 +46,16 @@ function trapClaims(s) {
         else if (x)
             out.push(x);
     }
+    // run 42Q: a plain list of three or more strengths ("patented technology, intel from a large lab, cloud and on-premise deployment and local support")
+    // is one criterion per strength, not one long criterion
+    const listed = out.flatMap((o) => {
+        const ps = (0, dealtext_ts_1.splitTopLevel)(o).map((x) => x.trim().replace(/^(?:and|plus)\s+/i, '')).filter(Boolean);
+        // "one platform for data movement, transformation and activation" is one strength with a list inside it: the first piece ends on a short object of "for", "of" or "in"
+        // nor is "owns the operational process, the data inputs and the quality": the objects of one verb
+        return ps.length >= 3 && !/\b(?:for|of|in|across|between|to)\s+\S+(?:\s+\S+)?$/i.test(ps[0]) && !ps.slice(1).some((x) => /^the\b/i.test(x)) && ps.every((x) => x.split(/\s+/).length >= 2 && !/^(?:built|backed|designed|powered|so|which|that|where|while)\b/i.test(x)) ? ps : [o];
+    });
+    if (listed.length > out.length)
+        return listed.slice(0, 6);
     return out.slice(0, 4);
 }
 exports.TRAP_METAPHOR = /\b(?:highway|jams?|traffic jam|roadblock|treadmill|maze|jungle|minefield|spaghetti|patchwork|house of cards|duct tape|band-?aid|silver bullet|black hole|rabbit hole|quicksand|hamster wheel|fire-?fighting|firefight\w*)\b/i;
@@ -437,13 +447,25 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
             const before = text.slice(0, at).trimEnd();
             const after = text.slice(at + num.length);
             const inBrackets = /\($/.test(before) && /^\s*\)/.test(after);
-            const ctxWords = inBrackets ? before.replace(/\($/, '').trim().split(/\s+/).slice(-2).join(' ') : after.trim().split(/\s+/).slice(0, 2).join(' ').replace(/[.,;:)]+$/, '');
+            // run 42Q: the words after a figure stop before a joining word, so a claim never ends on "and" or "with" ("99.99% availability", not "99.99% availability and")
+            const afterWords = [];
+            for (const w of after.trim().split(/\s+/).slice(0, 3)) {
+                if (/^(?:and|or|with|for|to|in|on|of|by|from|the|a|an|as|at)$/i.test(w))
+                    break;
+                afterWords.push(w);
+                if (/[.,;:)]$/.test(w) || afterWords.length === 2)
+                    break;
+            }
+            const ctxWords = inBrackets ? before.replace(/\($/, '').trim().split(/\s+/).slice(-2).join(' ') : afterWords.join(' ').replace(/[.,;:)]+$/, '');
             const claimText = inBrackets ? `${ctxWords} (${num})` : `${num} ${ctxWords}`.trim();
             if (!figureClaims.includes(claimText))
                 figureClaims.push(claimText);
         }
     }
-    const claimsHere = [...allStrengths.filter((x) => CLAIM_WORDS.test(x)), ...siteSays, ...figureClaims].filter((x, i, a) => a.indexOf(x) === i);
+    // run 42Q: a long strengths sentence is not cut mid phrase: only its pieces that hold the claim word (or a figure) are listed, each whole
+    const claimPieces = (x) => { if (x.length <= 90)
+        return [x]; const ps = (0, dealtext_ts_1.splitTopLevel)(x).map((p) => p.replace(/^(?:and|plus)\s+/i, '').trim()).filter((p) => CLAIM_WORDS.test(p)); return ps.length ? ps : [x]; };
+    const claimsHere = [...allStrengths.filter((x) => CLAIM_WORDS.test(x)).flatMap(claimPieces), ...siteSays, ...figureClaims].filter((x, i, a) => a.indexOf(x) === i);
     // ---- the buyer's priorities: aims (clauses) and figures with their own source label ----
     const startsWant = (x) => exports.TRAP_WANT_VERBS.test(x.replace(/^(?:and|to)\s+/i, ''));
     const aims = [];

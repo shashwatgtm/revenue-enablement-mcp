@@ -80,3 +80,15 @@ test("email: no stock persona question that shares nothing with the product's pr
   assert.match(t, /the tedious back-and-forth of finding a time to meet/i);
   assert.doesNotMatch(t, /Nothing you gave speaks to/);
 });
+
+test("trap: a claim to source never ends mid phrase, and a plain list of strengths is one criterion each", async () => {
+  const t = await call("competitive_trap_setter", { competitor: "fragmented tools", your_solution: "Shieldmark, a cybersecurity platform: endpoint protection, EDR and XDR",
+    your_strengths: "Patented detection technology, intel from one of the largest malware labs, flexible cloud and on-premise deployment, a single platform and local support, with 99.99% availability and on-demand scale",
+    evaluation_stage: "mid", buyer_persona: "IT Manager", trap_type: "all", your_sector: "cybersecurity" });
+  const src = (t.match(/The buyer will ask for the source of: [^\n]*/) || [""])[0];
+  assert.ok(src, "no claims to source");
+  assert.doesNotMatch(src, /\b(?:and|with|or|flexible)"/);
+  assert.match(src, /"99\.99% availability"/);
+  const crit = (t.match(/^- Criterion \d+:/gm) || []).length;
+  assert.ok(crit >= 3, "criteria: " + crit);
+});

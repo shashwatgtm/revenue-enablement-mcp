@@ -5,6 +5,7 @@
 // flows and statistics) and answer an objection from those inputs and from the business model.
 // Rules (B82, D80): no statistic, benchmark or named-company fact is written here; nothing is said about the user's product that the user did not
 // type (an answer says what to confirm instead); no network, no file access, no environment, no logging.
+import { escapePiece } from './escape-inputs.ts';
 import { isGenericWord, splitTopLevel, joinList, clip, typedLength, type SolutionBrief } from './dealtext.ts';
 import { MODEL_TRADES, type BusinessModel } from './verticals.ts';
 
@@ -492,9 +493,9 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
     }
     if (carry) pieces.push(carry);
     for (const p of pieces) {
-      const item = { text: p.replace(/[.]+$/, ''), label };
+      const item = { text: escapePiece(p.replace(/[.]+$/, '')), label };
       // a figure, a credential or a benchmark is said, not shown; so is any item that holds a number and does not start with something a presenter can do
-      if (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && /[A-Za-z]/.test(p) && !DEMO_VERB.test(p.trim()))) claims.push(item); else flows.push(item);
+      if (/[A-Za-z]/.test(p) && (isStat(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && /[A-Za-z]/.test(p) && !DEMO_VERB.test(p.trim())))) claims.push(item); else flows.push(item);
     }
   }
   // a figure with no label of its own takes the label the list ends with ("... (page claims)")

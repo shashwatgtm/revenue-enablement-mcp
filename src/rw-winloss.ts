@@ -3,6 +3,7 @@
 // the alternatives, the people and the figures the user gave; every part of the deal that the user listed is asked about; what is missing
 // (the outcome, the reason, the winner) is named once at the end with what it would change. Nothing is concluded that an input does not say
 // (B82). Text only: no network, file or environment access.
+import { escapePiece } from './escape-inputs.ts';
 import { parseContacts, tagKind, sentences, joinList, clip, upperFirst, splitTopLevel, typedLength, type Contact } from './dealtext.ts';
 import type { Vertical } from './verticals.ts';
 import { readSector, fitSector, productOf, isKind, partsIn, readAlt, endSentence, andList, type Deps, type Alt } from './rw-common.ts';
@@ -102,19 +103,19 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
 
   // ---- the alternatives: named once, by a short handle ----
   const named = wonBy && !/^(?:no decision|none|nobody|n\/a)\.?$/i.test(wonBy) ? wonBy : '';
-  interface Weighed extends Alt { winner: boolean; k: Kind | null }
+  interface Weighed extends Alt { group: number; winner: boolean; k: Kind | null }
   const weighed: Weighed[] = [];
-  const addAlt = (t: string, isNamed: boolean, winner: boolean) => {
-    const text = t.trim().replace(/[.]+$/, '');
+  const addAlt = (t: string, isNamed: boolean, winner: boolean, group = 0) => {
+    const text = escapePiece(t.trim().replace(/[.]+$/, ''));
     if (!text) return;
-    const dup = weighed.find((w) => sameAlt(w.text, text, isNamed));
+    const dup = weighed.find((w) => w.group !== group && sameAlt(w.text, text, isNamed));
     if (dup) { if (winner) dup.winner = true; return; }
     const a = readAlt(text, D, isNamed);
-    weighed.push({ ...a, winner, k: a.kind === 'vendor' ? null : kindOf(a) });
+    weighed.push({ ...a, winner, group, k: a.kind === 'vendor' ? null : kindOf(a) });
   };
   const m = details.match(ALT_TAIL);
   if (m) splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
-  if (named) splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome));
+  if (named) splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome, 1));
   const handles = weighed.map((w) => w.handle);
 
   // ---- the buyer and the notes ----

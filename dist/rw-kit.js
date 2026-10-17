@@ -29,6 +29,7 @@ exports.dedupeAnswers = dedupeAnswers;
 // flows and statistics) and answer an objection from those inputs and from the business model.
 // Rules (B82, D80): no statistic, benchmark or named-company fact is written here; nothing is said about the user's product that the user did not
 // type (an answer says what to confirm instead); no network, no file access, no environment, no logging.
+const escape_inputs_ts_1 = require("./escape-inputs.js");
 const dealtext_ts_1 = require("./dealtext.js");
 const verticals_ts_1 = require("./verticals.js");
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -635,9 +636,9 @@ function readMustShow(text) {
         if (carry)
             pieces.push(carry);
         for (const p of pieces) {
-            const item = { text: p.replace(/[.]+$/, ''), label };
+            const item = { text: (0, escape_inputs_ts_1.escapePiece)(p.replace(/[.]+$/, '')), label };
             // a figure, a credential or a benchmark is said, not shown; so is any item that holds a number and does not start with something a presenter can do
-            if ((0, exports.isStat)(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && /[A-Za-z]/.test(p) && !exports.DEMO_VERB.test(p.trim())))
+            if (/[A-Za-z]/.test(p) && ((0, exports.isStat)(p) || ARCH_CLAIM.test(p.trim()) || (/\d/.test(p) && /[A-Za-z]/.test(p) && !exports.DEMO_VERB.test(p.trim()))))
                 claims.push(item);
             else
                 flows.push(item);

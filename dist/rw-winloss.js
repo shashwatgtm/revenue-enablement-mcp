@@ -6,6 +6,7 @@ exports.buildWinLoss = buildWinLoss;
 // the alternatives, the people and the figures the user gave; every part of the deal that the user listed is asked about; what is missing
 // (the outcome, the reason, the winner) is named once at the end with what it would change. Nothing is concluded that an input does not say
 // (B82). Text only: no network, file or environment access.
+const escape_inputs_ts_1 = require("./escape-inputs.js");
 const dealtext_ts_1 = require("./dealtext.js");
 const rw_common_ts_1 = require("./rw-common.js");
 const KINDS = [
@@ -105,24 +106,24 @@ function buildWinLoss(args, D) {
     // ---- the alternatives: named once, by a short handle ----
     const named = wonBy && !/^(?:no decision|none|nobody|n\/a)\.?$/i.test(wonBy) ? wonBy : '';
     const weighed = [];
-    const addAlt = (t, isNamed, winner) => {
-        const text = t.trim().replace(/[.]+$/, '');
+    const addAlt = (t, isNamed, winner, group = 0) => {
+        const text = (0, escape_inputs_ts_1.escapePiece)(t.trim().replace(/[.]+$/, ''));
         if (!text)
             return;
-        const dup = weighed.find((w) => sameAlt(w.text, text, isNamed));
+        const dup = weighed.find((w) => w.group !== group && sameAlt(w.text, text, isNamed));
         if (dup) {
             if (winner)
                 dup.winner = true;
             return;
         }
         const a = (0, rw_common_ts_1.readAlt)(text, D, isNamed);
-        weighed.push({ ...a, winner, k: a.kind === 'vendor' ? null : kindOf(a) });
+        weighed.push({ ...a, winner, group, k: a.kind === 'vendor' ? null : kindOf(a) });
     };
     const m = details.match(ALT_TAIL);
     if (m)
         splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
     if (named)
-        splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome));
+        splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome, 1));
     const handles = weighed.map((w) => w.handle);
     // ---- the buyer and the notes ----
     const seg = (details.match(/\bdeals?\s+with\s+([^;:.]+?)\s*(?:;|\.|$)/i) || [])[1] || '';

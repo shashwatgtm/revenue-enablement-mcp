@@ -63,7 +63,7 @@ function painAtoms(text) {
     for (const sg of segs)
         for (const c of colonList(sg))
             for (const x of split(c))
-                if (x.trim().length > 3 && !out.includes(x.trim()))
+                if ((0, dealtext_ts_1.typedLength)(x.trim()) > 3 && !out.includes(x.trim()))
                     out.push(x.trim());
     return out.slice(0, 6);
 }

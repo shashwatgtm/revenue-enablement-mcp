@@ -9,6 +9,7 @@ exports.buildDemoScript = buildDemoScript;
 //  4. each objection is answered from the inputs and the business model (answerObjection), where it would come up;
 //  5. what was not given is named once, at the end, with what it would change.
 // No fact about the product is added: a line says what the user's description says, or says what to confirm.
+const escape_inputs_ts_1 = require("./escape-inputs.js");
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
@@ -310,14 +311,14 @@ function buildDemoScript(args, d) {
     const claimSay = (items) => `${items.map((c) => c.text.replace(/[.]+$/, '')).join('; ')}.`;
     const claimLabels = (items) => [...new Set(items.map((c) => c.label || 'a claim you gave'))].join('; ');
     // ---- objections ----
-    const typed = d.splitItems(knownObjections).map((o) => o.replace(/^"|"$/g, '').trim()).filter(Boolean);
+    const typed = d.splitItems(knownObjections).map((o) => (0, escape_inputs_ts_1.escapePiece)(o.replace(/^"|"$/g, '').trim())).filter(Boolean);
     const fromSector = !typed.length && !!v;
     const objections = typed.length ? typed : fromSector ? v.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
     const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
     const secPerson = people.find((p) => p.contact && (p.contact.family === 'security' || p.contact.family === 'risk'))?.title || '';
     const dsWho = (t0) => { const t = t0.replace(/^the\s+/i, ''); return (/\b(?:svp|evp|cio|cto|ciso|cfo|ceo|coo|cmo|cro|board|council|panel|manager|director|head|lead|leader|leaders|chief|officer|vp|vice|president|engineer|engineers|analyst|analysts|architect|owner|owners|founder|executive|executives|controller|counsel|team|teams|committee|group|auditors?|reviewers?|administrators?|admins?|developers?|users?|agents|staff|partners?|programs?)\b/i.test(t) || (/^[A-Z]{2,5}$/.test(t) && !/^(?:IT|HR|QA|PR|GTM|R&D)$/.test(t)) ? `the ${t}` : `the ${t} team`); };
     // a comma list ("separate point tools for pricing, operations, payments and distribution") is one alternative; only a semicolon or a new line separates alternatives
-    const altItems = (competitorContext.includes(';') || competitorContext.includes('\n') ? d.splitItems(competitorContext) : competitorContext ? [competitorContext] : []).map((x) => x.replace(/[.]+$/, ''));
+    const altItems = (competitorContext.includes(';') || competitorContext.includes('\n') ? d.splitItems(competitorContext) : competitorContext ? [competitorContext] : []).map((x) => (0, escape_inputs_ts_1.escapePiece)(x.replace(/[.]+$/, '')));
     const actx = {
         P, kind: product.kind, caps: product.caps, alts: altItems.length ? altItems : competitorContext ? [competitorContext] : [],
         pains, claims: claimsAll, outcomes: outcomeText ? [outcomeText] : [], model: ctx.model, voice: 'seller', shown: shown.filter((s) => !s.fromPain).map((s) => (s.cap ? s.cap.name : s.title)),
@@ -547,7 +548,7 @@ function buildDemoScript(args, d) {
         objections.length ? `- Send the written answers to: ${objections.map((o) => o.replace(/[?.]+$/, '')).join('; ')}.` : '',
         `- Send the summary promised in the close, and brief your champion separately.`,
     ].filter(Boolean).join('\n');
-    const checks = [...answers.entries()].map(([o, a]) => `- "${o.replace(/[?.]+$/, '')}": ${a.check}.`);
+    const checks = objections.map((o) => [o, answers.get(o)]).map(([o, a]) => `- "${o.replace(/[?.]+$/, '')}": ${a.check}.`);
     const noDesc = shown.filter((s) => s.cap && !s.cap.desc && !s.flow).map((s) => s.cap.name);
     const sharpen = [];
     if (!primaryAudience)

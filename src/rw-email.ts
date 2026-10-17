@@ -4,7 +4,7 @@
 // persona is never made plural by adding a letter, and an executive is asked who else should join, not whether the topic is theirs.
 // What is not given is named once, at the end, with what it would change. Nothing is invented (B82): no figure, customer, date or promise
 // that the user did not give. Text only: no network, file or environment access.
-import { parseProof, proofPhrase, familyOf, levelOf, joinList, clip, upperFirst, splitTopLevel, type ProofItem } from './dealtext.ts';
+import { typedLength, parseProof, proofPhrase, familyOf, levelOf, joinList, clip, upperFirst, splitTopLevel, type ProofItem } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import type { Vertical } from './verticals.ts';
 import { readSector, fitSector, productOf, isKind, doesLine, partsIn, sourceOf, endSentence, sentenceCase, listItems, isNotGiven, andList, dropRepeats, type Deps, type Product, type Source } from './rw-common.ts';
@@ -45,7 +45,7 @@ export function painAtoms(text: string): string[] {
     }
     return [s];
   };
-  for (const sg of segs) for (const c of colonList(sg)) for (const x of split(c)) if (x.trim().length > 3 && !out.includes(x.trim())) out.push(x.trim());
+  for (const sg of segs) for (const c of colonList(sg)) for (const x of split(c)) if (typedLength(x.trim()) > 3 && !out.includes(x.trim())) out.push(x.trim());
   return out.slice(0, 6);
 }
 

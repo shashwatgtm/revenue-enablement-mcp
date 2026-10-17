@@ -29,6 +29,7 @@ const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const rw1_account_ts_1 = require("./rw1-account.js");
 const rw1_map_ts_1 = require("./rw1-map.js");
+const rw1_roi_ts_1 = require("./rw1-roi.js");
 const rw_demo_ts_1 = require("./rw-demo.js");
 const rw_champion_ts_1 = require("./rw-champion.js");
 const rw_discovery_ts_1 = require("./rw-discovery.js");
@@ -1526,6 +1527,12 @@ function executeRoiBusinessCaseBuilder(args) {
     const userValue = ownEstimate !== null ? ownEstimate : ownCost !== null && ownPct !== null ? ownCost * ownPct / 100 : null;
     const userValueText = ownEstimate !== null ? `your own estimate of the annual value, ${money(ownEstimate)}`
         : ownCost !== null && ownPct !== null ? `${ownPct}% of the current annual cost you supplied (${money(ownCost)})` : '';
+    // Run 42 (owner approval, 17 October 2026): without a buyer figure (annual_value_estimate, or current_annual_cost with expected_improvement_percent)
+    // this tool calculates no ROI, payback or value. It no longer applies built-in example hours, headcount, hourly rates or shares of revenue. The answer
+    // explains the method, uses the figures the input does give only as stated and labelled, and asks for at most three missing numbers (src/rw1-roi.ts).
+    if (userValue === null) {
+        return (0, rw1_roi_ts_1.buildRoiStructure)(args, { customerName, industry, companySize, yourSolution, primaryValueDriver, knownMetrics, currentProcess, implementationTimeline, revenueGiven, employeesGiven, annualRevenue, employeeCount, priceGiven, solutionPrice, ownCost, ownPct }, RW1_DEPS);
+    }
     // Industry benchmarks for ROI calculations
     const benchmarks = {
         Technology: {

@@ -177,7 +177,9 @@ test("roi_business_case_builder: given revenue and employees are labelled as you
   assert.ok(!both.includes("| **Est. Annual Revenue** |") && !both.includes("| **Est. Employees** |"));
   const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 })).text;
-  assert.match(row(est, "| **Est. Annual Revenue** |"), /estimated from your employee count/);
+  // Run 42 (owner approval, 17 October 2026): a missing revenue is no longer estimated from the employee count; it is shown as not supplied.
+  assert.equal(row(est, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
+  assert.ok(!/estimated from your employee count/.test(est));
   assert.equal(row(est, "| **Employees** |"), "| **Employees** | 500 (your input) |");
 });
 

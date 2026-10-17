@@ -9,6 +9,10 @@
 // The /mcp input check counts a null member as not given, so null is not refused: it means the same as omitted.
 // Run 19 R19-36 (ledger B16-18): a value you give is labelled "(your input)" and its row drops "Est."; only an estimated value keeps
 // "Est." and its example label. The expectations below changed with that rule and nothing else.
+// Run 42 (owner approval, 17 October 2026): without a buyer figure the tool no longer estimates a revenue, an employee count or a value
+// from them, and calculates no ROI, payback or value. The cases that pinned the old estimates (estimated revenue or employees, example
+// productivity and cost values, the not-computed lines that came from a 0 in that estimate) now pin that: every size input is shown as
+// given (0 as 0), nothing is estimated, no ROI or example figure is printed. With the buyer's own value, a 0 still flows as before.
 // Run: node --test tests/roi-zero-inputs.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -46,19 +50,24 @@ const sensLines = (text, label) =>
 
 const PROD = { your_solution: "Helix Platform", primary_value_driver: "productivity" };
 
-// ---------- annual_revenue ----------
+// ---------- no buyer figure: sizes shown as given, nothing estimated, no return ----------
+const noReturn = (text, label) => {
+  assert.ok(!/\| \*\*ROI\*\* \|/.test(text), label + ": an ROI row is printed");
+  assert.ok(!/\d+% ROI|months\*\* payback|Annual Productivity Value|Employees impacted|Example figure|estimated from your/.test(text), label + ": an example figure is printed");
+  assert.ok(!/Infinity|NaN/.test(text));
+  assert.match(text, /No ROI percentage, payback period or headline return is shown/);
+};
 
 for (const [label, rev] of [["omitted", undefined], ["null", null]]) {
-  test(`annual_revenue ${label}: revenue is estimated from the employee count and labelled as an example`, async () => {
+  test(`annual_revenue ${label} (employees given): no revenue is estimated and no return is shown`, async () => {
     const args = { ...PROD, employee_count: 100 };
     if (rev !== undefined) args.annual_revenue = rev;
     const { isError, text } = await call(args);
     assert.equal(isError, false);
-    assert.match(row(text, "| **Est. Annual Revenue** |"), /\$25,000,000, estimated from your employee count \(Example figure: replace with your own\)/);
-    assert.match(row(text, "| **Employees** |"), /\| 100 \(your input\) \|$/);
-    assert.match(row(text, "Annual Productivity Value"), /\*\*\$250,000\*\*/);
-    assert.ok(!row(text, "| **Est. Annual Revenue** |").includes("(your input)"));
-    assert.ok(!text.includes("add your annual revenue"));
+    assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
+    assert.equal(row(text, "| **Employees** |"), "| **Employees** | 100 (your input) |");
+    assert.ok(!text.includes("$25,000,000"));
+    noReturn(text, label);
   });
 }
 
@@ -68,43 +77,20 @@ test("annual_revenue 0 (employees given): shown as $0 (your input), never estima
   assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 100 (your input) |");
   assert.ok(!text.includes("$25,000,000"), "revenue was estimated from the employee count");
-  assert.ok(!/estimated from your employee count/.test(text), "revenue was estimated from the employee count");
-  assert.match(row(text, "Revenue baseline:"), /Revenue baseline: \$0 \(your input\)$/);
-  assert.match(row(text, "Annual Productivity Value"), /\*\*\$0\*\* \(Example figure: replace with your own\)$/);
+  noReturn(text, "revenue 0");
 });
 
-test("annual_revenue 0, no price: figures that divide by the value print the not-computed line", async () => {
-  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100 });
-  assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | " + NEEDS_REVENUE + " |"));
-  assert.ok(row(text, "| **Payback Period** |").startsWith("| **Payback Period** | " + NEEDS_REVENUE + " |"));
-  assert.ok(row(text, "| **Value/Cost Ratio** |").startsWith("| **Value/Cost Ratio** | " + NEEDS_REVENUE + " |"));
-  for (const label of ["- ROI: ", "- Payback: "]) {
-    const hits = sensLines(text, label);
-    assert.equal(hits.length, 2);
-    for (const h of hits) assert.equal(h, label + NEEDS_REVENUE);
-  }
-  const summary = text.slice(text.indexOf("## One-Page Executive Summary"));
-  assert.ok(!/\d+%\*\* ROI/.test(summary) && !/months\*\* payback/.test(summary));
-  assert.ok(summary.includes("- **ROI:** " + NEEDS_REVENUE) && summary.includes("- **Payback:** " + NEEDS_REVENUE));
-  assert.ok(!/Infinity|NaN/.test(text));
-});
-
-test("annual_revenue 0: figures that do not divide by it are computed with 0", async () => {
-  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100 });
-  assert.match(row(text, "**Total Quantified Value**"), /\*\*\$0\*\*/);
-  assert.match(row(text, "**Net Annual Benefit**"), /\| \$0 /);
-  assert.match(row(text, "**3-Year Net Value**"), /\| \$0 \|/);
-  assert.equal(sensLines(text, "- Annual Value: ").join("|"), "- Annual Value: $0|- Annual Value: $0");
-  assert.match(text, /- \*\*\$0\*\* in annual value/);
-  assert.match(text, /Cost of delay: \$0\/month/);
-});
-
-test("annual_revenue 0 with a price: ROI and the ratio are computed, payback divides by the value and is not computed", async () => {
+test("annual_revenue 0 with a price and no buyer figure: the price arithmetic only, no return", async () => {
   const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100, solution_price: 40000 });
-  assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | -100% |"));
-  assert.ok(row(text, "| **Value/Cost Ratio** |").startsWith("| **Value/Cost Ratio** | 0.0x |"));
-  assert.ok(row(text, "| **Payback Period** |").startsWith("| **Payback Period** | " + NEEDS_REVENUE + " |"));
-  assert.equal(sensLines(text, "- Payback: ").join("|"), "- Payback: " + NEEDS_REVENUE + "|- Payback: " + NEEDS_REVENUE);
+  noReturn(text, "revenue 0, price");
+  assert.match(text, /At the annual price you gave \(\$40,000\)/);
+});
+
+test("annual_revenue 0 with the buyer's own value: every figure is computed from that value", async () => {
+  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100, solution_price: 40000, annual_value_estimate: 100000 });
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
+  assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | 150% |"));
+  assert.ok(!text.includes("not computed"));
 });
 
 test("annual_revenue 0 with cost_reduction: the value does not come from revenue, so every figure is computed", async () => {
@@ -113,25 +99,24 @@ test("annual_revenue 0 with cost_reduction: the value does not come from revenue
   assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
 });
 
-test("annual_revenue ordinary value: shown as given, not estimated", async () => {
+test("annual_revenue and employee_count ordinary values: shown as given, not turned into a value", async () => {
   const { text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 100 });
-  assert.match(row(text, "| **Annual Revenue** |"), /\| \$10,000,000 \(your input\) \|$/);
-  assert.match(row(text, "Annual Productivity Value"), /\*\*\$100,000\*\*/);
-  assert.ok(!text.includes("not computed"));
-  assert.ok(!text.includes("| **Est. "), "nothing is estimated when both are given");
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $10,000,000 (your input) |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | 100 (your input) |");
+  assert.match(text, /this tool does not turn them into a value/);
+  noReturn(text, "ordinary");
 });
 
 // ---------- employee_count ----------
 
 for (const [label, emp] of [["omitted", undefined], ["null", null]]) {
-  test(`employee_count ${label}: employees are estimated from the revenue and labelled as an example`, async () => {
+  test(`employee_count ${label} (revenue given): no employee count is estimated and no return is shown`, async () => {
     const args = { ...PROD, annual_revenue: 10000000 };
     if (emp !== undefined) args.employee_count = emp;
     const { isError, text } = await call(args);
     assert.equal(isError, false);
-    assert.match(row(text, "| **Est. Employees** |"), /\| 40, estimated from your annual revenue \(Example figure: replace with your own\) \|$/);
-    assert.ok(!row(text, "| **Est. Employees** |").includes("(your input)"));
-    assert.ok(!text.includes("add your employee count"));
+    assert.equal(row(text, "| **Employees** |"), "| **Employees** | not supplied |");
+    noReturn(text, label);
   });
 }
 
@@ -139,37 +124,21 @@ test("employee_count 0 (revenue given): shown as 0 (your input), never estimated
   const { isError, text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 0 });
   assert.equal(isError, false);
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
-  assert.ok(!/estimated from your annual revenue/.test(text), "employees were estimated from the revenue");
-  assert.match(row(text, "| **Annual Revenue** |"), /\| \$10,000,000 \(your input\) \|$/);
-  // Nothing divides by the employee count, so the revenue figures are computed as usual.
-  assert.match(row(text, "Annual Productivity Value"), /\*\*\$100,000\*\*/);
-  assert.ok(!text.includes("not computed"));
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $10,000,000 (your input) |");
+  noReturn(text, "employees 0");
 });
 
-// Run 16 R16-41 (the verifier's Medium note): this case first pinned the old minimum of 10 impacted employees for a typed 0;
-// D45 uses a typed 0 as 0, so it now expects 0 impacted employees and payback naming the employee count.
-test("employee_count 0 (revenue given), cost_reduction: 0 impacted employees, payback says add your employee count", async () => {
+test("employee_count 0, cost_reduction, no buyer figure: no impacted employees, no savings, no return", async () => {
   const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 10000000, employee_count: 0, solution_price: 40000 });
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
-  assert.match(row(text, "Employees impacted:"), /Employees impacted: 0$/);
-  assert.ok(row(text, "| **Payback Period** |").includes("not computed: add your employee count"));
+  noReturn(text, "cost_reduction employees 0");
 });
 
-test("employee_count 0 and no revenue: revenue is 0 from 0 employees, and figures that divide by the value say add your employee count", async () => {
+test("employee_count 0 and no revenue: shown as given, no revenue estimated from it", async () => {
   const { text } = await call({ ...PROD, employee_count: 0 });
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
-  assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | $0, estimated from your employee count " + EX + " |");
-  assert.match(row(text, "**Total Quantified Value**"), /\*\*\$0\*\*/);
-  assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | " + NEEDS_EMPLOYEES + " |"));
-  assert.ok(row(text, "| **Payback Period** |").startsWith("| **Payback Period** | " + NEEDS_EMPLOYEES + " |"));
-  assert.ok(row(text, "| **Value/Cost Ratio** |").startsWith("| **Value/Cost Ratio** | " + NEEDS_EMPLOYEES + " |"));
-  assert.ok(!/Infinity|NaN/.test(text));
-});
-
-test("employee_count ordinary value: shown as given, not estimated", async () => {
-  const { text } = await call({ ...PROD, annual_revenue: 10000000, employee_count: 100 });
-  assert.match(row(text, "| **Employees** |"), /\| 100 \(your input\) \|$/);
-  assert.ok(!/estimated from your annual revenue/.test(text));
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
+  noReturn(text, "employees 0 no revenue");
 });
 
 // ---------- both 0, and 0 with a price of 0 ----------
@@ -179,21 +148,26 @@ test("annual_revenue 0 and employee_count 0: both shown as given, nothing estima
   assert.equal(isError, false);
   assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
-  assert.ok(!/estimated from your/.test(text.split("## Assumptions")[0]));
-  assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | " + NEEDS_REVENUE + " |"));
-  assert.ok(!/Infinity|NaN/.test(text));
+  noReturn(text, "both 0");
 });
 
-test("a price of 0 still wins for the figures that divide by the price (D34), with revenue 0", async () => {
-  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100, solution_price: 0 });
+test("a price of 0 still wins for the figures that divide by the price (D34), with the buyer's own value", async () => {
+  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100, solution_price: 0, annual_value_estimate: 100000 });
   assert.ok(row(text, "| **ROI** |").startsWith("| **ROI** | not computed: add your annual price |"));
   assert.ok(row(text, "| **Payback Period** |").startsWith("| **Payback Period** | not computed: add your annual price |"));
   assert.equal(row(text, "**Solution Cost**"), "| **Solution Cost** | $0 (your input) | $0 (your input) | $0 (your input) |");
 });
 
-test("neither size input given: today's wording is unchanged", async () => {
+test("a price of 0 and no buyer figure: shown as given, no return", async () => {
+  const { text } = await call({ ...PROD, annual_revenue: 0, employee_count: 100, solution_price: 0 });
+  noReturn(text, "price 0");
+  assert.equal(row(text, "| **Annual price** |"), "| **Annual price** | $0 (your input) |");
+});
+
+test("neither size input given: no estimate, no example value, the numbers to ask for are named", async () => {
   const { text } = await call({ ...PROD });
-  assert.equal(row(text, "| **Est. Annual Revenue** |"), "| **Est. Annual Revenue** | not supplied |");
-  assert.equal(row(text, "| **Est. Employees** |"), "| **Est. Employees** | not supplied |");
-  assert.match(row(text, "Annual Productivity Value"), /not computed: needs annual revenue or employee count/);
+  assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
+  assert.equal(row(text, "| **Employees** |"), "| **Employees** | not supplied |");
+  noReturn(text, "neither");
+  assert.match(text, /## The numbers to ask for/);
 });

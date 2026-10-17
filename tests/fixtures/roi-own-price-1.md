@@ -12,7 +12,7 @@
 | **Annual Revenue** | $10,000,000 (your input) |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
 | **Solution** | Helix Platform |
-| **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
+| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
 
 ---
 
@@ -20,25 +20,18 @@
 
 | Investment | Year 1 | Year 2 | Year 3 |
 |------------|--------|--------|--------|
-| **Solution Cost** | $0.01 | $0.01 | $0.01 |
-| **Implementation** (Example figure: replace with your own) | under $0.01 | $0 | $0 |
-| **Total Investment** | $0.01 (Example figure: replace with your own) | $0.01 | $0.01 |
+| **Solution Cost** | $1 | $1 | $1 |
+| **Implementation** (Example figure: replace with your own) | $0.15 | $0 | $0 |
+| **Total Investment** | $1.15 (Example figure: replace with your own) | $1 | $1 |
 
 ---
 
 ## Value Breakdown
 
-### Productivity Gains
+### Value From Your Figures
 
-**Calculation Methodology:**
-- Revenue baseline: $10,000,000 (your input)
-- Productivity improvement: 1% (assumed) (Example figure: replace with your own)
-- Annual Productivity Value: **$100,000** (Example figure: replace with your own)
-
-**Validation Questions:**
-- "How much time does your team spend on low-value tasks?"
-- "What could your team achieve with 10% more time?" (Example figure: replace with your own)
-- "Where are the biggest time sinks today?"
+**Calculation:**
+- Annual value: your own estimate of the annual value, $100,000 = **$100,000**
 
 ---
 
@@ -47,21 +40,19 @@
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$100,000** (Example figure: replace with your own) |
-| **Annual Investment** | $0.01 |
-| **Net Annual Benefit** | $99,999.99 (Example figure: replace with your own) |
-
-*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current_annual_cost and expected_improvement_percent, or annual_value_estimate).*
+| **Total Quantified Value** | **$100,000** |
+| **Annual Investment** | $1 |
+| **Net Annual Benefit** | $99,999 |
 
 ### Key Metrics
 
 Example figures: replace with your own.
 | Metric | Value | Example threshold |
 |--------|-------|-------------------|
-| **ROI** | 999999900% | >100% considered strong |
+| **ROI** | 9999900% | >100% considered strong |
 | **Payback Period** | 0.0 months | <12 months considered fast |
-| **3-Year Net Value** | $299,999.97 | - |
-| **Value/Cost Ratio** | 10000000.0x | >3x considered excellent |
+| **3-Year Net Value** | $299,997 | - |
+| **Value/Cost Ratio** | 100000.0x | >3x considered excellent |
 
 ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
 
@@ -90,11 +81,11 @@ The assumptions above are examples built into this tool, not findings from publi
 Example figures: replace with your own.
 ### Conservative Scenario (50% of projected value)
 - Annual Value: $50,000
-- ROI: 499999900%
+- ROI: 4999900%
 - Payback: 0.0 months
 ### Aggressive Scenario (150% of projected value)
 - Annual Value: $150,000
-- ROI: 1499999900%
+- ROI: 14999900%
 - Payback: 0.0 months
 
 ---
@@ -132,7 +123,7 @@ Helix Platform addresses these challenges.
 **The Value:**
 Example figures: replace with your own.
 - **$100,000** in annual value
-- **999999900%** ROI
+- **9999900%** ROI
 - **0.0 months** payback
 
 **Why Now:**
@@ -141,6 +132,6 @@ Example figures: replace with your own.
 
 ---
 
-*Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
+*Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.*
 
 Suggested timings, lengths and counts: adjust them to your own.

@@ -31,6 +31,7 @@ import { splitFeatureList, type ListItem, aAn, describeWith, painClauses, soluti
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
 import { buildAccountPlan } from './rw1-account.ts';
 import { buildMutualActionPlan } from './rw1-map.ts';
+import { buildRoiStructure } from './rw1-roi.ts';
 import type { Deps as Rw1Deps } from './rw1-common.ts';
 import { buildDemoScript } from './rw-demo.ts';
 import { buildChampionKit } from './rw-champion.ts';
@@ -1546,6 +1547,13 @@ function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
   const userValue: number | null = ownEstimate !== null ? ownEstimate : ownCost !== null && ownPct !== null ? ownCost * ownPct / 100 : null;
   const userValueText = ownEstimate !== null ? `your own estimate of the annual value, ${money(ownEstimate)}`
     : ownCost !== null && ownPct !== null ? `${ownPct}% of the current annual cost you supplied (${money(ownCost)})` : '';
+
+  // Run 42 (owner approval, 17 October 2026): without a buyer figure (annual_value_estimate, or current_annual_cost with expected_improvement_percent)
+  // this tool calculates no ROI, payback or value. It no longer applies built-in example hours, headcount, hourly rates or shares of revenue. The answer
+  // explains the method, uses the figures the input does give only as stated and labelled, and asks for at most three missing numbers (src/rw1-roi.ts).
+  if (userValue === null) {
+    return buildRoiStructure(args, { customerName, industry, companySize, yourSolution, primaryValueDriver, knownMetrics, currentProcess, implementationTimeline, revenueGiven, employeesGiven, annualRevenue, employeeCount, priceGiven, solutionPrice, ownCost, ownPct }, RW1_DEPS);
+  }
 
   // Industry benchmarks for ROI calculations
   const benchmarks: Record<string, Record<string, number>> = {

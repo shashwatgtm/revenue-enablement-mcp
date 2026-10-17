@@ -30,7 +30,10 @@ const call = async (args) => {
 };
 
 // Claude chat's measurement C-REV-01 (B44): productivity, annual revenue 10,000,000.
-const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
+// Run 42 (owner approval, 17 October 2026): without a buyer figure the tool calculates no ROI, so the D34 price rules are checked on the
+// calculation path: BASE gives the buyer's own annual value, $100,000, the value the old example (1 percent of this revenue) produced.
+// The fixtures were regenerated once from that path (roi-own-price-*.md); the old ones held the removed example-based answer.
+const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000, annual_value_estimate: 100000 };
 // Run 19 (D80, problem 5): the fixtures were regenerated once; the only change is the honest confidence line (Low when the value
 // rests on example assumptions) and, where the example ROI is very high, a note to add the buyer's own figures.
 // Run 19 R19-36 (ledger B16-18): regenerated again; the only change is the revenue you give, labelled "(your input)" in the
@@ -46,7 +49,7 @@ const NEEDS_PRICE = "not computed: add your annual price";
 test("solution_price omitted: the answer is byte-identical to today's (labelled example price)", async () => {
   const { isError, text } = await call({ ...BASE });
   assert.equal(isError, false);
-  assert.equal(text, fixture("roi-price-omitted.md"));
+  assert.equal(text, fixture("roi-own-price-omitted.md"));
   assert.match(row(text, "**Solution Cost**"), /\(not supplied\) \(Example figure: replace with your own\) \| \$10,000 \| \$10,000 \| \$10,000 \|/);
   assert.match(row(text, "| **ROI** |"), /\| 900% \|/);
 });
@@ -54,7 +57,7 @@ test("solution_price omitted: the answer is byte-identical to today's (labelled 
 test("solution_price null: not refused, and read as omitted (the /mcp input check counts null as not given)", async () => {
   const { isError, text } = await call({ ...BASE, solution_price: null });
   assert.equal(isError, false);
-  assert.equal(text, fixture("roi-price-omitted.md"));
+  assert.equal(text, fixture("roi-own-price-omitted.md"));
 });
 
 test("solution_price 0: the Solution Cost row shows $0 (your input) and no example price is used", async () => {
@@ -110,7 +113,7 @@ test('solution_price "0" (text): read as a number by the input check, so it mean
   assert.equal(a.text, b.text);
 });
 
-for (const [price, file] of [[0.01, "roi-price-0.01.md"], [1, "roi-price-1.md"], [50000, "roi-price-50000.md"]]) {
+for (const [price, file] of [[0.01, "roi-own-price-0.01.md"], [1, "roi-own-price-1.md"], [50000, "roi-own-price-50000.md"]]) {
   test(`solution_price ${price}: figures are computed (none is "not computed"), no raw float, unchanged from today`, async () => {
     const { isError, text } = await call({ ...BASE, solution_price: price });
     assert.equal(isError, false);
@@ -121,3 +124,16 @@ for (const [price, file] of [[0.01, "roi-price-0.01.md"], [1, "roi-price-1.md"],
     assert.equal(text, fixture(file));
   });
 }
+
+test("Run 42: without a buyer figure no ROI, payback or value is shown, whatever the price", async () => {
+  for (const price of [undefined, null, 0, 0.01, 50000]) {
+    const args = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
+    if (price !== undefined) args.solution_price = price;
+    const { isError, text } = await call(args);
+    assert.equal(isError, false);
+    assert.ok(!/\| \*\*ROI\*\* \|/.test(text), "an ROI row is shown for price " + price);
+    assert.ok(!/\d+% ROI|months\*\* payback|Example figure/.test(text), "an example figure is shown for price " + price);
+    assert.match(text, /No ROI percentage, payback period or headline return is shown/);
+    assert.match(text, /\$10,000,000 \(your input\)/);
+  }
+});

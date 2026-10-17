@@ -12,7 +12,7 @@
 | **Annual Revenue** | $10,000,000 (your input) |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
 | **Solution** | Helix Platform |
-| **Confidence Level** | Low: the value figures rest on example assumptions, not on the customer's data |
+| **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
 
 ---
 
@@ -28,17 +28,10 @@
 
 ## Value Breakdown
 
-### Productivity Gains
+### Value From Your Figures
 
-**Calculation Methodology:**
-- Revenue baseline: $10,000,000 (your input)
-- Productivity improvement: 1% (assumed) (Example figure: replace with your own)
-- Annual Productivity Value: **$100,000** (Example figure: replace with your own)
-
-**Validation Questions:**
-- "How much time does your team spend on low-value tasks?"
-- "What could your team achieve with 10% more time?" (Example figure: replace with your own)
-- "Where are the biggest time sinks today?"
+**Calculation:**
+- Annual value: your own estimate of the annual value, $100,000 = **$100,000**
 
 ---
 
@@ -47,9 +40,9 @@
 ### Total Annual Value
 | Category | Annual Value |
 |----------|--------------|
-| **Total Quantified Value** | **$100,000** (Example figure: replace with your own) |
+| **Total Quantified Value** | **$100,000** |
 | **Annual Investment** | $10,000 (Example figure: replace with your own) |
-| **Net Annual Benefit** | $90,000 (Example figure: replace with your own) |
+| **Net Annual Benefit** | $90,000 |
 
 ### Key Metrics
 
@@ -139,6 +132,6 @@ Example figures: replace with your own.
 
 ---
 
-*Confidence: low. The value figures rest on example assumptions until you replace them with customer-provided metrics.*
+*Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.*
 
 Suggested timings, lengths and counts: adjust them to your own.

@@ -163,7 +163,7 @@ const gerundStart = (t) => /^[a-z]+ing\b/i.test(t.trim()) && !/^(?:during|nothin
 /** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
  *  a bracket that only says where a statement came from is a source note. */
 /** Words that name a difficulty, a loss or a gap: a clause without one only sets the scene. */
-exports.PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
+exports.PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too|by hand|paper|spreadsheets?|re-?key\w*|chas\w*|no-shows?|back-and-forth)\b/i;
 function readPains(text) {
     const notes = [], evidence = [];
     let t = (text || '').replace(/\s+/g, ' ').trim().replace(/[.]+$/, '');

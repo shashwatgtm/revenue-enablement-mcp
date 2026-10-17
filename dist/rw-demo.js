@@ -16,6 +16,7 @@ const verticals_ts_1 = require("./verticals.js");
 const rw_kit_ts_1 = require("./rw-kit.js");
 /** Run 42Q: a list of names after "integrations with" (or "connects to", "works with") is one item, not one step per name; when the
  *  user labelled it as a claim it is said beside the part it belongs to, so the demo steps come from the product's parts and the pains. */
+const RECOGNITION = /\b(?:named|recogni[sz]ed|awards?|award-winning|ranked|rated|leader|featured|must-try|best|top|trusted by|loved by)\b/i;
 const NAME_LIST_HEAD = /^(?:native\s+|deep\s+)?(?:integrations?|integrates|connectors?|connects|connections?|works)\s+(?:with|to|for)\s+/i;
 const BARE_NAME = /^(?:and\s+)?[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2}(?:\s+and\s+[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2})?$/;
 function joinNameLists(ms) {
@@ -35,6 +36,11 @@ function joinNameLists(ms) {
             open = { head: f, names: [] };
             groups.push(open);
             order.push(open);
+            continue;
+        }
+        // a recognition labelled as a claim ("named a must-try tool by ...") is said, not shown
+        if ((/\bclaims?\b/i.test(f.label || '') && RECOGNITION.test(f.text)) || /^(?:named|recogni[sz]ed|ranked|rated|awarded|featured|trusted by|loved by)\b/i.test(f.text.trim())) {
+            claims.push(f);
             continue;
         }
         order.push(f);

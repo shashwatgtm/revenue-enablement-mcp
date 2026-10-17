@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.lensFor = void 0;
+exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.PROBLEM_WORD = exports.lensFor = void 0;
 exports.wordsOf = wordsOf;
 exports.overlap = overlap;
 exports.groupsOf = groupsOf;
@@ -94,6 +94,10 @@ const GROUPS = [
     ['migration', /migrat|moderni[sz]|legacy|ageing|aging|inherited|technical debt|tech debt|replac|application management|re-?platform|lift and shift|transform|re-?architect|decommission|cloud/],
     ['build', /construction|project|change order|submittal|subcontract|daily log|bid\b|contractor/],
     // run 42Q: winning work on price: a bid, a tender or a quote is answered by estimating and quoting, takeoffs or proposals
+    // run 42Q: notes and follow-ups are answered by transcription and summaries; finding a time to meet by scheduling; pipelines built by hand by managed connectors
+    ['notes', /\bnotes?\b|notetak|transcri|summar|\brecaps?\b|action items?|follow-?ups?/],
+    ['meetings', /schedul|\bcalendars?\b|time to meet|\bappointments?\b|back-and-forth|booking links?/],
+    ['pipelines', /data pipelines?|maintaining pipelines|pipelines? by hand|\bconnectors?\b|\betl\b|\belt\b|data movement/],
     ['quote', /\bbids?\b|\bbidding\b|\btenders?\b|\bquot(?:e|es|ed|ing|ation|ations)\b|\bestimat(?:e|es|ing|ion|or|ors)\b|\btakeoffs?\b/],
 ];
 function groupsOf(t) {
@@ -159,7 +163,7 @@ const gerundStart = (t) => /^[a-z]+ing\b/i.test(t.trim()) && !/^(?:during|nothin
 /** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
  *  a bracket that only says where a statement came from is a source note. */
 /** Words that name a difficulty, a loss or a gap: a clause without one only sets the scene. */
-const PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
+exports.PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
 function readPains(text) {
     const notes = [], evidence = [];
     let t = (text || '').replace(/\s+/g, ' ').trim().replace(/[.]+$/, '');
@@ -236,7 +240,7 @@ function readPains(text) {
             const newClause = !pointsBack && (longNounPhrase || (consequence && hasVerb(prev)) || (hasVerb(prev) && !prevInfinitive && (lead ? hasVerb(p) || gerundStart(p) : gerundStart(p) || verbEarly(p))));
             // run 42Q: a clause that only sets the scene ("Enterprises run regulated processes, and pilots stay pilots unless ...") is not a problem of its own:
             // when it names no difficulty and the clause after it does, the sentence is one problem
-            const sceneOnly = newClause && clauses.length === 1 && !!lead && lead[1].toLowerCase() === 'and' && !PROBLEM_WORD.test(prev) && PROBLEM_WORD.test(p);
+            const sceneOnly = newClause && clauses.length === 1 && !!lead && lead[1].toLowerCase() === 'and' && !exports.PROBLEM_WORD.test(prev) && exports.PROBLEM_WORD.test(p);
             if (newClause && !sceneOnly)
                 clauses.push(p);
             else

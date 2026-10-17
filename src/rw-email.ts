@@ -6,6 +6,7 @@
 // that the user did not give. Text only: no network, file or environment access.
 import { typedLength, parseProof, proofPhrase, familyOf, levelOf, joinList, clip, upperFirst, splitTopLevel, type ProofItem } from './dealtext.ts';
 import { roleFor } from './answers.ts';
+import { PROBLEM_WORD } from './rw-kit.ts';
 import type { Vertical } from './verticals.ts';
 import { readSector, fitSector, productOf, isKind, doesLine, partsIn, sourceOf, endSentence, sentenceCase, listItems, isNotGiven, andList, dropRepeats, type Deps, type Product, type Source } from './rw-common.ts';
 
@@ -41,6 +42,8 @@ export function painAtoms(text: string): string[] {
     for (const m of s.matchAll(/,\s+(?:and|while|but)\s+|\s+while\s+/gi)) {
       const i = m.index ?? 0;
       const left = s.slice(0, i), right = s.slice(i + m[0].length);
+      // run 42Q: a clause that only sets the scene stays with the problem that follows it (one sentence, one problem)
+      if (/^,/.test(m[0]) && !PROBLEM_WORD.test(left) && PROBLEM_WORD.test(right)) continue;
       if (left.length >= 40 && right.length >= 30 && balanced(left) && balanced(right)) return [...split(left, depth + 1), ...split(right.replace(/^(?:and|while|but)\s+/i, ''), depth + 1)];
     }
     return [s];
@@ -57,6 +60,8 @@ const overlap = (a: string, b: string): number => { const sb = stems(b); return 
 const RELATED: string[][] = [
   ['cart', 'checkout', 'basket', 'abandon'], ['payout', 'disburs', 'payable', 'remittance'], ['reconcil', 'settle', 'ledger'], ['refund', 'dispute', 'chargeback'],
   ['fraud', 'phish', 'scam', 'spoof', 'spam'], ['scan', 'vulnerab', 'assess', 'penetrat', 'pentest', 'binar'], ['search', 'knowledge', 'retriev', 'discover'],
+  // run 42Q: finding a time to meet is answered by booking and scheduling; notes and follow-ups by summaries and recaps; bids by estimating and quoting
+  ['schedul', 'booking', 'calendar', 'meet', 'appointment', 'back-and-forth'], ['notes', 'notetak', 'transcri', 'summar', 'recap', 'follow-up', 'action item'], ['bid', 'tender', 'quot', 'estimat', 'takeoff'],
   ['invoice', 'billing', 'receivable'], ['shipment', 'freight', 'tracking', 'carrier'], ['recruit', 'candidate', 'applicant', 'hiring'], ['forecast', 'demand', 'inventory'],
 ];
 const hasStem = (text: string, stem: string): boolean => new RegExp(`\\b${stem}`, 'i').test(text);

@@ -68,6 +68,10 @@ const GROUPS: [string, RegExp][] = [
   ['migration', /migrat|moderni[sz]|legacy|ageing|aging|inherited|technical debt|tech debt|replac|application management|re-?platform|lift and shift|transform|re-?architect|decommission|cloud/],
   ['build', /construction|project|change order|submittal|subcontract|daily log|bid\b|contractor/],
   // run 42Q: winning work on price: a bid, a tender or a quote is answered by estimating and quoting, takeoffs or proposals
+  // run 42Q: notes and follow-ups are answered by transcription and summaries; finding a time to meet by scheduling; pipelines built by hand by managed connectors
+  ['notes', /\bnotes?\b|notetak|transcri|summar|\brecaps?\b|action items?|follow-?ups?/],
+  ['meetings', /schedul|\bcalendars?\b|time to meet|\bappointments?\b|back-and-forth|booking links?/],
+  ['pipelines', /data pipelines?|maintaining pipelines|pipelines? by hand|\bconnectors?\b|\betl\b|\belt\b|data movement/],
   ['quote', /\bbids?\b|\bbidding\b|\btenders?\b|\bquot(?:e|es|ed|ing|ation|ations)\b|\bestimat(?:e|es|ing|ion|or|ors)\b|\btakeoffs?\b/],
 ];
 export function groupsOf(t: string): Set<string> {
@@ -131,7 +135,7 @@ export interface PainSet { pains: string[]; evidence: string[]; notes: string[] 
 /** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
  *  a bracket that only says where a statement came from is a source note. */
 /** Words that name a difficulty, a loss or a gap: a clause without one only sets the scene. */
-const PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
+export const PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
 export function readPains(text: string): PainSet {
   const notes: string[] = [], evidence: string[] = [];
   let t = (text || '').replace(/\s+/g, ' ').trim().replace(/[.]+$/, '');

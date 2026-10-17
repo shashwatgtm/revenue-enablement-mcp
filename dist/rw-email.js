@@ -11,6 +11,7 @@ exports.buildEmailSequence = buildEmailSequence;
 // that the user did not give. Text only: no network, file or environment access.
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
+const rw_kit_ts_1 = require("./rw-kit.js");
 const rw_common_ts_1 = require("./rw-common.js");
 exports.EMAIL_COUNTS = { cold_outreach: 5, warm_follow_up: 3, post_demo: 4, re_engagement: 3, proposal_follow_up: 4, nurture: 4, event_follow_up: 3, referral_request: 3 };
 const TITLES = { cold_outreach: 'Cold Outreach', warm_follow_up: 'Warm Follow-Up', post_demo: 'Post-Demo', re_engagement: 'Re-Engagement', proposal_follow_up: 'Proposal follow up', nurture: 'Nurture', event_follow_up: 'Event follow up', referral_request: 'Referral request' };
@@ -55,6 +56,9 @@ function painAtoms(text) {
         for (const m of s.matchAll(/,\s+(?:and|while|but)\s+|\s+while\s+/gi)) {
             const i = m.index ?? 0;
             const left = s.slice(0, i), right = s.slice(i + m[0].length);
+            // run 42Q: a clause that only sets the scene stays with the problem that follows it (one sentence, one problem)
+            if (/^,/.test(m[0]) && !rw_kit_ts_1.PROBLEM_WORD.test(left) && rw_kit_ts_1.PROBLEM_WORD.test(right))
+                continue;
             if (left.length >= 40 && right.length >= 30 && balanced(left) && balanced(right))
                 return [...split(left, depth + 1), ...split(right.replace(/^(?:and|while|but)\s+/i, ''), depth + 1)];
         }
@@ -75,6 +79,8 @@ const overlap = (a, b) => { const sb = stems(b); return [...stems(a)].filter((w)
 const RELATED = [
     ['cart', 'checkout', 'basket', 'abandon'], ['payout', 'disburs', 'payable', 'remittance'], ['reconcil', 'settle', 'ledger'], ['refund', 'dispute', 'chargeback'],
     ['fraud', 'phish', 'scam', 'spoof', 'spam'], ['scan', 'vulnerab', 'assess', 'penetrat', 'pentest', 'binar'], ['search', 'knowledge', 'retriev', 'discover'],
+    // run 42Q: finding a time to meet is answered by booking and scheduling; notes and follow-ups by summaries and recaps; bids by estimating and quoting
+    ['schedul', 'booking', 'calendar', 'meet', 'appointment', 'back-and-forth'], ['notes', 'notetak', 'transcri', 'summar', 'recap', 'follow-up', 'action item'], ['bid', 'tender', 'quot', 'estimat', 'takeoff'],
     ['invoice', 'billing', 'receivable'], ['shipment', 'freight', 'tracking', 'carrier'], ['recruit', 'candidate', 'applicant', 'hiring'], ['forecast', 'demand', 'inventory'],
 ];
 const hasStem = (text, stem) => new RegExp(`\\b${stem}`, 'i').test(text);

@@ -24,6 +24,7 @@ Object.defineProperty(exports, "clip", { enumerable: true, get: function () { re
 Object.defineProperty(exports, "upperFirst", { enumerable: true, get: function () { return dealtext_ts_1.upperFirst; } });
 Object.defineProperty(exports, "splitTopLevel", { enumerable: true, get: function () { return dealtext_ts_1.splitTopLevel; } });
 const rw1_common_ts_1 = require("./rw1-common.js");
+const sector_read_ts_1 = require("./sector-read.js");
 const verticals_ts_1 = require("./verticals.js");
 // Round 4: a business model is named only as far as the seller's own words show it (rule E8). The shared reader gives "connectivity (per site, per link ...)" to any seller
 // of voice or messaging APIs and "services (per FTE ...)" to a platform that moves freight; neither is stated by the inputs, so the line says the notes follow the usual shape
@@ -44,12 +45,12 @@ function firstSubtype(v, sellerText) {
     return { ...v, ...hits[0].st.notes, name: `${v.name}, ${hits[0].st.name}`, subtype: hits[0].st.id };
 }
 function readSector(explicitModel, input) {
-    const read = (0, verticals_ts_1.explainSector)(input);
+    const read = (0, sector_read_ts_1.readSellerSector)(input);
     const m = (0, verticals_ts_1.detectModel)(explicitModel, input);
     const sellerOnly = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
-    const v = firstSubtype((0, verticals_ts_1.profileFor)(read.vertical, m.model, input), sellerOnly);
+    const v = firstSubtype((0, sector_read_ts_1.profileForSeller)(read.vertical, m.model, input), sellerOnly);
     const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
-    const sector = v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
+    const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
     const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
     const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
     const allText = [sellerText, ...(input.context || []).filter((x) => typeof x === 'string')].join(' . ');

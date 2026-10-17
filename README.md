@@ -70,6 +70,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `competitive_threats` | No | string | Known competitors in the account |
 | `your_solution` | No | string | Your product/service offering |
 | `account_notes` | No | string | Any additional context about the account |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 2. Deal Strategy Coach (`deal_strategy_coach`)
 
@@ -86,6 +87,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `next_steps` | No | string | Currently planned next steps |
 | `close_date` | No | string | Target close date |
 | `your_solution` | No | string | What you are selling |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 3. Discovery Question Bank (`discovery_question_bank`)
 
@@ -99,6 +101,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `deal_stage` | No | one of: `first_call`, `discovery`, `deep_dive`, `technical`, `executive` | Stage of conversation |
 | `your_solution` | No | string | Your product/solution for relevant questions |
 | `gaps_to_fill` | No | string | Specific information gaps to address |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 4. ROI Business Case Builder (`roi_business_case_builder`)
 
@@ -118,6 +121,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `annual_value_estimate` | No | number (0 or more) | Optional: the buyer's own estimate of the annual value in dollars; used as the value when given |
 | `current_process` | No | string | How they do it today. Shown in the output; not used in the calculation |
 | `implementation_timeline` | No | string | Expected implementation time. Shown in the output; not used in the calculation |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 5. Mutual Action Plan Generator (`mutual_action_plan_generator`)
 
@@ -134,6 +138,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `known_process_steps` | No | string | Known steps in their buying process |
 | `blockers` | No | string | Known blockers or concerns |
 | `your_solution` | No | string | What you are selling |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 6. Win/Loss Analyzer (`win_loss_analyzer`)
 
@@ -149,6 +154,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `stakeholders_involved` | No | string | Key stakeholders and their positions |
 | `your_solution` | No | string | What you were selling |
 | `multiple_deals` | No | string | For portfolio analysis: summary of multiple deals |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 7. Proposal Section Writer (`proposal_section_writer`)
 
@@ -165,6 +171,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `implementation_approach` | No | string | How you will implement |
 | `success_metrics` | No | string | Expected outcomes/metrics |
 | `tone` | No | one of: `formal`, `consultative`, `bold`, `conservative` | Tone for the proposal (changes only the opening of the executive summary) |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 8. Email Sequence Generator (`email_sequence_generator`)
 
@@ -181,6 +188,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `num_emails` | No | number (0 or more) | Accepted but not used yet: each sequence type has a fixed number of emails |
 | `tone` | No | one of: `professional`, `casual`, `urgent`, `consultative`, `provocative` | Email tone |
 | `sender_context` | No | string | Context about sender (role, shared connections, etc.) |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 9. Demo Script Builder (`demo_script_builder`)
 
@@ -197,6 +205,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `must_show_features` | No | string | Features that must be demonstrated |
 | `known_objections` | No | string | Known objections to address |
 | `desired_outcome` | No | string | What you want to achieve from this demo |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 10. Pricing Negotiation Guide (`pricing_negotiation_guide`)
 
@@ -213,6 +222,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `decision_timeline` | No | string | When decision needs to be made |
 | `approval_authority` | No | string | Who has final approval on pricing |
 | `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 11. Champion Enablement Kit (`champion_enablement_kit`)
 
@@ -229,6 +239,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `budget_context` | No | string | Budget situation and pricing |
 | `urgency_drivers` | No | string | Why act now |
 | `champion_wins` | No | string | How this makes the champion look good |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 #### 12. Competitive Trap Setter (`competitive_trap_setter`)
 
@@ -243,6 +254,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `buyer_persona` | No | string | Role of key evaluator |
 | `trap_type` | No | one of: `discovery_questions`, `evaluation_criteria`, `reference_questions`, `technical_requirements`, `commercial_terms`, `all` | Type of competitive positioning |
 | `business_model` | No | one of: `saas`, `services`, `connectivity`, `transactions`, `marketplace`, `hardware_software`, `investment` | Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out |
+| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
 ## Who Is This For?
 

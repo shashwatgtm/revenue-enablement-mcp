@@ -37,7 +37,7 @@ test("problem 1: no clinic or dummy-company word in src/ or in tools/list", asyn
 // Problem 2 and 3: the trap setter never pastes the competitor's weakness into a question for the buyer, keeps every input
 // Problem 7: no invented promises
 test("competitive_trap_setter: weaknesses stay notes for the seller; no invented promise; sector words added", async () => {
-  const r = await call("competitive_trap_setter", { competitor: "Competitor A", your_solution: "Lanehop", evaluation_stage: "mid", trap_type: "all",
+  const r = await call("competitive_trap_setter", { competitor: "Competitor A", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", evaluation_stage: "mid", trap_type: "all",
     buyer_persona: "Head of Last-Mile Operations", your_strengths: "Live in six weeks without IT help\nCleans unstructured addresses automatically\nRe-plans routes during the day",
     competitor_weaknesses: "Months of setup before the first route\nStruggles with unstructured addresses" });
   assert.equal(r.isError, false);
@@ -69,7 +69,7 @@ test("pricing_negotiation_guide: uses the given competitor gap and value, no sea
 
 // Problem 2: email sentences read naturally with any pain text or call to action
 test("email_sequence_generator: no pasted clause in a fixed sentence; proof used in email 3", async () => {
-  const r = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "Head of Last-Mile Operations", your_solution: "Lanehop",
+  const r = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "Head of Last-Mile Operations", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     target_industry: "third-party logistics", specific_pain_point: "dispatchers re-plan routes by hand when orders change", key_value_prop: "routes re-planned in under a minute",
     social_proof: "first-attempt deliveries up at Example Logistics Co", call_to_action: "20-minute call", sender_context: "Account Executive at Lanehop" });
   assert.doesNotMatch(r.text, /Quick thought on dispatchers/);
@@ -85,7 +85,7 @@ test("email_sequence_generator: no pasted clause in a fixed sentence; proof used
 // Problem 2, 3, 8: discovery questions in the sector's language, gaps first, no awkward echo
 test("discovery_question_bank: sector questions, gaps first, no 'You mentioned none shared yet'", async () => {
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_industry: "third-party logistics", prospect_role: "Head of Last-Mile Operations",
-    known_pain_points: "failed first-attempt deliveries", known_metrics: "none shared yet", deal_stage: "discovery", your_solution: "Lanehop", gaps_to_fill: "economic buyer, decision process" });
+    known_pain_points: "failed first-attempt deliveries", known_metrics: "none shared yet", deal_stage: "discovery", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", gaps_to_fill: "economic buyer, decision process" });
   assert.doesNotMatch(r.text, /You mentioned none shared yet/i);
   assert.match(r.text, /cost per delivery|dispatcher|re-plan/i);
   const gapsAt = r.text.search(/Gaps to fill first/i);
@@ -105,7 +105,7 @@ test("roi_business_case_builder: the buyer's cost and improvement drive the valu
 
 // Problem 3: every blocker gets its own answer
 test("deal_strategy_coach: each blocker is answered on its own", async () => {
-  const r = await call("deal_strategy_coach", { deal_name: "Example Logistics Co expansion", deal_stage: "proposal", your_solution: "Lanehop",
+  const r = await call("deal_strategy_coach", { deal_name: "Example Logistics Co expansion", deal_stage: "proposal", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     blockers: "we already have a TMS; our drivers will not use a new app" });
   assert.match(r.text, /we already have a TMS/i);
   assert.match(r.text, /drivers will not use a new app/i);
@@ -114,7 +114,7 @@ test("deal_strategy_coach: each blocker is answered on its own", async () => {
 
 // Problem 3: the loss reason is read, not filed as a generic competitive loss
 test("win_loss_analyzer: the loss reason and the stakeholders are analysed", async () => {
-  const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost", your_solution: "Spendrill", loss_reason: "HR owned the decision and wanted a payroll bundle",
+  const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost", your_solution: "Spendrill, a spend and expense management platform", your_sector: "fintech", loss_reason: "HR owned the decision and wanted a payroll bundle",
     competitor_won: "Competitor B", stakeholders_involved: "Finance Controller (supporter), CFO (neutral), HR Head (against)" });
   assert.match(r.text, /HR owned the decision and wanted a payroll bundle/);
   assert.match(r.text, /bundle/i);
@@ -124,7 +124,7 @@ test("win_loss_analyzer: the loss reason and the stakeholders are analysed", asy
 
 // Problem 3: the mutual action plan carries the requirements and blockers given
 test("mutual_action_plan_generator: requirements and blockers given are in the plan", async () => {
-  const r = await call("mutual_action_plan_generator", { deal_name: "Example Logistics Co expansion", target_close_date: "2026-12-15", your_solution: "Lanehop",
+  const r = await call("mutual_action_plan_generator", { deal_name: "Example Logistics Co expansion", target_close_date: "2026-12-15", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     known_requirements: "re-plans routes during the day, cleans unstructured addresses", blockers: "IT review of the TMS integration" });
   assert.match(r.text, /re-plans routes during the day/);
   assert.match(r.text, /IT review of the TMS integration/);
@@ -133,7 +133,7 @@ test("mutual_action_plan_generator: requirements and blockers given are in the p
 
 // Problem 3: the demo maps every must-show feature and answers every objection
 test("demo_script_builder: features become steps and every objection gets its own answer", async () => {
-  const r = await call("demo_script_builder", { demo_type: "first_look", your_solution: "Lanehop", demo_duration: 30,
+  const r = await call("demo_script_builder", { demo_type: "first_look", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", demo_duration: 30,
     must_show_features: "live re-routing, address cleaning, offline driver app", known_objections: "we already have a TMS; drivers will not adopt it" });
   assert.match(r.text, /live re-routing/); assert.match(r.text, /address cleaning/); assert.match(r.text, /offline driver app/);
   assert.doesNotMatch(r.text, /\[Prepared response\]/);
@@ -142,7 +142,7 @@ test("demo_script_builder: features become steps and every objection gets its ow
 
 // Problem 2 and 3: the proposal keeps differentiators whole and uses the implementation approach
 test("proposal_section_writer: differentiators kept whole; implementation approach used", async () => {
-  const r = await call("proposal_section_writer", { section_type: "executive_summary", your_solution: "Lanehop", customer_name: "Example Logistics Co",
+  const r = await call("proposal_section_writer", { section_type: "executive_summary", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", customer_name: "Example Logistics Co",
     key_differentiators: "Routes re-planned in under a minute, not overnight", implementation_approach: "6-week rollout in two phases" });
   assert.doesNotMatch(r.text, /\*\*not overnight\*\*/);
   assert.match(r.text, /6-week rollout in two phases/);
@@ -150,7 +150,7 @@ test("proposal_section_writer: differentiators kept whole; implementation approa
 
 // Problem 3: the champion kit uses objections and never shows a won-deal note as timing
 test("champion_enablement_kit: objections used; champion wins not shown as timing", async () => {
-  const r = await call("champion_enablement_kit", { asset_type: "internal_business_case", your_solution: "Spendrill", target_stakeholder: "CFO",
+  const r = await call("champion_enablement_kit", { asset_type: "internal_business_case", your_solution: "Spendrill, a spend and expense management platform", your_sector: "fintech", target_stakeholder: "CFO",
     known_objections: "our ERP already has an expense module", champion_wins: "won where the finance controller owns the close" });
   assert.match(r.text, /our ERP already has an expense module/i);
   assert.match(r.text, /month of the buyer.s own transactions|gap between the ERP module/); // the fintech answer pattern, not a generic one
@@ -159,7 +159,7 @@ test("champion_enablement_kit: objections used; champion wins not shown as timin
 
 // Problem 3 and 8: the account plan does not ask for what was given and adds sector knowledge
 test("account_plan_builder: given contacts are used, not asked for; sector notes", async () => {
-  const r = await call("account_plan_builder", { account_name: "Example Logistics Co", industry: "third-party logistics", your_solution: "Lanehop",
+  const r = await call("account_plan_builder", { account_name: "Example Logistics Co", industry: "third-party logistics", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     known_contacts: "Head of Last-Mile Operations (champion), COO (economic buyer)" });
   assert.doesNotMatch(r.text, /Identify 2-3 potential champions/);
   assert.match(r.text, /Head of Last-Mile Operations/);
@@ -170,12 +170,12 @@ test("account_plan_builder: given contacts are used, not asked for; sector notes
 // Run 20 round 1 (B81): nothing is estimated any more, so a size you did not give says "not supplied" and no row is called "Est.".
 test("roi_business_case_builder: given revenue and employees are labelled as your input, estimated ones keep Est.", async () => {
   const row = (text, start) => text.split("\n").find((l) => l.startsWith(start)) || "";
-  const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
+  const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     primary_value_driver: "cost_reduction", company_size: "mid_market", annual_revenue: 60000000, employee_count: 500, solution_price: 90000 })).text;
   assert.equal(row(both, "| **Annual Revenue** |"), "| **Annual Revenue** | $60,000,000 (your input) |");
   assert.equal(row(both, "| **Employees** |"), "| **Employees** | 500 (your input) |");
   assert.ok(!both.includes("| **Est. Annual Revenue** |") && !both.includes("| **Est. Employees** |"));
-  const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop",
+  const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech",
     primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 })).text;
   assert.match(row(est, "| **Est. Annual Revenue** |"), /estimated from your employee count/);
   assert.equal(row(est, "| **Employees** |"), "| **Employees** | 500 (your input) |");
@@ -199,8 +199,8 @@ test("/mcp answers carry Referrer-Policy, a frame rule and a JSON content policy
 test("no invented promise in any pricing scenario or proposal section", async () => {
   const tools = (await rpc("tools/list", {})).result.tools;
   const base = {
-    pricing_negotiation_guide: { your_solution: "Lanehop", list_price: "120000", competitor_price: "about 15% lower", customer_name: "Example Logistics Co" },
-    proposal_section_writer: { customer_name: "Example Logistics Co", your_solution: "Lanehop", customer_challenges: "late deliveries; manual route planning" },
+    pricing_negotiation_guide: { your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", list_price: "120000", competitor_price: "about 15% lower", customer_name: "Example Logistics Co" },
+    proposal_section_writer: { customer_name: "Example Logistics Co", your_solution: "Lanehop, a last mile delivery and dispatch platform", your_sector: "logistics_tech", customer_challenges: "late deliveries; manual route planning" },
   };
   for (const name of Object.keys(base)) {
     const props = tools.find((t) => t.name === name).inputSchema.properties;

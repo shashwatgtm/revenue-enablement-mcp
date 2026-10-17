@@ -301,6 +301,7 @@
 <tr><td><code>competitive_threats</code></td><td>string</td><td>no</td><td></td><td>Known competitors in the account</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/service offering</td></tr>
 <tr><td><code>account_notes</code></td><td>string</td><td>no</td><td></td><td>Any additional context about the account</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="deal-strategy-coach" aria-labelledby="d-deal-strategy-coach">
@@ -319,6 +320,7 @@
 <tr><td><code>next_steps</code></td><td>string</td><td>no</td><td></td><td>Currently planned next steps</td></tr>
 <tr><td><code>close_date</code></td><td>string</td><td>no</td><td></td><td>Target close date</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="discovery-question-bank" aria-labelledby="d-discovery-question-bank">
@@ -334,6 +336,7 @@
 <tr><td><code>deal_stage</code></td><td>string</td><td>no</td><td>first_call, discovery, deep_dive, technical, executive</td><td>Stage of conversation</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution for relevant questions</td></tr>
 <tr><td><code>gaps_to_fill</code></td><td>string</td><td>no</td><td></td><td>Specific information gaps to address</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
@@ -355,6 +358,7 @@
 <tr><td><code>annual_value_estimate</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
 <tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
 <tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
@@ -373,6 +377,7 @@
 <tr><td><code>known_process_steps</code></td><td>string</td><td>no</td><td></td><td>Known steps in their buying process</td></tr>
 <tr><td><code>blockers</code></td><td>string</td><td>no</td><td></td><td>Known blockers or concerns</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="win-loss-analyzer" aria-labelledby="d-win-loss-analyzer">
@@ -390,6 +395,7 @@
 <tr><td><code>stakeholders_involved</code></td><td>string</td><td>no</td><td></td><td>Key stakeholders and their positions</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you were selling</td></tr>
 <tr><td><code>multiple_deals</code></td><td>string</td><td>no</td><td></td><td>For portfolio analysis: summary of multiple deals</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="proposal-section-writer" aria-labelledby="d-proposal-section-writer">
@@ -408,6 +414,7 @@
 <tr><td><code>implementation_approach</code></td><td>string</td><td>no</td><td></td><td>How you will implement</td></tr>
 <tr><td><code>success_metrics</code></td><td>string</td><td>no</td><td></td><td>Expected outcomes/metrics</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>formal, consultative, bold, conservative</td><td>Tone for the proposal (changes only the opening of the executive summary)</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="email-sequence-generator" aria-labelledby="d-email-sequence-generator">
@@ -426,6 +433,7 @@
 <tr><td><code>num_emails</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>professional, casual, urgent, consultative, provocative</td><td>Email tone</td></tr>
 <tr><td><code>sender_context</code></td><td>string</td><td>no</td><td></td><td>Context about sender (role, shared connections, etc.)</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="demo-script-builder" aria-labelledby="d-demo-script-builder">
@@ -444,6 +452,7 @@
 <tr><td><code>must_show_features</code></td><td>string</td><td>no</td><td></td><td>Features that must be demonstrated</td></tr>
 <tr><td><code>known_objections</code></td><td>string</td><td>no</td><td></td><td>Known objections to address</td></tr>
 <tr><td><code>desired_outcome</code></td><td>string</td><td>no</td><td></td><td>What you want to achieve from this demo</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="pricing-negotiation-guide" aria-labelledby="d-pricing-negotiation-guide">
@@ -462,6 +471,7 @@
 <tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>
 <tr><td><code>approval_authority</code></td><td>string</td><td>no</td><td></td><td>Who has final approval on pricing</td></tr>
 <tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="champion-enablement-kit" aria-labelledby="d-champion-enablement-kit">
@@ -480,6 +490,7 @@
 <tr><td><code>budget_context</code></td><td>string</td><td>no</td><td></td><td>Budget situation and pricing</td></tr>
 <tr><td><code>urgency_drivers</code></td><td>string</td><td>no</td><td></td><td>Why act now</td></tr>
 <tr><td><code>champion_wins</code></td><td>string</td><td>no</td><td></td><td>How this makes the champion look good</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="competitive-trap-setter" aria-labelledby="d-competitive-trap-setter">
@@ -496,6 +507,7 @@
 <tr><td><code>buyer_persona</code></td><td>string</td><td>no</td><td></td><td>Role of key evaluator</td></tr>
 <tr><td><code>trap_type</code></td><td>string</td><td>no</td><td>discovery_questions, evaluation_criteria, reference_questions, technical_requirements, commercial_terms, all</td><td>Type of competitive positioning</td></tr>
 <tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 </div>

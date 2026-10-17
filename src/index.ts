@@ -35,6 +35,7 @@ import type { Deps as Rw1Deps } from './rw1-common.ts';
 import { buildDemoScript } from './rw-demo.ts';
 import { buildChampionKit } from './rw-champion.ts';
 import { buildDiscoveryBank } from './rw-discovery.ts';
+import { readSellerSector, profileForSeller, setYourSector, sectorSetPhrase, YOUR_SECTOR_VALUES, YOUR_SECTOR_DESCRIPTION } from './sector-read.ts';
 import { explainSector, detectModel, profileFor, VERTICALS, SECTOR_MODEL, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
@@ -992,14 +993,14 @@ function q(s: string): string {
 // `buyer` says who the buyer is (industry, company name). The seller's words are read first, then context, role and buyer; each
 // only when the earlier ones name no sector. A security tool sold to banks is cybersecurity.
 function readContext(explicitModel: unknown, input: { seller: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[] }): { v: Vertical | null; model: BusinessModel | null; line: string } {
-  const read = explainSector(input);
+  const read = readSellerSector(input);
   let v = read.vertical;
   const source = read.source;
   let m = detectModel(explicitModel, input);
   const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
   // A seller that manages money gets the investment notes (and an AI native seller of support automation the support notes): src/verticals.ts profileFor.
-  v = profileFor(v, m.model, input);
-  const sector = v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
+  v = profileForSeller(v, m.model, input);
+  const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
   const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
   return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
@@ -1012,7 +1013,7 @@ function sectorNotes(v: Vertical | null, what: 'committee' | 'metrics' | 'object
   if (what === 'committee' || what === 'all') out.push(`- **Who usually decides:** ${v.committee}`);
   if (what === 'metrics' || what === 'all') out.push(`- **What this sector measures:** ${v.metrics.join(', ')}.`);
   if (what === 'objections' || what === 'all') out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => o.objection.toLowerCase()).join('; ')}.`);
-  if (what !== 'objections') out.push(`- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.`);
+  if (what !== 'objections') out.push(`- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.`);
   out.push(`- **A proof point that lands:** ${v.proofShape}`);
   return out.join('\n');
 }
@@ -1514,7 +1515,7 @@ function executeDiscoveryQuestionBank(args: Record<string, unknown>): string {
 
 // Tool 4: ROI Business Case Builder
 function executeRoiBusinessCaseBuilder(args: Record<string, unknown>): string {
-  const customerName = (args.customer_name as string) || '[Customer name]';
+  const customerName = (args.customer_name as string) || 'your customer';
   const industry = (args.industry as string) || 'Technology';
   const companySize = (args.company_size as string) || 'mid_market';
   // D45 (run 16): omitted, null and 0 are told apart with explicit checks, as for the price below. Omitted or null:
@@ -1679,7 +1680,7 @@ ${EXAMPLES}
 - Annual Cost Savings: **${money(annualCostSavings)}**
 
 **Validation Questions:**
-- "How many hours per week do your team spend on [manual task]?"
+- "How many hours per week do your team spend on the work this would replace?"
 - "What's the fully-loaded cost of your team members?"
 - "How many people are doing this work today?"
 
@@ -1724,7 +1725,7 @@ ${EXAMPLES}
 
 **Validation Questions:**
 - "What's the cost of a compliance incident?"
-- "How much revenue is at risk from [risk factor]?"
+- "How much revenue is at risk from the problems this addresses?"
 - "What would a data breach or outage cost you?"
 
 `;
@@ -1894,10 +1895,10 @@ ${EXAMPLES}
 ### Why ${yourSolution} for ${customerName}
 
 **The Problem:**
-${currentProcess ? currentProcess : "[The customer's problem in their words]"}
+${currentProcess ? currentProcess : "Not given. Add current_process, in the customer's own words, and it will be shown here."}
 
 **The Solution:**
-${yourSolution} addresses these challenges through [key capabilities].
+${yourSolution} addresses these challenges${(() => { const ps = solutionBrief(args.your_solution ? yourSolution : '').parts; return ps.length ? ` through ${joinList(ps.slice(0, 4))}` : ''; })()}.
 
 **The Value:**
 ${valueComputed ? `${EXAMPLES}
@@ -1906,7 +1907,6 @@ ${roiSummary}
 ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
-- [Why this customer should act now, for example competitive pressure, if it applies]
 - Cost of delay: ${valueComputed ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : nc}
 - Implementation timeline: ${timelineText}
 
@@ -2015,6 +2015,14 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
 
 // Placeholder for tools 7-12 - will be completed in next part
 function executeTool(name: string, args: Record<string, unknown>): string {
+  setYourSector(args.your_sector);
+  try {
+    return runTool(name, args);
+  } finally {
+    setYourSector(undefined);
+  }
+}
+function runTool(name: string, args: Record<string, unknown>): string {
   switch (name) {
     case 'account_plan_builder':
       return executeAccountPlanBuilder(args);
@@ -2616,7 +2624,7 @@ Enterprise deals often have multiple vendors. Position on value, not price:
   };
 
   const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
-  const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${v.vocabulary.join(', ')}. Use them where they are true for the prospect.` : '';
+  const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.` : '';
   const text = generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${P}`);
   // every scenario but the discount request (which has its own situation table) opens with the deal, the leverage and the approver
   const withDeal = scenario === 'discount_request' || !scenarioGuides[scenario]
@@ -3304,6 +3312,12 @@ const TOOL_TITLES: Record<string, string> = {
   "champion_enablement_kit": "Champion Enablement Kit",
   "competitive_trap_setter": "Competitive Trap Setter"
 };
+
+// Run 42B: every tool takes the same optional your_sector (the seller's own industry).
+for (const t of Object.values(tools)) {
+  const props = ((t.inputSchema as { properties?: Record<string, unknown> }).properties ??= {});
+  props.your_sector = { type: 'string', enum: [...YOUR_SECTOR_VALUES], description: YOUR_SECTOR_DESCRIPTION };
+}
 
 function withMeta<T extends { name: string }>(tool: T) {
   const title = TOOL_TITLES[tool.name] ?? tool.name;

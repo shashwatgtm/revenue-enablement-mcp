@@ -356,8 +356,17 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   // run 42Q: a stock question that shares no word with the pain, the value or the product is off topic for this product ("how does a rep record a deal" for a
   // scheduling tool); it is used only when too few others are left. Questions built on the pain the user gave come next, so every question is about this problem.
   const topicText = `${painText} ${valueText} ${solution}`;
-  const painQs = atomsP.slice(0, 3).map((a) => { const t = a.replace(/[.:;,]+$/, '').replace(/:.*$/, ''); const low = /^[A-Z][a-z]/.test(t) && !/^[A-Z][a-z]+[A-Z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
-    return /^(?:the|a|an|too|no|slow|manual|long|lost|missed|late)\b|^\w+ing\b/i.test(low) ? `How much of the week goes on ${low} today, and who picks it up?` : `When ${low}, what does it cost the team in a week, and who picks it up?`; });
+  // a long problem is asked about by its own part: the clause after ", and" that names the difficulty, or else its first piece of some length
+  const askPart = (t: string): string => {
+    if (t.length <= 110) return t;
+    const tail = t.match(/,\s+and\s+([^,]{20,})$/);
+    if (tail && PROBLEM_WORD.test(tail[1]) && tail[1].split(/\s+/).length >= 5) return tail[1].trim();
+    const cut = t.indexOf(', ', 40);
+    return cut > 0 ? t.slice(0, cut) : t;
+  };
+  const painQs = atomsP.slice(0, 3).map((a) => { const t = askPart(a.replace(/[.:;,]+$/, '').replace(/:.*$/, '')); const low = /^[A-Z][a-z]/.test(t) && !/^[A-Z][a-z]+[A-Z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
+    const nounPhrase = /^(?:the|a|an|too|no|slow|manual|long|lost|missed|late)\b|^\w+ing\b/i.test(low) && !/\b(?:is|are|was|were|takes?|costs?|leaves?|means?)\b/i.test(low);
+    return nounPhrase ? `How much of the week goes on ${low} today, and who picks it up?` : `When ${low}, what does it cost the team in a week, and who picks it up?`; });
   const qRanked = qPool0.map((x, i) => ({ x, i, n: overlap(x, topicText) })).sort((a, b) => b.n - a.n || a.i - b.i);
   const onTopic = qRanked.filter((o) => o.n >= 2).map((o) => o.x);
   const offTopicQs = qRanked.filter((o) => o.n < 2).map((o) => o.x);

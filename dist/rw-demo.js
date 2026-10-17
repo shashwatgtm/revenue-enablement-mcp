@@ -14,6 +14,48 @@ const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
 const rw_kit_ts_1 = require("./rw-kit.js");
+/** Run 42Q: a list of names after "integrations with" (or "connects to", "works with") is one item, not one step per name; when the
+ *  user labelled it as a claim it is said beside the part it belongs to, so the demo steps come from the product's parts and the pains. */
+const NAME_LIST_HEAD = /^(?:native\s+|deep\s+)?(?:integrations?|integrates|connectors?|connects|connections?|works)\s+(?:with|to|for)\s+/i;
+const BARE_NAME = /^(?:and\s+)?[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2}(?:\s+and\s+[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2})?$/;
+function joinNameLists(ms) {
+    const flows = [];
+    const claims = [...ms.claims];
+    // only a head followed by at least one more name is a list; "integration with an existing TMS in weeks" stays a flow
+    const groups = [];
+    const order = [];
+    let open = null;
+    for (const f of ms.flows) {
+        if (open && BARE_NAME.test(f.text.trim()) && f.label === open.head.label) {
+            open.names.push(f.text.trim().replace(/^and\s+/i, ''));
+            continue;
+        }
+        open = null;
+        if (NAME_LIST_HEAD.test(f.text.trim())) {
+            open = { head: f, names: [] };
+            groups.push(open);
+            order.push(open);
+            continue;
+        }
+        order.push(f);
+    }
+    for (const x of order) {
+        if (!('head' in x)) {
+            flows.push(x);
+            continue;
+        }
+        if (!x.names.length) {
+            flows.push(x.head);
+            continue;
+        }
+        const all = [x.head.text.trim(), ...x.names];
+        const last = all.pop();
+        const item = { ...x.head, text: /\band\b/.test(last) ? `${all.join(', ')}, ${last}` : `${all.join(', ')} and ${last}` };
+        (/\bclaims?\b/i.test(x.head.label || '') ? claims : flows).push(item);
+    }
+    void groups;
+    return { flows, claims };
+}
 const CLOSE_KINDS = new Set(['howmuch', 'discount', 'cheapest', 'totalcost', 'terms', 'packaging', 'timing', 'proof']);
 const STEP_KINDS = new Set(['offline', 'accuracy', 'canuse', 'integration', 'adoption', 'security', 'compliance', 'securecompare']);
 const say = (s) => s.replace(/"/g, "'");
@@ -84,7 +126,7 @@ function buildDemoScript(args, d) {
     const painWord = (i) => low(pains[i]);
     // a short pain is named by its own words; a long one by "the first problem you described" (its words were played back once in the opening)
     const pRef = (i) => (0, rw_kit_ts_1.painRef)(low(pains[i]), i);
-    const ms = (0, rw_kit_ts_1.readMustShow)(mustShowFeatures);
+    const ms = joinNameLists((0, rw_kit_ts_1.readMustShow)(mustShowFeatures));
     const claimsAll = [...ms.claims];
     for (const e of painSet.evidence)
         claimsAll.push({ text: e, label: 'from your pain points' });

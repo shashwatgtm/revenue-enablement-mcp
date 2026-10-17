@@ -2,7 +2,7 @@
 // (nothing read from the text overrides it); when it is not, the sector is read from the seller's own words only, and the
 // tool stays neutral when only the deal text, the job titles or the customer's industry point to one.
 // This file adds no figures and no sector facts (B82): it only picks which entry of src/verticals.ts is used.
-import { explainSector, profileFor, VERTICALS, type Vertical, type BusinessModel } from './verticals.ts';
+import { explainSector, profileFor, VERTICALS, SUBTYPES, SECTOR_MODEL, type Vertical, type BusinessModel } from './verticals.ts';
 
 export const YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'] as const;
 export const YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
@@ -51,4 +51,18 @@ export function profileForSeller(v: Vertical | null, model: BusinessModel | null
 }
 export function sectorSetPhrase(v: Vertical | null): string {
   return v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral';
+}
+/** Run 42Q: when your_sector is set, the business model comes only from business_model, from the seller's own charge words, or from the
+ *  set sector's usual model. A generic software word ("platform", "products", "technology") is not a charge word, and the usual model of a
+ *  sector read from the text is not the set sector's: a services firm set as ITeS that mentions agentic products is still sold as services.
+ *  A model read from specific words (a payment gateway, managed services, connectivity) is kept. Nothing changes when your_sector is not set. */
+const CHARGE_SAAS = /\b(?:saas|subscriptions?|subscribe|per seat|per user|per month|monthly plan|annual plan|licen[cs]e[sd]?|pricing plans?)\b/i;
+export function modelUnderSetSector(m: { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' }, v: Vertical | null, input: Record<string, unknown>): { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' } {
+  if (!forced || forced === 'other' || !v || m.how === 'input') return m;
+  const seller = (Array.isArray(input.seller) ? input.seller : []).filter((x): x is string => typeof x === 'string').join(' . ');
+  const st = v.subtype ? SUBTYPES.find((x) => x.id === v.subtype) : undefined;
+  const usual = st?.model ?? SECTOR_MODEL[v.id];
+  if (m.how === 'sector' || m.how === 'unknown') return { model: usual, how: 'sector' };
+  if (m.how === 'read' && m.model === 'saas' && !CHARGE_SAAS.test(seller) && usual !== 'saas') return { model: usual, how: 'sector' };
+  return m;
 }

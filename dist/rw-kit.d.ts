@@ -18,8 +18,6 @@ export interface PainSet {
     evidence: string[];
     notes: string[];
 }
-/** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
- *  a bracket that only says where a statement came from is a source note. */
 export declare function readPains(text: string): PainSet;
 /** A long pain in fewer words: cut at a natural boundary where what is left is a whole statement; a pain that cannot be cut cleanly is kept whole. */
 export declare function painShort(p: string, max?: number): string;

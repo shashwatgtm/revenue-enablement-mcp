@@ -6,6 +6,7 @@ exports.sectorIsSet = sectorIsSet;
 exports.readSellerSector = readSellerSector;
 exports.profileForSeller = profileForSeller;
 exports.sectorSetPhrase = sectorSetPhrase;
+exports.modelUnderSetSector = modelUnderSetSector;
 // Run 42B: the seller's own sector. One optional input, your_sector, on every tool. When it is given it decides the sector
 // (nothing read from the text overrides it); when it is not, the sector is read from the seller's own words only, and the
 // tool stays neutral when only the deal text, the job titles or the customer's industry point to one.
@@ -60,5 +61,22 @@ function profileForSeller(v, model, input) {
 }
 function sectorSetPhrase(v) {
     return v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral';
+}
+/** Run 42Q: when your_sector is set, the business model comes only from business_model, from the seller's own charge words, or from the
+ *  set sector's usual model. A generic software word ("platform", "products", "technology") is not a charge word, and the usual model of a
+ *  sector read from the text is not the set sector's: a services firm set as ITeS that mentions agentic products is still sold as services.
+ *  A model read from specific words (a payment gateway, managed services, connectivity) is kept. Nothing changes when your_sector is not set. */
+const CHARGE_SAAS = /\b(?:saas|subscriptions?|subscribe|per seat|per user|per month|monthly plan|annual plan|licen[cs]e[sd]?|pricing plans?)\b/i;
+function modelUnderSetSector(m, v, input) {
+    if (!forced || forced === 'other' || !v || m.how === 'input')
+        return m;
+    const seller = (Array.isArray(input.seller) ? input.seller : []).filter((x) => typeof x === 'string').join(' . ');
+    const st = v.subtype ? verticals_ts_1.SUBTYPES.find((x) => x.id === v.subtype) : undefined;
+    const usual = st?.model ?? verticals_ts_1.SECTOR_MODEL[v.id];
+    if (m.how === 'sector' || m.how === 'unknown')
+        return { model: usual, how: 'sector' };
+    if (m.how === 'read' && m.model === 'saas' && !CHARGE_SAAS.test(seller) && usual !== 'saas')
+        return { model: usual, how: 'sector' };
+    return m;
 }
 //# sourceMappingURL=sector-read.js.map

@@ -418,7 +418,20 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     let roleQs = persona && opsFit ? rk.questions.filter((x) => !/\bthat\b/i.test(x) && motionFit(x) && askable(x)) : [];
     const sectorQs = vv ? vv.discovery.filter((x) => motionFit(x) && askable(x)) : roleQs;
     const qPool0 = [...(technical || practitioner || !opsFit ? sectorQs : roleQs), ...(technical || practitioner || !opsFit ? roleQs : sectorQs)].filter((x, i, a) => a.indexOf(x) === i);
-    const qPool = qPool0.map((x, i) => ({ x, i, n: overlap(x, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.x);
+    // run 42Q: a stock question that shares no word with the pain, the value or the product is off topic for this product ("how does a rep record a deal" for a
+    // scheduling tool); it is used only when too few others are left. Questions built on the pain the user gave come next, so every question is about this problem.
+    const topicText = `${painText} ${valueText} ${solution}`;
+    const painQs = atomsP.slice(0, 3).map((a) => {
+        const t = a.replace(/[.:;,]+$/, '').replace(/:.*$/, '');
+        const low = /^[A-Z][a-z]/.test(t) && !/^[A-Z][a-z]+[A-Z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
+        return /^(?:the|a|an|too|no|slow|manual|long|lost|missed|late)\b|^\w+ing\b/i.test(low) ? `How much of the week goes on ${low} today, and who picks it up?` : `When ${low}, what does it cost the team in a week, and who picks it up?`;
+    });
+    const qRanked = qPool0.map((x, i) => ({ x, i, n: overlap(x, topicText) })).sort((a, b) => b.n - a.n || a.i - b.i);
+    const onTopic = qRanked.filter((o) => o.n >= 2).map((o) => o.x);
+    const offTopicQs = qRanked.filter((o) => o.n < 2).map((o) => o.x);
+    // when fewer than three are left, questions about the problem itself fill the pool before any stock question that is off topic
+    const fillQs = [`What have you tried so far on ${painText ? 'this' : 'it'}, and what stopped it from working?`, 'Who else feels this problem, and who would decide on a change?'];
+    const qPool = [...onTopic, ...painQs, ...(onTopic.length + painQs.length >= 3 ? [] : fillQs), ...(onTopic.length + painQs.length + fillQs.length >= 3 ? [] : offTopicQs)].filter((x, i, arr) => x && arr.indexOf(x) === i);
     let qi = 0;
     const nextQ = () => qPool.length ? qPool[qi++ % qPool.length] : '';
     const freshQ = () => (qi < qPool.length ? qPool[qi++] : '');

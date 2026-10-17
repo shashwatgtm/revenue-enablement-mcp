@@ -13,4 +13,11 @@ export declare function readSellerSector(input: Record<string, unknown>): Seller
 /** profileFor reads the text again (a money manager, an AI support seller); when the sector was set it is left as set. */
 export declare function profileForSeller(v: Vertical | null, model: BusinessModel | null | undefined, input: Record<string, unknown>): Vertical | null;
 export declare function sectorSetPhrase(v: Vertical | null): string;
+export declare function modelUnderSetSector(m: {
+    model: BusinessModel | null;
+    how: 'input' | 'read' | 'sector' | 'unknown';
+}, v: Vertical | null, input: Record<string, unknown>): {
+    model: BusinessModel | null;
+    how: 'input' | 'read' | 'sector' | 'unknown';
+};
 //# sourceMappingURL=sector-read.d.ts.map

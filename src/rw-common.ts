@@ -4,7 +4,7 @@
 import { escapePiece } from './escape-inputs.ts';
 import { isGenericWord, solutionBrief, clip, upperFirst, splitTopLevel, partLabel, type SolutionBrief } from './dealtext.ts';
 import { readModel } from './rw1-common.ts';
-import { readSellerSector, profileForSeller, sectorSetPhrase } from './sector-read.ts';
+import { readSellerSector, profileForSeller, modelUnderSetSector, sectorSetPhrase } from './sector-read.ts';
 import { detectModel, MODEL_NAME, VERTICALS, SUBTYPES, type Vertical, type BusinessModel } from './verticals.ts';
 
 export interface Deps {
@@ -36,9 +36,10 @@ function firstSubtype(v: Vertical | null, sellerText: string): Vertical | null {
 }
 export function readSector(explicitModel: unknown, input: { seller: unknown[]; context?: unknown[]; role?: unknown[]; buyer?: unknown[] }): SectorRead {
   const read = readSellerSector(input);
-  const m = detectModel(explicitModel, input);
+  const m0 = detectModel(explicitModel, input);
   const sellerOnly = (input.seller || []).filter((x): x is string => typeof x === 'string').join(' . ');
-  const v = firstSubtype(profileForSeller(read.vertical, m.model, input), sellerOnly);
+  const v = firstSubtype(profileForSeller(read.vertical, m0.model, input), sellerOnly);
+  const m = modelUnderSetSector(m0, v, input);   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
   const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
   const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
   const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';

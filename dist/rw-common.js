@@ -46,9 +46,10 @@ function firstSubtype(v, sellerText) {
 }
 function readSector(explicitModel, input) {
     const read = (0, sector_read_ts_1.readSellerSector)(input);
-    const m = (0, verticals_ts_1.detectModel)(explicitModel, input);
+    const m0 = (0, verticals_ts_1.detectModel)(explicitModel, input);
     const sellerOnly = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
-    const v = firstSubtype((0, sector_read_ts_1.profileForSeller)(read.vertical, m.model, input), sellerOnly);
+    const v = firstSubtype((0, sector_read_ts_1.profileForSeller)(read.vertical, m0.model, input), sellerOnly);
+    const m = (0, sector_read_ts_1.modelUnderSetSector)(m0, v, input); // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
     const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';

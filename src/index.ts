@@ -36,7 +36,7 @@ import type { Deps as Rw1Deps } from './rw1-common.ts';
 import { buildDemoScript } from './rw-demo.ts';
 import { buildChampionKit } from './rw-champion.ts';
 import { buildDiscoveryBank } from './rw-discovery.ts';
-import { readSellerSector, profileForSeller, setYourSector, sectorSetPhrase, YOUR_SECTOR_VALUES, YOUR_SECTOR_DESCRIPTION } from './sector-read.ts';
+import { readSellerSector, profileForSeller, modelUnderSetSector, setYourSector, sectorSetPhrase, YOUR_SECTOR_VALUES, YOUR_SECTOR_DESCRIPTION } from './sector-read.ts';
 import { explainSector, detectModel, profileFor, VERTICALS, SECTOR_MODEL, MODEL_TRADES, MODEL_NAME, SAAS_ONLY, BUSINESS_MODELS, type Vertical, type BusinessModel } from './verticals.ts';
 
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
@@ -1001,6 +1001,7 @@ function readContext(explicitModel: unknown, input: { seller: unknown[]; context
   const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
   // A seller that manages money gets the investment notes (and an AI native seller of support automation the support notes): src/verticals.ts profileFor.
   v = profileForSeller(v, m.model, input);
+  m = modelUnderSetSector(m, v, input);   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
   const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
   const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
   return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };

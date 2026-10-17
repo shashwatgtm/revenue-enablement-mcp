@@ -93,6 +93,8 @@ const GROUPS = [
     ['delivery', /agile|sprint|\bproject|delivery|digital engineering|digital product|accelerat|roadmap|advisory|transformation|embark/],
     ['migration', /migrat|moderni[sz]|legacy|ageing|aging|inherited|technical debt|tech debt|replac|application management|re-?platform|lift and shift|transform|re-?architect|decommission|cloud/],
     ['build', /construction|project|change order|submittal|subcontract|daily log|bid\b|contractor/],
+    // run 42Q: winning work on price: a bid, a tender or a quote is answered by estimating and quoting, takeoffs or proposals
+    ['quote', /\bbids?\b|\bbidding\b|\btenders?\b|\bquot(?:e|es|ed|ing|ation|ations)\b|\bestimat(?:e|es|ing|ion|or|ors)\b|\btakeoffs?\b/],
 ];
 function groupsOf(t) {
     const low = withoutScope(t).toLowerCase();
@@ -156,6 +158,8 @@ const verbEarly = (t) => (t.toLowerCase().match(/[a-z']+/g) || []).slice(0, 4).s
 const gerundStart = (t) => /^[a-z]+ing\b/i.test(t.trim()) && !/^(?:during|nothing|something|anything|everything|morning|evening|building|ceiling)\b/i.test(t.trim());
 /** The separate pains in a typed pain statement. A comma list inside one pain stays whole ("a, b and c"); a figure after a colon is evidence, not a pain;
  *  a bracket that only says where a statement came from is a source note. */
+/** Words that name a difficulty, a loss or a gap: a clause without one only sets the scene. */
+const PROBLEM_WORD = /\b(?:slow\w*|los[et]\w*|losing|manual\w*|costs?|costly|expensive|fail\w*|errors?|stuck|stays?|stall\w*|delay\w*|miss(?:ed|es|ing)?|can(?:no|')t|cannot|unable|hard|difficult\w*|lack\w*|without|only|wast\w*|risk\w*|break\w*|broken|churn\w*|late|tedious|busywork|juggl\w*|hours|days|weeks|backlog\w*|gaps?|drop\w*|leak\w*|fragment\w*|silo\w*|never|no longer|struggl\w*|unless|too)\b/i;
 function readPains(text) {
     const notes = [], evidence = [];
     let t = (text || '').replace(/\s+/g, ' ').trim().replace(/[.]+$/, '');
@@ -230,10 +234,13 @@ function readPains(text) {
             // a clause that ends on "for that" or "with this" points back at the one before it: they stay one statement
             const pointsBack = /\b(?:for|of|with|to|from|about|by)\s+(?:that|this|those|these|them)$/i.test(p);
             const newClause = !pointsBack && (longNounPhrase || (consequence && hasVerb(prev)) || (hasVerb(prev) && !prevInfinitive && (lead ? hasVerb(p) || gerundStart(p) : gerundStart(p) || verbEarly(p))));
-            if (newClause)
+            // run 42Q: a clause that only sets the scene ("Enterprises run regulated processes, and pilots stay pilots unless ...") is not a problem of its own:
+            // when it names no difficulty and the clause after it does, the sentence is one problem
+            const sceneOnly = newClause && clauses.length === 1 && !!lead && lead[1].toLowerCase() === 'and' && !PROBLEM_WORD.test(prev) && PROBLEM_WORD.test(p);
+            if (newClause && !sceneOnly)
                 clauses.push(p);
             else
-                clauses[clauses.length - 1] = `${prev}${lead && lead[1].toLowerCase() === 'and' ? ' and ' : ', '}${p}`;
+                clauses[clauses.length - 1] = `${prev}${lead && lead[1].toLowerCase() === 'and' ? (sceneOnly ? ', and ' : ' and ') : ', '}${p}`;
         }
         for (const c of clauses) {
             // a clause that holds two full statements joined by "while" is two pains

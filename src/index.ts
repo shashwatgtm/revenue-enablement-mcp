@@ -3309,7 +3309,7 @@ function executeDemoScriptBuilder(args: Record<string, unknown>): string {
 // =============================================================================
 
 export const SERVER_NAME = 'revenue-enablement-mcp';
-export const SERVER_VERSION = '1.2.30';
+export const SERVER_VERSION = '1.2.31';
 
 // Every tool only builds text from its inputs: no storage, no network, no side effects.
 const TOOL_TITLES: Record<string, string> = {

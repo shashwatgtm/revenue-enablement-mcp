@@ -478,6 +478,8 @@ export const upFirst = (s: string): string => s.charAt(0).toUpperCase() + s.slic
 // The must-show list: flows the seller can run live, and statistics or credentials, which are said, never shown
 // ---------------------------------------------------------------------------------------------------------------------------
 export interface Item { text: string; label: string }
+/** Run 42B: a membership, ownership, track record or certification phrase is a claim to say, never a flow to show. */
+export const CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
 export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
   const flows: Item[] = [], claims: Item[] = [];
   const t = (text || '').trim();
@@ -497,6 +499,8 @@ export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
       if (carry) { x = `${carry}, ${x}`; carry = ''; }
       if (/^(?:in|on|at|for|with|of|across|by|among|from)\b/i.test(x) && x.split(/\s+/).length <= 3 && !isStat(x)) { carry = x; continue; }
       const prev = pieces[pieces.length - 1];
+      // run 42B: a track record names its customers in a list ("operated in production for A, B and C with sustained traffic"): the rest of the list belongs to it
+      if (prev && CLAIM_PHRASE.test(prev) && !CLAIM_PHRASE.test(x) && !DEMO_VERB.test(x) && !isStat(x)) { pieces[pieces.length - 1] = `${prev}, ${x}`; continue; }
       // a list of years ("... 2024, 2025 and 2026") is one item, not three
       if (prev && /^(?:19|20)\d\d(?:\s+and\s+(?:19|20)\d\d)?$/.test(x) && /\b(?:19|20)\d\d$/.test(prev)) { pieces[pieces.length - 1] = `${prev}, ${x}`; continue; }
       // a short fragment without a number of its own belongs to the item before it ("FMS or TMS in weeks" joins)

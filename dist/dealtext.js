@@ -168,7 +168,8 @@ function isClearName(name) {
     if (toks.filter((t) => /^[A-Z0-9]/.test(t)).length < 2 && !toks.some((t) => /^(?:from|by)$/i.test(t)))
         return false;
     // a head that holds a preposition other than "from/by/of" is the start of a description ("CRM for sales, marketing and service teams"), not a name
-    return !/\b(?:helps?|reduces?|gives?|lets?|makes?|that|which|who|where)\b/i.test(name) && !toks.slice(1).some((t) => /^(?:for|to|with|in|on|at|and|or|into|across)$/.test(t));
+    // (a capitalised "Help" or "Make" is part of a name such as "Help Scout"; only the lower case verb marks a description)
+    return !/\b(?:helps?|reduces?|gives?|lets?|makes?)\b/.test(name) && !/\b(?:that|which|who|where)\b/i.test(name) && !toks.slice(1).some((t) => /^(?:for|to|with|in|on|at|and|or|into|across)$/.test(t));
 }
 function solutionBrief(input) {
     const full = (input || '').trim().replace(/\s+/g, ' ');

@@ -69,6 +69,8 @@ export interface Item {
     text: string;
     label: string;
 }
+/** Run 42B: a membership, ownership, track record or certification phrase is a claim to say, never a flow to show. */
+export declare const CLAIM_PHRASE: RegExp;
 export declare function readMustShow(text: string): {
     flows: Item[];
     claims: Item[];

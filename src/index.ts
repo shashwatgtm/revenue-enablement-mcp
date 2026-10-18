@@ -1944,6 +1944,7 @@ interface Step { m: string; who: Who }
 // operators and enterprise connectivity, cloud security, API testing). They are used only for that kind; every other company of the vertical gets the generic entry.
 const STOCK_KIND: Record<string, string> = { 'logistics-tech': 'last-mile', 'vertical-saas': 'fmcg-retail-execution', fintech: 'spend-expense', telecom: 'operators-connectivity', cybersecurity: 'cloud-security', software: 'testing' };
 function stockKey(v: Vertical | null, key: string): string {
+  if (v && (v as Vertical & { generalOnly?: boolean }).generalOnly && key === v.id) return 'generic';   // run 42B: the sector's general notes only: no stock steps written for one kind of company
   const kind = v && key === v.id ? STOCK_KIND[v.id] : undefined;
   return kind && v && v.subtype !== kind ? 'generic' : key;
 }
@@ -3385,6 +3386,14 @@ const MONEY_TEXT: Record<string, string[]> = { pricing_negotiation_guide: ["comp
 const METRIC_TEXT: Record<string, string[]> = {};
 const ONE_AMOUNT: Record<string, string[]> = {};
 
+// Run 42B: "R and D", "M and A", "Q and A" and "P and L" are one thing each; written out with "and" the list readers would cut them in two ("digital engineering and R" / "D solutions").
+const ABBREVIATION_AND = /\b([RMQP]) and ([DAL])\b(?=[\s,.;:)]|$)/g;
+function joinAbbreviations(value: unknown): unknown {
+  if (typeof value === 'string') return value.replace(ABBREVIATION_AND, (m, a: string, b: string) => (['RD', 'MA', 'QA', 'PL'].includes(a + b) ? `${a}&${b}` : m));
+  if (Array.isArray(value)) return value.map(joinAbbreviations);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, joinAbbreviations(v)]));
+  return value;
+}
 function checkRequiredInputs(name: string, args: Record<string, unknown> | undefined): string | null {
   const tool = (tools as Record<string, { inputSchema: { required?: string[] } }>)[name];
   if (!tool) {
@@ -3442,7 +3451,7 @@ export function createServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
     // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
-    const typed = cleanDeep(request.params.arguments) as Record<string, unknown> | undefined;
+    const typed = joinAbbreviations(cleanDeep(request.params.arguments)) as Record<string, unknown> | undefined;
     const problem = checkRequiredInputs(request.params.name, typed);
     const safeArgs = escapeDeep(typed);
     if (problem) {

@@ -38,6 +38,12 @@ function joinNameLists(ms) {
             order.push(open);
             continue;
         }
+        // run 42B: a page claim, a group membership, a track record or a recognition is said, never shown:
+        // a membership, ownership, track record or certification phrase is a claim, whatever its label
+        if (rw_kit_ts_1.CLAIM_PHRASE.test(f.text.trim())) {
+            claims.push(f);
+            continue;
+        }
         // a recognition labelled as a claim ("named a must-try tool by ...") is said, not shown
         if ((/\bclaims?\b/i.test(f.label || '') && RECOGNITION.test(f.text)) || /^(?:named|recogni[sz]ed|ranked|rated|awarded|featured|trusted by|loved by)\b/i.test(f.text.trim())) {
             claims.push(f);

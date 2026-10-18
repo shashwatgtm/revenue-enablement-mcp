@@ -11,6 +11,7 @@ exports.modelUnderSetSector = modelUnderSetSector;
 // (nothing read from the text overrides it); when it is not, the sector is read from the seller's own words only, and the
 // tool stays neutral when only the deal text, the job titles or the customer's industry point to one.
 // This file adds no figures and no sector facts (B82): it only picks which entry of src/verticals.ts is used.
+const sub_industry_ts_1 = require("./sub-industry.js");
 const verticals_ts_1 = require("./verticals.js");
 exports.YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'];
 exports.YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
@@ -21,17 +22,9 @@ function setYourSector(value) {
     forced = typeof value === 'string' && exports.YOUR_SECTOR_VALUES.includes(value) ? value : undefined;
 }
 function sectorIsSet() { return forced !== undefined; }
-/** A sub industry (a kind of company inside the sector, with its own notes) is used only when the seller's own words name it; otherwise the sector's general entry is used. */
+/** A sub industry (a kind of company inside the sector, with its own notes) is used only when the seller's own words name it (src/sub-industry.ts); otherwise the sector's general entry is used. */
 function generalUnlessClear(v, input) {
-    if (!v || !v.subtype)
-        return v;
-    const sellerTexts = Array.isArray(input.seller) ? input.seller : [];
-    const a = (0, verticals_ts_1.explainSector)({ seller: sellerTexts, context: [], role: [], buyer: [] });
-    const b = (0, verticals_ts_1.explainSector)({ seller: [], context: [], role: [], buyer: sellerTexts });
-    const same = (x) => !!x && x.id === v.id && x.subtype === v.subtype;
-    if (same(a.vertical) || same(b.vertical))
-        return v;
-    return verticals_ts_1.VERTICALS.find((x) => x.id === v.id) ?? v;
+    return (0, sub_industry_ts_1.gateSubIndustry)(v, Array.isArray(input.seller) ? input.seller : []);
 }
 function readSellerSector(input) {
     if (forced) {
@@ -57,7 +50,7 @@ function readSellerSector(input) {
 }
 /** profileFor reads the text again (a money manager, an AI support seller); when the sector was set it is left as set. */
 function profileForSeller(v, model, input) {
-    return forced ? v : (0, verticals_ts_1.profileFor)(v, model, input);
+    return (0, sub_industry_ts_1.withGeneralNotes)(generalUnlessClear(forced ? v : (0, verticals_ts_1.profileFor)(v, model, input), input), Array.isArray(input.seller) ? input.seller : []);
 }
 function sectorSetPhrase(v) {
     return v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral';

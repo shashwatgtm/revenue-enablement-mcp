@@ -11,14 +11,14 @@ import { parseContacts, familyOf, levelOf, joinList, clip, solutionBrief, type C
 import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
 import {
-  readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
+  readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, CLAIM_PHRASE, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
   answerObjection, dedupeAnswers, splitNotes, type Capability, type Item, type AnswerCtx, type Answer,
 } from './rw-kit.ts';
 
 /** Run 42Q: a list of names after "integrations with" (or "connects to", "works with") is one item, not one step per name; when the
  *  user labelled it as a claim it is said beside the part it belongs to, so the demo steps come from the product's parts and the pains. */
 const RECOGNITION = /\b(?:named|recogni[sz]ed|awards?|award-winning|ranked|rated|leader|featured|must-try|best|top|trusted by|loved by)\b/i;
-const NAME_LIST_HEAD = /^(?:native\s+|deep\s+)?(?:integrations?|integrates|connectors?|connects|connections?|works)\s+(?:with|to|for)\s+/i;
+const NAME_LIST_HEAD =/^(?:native\s+|deep\s+)?(?:integrations?|integrates|connectors?|connects|connections?|works)\s+(?:with|to|for)\s+/i;
 const BARE_NAME = /^(?:and\s+)?[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2}(?:\s+and\s+[A-Z0-9][\w.+&-]*(?:\s+[A-Z0-9][\w.+&-]*){0,2})?$/;
 function joinNameLists(ms: { flows: Item[]; claims: Item[] }): { flows: Item[]; claims: Item[] } {
   const flows: Item[] = [];
@@ -31,6 +31,9 @@ function joinNameLists(ms: { flows: Item[]; claims: Item[] }): { flows: Item[]; 
     if (open && BARE_NAME.test(f.text.trim()) && f.label === open.head.label) { open.names.push(f.text.trim().replace(/^and\s+/i, '')); continue; }
     open = null;
     if (NAME_LIST_HEAD.test(f.text.trim())) { open = { head: f, names: [] }; groups.push(open); order.push(open); continue; }
+    // run 42B: a page claim, a group membership, a track record or a recognition is said, never shown:
+    // a membership, ownership, track record or certification phrase is a claim, whatever its label
+    if (CLAIM_PHRASE.test(f.text.trim())) { claims.push(f); continue; }
     // a recognition labelled as a claim ("named a must-try tool by ...") is said, not shown
     if ((/\bclaims?\b/i.test(f.label || '') && RECOGNITION.test(f.text)) || /^(?:named|recogni[sz]ed|ranked|rated|awarded|featured|trusted by|loved by)\b/i.test(f.text.trim())) { claims.push(f); continue; }
     order.push(f);

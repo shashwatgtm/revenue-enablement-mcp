@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.PROBLEM_WORD = exports.lensFor = void 0;
+exports.CLAIM_PHRASE = exports.upFirst = exports.capText = exports.DEMO_VERB = exports.isStat = exports.SHOW = exports.PROBLEM_WORD = exports.lensFor = void 0;
 exports.wordsOf = wordsOf;
 exports.overlap = overlap;
 exports.groupsOf = groupsOf;
@@ -602,6 +602,8 @@ function capSay(c) {
 }
 const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 exports.upFirst = upFirst;
+/** Run 42B: a membership, ownership, track record or certification phrase is a claim to say, never a flow to show. */
+exports.CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
 function readMustShow(text) {
     const flows = [], claims = [];
     const t = (text || '').trim();
@@ -633,6 +635,11 @@ function readMustShow(text) {
                 continue;
             }
             const prev = pieces[pieces.length - 1];
+            // run 42B: a track record names its customers in a list ("operated in production for A, B and C with sustained traffic"): the rest of the list belongs to it
+            if (prev && exports.CLAIM_PHRASE.test(prev) && !exports.CLAIM_PHRASE.test(x) && !exports.DEMO_VERB.test(x) && !(0, exports.isStat)(x)) {
+                pieces[pieces.length - 1] = `${prev}, ${x}`;
+                continue;
+            }
             // a list of years ("... 2024, 2025 and 2026") is one item, not three
             if (prev && /^(?:19|20)\d\d(?:\s+and\s+(?:19|20)\d\d)?$/.test(x) && /\b(?:19|20)\d\d$/.test(prev)) {
                 pieces[pieces.length - 1] = `${prev}, ${x}`;

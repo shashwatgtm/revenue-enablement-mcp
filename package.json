@@ -30,7 +30,7 @@
     "url": "https://github.com/shashwatgtm/revenue-enablement-mcp.git"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@netlify/blobs": "^10.7.13"
   },
   "devDependencies": {

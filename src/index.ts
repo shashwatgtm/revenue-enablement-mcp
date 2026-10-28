@@ -247,7 +247,7 @@ const tools: Record<string, Tool> = {
         },
         known_contacts: {
           type: 'string',
-          description: 'Known contacts and their roles (can be rough notes)'
+          description: 'Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account_notes'
         },
         current_products: {
           type: 'string',
@@ -470,7 +470,7 @@ const tools: Record<string, Tool> = {
         },
         target_close_date: {
           type: 'string',
-          description: 'Target close date (YYYY-MM-DD)'
+          description: 'Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so'
         },
         current_stage: {
           type: 'string',
@@ -499,7 +499,7 @@ const tools: Record<string, Tool> = {
         },
         known_process_steps: {
           type: 'string',
-          description: 'Known steps in their buying process'
+          description: 'Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone'
         },
         blockers: {
           type: 'string',

@@ -296,7 +296,7 @@
 <tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
 <tr><td><code>current_arr</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
-<tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles (can be rough notes)</td></tr>
+<tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account_notes</td></tr>
 <tr><td><code>current_products</code></td><td>string</td><td>no</td><td></td><td>Products/services they currently use from you</td></tr>
 <tr><td><code>expansion_opportunities</code></td><td>string</td><td>no</td><td></td><td>Potential expansion areas or whitespace</td></tr>
 <tr><td><code>competitive_threats</code></td><td>string</td><td>no</td><td></td><td>Known competitors in the account</td></tr>
@@ -368,14 +368,14 @@
   <p class="hx-prose">Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. <a href="/tools/mutual-action-plan-generator/">Open the form</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
-<tr><td><code>target_close_date</code></td><td>string</td><td>yes</td><td></td><td>Target close date (YYYY-MM-DD)</td></tr>
+<tr><td><code>target_close_date</code></td><td>string</td><td>yes</td><td></td><td>Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so</td></tr>
 <tr><td><code>current_stage</code></td><td>string</td><td>no</td><td>discovery, evaluation, proposal, negotiation, procurement</td><td>Current deal stage</td></tr>
 <tr><td><code>buyer_champion</code></td><td>string</td><td>no</td><td></td><td>Champion name and title</td></tr>
 <tr><td><code>economic_buyer</code></td><td>string</td><td>no</td><td></td><td>Economic buyer name and title</td></tr>
 <tr><td><code>technical_evaluators</code></td><td>string</td><td>no</td><td></td><td>Technical evaluators involved</td></tr>
 <tr><td><code>procurement_contact</code></td><td>string</td><td>no</td><td></td><td>Procurement contact if known</td></tr>
 <tr><td><code>known_requirements</code></td><td>string</td><td>no</td><td></td><td>Known requirements or evaluation criteria</td></tr>
-<tr><td><code>known_process_steps</code></td><td>string</td><td>no</td><td></td><td>Known steps in their buying process</td></tr>
+<tr><td><code>known_process_steps</code></td><td>string</td><td>no</td><td></td><td>Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone</td></tr>
 <tr><td><code>blockers</code></td><td>string</td><td>no</td><td></td><td>Known blockers or concerns</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
 <tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>

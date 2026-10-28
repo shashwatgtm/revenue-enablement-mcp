@@ -64,7 +64,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `account_name` | Yes | string | Company/account name |
 | `industry` | No | string | Industry vertical |
 | `current_arr` | No | number (0 or more) | Current ARR with this account (0 for prospects) |
-| `known_contacts` | No | string | Known contacts and their roles (can be rough notes) |
+| `known_contacts` | No | string | Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account_notes |
 | `current_products` | No | string | Products/services they currently use from you |
 | `expansion_opportunities` | No | string | Potential expansion areas or whitespace |
 | `competitive_threats` | No | string | Known competitors in the account |
@@ -128,14 +128,14 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | Input | Required | Type | Description |
 |---|---|---|---|
 | `deal_name` | Yes | string | Deal/opportunity name |
-| `target_close_date` | Yes | string | Target close date (YYYY-MM-DD) |
+| `target_close_date` | Yes | string | Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so |
 | `current_stage` | No | one of: `discovery`, `evaluation`, `proposal`, `negotiation`, `procurement` | Current deal stage |
 | `buyer_champion` | No | string | Champion name and title |
 | `economic_buyer` | No | string | Economic buyer name and title |
 | `technical_evaluators` | No | string | Technical evaluators involved |
 | `procurement_contact` | No | string | Procurement contact if known |
 | `known_requirements` | No | string | Known requirements or evaluation criteria |
-| `known_process_steps` | No | string | Known steps in their buying process |
+| `known_process_steps` | No | string | Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone |
 | `blockers` | No | string | Known blockers or concerns |
 | `your_solution` | No | string | What you are selling |
 | `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |

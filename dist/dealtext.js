@@ -306,8 +306,12 @@ function parseContacts(text, investmentBuyer = false) {
         return [];
     const chunks = [];
     for (const line of text.split(/\n|;/)) {
-        const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '');
+        // host review 28 Oct 2026: a note about the list ("no personal contact details supplied") is not a contact, and a
+        // "Role only:" label in front of a title is not part of the title
+        const l = line.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, '').replace(/^roles? only\s*:\s*/i, '');
         if (!l)
+            continue;
+        if (/^(?:no|none|without)\b.*\b(?:contacts?|details?|names?|emails?|phones?|people|persons?)\b.*\b(?:supplied|given|provided|known|shared|available)\b/i.test(l))
             continue;
         const pieces = splitTopLevel(l);
         for (const p of pieces) {

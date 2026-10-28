@@ -198,7 +198,10 @@ function buildMutualActionPlan(args, d) {
         return 'Agree the measure and the pass mark with the champion, then test it on the buyer\'s own case';
     };
     // ---- the buyer's own process steps, placed by what they are ----
-    const processSteps = d.splitItems(stepsIn).map(rw1_common_ts_1.stripEnd);
+    // A plain comma list of short steps ("Pilot, security review, procurement") is a list too, whatever the case of each step
+    // (host review 28 Oct 2026: the shared reader keeps a comma list as one item unless every item starts with a capital).
+    const commaSteps = !/[;\n]/.test(stepsIn) && /,/.test(stepsIn) && stepsIn.split(',').every((x) => { const w = x.trim().replace(/^and\s+/i, '').split(/\s+/); return w[0] !== '' && w.length <= 4; });
+    const processSteps = d.splitItems(commaSteps ? stepsIn.replace(/,\s*(?:and\s+)?/g, ';') : stepsIn).map(rw1_common_ts_1.stripEnd);
     const placeStep = (s) => {
         const t = s.toLowerCase();
         if (/security|questionnaire|vendor (?:risk )?assessment|risk assessment|due diligence|penetration|infosec/.test(t))

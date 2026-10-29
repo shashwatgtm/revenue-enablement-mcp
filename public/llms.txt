@@ -45,7 +45,7 @@ No. Each tool applies fixed rules in the Revenue Enablement code to the inputs y
 
 ### What happens to what I type?
 
-It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. Nothing is stored and nothing you type is logged. The privacy page has the details.
+It is sent to this site's server, used once to build the answer, and dropped when the answer is sent back. What you type and the answer are not stored, and nothing you type is logged. Only an anonymous count of tool calls is kept. The privacy page has the details.
 
 ### How do I use Revenue Enablement in Claude?
 
@@ -69,7 +69,7 @@ Yes, at https://github.com/shashwatgtm/revenue-enablement-mcp under the MIT lice
 
 ### Who is Revenue Enablement not ideal for?
 
-Teams that want the tools to read their CRM, email or call notes: they work only from what you type. Sending anything straight to a buyer: every output is a draft for a person to review first. Teams that need saved deal history: nothing is stored, so keep each result in your own deal record.
+Teams that want the tools to read their CRM, email or call notes: they work only from what you type. Sending anything straight to a buyer: every output is a draft for a person to review first. Teams that need saved deal history: answers are not stored, so keep each result in your own deal record.
 
 ### How do I report a problem?
 

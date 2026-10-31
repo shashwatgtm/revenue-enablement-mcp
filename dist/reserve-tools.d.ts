@@ -1,3 +1,3 @@
-import './negotiation.js';
-export { reserveTools, isReserveTool, callReserveTool } from './reserve-common.js';
+import './negotiation.ts';
+export { reserveTools, isReserveTool, callReserveTool } from './reserve-common.ts';
 //# sourceMappingURL=reserve-tools.d.ts.map

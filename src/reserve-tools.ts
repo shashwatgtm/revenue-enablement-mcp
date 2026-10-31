@@ -1,2 +1,2 @@
-import './negotiation.js';
-export {reserveTools,isReserveTool,callReserveTool} from './reserve-common.js';
+import './negotiation.ts';
+export {reserveTools,isReserveTool,callReserveTool} from './reserve-common.ts';

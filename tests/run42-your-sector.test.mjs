@@ -19,7 +19,7 @@ const VALUES = ["logistics_tech", "fintech", "saas", "vertical_saas", "ai_native
 
 test("every tool declares an optional your_sector with the ten choices", async () => {
   const { result: { tools } } = await rpc("tools/list", {});
-  assert.equal(tools.length, 15);
+  assert.equal(tools.length, 16);
   for (const t of tools) {
     const p = t.inputSchema.properties.your_sector;
     assert.ok(p, t.name);

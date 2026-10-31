@@ -1,4 +1,4 @@
-import { type Row } from './reserve-common.js';
+import { type Row } from './reserve-common.ts';
 export declare function roundMoney(x: number): number;
 export declare function parseMoney(raw: string, negative?: boolean): number;
 export declare function concessionMath(a: Row): {

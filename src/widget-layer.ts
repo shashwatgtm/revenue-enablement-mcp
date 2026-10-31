@@ -12,7 +12,7 @@ export function attachWidgets(server:Server):void{
   if(request.method==='tools/list')return {...result,tools:result.tools.map((t:any)=>Object.prototype.hasOwnProperty.call(WIDGETS,t.name)?{...t,_meta:{...t._meta,ui:{...t._meta?.ui,resourceUri:uri(t.name),visibility:['model']},'openai/outputTemplate':uri(t.name)}}:t)};
   if(request.method==='tools/call'&&!result.isError&&Object.prototype.hasOwnProperty.call(WIDGETS,request.params.name)){
    const text=result.content?.filter((c:any)=>c.type==='text').map((c:any)=>c.text).join('\n');
-   if(typeof text==='string')return {...result,structuredContent:widgetPayload(request.params.name,WIDGETS[request.params.name],text)};
+   if(typeof text==='string')return {...result,structuredContent:{...result.structuredContent,...widgetPayload(request.params.name,WIDGETS[request.params.name],text)}};
   }
   return result;
  })) as typeof server.setRequestHandler;

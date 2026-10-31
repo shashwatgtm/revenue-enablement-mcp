@@ -1,0 +1,8 @@
+{
+  "repo": "revenue-enablement-mcp",
+  "name": "win_loss_analyzer",
+  "path": "src/index.ts",
+  "commit": "ec4a73554f169a1c075e6b06e91f864fc21da4ee",
+  "skip_reason": "",
+  "source_sha256": "011102dd98c64ed1bb4e2ca9809fa6a827dce60f35d4e311b95a0a060ad0a7c7"
+}

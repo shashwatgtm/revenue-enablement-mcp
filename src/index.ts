@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { attachWidgets } from './widget-layer.ts';
 import { waveTools, isWaveTool, callWaveTool } from './wave2-checkers.ts';
 
 /**
@@ -3444,6 +3445,8 @@ export function createServer(): Server {
     { name: SERVER_NAME, version: SERVER_VERSION },
     { capabilities: { tools: {} } }
   );
+
+  attachWidgets(server);
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [...Object.values(tools).map((tool) => withMeta(tool)), ...waveTools],

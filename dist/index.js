@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
+const widget_layer_ts_1 = require("./widget-layer.js");
 const wave2_checkers_ts_1 = require("./wave2-checkers.js");
 /**
  * Revenue Enablement MCP v1.0.0
@@ -3367,6 +3368,7 @@ function checkRequiredInputs(name, args) {
 }
 function createServer() {
     const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });
+    (0, widget_layer_ts_1.attachWidgets)(server);
     server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
         tools: [...Object.values(tools).map((tool) => withMeta(tool)), ...wave2_checkers_ts_1.waveTools],
     }));

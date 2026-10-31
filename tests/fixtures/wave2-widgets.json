@@ -1,0 +1,68 @@
+{
+  "account_plan_builder": {
+    "normal": {
+      "account_name": "Account A",
+      "industry": "software",
+      "current_arr": 12000,
+      "known_contacts": "Operations lead: champion; Finance director: economic buyer",
+      "current_products": "Approval workflow",
+      "expansion_opportunities": "Another team needs the same handoff process",
+      "competitive_threats": "Internal tool",
+      "your_solution": "Operations workflow software",
+      "account_notes": "Current customer. Confirm expansion need before proposing it."
+    },
+    "weak": {
+      "account_name": "Not supplied"
+    }
+  },
+  "roi_business_case_builder": {
+    "normal": {
+      "your_solution": "Operations workflow software",
+      "primary_value_driver": "cost_reduction",
+      "solution_price": 12000,
+      "current_annual_cost": 100000,
+      "expected_improvement_percent": 20,
+      "known_metrics": "Synthetic arithmetic inputs for testing, not a customer claim",
+      "current_process": "Manual approval handling",
+      "implementation_timeline": "One month"
+    },
+    "weak": {
+      "your_solution": "Not supplied",
+      "primary_value_driver": "revenue_increase"
+    }
+  },
+  "mutual_action_plan_generator": {
+    "normal": {
+      "deal_name": "Opportunity A",
+      "target_close_date": "2026-12-18",
+      "current_stage": "proposal",
+      "buyer_champion": "Operations lead",
+      "economic_buyer": "Finance director",
+      "technical_evaluators": "IT lead",
+      "procurement_contact": "Procurement lead",
+      "known_requirements": "Confirm audit trail",
+      "known_process_steps": "Pilot, security review, procurement, signature",
+      "blockers": "Approval evidence not yet complete",
+      "your_solution": "Operations workflow software"
+    },
+    "weak": {
+      "deal_name": "Not supplied",
+      "target_close_date": "2026-11-02"
+    }
+  },
+  "win_loss_analyzer": {
+    "normal": {
+      "analysis_type": "single_deal",
+      "deal_outcome": "lost",
+      "deal_details": "The buyer deferred the project because an internal owner was not assigned. This is the only supplied deal note.",
+      "loss_reason": "No internal owner",
+      "deal_value": 12000,
+      "sales_cycle_days": 45,
+      "stakeholders_involved": "Operations lead",
+      "your_solution": "Operations workflow software"
+    },
+    "weak": {
+      "analysis_type": "single_deal"
+    }
+  }
+}

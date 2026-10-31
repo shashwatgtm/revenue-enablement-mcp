@@ -1,4 +1,5 @@
 export const WIDGETS:Record<string,string>={
+  "negotiation_trade_check": "Negotiation Trade Check",
   "account_plan_builder": "Account Plan Builder",
   "roi_business_case_builder": "ROI Business Case Builder",
   "mutual_action_plan_generator": "Mutual Action Plan Generator",

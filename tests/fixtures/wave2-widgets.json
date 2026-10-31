@@ -64,5 +64,35 @@
     "weak": {
       "analysis_type": "single_deal"
     }
+  },
+  "negotiation_trade_check": {
+    "normal": {
+      "deal_kind": "new",
+      "mode": "discount",
+      "currency": "INR",
+      "value": "36 lakh",
+      "discount_percent": 20,
+      "trades": [
+        {
+          "give": "a lower first-year rate",
+          "get": "a two-year commitment",
+          "worth": "3 lakh"
+        },
+        {
+          "give": "a lower rate after approval",
+          "get": "an approved case study"
+        }
+      ],
+      "deadline": {
+        "kind": "reply",
+        "date": "2026-11-06"
+      }
+    },
+    "weak": {
+      "deal_kind": "new",
+      "mode": "discount",
+      "currency": "USD",
+      "discount_percent": 15
+    }
   }
 }

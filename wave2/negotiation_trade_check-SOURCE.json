@@ -1,0 +1,30 @@
+{
+  "repo": "b2b-deal-execution",
+  "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/SKILL.md",
+  "commit": "5822f07799d7a7a38f4c80e9359f493009e6ea7c",
+  "source_sha256": "50ba2cc9a69116df51bf5ee967609ae045a80b80d2a5ecde093a6ae3b9c9d6d9",
+  "sha": "488b31378dbf63a4607cec213ecb8b4a9b663a9d",
+  "name": "negotiation-and-champion",
+  "references": [
+    {
+      "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/references/champion-assets.md",
+      "sha256": "faf557cbe5a58449acc87c15cb5b9fec9cc536419374aa7cdfc991af8a93a927"
+    },
+    {
+      "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/references/negotiation-playbooks.md",
+      "sha256": "44a706d5fe4713b6d9759d859507ee13e32d68d4ea7bd9780ccc40fa65e5b24a"
+    },
+    {
+      "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/references/verticals.md",
+      "sha256": "920d47185622f067097eb47acb98ccfb90094d5359bdf7e81f68d3af9d78a83b"
+    },
+    {
+      "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/references/voice-and-fact-check.md",
+      "sha256": "919f2ae235c93e7cf633d845ab86577444ddbb6cd80f8a44ee21e8c1a9e4fbc0"
+    },
+    {
+      "path": "plugins/b2b-deal-execution/skills/negotiation-and-champion/scripts/concession_math.py",
+      "sha256": "1a4d10d24c2478ff8a284959492867268ff646ed9e2d2c5a74ce9580689cf1ea"
+    }
+  ]
+}

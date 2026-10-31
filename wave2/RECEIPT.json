@@ -1,0 +1,18 @@
+{
+  "artifact": "ARTIFACT_PREPARED",
+  "tests": {
+    "focused_pass": 17,
+    "full_suite_pass": 1234,
+    "full_suite_skip": 30,
+    "original_failures": "See hub CHECKER-REPAIRS.md; preserved as FAIL"
+  },
+  "host": "NOT_TESTED",
+  "release": "OWNER_GATE",
+  "files": {
+    "src/wave2-checkers.ts": "9baa4e0dcdae64cf2626adb6f62c67e06ac4769d855fe5103c076d1bba0abf6a",
+    "tests/wave2-checkers.test.mjs": "6bfe19fcafc1c5059bd2b85a621e0937f8b6564522072ef73bdbbf8ca8c9e438",
+    "tests/wave2-protocol.test.mjs": "0c5e94b5a9546dc0cf62803506b6f13e2374ccded1fc09a9e9433806ea5d8ffa",
+    "src/index.ts": "2d43acf512edecd5d115387330570c65fd794a20b74ef8bab6e19e4fb7814338"
+  },
+  "final_receipt": "https://github.com/shashwatgtm/gtmhelix-tools-hub/tree/codex/wave2-20261031/wave2-20261031/checks"
+}

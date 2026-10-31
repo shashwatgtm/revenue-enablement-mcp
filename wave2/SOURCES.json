@@ -1,0 +1,29 @@
+[
+  {
+    "name": "competitive-intelligence",
+    "repo": "b2b-sales-enablement",
+    "path": "plugins/b2b-sales-enablement/skills/competitive-intelligence/SKILL.md",
+    "commit": "ba3e5b67b40a0a468c4c5ffecb6aaef7ea230993",
+    "sha": "c0a7e93ccb0b97ea6c1ba3614bec40d138358f50",
+    "source_sha256": "d978befecf9e9f8b5855275ee058a5820192eed91b96284ef8c04bd3d0fbe621",
+    "source_url": "https://github.com/shashwatgtm/b2b-sales-enablement/blob/ba3e5b67b40a0a468c4c5ffecb6aaef7ea230993/plugins/b2b-sales-enablement/skills/competitive-intelligence/SKILL.md"
+  },
+  {
+    "name": "sales-proposal-builder",
+    "repo": "b2b-sales-enablement",
+    "path": "plugins/b2b-sales-enablement/skills/sales-proposal-builder/SKILL.md",
+    "commit": "ba3e5b67b40a0a468c4c5ffecb6aaef7ea230993",
+    "sha": "58250c13afc6b4e674841eaf36ec12b85e371727",
+    "source_sha256": "a01361244040fdb1617be326fe0789394e9c65ad8f701b8d76b1017f8f8ea79f",
+    "source_url": "https://github.com/shashwatgtm/b2b-sales-enablement/blob/ba3e5b67b40a0a468c4c5ffecb6aaef7ea230993/plugins/b2b-sales-enablement/skills/sales-proposal-builder/SKILL.md"
+  },
+  {
+    "name": "sales-sequences",
+    "repo": "b2b-deal-execution",
+    "path": "plugins/b2b-deal-execution/skills/sales-sequences/SKILL.md",
+    "commit": "5822f07799d7a7a38f4c80e9359f493009e6ea7c",
+    "sha": "9c159f9beecc337f0a3ac8e89d1d2030ebbc9f0d",
+    "source_sha256": "7d5a89dac80c1cd8c3b7bcaa093d9edc3d77df0410d18cece9a3a667205aa140",
+    "source_url": "https://github.com/shashwatgtm/b2b-deal-execution/blob/5822f07799d7a7a38f4c80e9359f493009e6ea7c/plugins/b2b-deal-execution/skills/sales-sequences/SKILL.md"
+  }
+]

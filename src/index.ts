@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { waveTools, isWaveTool, callWaveTool } from './wave2-checkers.ts';
 
 /**
  * Revenue Enablement MCP v1.0.0
@@ -3445,10 +3446,11 @@ export function createServer(): Server {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: Object.values(tools).map((tool) => withMeta(tool)),
+    tools: [...Object.values(tools).map((tool) => withMeta(tool)), ...waveTools],
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (isWaveTool(request.params.name)) return callWaveTool(request.params.name, request.params.arguments);
     // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
     // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
     const typed = joinAbbreviations(cleanDeep(request.params.arguments)) as Record<string, unknown> | undefined;

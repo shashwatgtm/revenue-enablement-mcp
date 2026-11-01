@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
+const decision_limits_ts_1 = require("./decision-limits.js");
 const text_signals_ts_1 = require("./text-signals.js");
 const text_signals_ts_2 = require("./text-signals.js");
 const text_signals_ts_3 = require("./text-signals.js");
@@ -2003,7 +2004,10 @@ function executeWinLossAnalyzer(args) {
 function executeTool(name, args) {
     (0, sector_read_ts_1.setYourSector)(args.your_sector);
     try {
-        return (0, text_signals_ts_2.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
+        const limit = (0, decision_limits_ts_1.decisionLimit)(name, args);
+        if (limit.stop)
+            return limit.text;
+        return limit.text + (0, text_signals_ts_2.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
     }
     finally {
         (0, sector_read_ts_1.setYourSector)(undefined);
@@ -3390,6 +3394,10 @@ function checkRequiredInputs(name, args) {
         return `Invalid input for ${(0, text_signals_ts_1.readerLabel)(name)}: ${problems.map(text_signals_ts_1.readerIssue).join("; ")}.`;
     }
     return null;
+}
+for (const tool of Object.values(tools)) {
+    Object.assign((tool.inputSchema.properties ??= {}), (0, decision_limits_ts_1.decisionInputs)(tool.name));
+    tool.description += (0, decision_limits_ts_1.decisionHelp)(tool.name);
 }
 function createServer() {
     const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });

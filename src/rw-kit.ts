@@ -1,3 +1,4 @@
+import { frictionReading } from './text-signals.ts';
 import { clearanceAdvice } from './text-signals.ts';
 import { hasSignal, signal } from './text-signals.ts';
 // Run 22 (rewrite of demo_script_builder, champion_enablement_kit and discovery_question_bank): shared pure helpers.
@@ -202,7 +203,8 @@ export function readPains(text: string): PainSet {
   }
   const uniq: string[] = [];
   for (const o of out.map((x) => x.replace(/^[\s,]+|[\s,.]+$/g, '').trim()).filter((x) => typedLength(x) > 3)) if (!uniq.includes(o)) uniq.push(o);
-  return { pains: uniq.slice(0, 7), evidence, notes };
+  const current = uniq.filter(p => { if (frictionReading(p).state === 'negated') { notes.push('No current difficulty stated: '+p); return false; } return true; });
+  return { pains: current.slice(0, 7), evidence, notes };
 }
 const BOUNDARY = new Set(['for', 'across', 'without', 'because', 'so', 'while', 'with', 'in', 'on', 'by', 'from', 'that', 'which', 'as', 'when', 'where', 'between', 'into']);
 /** A long pain in fewer words: cut at a natural boundary where what is left is a whole statement; a pain that cannot be cut cleanly is kept whole. */

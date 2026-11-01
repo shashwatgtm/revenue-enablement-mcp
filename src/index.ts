@@ -1105,7 +1105,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   const cancelledRead = signal([blockers, nextSteps].join('; '), 'cancelled');
   const cancelled = args.project_status ? args.project_status === 'cancelled' : cancelledRead.state === 'affirmed';
   if (cancelled) return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project status is cancelled.' : evidenceLine('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
-  const compItems = splitItems(competitors).filter(c => signal(c, 'incumbent').state !== 'negated');
+  const compItems = splitItems(competitors).filter(c => !['negated','unclear'].includes(signal(c, 'incumbent').state));
 
   // Calculate deal health
   let healthScore = 70; // Start at 70

@@ -4,7 +4,7 @@ exports.buildAccountPlan = buildAccountPlan;
 const text_signals_ts_1 = require("./text-signals.js");
 // Run 22: account_plan_builder, rewritten. The plan is written from the inputs: who decides (one row per contact, with what each cares about),
 // where the account can grow (the parts of the product against the account's own pain), the alternatives it uses today (a different question
-// for each), an answer for each objection, and 90 days built from all of that. Tier and expansion potential keep the old rule on ARR (D80).
+// for each), an answer for each objection, and 90 days built from all of that. The contract tier keeps its ARR rule; ARR does not establish expansion potential.
 // Nothing here states a fact about the user's product or the account that was not typed (rule B82); what was not given is listed once, at the end.
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
@@ -48,22 +48,17 @@ function buildAccountPlan(args, d) {
     const metric = v ? v.metrics[0] : '';
     // ---- the tier rule on ARR (unchanged, D80) ----
     let tier = 'Prospect';
-    let potential = 'High';
     if (arr > 500000) {
         tier = 'Strategic';
-        potential = 'Very High';
     }
     else if (arr > 100000) {
         tier = 'Enterprise';
-        potential = 'High';
     }
     else if (arr > 25000) {
         tier = 'Growth';
-        potential = 'Medium';
     }
     else if (arr > 0) {
         tier = 'SMB';
-        potential = 'Medium';
     }
     const existing = arr > 0;
     // ---- the notes: objections (after "Objections:") and the rest ----
@@ -158,9 +153,9 @@ function buildAccountPlan(args, d) {
         ? `${(0, dealtext_ts_1.upperFirst)(accountName)} is an existing account${industry ? ` in ${industry}` : ''} with annual recurring revenue of ${d.money(arr)}`
         : `${(0, dealtext_ts_1.upperFirst)(accountName)} is a prospect${industry ? ` in ${industry}` : ''}${arrGiven ? ' (the annual recurring revenue you gave is 0)' : ''}`;
     const sells = solutionIn ? (brief.short ? ` This plan is about ${existing ? 'growing it' : 'winning it'} with ${P}${brief.kind ? `, which ${(0, dealtext_ts_1.describeWith)((0, rw1_common_ts_1.cleanBrief)(brief))}` : ''}.` : ` This plan is about ${existing ? 'growing it' : 'winning it'}; what you sell, in your words, is ${(0, rw1_common_ts_1.sellerWords)(brief)}.`) : '';
-    const tierLine = `By this tool's rule on ARR alone the account sits in the ${tier} tier with ${potential.toLowerCase()} expansion potential; that is a rule on the number, not a view of the account.`;
+    const tierLine = `By this tool's example rule on ARR alone the account sits in the ${tier} contract band. Expansion potential is unknown until a new need and its buyer are supplied and confirmed; ARR does not establish either.`;
     const brief1 = [`${who}.${sells}`, tierLine, ...(hypothetical ? ['Your notes mark the figures as hypothetical, so treat the ARR and the tier as test figures.'] : []), ...(noteLines.length ? [`Your notes add: ${noteLines.map(rw1_common_ts_1.quoted).join(' ')}`] : [])];
-    const facts = [`| **Account** | ${accountName} |`, ...(industryIn ? [`| **Industry** | ${industryIn.replace(/_/g, ' ')} |`] : []), `| **Account Tier** | ${tier} (set by this tool's rule from Current ARR) |`, ...(arrGiven ? [`| **Current ARR** | ${d.money(arr)} |`] : []), `| **Expansion Potential** | ${potential} (set by this tool's rule from Current ARR, not from your notes) |`];
+    const facts = [`| **Account** | ${accountName} |`, ...(industryIn ? [`| **Industry** | ${industryIn.replace(/_/g, ' ')} |`] : []), `| **Account Tier** | ${tier} (set by this tool's rule from Current ARR) |`, ...(arrGiven ? [`| **Current ARR** | ${d.money(arr)} |`] : []), `| **Expansion Potential** | Unknown; confirm a new need and its buyer before assessing expansion |`];
     out.push(`## The account in brief\n\n${brief1.join(' ')}\n\n| Attribute | Value |\n|-----------|-------|\n${facts.join('\n')}\n\n${ctxLine}`);
     if (buyerCtx)
         out.push(`For a buyer in ${buyerCtx.name}, expect this. ${buyerCtx.reviews} ${buyerCtx.buying}`);
@@ -294,7 +289,7 @@ By day 90 you should have a decision on ${existing ? 'the expansion' : 'the firs
     // ---- what was not given ----
     const miss = [];
     if (!arrGiven)
-        miss.push('`current arr` (it would change the tier and the expansion potential, which now follow the rule for a prospect)');
+        miss.push('`current arr` (it would change the contract band, which now follows the rule for a prospect; expansion potential remains unknown)');
     if (!industryIn)
         miss.push('`industry` (it would change the review steps and risks written for the buyer)');
     if (!contactsText)

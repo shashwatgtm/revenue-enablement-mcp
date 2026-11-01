@@ -999,7 +999,7 @@ function readContext(explicitModel, input) {
     v = (0, sector_read_ts_1.profileForSeller)(v, m.model, input);
     m = (0, sector_read_ts_1.modelUnderSetSector)(m, v, input); // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; set how you charge (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
+    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; describe how you charge for advice that fits it';
     return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).

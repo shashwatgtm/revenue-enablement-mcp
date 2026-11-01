@@ -1,3 +1,4 @@
+import { WIDGET_ORIGIN } from "./widget-origin.ts";
 import { BUILD_PROFILE } from './build-profile.ts';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
@@ -9,7 +10,7 @@ import {
 import { widgetPayload } from "./widget-model.ts";
 import { WIDGET_HTML } from "./widget-document.ts";
 import { WIDGETS } from "./widget-registry.ts";
-const uri = (name: string) => `ui://helix-wave2/${name}.html`;
+const uri = (name: string) => `ui://helix-wave3-${BUILD_PROFILE.buildHash}/${name}.html`;
 export function attachWidgets(server: Server): void {
   const selected = BUILD_PROFILE.profile === "wave" ? WIDGETS : Object.fromEntries(Object.entries(WIDGETS).filter(([name]) => name === null));
   if (!Object.keys(selected).length) return;
@@ -85,11 +86,13 @@ export function attachWidgets(server: Server): void {
           _meta: {
             ui: {
               prefersBorder: true,
+              ...(BUILD_PROFILE.domainEnabled && WIDGET_ORIGIN ? {domain: WIDGET_ORIGIN} : {}),
               csp: { connectDomains: [], resourceDomains: [] },
             },
             "openai/widgetDescription":
               entry[1] + " result with source text and table views.",
             "openai/widgetPrefersBorder": true,
+            ...(BUILD_PROFILE.domainEnabled && WIDGET_ORIGIN ? {"openai/widgetDomain": WIDGET_ORIGIN} : {}),
             "openai/widgetCSP": { connect_domains: [], resource_domains: [] },
             "openai/ui": { availableDisplayModes: ["inline", "fullscreen"] },
           },

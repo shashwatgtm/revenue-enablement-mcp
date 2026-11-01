@@ -1,3 +1,4 @@
+import { clearanceAdvice } from './text-signals.ts';
 import { hasSignal, signal } from './text-signals.ts';
 // Run 22 (rewrite of demo_script_builder, champion_enablement_kit and discovery_question_bank): shared pure helpers.
 // Why this file exists: the three tools used to paste the user's text into a scaffold. The judges scored that 2 to 3 because a statistic became a
@@ -716,6 +717,7 @@ const trimDot = (s: string): string => s.replace(/[.\s]+$/, '');
 /** Answers one objection in the voice asked for. Each answer uses the inputs that touch the question (the product's parts, the alternatives, the pains,
  *  the statistics with their labels) and the business model; where a fact is needed that was not given, it says so in `check` instead of claiming it. */
 export function answerObjection(o: string, c: AnswerCtx): Answer {
+  const clearance=clearanceAdvice(o); if(clearance)return {kind:'clearance',say:clearance,ask:'Which required approval, if any, is still outstanding?',check:'the required reviewers, scope and written approval record',sector:'',risk:'Use the stated approval status; do not infer risk from a department name.'};
   const sellerV = c.voice === 'seller';
   const P = c.P || 'the product';
   const Ps = /s$/i.test(P) ? `${P}'` : `${P}'s`;

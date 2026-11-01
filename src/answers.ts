@@ -1,3 +1,4 @@
+import { clearanceAdvice } from './text-signals.ts';
 import { readSignal, SIGNALS, evidenceLine } from './text-signals.ts';
 // Run 20 round 1b (D92): how an objection, blocker or buyer question is answered, and what each kind of buyer role cares about.
 // Rule B82: no statistic, benchmark or named-company fact. Rule: nothing is said about the user's own product that the user did
@@ -207,6 +208,7 @@ const KINDS: Kind[] = [
 
 /** Answers one objection, blocker or buyer question by its kind, from the user's own words and the sector's usual objections. */
 export function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer {
+  const clearance=clearanceAdvice(text); if(clearance)return {kind:'clearance',how:clearance,confirm:'the required reviewers, scope and written approval record',ask:'Which required approval, if any, is still outstanding?',sector:''};
   const t = text.trim();
   const p = ctx.product || 'your product';
   let sector = '';

@@ -3,10 +3,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
-const decision_limits_ts_1 = require("./decision-limits.js");
 const text_signals_ts_1 = require("./text-signals.js");
+const decision_limits_ts_1 = require("./decision-limits.js");
 const text_signals_ts_2 = require("./text-signals.js");
 const text_signals_ts_3 = require("./text-signals.js");
+const text_signals_ts_4 = require("./text-signals.js");
 /**
  * Revenue Enablement MCP v1.0.0
  * Deal Strategy, ROI Calculators, Account Planning & Sales Enablement
@@ -1023,6 +1024,9 @@ function sectorNotes(v, what = 'all') {
 }
 // The answer pattern for one objection or blocker typed by the user: the sector's pattern when it matches, else a pattern by kind.
 function answerFor(text, v) {
+    const clearance = (0, text_signals_ts_1.clearanceAdvice)(text);
+    if (clearance)
+        return clearance;
     const t = text.toLowerCase();
     if (v) {
         for (const o of v.objections) {
@@ -1091,17 +1095,17 @@ function executeDealStrategyCoach(args) {
     const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
     const P = brief.short || 'your solution';
     const bctx = { product: brief.short, sectorObjections: dealCtx.v?.objections, sectorName: dealCtx.v?.name, model: dealCtx.model };
-    const buyerRead = (0, text_signals_ts_3.signal)(economicBuyer, 'engaged');
-    const incumbentRead = (0, text_signals_ts_3.signal)(competitors, 'incumbent');
-    const blockerRead = (0, text_signals_ts_3.readSignal)(blockers, new RegExp(text_signals_ts_3.SIGNALS.blocker.source + '|' + text_signals_ts_3.SIGNALS.price.source, 'i'), /\b(price|cost|budget|security|legal|procurement|approval|data|integration|offline)\b/i);
+    const buyerRead = (0, text_signals_ts_4.signal)(economicBuyer, 'engaged');
+    const incumbentRead = (0, text_signals_ts_4.signal)(competitors, 'incumbent');
+    const blockerRead = (0, text_signals_ts_4.blockerReading)(blockers);
     const buyerEngaged = args.economic_buyer_engagement ? args.economic_buyer_engagement === 'engaged' : buyerRead.state === 'affirmed';
     const incumbentPresent = args.incumbent_status ? args.incumbent_status === 'present' : incumbentRead.state === 'affirmed';
     const blockerPresent = args.blocker_status ? args.blocker_status === 'present' : blockerRead.state === 'affirmed';
-    const cancelledRead = (0, text_signals_ts_3.signal)([blockers, nextSteps].join('; '), 'cancelled');
+    const cancelledRead = (0, text_signals_ts_4.signal)([blockers, nextSteps].join('; '), 'cancelled');
     const cancelled = args.project_status ? args.project_status === 'cancelled' : cancelledRead.state === 'affirmed';
     if (cancelled)
-        return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project status is cancelled.' : (0, text_signals_ts_3.evidenceLine)('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
-    const compItems = splitItems(competitors).filter(c => (0, text_signals_ts_3.signal)(c, 'incumbent').state !== 'negated');
+        return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project status is cancelled.' : (0, text_signals_ts_4.evidenceLine)('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
+    const compItems = splitItems(competitors).filter(c => (0, text_signals_ts_4.signal)(c, 'incumbent').state !== 'negated');
     // Calculate deal health
     let healthScore = 70; // Start at 70
     let healthFactors = [];
@@ -1168,9 +1172,9 @@ function executeDealStrategyCoach(args) {
         healthScore -= 10;
         healthFactors.push('High risk: Known blockers present');
     }
-    healthFactors.push(args.economic_buyer_engagement ? `Economic buyer fact supplied: ${args.economic_buyer_engagement}; typed fact used.` : (0, text_signals_ts_3.evidenceLine)('Economic buyer text', buyerRead));
-    healthFactors.push(args.incumbent_status ? `Incumbent fact supplied: ${args.incumbent_status}; typed fact used.` : (0, text_signals_ts_3.evidenceLine)('Competition text', incumbentRead));
-    healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : (0, text_signals_ts_3.evidenceLine)('Blocker text', blockerRead));
+    healthFactors.push(args.economic_buyer_engagement ? `Economic buyer fact supplied: ${args.economic_buyer_engagement}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Economic buyer text', buyerRead));
+    healthFactors.push(args.incumbent_status ? `Incumbent fact supplied: ${args.incumbent_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Competition text', incumbentRead));
+    healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Blocker text', blockerRead));
     healthScore = Math.max(0, Math.min(100, healthScore));
     let healthStatus = 'Healthy';
     if (healthScore < 50) {
@@ -1408,7 +1412,7 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
 `;
     }
     if (blockers?.trim() && args.blocker_status !== 'none' && blockerRead.state !== 'negated') {
-        const items = splitItems(blockers);
+        const items = ((0, text_signals_ts_1.clearanceBlocker)(blockers).state === 'absent' ? splitItems(blockers) : (0, text_signals_ts_4.clauses)(blockers)).filter(b => (0, text_signals_ts_4.blockerReading)(b).state !== 'negated');
         specificRecs += `
 ### Blocker Mitigation
 
@@ -2007,7 +2011,7 @@ function executeTool(name, args) {
         const limit = (0, decision_limits_ts_1.decisionLimit)(name, args);
         if (limit.stop)
             return limit.text;
-        return limit.text + (0, text_signals_ts_2.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
+        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
     }
     finally {
         (0, sector_read_ts_1.setYourSector)(undefined);
@@ -2084,7 +2088,7 @@ function executePricingNegotiationGuide(args) {
     const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' }];
     const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
     const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
-    const priceDirection = (0, text_signals_ts_3.hasSignal)(competitorPrice, /\b(above|higher|more expensive|more than)\b/i) ? 'higher' : (0, text_signals_ts_3.hasSignal)(competitorPrice, /\b(below|lower|cheaper|less than)\b/i) ? 'lower' : 'unclear';
+    const priceDirection = (0, text_signals_ts_4.hasSignal)(competitorPrice, /\b(above|higher|more expensive|more than)\b/i) ? 'higher' : (0, text_signals_ts_4.hasSignal)(competitorPrice, /\b(below|lower|cheaper|less than)\b/i) ? 'lower' : 'unclear';
     const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
     const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
     const haveValue = hasValue(args.deal_value) && dealValue > 0;
@@ -2100,7 +2104,7 @@ function executePricingNegotiationGuide(args) {
     const vFirst = (0, dealtext_ts_1.pickProof)(vItems, 1, ['result', 'quote', 'story', 'scale', 'recognition'])[0] || vItems[0];
     const valueQuoted = vFirst ? (0, dealtext_ts_1.proofPhrase)(vFirst).replace(/[.]$/, '') : valueDelivered.trim().replace(/[.]$/, '');
     const valueListText = vItems.length > 1 ? `${vItems.map((x) => `- ${(0, dealtext_ts_1.proofPhrase)(x)}${x.label ? ` (${(0, dealtext_ts_1.proofSource)(x)})` : ''}`).join('\n')}\nThese are claims you gave; check each is current before you quote it.` : '';
-    const valueRisk = (0, text_signals_ts_1.claimRisk)(valueDelivered);
+    const valueRisk = (0, text_signals_ts_2.claimRisk)(valueDelivered);
     const valueReframe = valueRisk.hold ? `The value case is not established: ${valueRisk.reason}. Hold the value-based price defense until the buyer confirms a supported result. Statement read: ${valueDelivered}` : !valueDelivered
         ? `
 "Before we discuss price, let's revisit the value we identified together.${v ? ` What does ${v.metrics[0]} cost you today, and what would it be worth to move it?` : ' What does this problem cost you today, and what would it be worth to fix it?'}${hasValue(args.deal_value) ? ` At ${dealValueText}, how does that compare?` : ''}"
@@ -2111,7 +2115,7 @@ function executePricingNegotiationGuide(args) {
 ${hasValue(args.deal_value) ? `At ${dealValueText}, is that result worth more to you than the ${hasValue(args.discount_requested) ? `${discountRequested}%` : 'discount'} you are asking for?"` : 'What is that result worth to you in a year?" (add the deal value to compare the price with it)'}`;
     // ---- the deal, the leverage and the approver, shown in every scenario ----
     const claimWords = /\b(?:first|only|largest|leading|best|most|#1|unique|fastest|cheapest)\b/i;
-    const leverageLine = (0, text_signals_ts_1.claimRisk)(yourLeverage).hold || /\b(?:no|not|without)\b[^.]{0,30}\b(?:exclusive|unique|advantage|leverage)/i.test(yourLeverage) ? `**Leverage not established:** ${yourLeverage}. Do not use this as a reason to defend the price. Compare the written quotes for the same scope, units, term and service commitments before deciding.` : yourLeverage
+    const leverageLine = (0, text_signals_ts_2.claimRisk)(yourLeverage).hold || /\b(?:no|not|without)\b[^.]{0,30}\b(?:exclusive|unique|advantage|leverage)/i.test(yourLeverage) ? `**Leverage not established:** ${yourLeverage}. Do not use this as a reason to defend the price. Compare the written quotes for the same scope, units, term and service commitments before deciding.` : yourLeverage
         ? `**Your leverage (your input):** ${yourLeverage.trim().replace(/[.]$/, '')}. Use it as a price argument only after the buyer confirms it matters and the evidence supports it. Compare the written quotes for the same scope, units and service commitments.${claimWords.test(yourLeverage) ? ' It contains a claim ("first", "only", "largest", "leading" or similar): keep the source for it to hand, because the buyer will ask.' : ''}`
         : `**Your leverage:** none given. Add your leverage (a capability they need, a timeline, switching costs, an invested champion) and this guide builds the price conversation around it.`;
     const theirLine = buyerLeverage ? `**Their leverage (your input):** ${buyerLeverage.trim().replace(/[.]$/, '')}. Compare the written quote and its scope before deciding whether the value case supports the price.` : '';
@@ -3350,7 +3354,7 @@ function joinAbbreviations(value) {
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
-        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).map(text_signals_ts_1.readerLabel).join(', ')}.`;
+        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).map(text_signals_ts_2.readerLabel).join(', ')}.`;
     }
     const required = tool.inputSchema.required ?? [];
     // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -3358,7 +3362,7 @@ function checkRequiredInputs(name, args) {
     const blankText = (key) => typeof args?.[key] === "string" && args[key].trim() === "" && props[key]?.type === "string" && !Array.isArray(props[key]?.enum);
     const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null || blankText(key));
     if (missing.length > 0) {
-        return `Missing required input for ${(0, text_signals_ts_1.readerLabel)(name)}: ${missing.map(text_signals_ts_1.readerLabel).join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+        return `Missing required input for ${(0, text_signals_ts_2.readerLabel)(name)}: ${missing.map(text_signals_ts_2.readerLabel).join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
     // Decision N2 (run 6) and run 7: schema limits at any depth, choices, money text and single amounts.
     const problems = [];
@@ -3391,7 +3395,7 @@ function checkRequiredInputs(name, args) {
             problems.push(`target close date ${(0, escape_inputs_ts_1.escapeText)(args.target_close_date.trim())} is in the past; use a future date in the format YYYY-MM-DD`);
     }
     if (problems.length > 0) {
-        return `Invalid input for ${(0, text_signals_ts_1.readerLabel)(name)}: ${problems.map(text_signals_ts_1.readerIssue).join("; ")}.`;
+        return `Invalid input for ${(0, text_signals_ts_2.readerLabel)(name)}: ${problems.map(text_signals_ts_2.readerIssue).join("; ")}.`;
     }
     return null;
 }

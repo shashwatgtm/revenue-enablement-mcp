@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+import { clearanceAdvice, clearanceBlocker } from './text-signals.ts';
 import { decisionInputs, decisionHelp, decisionLimit } from './decision-limits.ts';
 import { readerLabel, readerIssue, claimRisk, outcomeReading } from './text-signals.ts';
 import { sectorChoiceNotice } from './text-signals.ts';
-import { signal, readSignal, SIGNALS, evidenceLine, hasSignal } from './text-signals.ts';
+import { signal, readSignal, SIGNALS, evidenceLine, hasSignal, blockerReading, clauses } from './text-signals.ts';
 
 /**
  * Revenue Enablement MCP v1.0.0
@@ -1030,6 +1031,7 @@ function sectorNotes(v: Vertical | null, what: 'committee' | 'metrics' | 'object
 }
 // The answer pattern for one objection or blocker typed by the user: the sector's pattern when it matches, else a pattern by kind.
 function answerFor(text: string, v: Vertical | null): string {
+  const clearance = clearanceAdvice(text); if (clearance) return clearance;
   const t = text.toLowerCase();
   if (v) {
     for (const o of v.objections) {
@@ -1096,7 +1098,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   const bctx: BlockerContext = { product: brief.short, sectorObjections: dealCtx.v?.objections, sectorName: dealCtx.v?.name, model: dealCtx.model };
   const buyerRead = signal(economicBuyer, 'engaged');
   const incumbentRead = signal(competitors, 'incumbent');
-  const blockerRead = readSignal(blockers, new RegExp(SIGNALS.blocker.source+'|'+SIGNALS.price.source,'i'), /\b(price|cost|budget|security|legal|procurement|approval|data|integration|offline)\b/i);
+  const blockerRead = blockerReading(blockers);
   const buyerEngaged = args.economic_buyer_engagement ? args.economic_buyer_engagement === 'engaged' : buyerRead.state === 'affirmed';
   const incumbentPresent = args.incumbent_status ? args.incumbent_status === 'present' : incumbentRead.state === 'affirmed';
   const blockerPresent = args.blocker_status ? args.blocker_status === 'present' : blockerRead.state === 'affirmed';
@@ -1423,7 +1425,7 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
   }
 
   if (blockers?.trim() && args.blocker_status !== 'none' && blockerRead.state !== 'negated') {
-    const items = splitItems(blockers);
+    const items = (clearanceBlocker(blockers).state === 'absent' ? splitItems(blockers) : clauses(blockers)).filter(b => blockerReading(b).state !== 'negated');
     specificRecs += `
 ### Blocker Mitigation
 

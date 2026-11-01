@@ -1,130 +1,33 @@
 import type { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-type Row = Record<string, any>;
-type Schema = {
-  type: string;
-  properties?: Record<string, Schema>;
-  items?: Schema;
-  required?: string[];
-  enum?: string[];
-  minItems?: number;
-  maxItems?: number;
-  maxLength?: number;
-  minimum?: number;
-  additionalProperties?: boolean;
-};
-const text: Schema = { type: "string", maxLength: 20000 };
-const num: Schema = { type: "number", minimum: 0 };
-const choice = (...values: string[]): Schema => ({ ...text, enum: values });
-const object = (
-  properties: Record<string, Schema>,
-  required = Object.keys(properties),
-): Schema => ({
-  type: "object",
-  properties,
-  required,
-  additionalProperties: false,
-});
-const array = (items: Schema, minItems = 0): Schema => ({
-  type: "array",
-  items,
-  minItems,
-  maxItems: 200,
-});
-const count = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
-const tokens = (s: string) => s.match(/\b\d[\d,]*(?:\.\d+)?%?/g) ?? [];
-const iso = (s: string) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-  Number.isFinite(+new Date(s + "T00:00:00Z")) &&
-  new Date(s + "T00:00:00Z").toISOString().slice(0, 10) === s;
-const day = (s: string) =>
-  iso(s)
-    ? new Date(s + "T00:00:00Z").toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      })
-    : "invalid";
-const safeUrl = (s: string) => {
-  try {
-    const u = new URL(s);
-    return ["http:", "https:"].includes(u.protocol) &&
-      !u.username &&
-      !u.password
-      ? u
-      : null;
-  } catch {
-    return null;
-  }
-};
-const escaped = (s: string) =>
-  s
-    .replace(
-      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g,
-      "",
-    )
-    .replace(
-      /[&<>"'|`\[\]]/g,
-      (c) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-          "|": "&#124;",
-          "`": "&#96;",
-          "[": "&#91;",
-          "]": "&#93;",
-        })[c]!,
-    );
-const escapeDeep = (v: any): any =>
-  typeof v === "string"
-    ? escaped(v)
-    : Array.isArray(v)
-      ? v.map(escapeDeep)
-      : v && typeof v === "object"
-        ? Object.fromEntries(
-            Object.entries(v).map(([k, x]) => [escaped(k), escapeDeep(x)]),
-          )
-        : v;
-function validate(s: Schema, v: any, path = "$"): string[] {
-  const issues: string[] = [];
-  if (s.type === "object") {
-    if (!v || typeof v !== "object" || Array.isArray(v))
-      return [`${path}: object required`];
-    for (const k of s.required ?? [])
-      if (
-        !Object.prototype.hasOwnProperty.call(v, k) ||
-        (typeof v[k] === "string" && !v[k].trim())
-      )
-        issues.push(`${path}.${k}: required`);
-    for (const [k, x] of Object.entries(v)) {
-      if (!Object.prototype.hasOwnProperty.call(s.properties ?? {}, k))
-        issues.push(`${path}: unknown property`);
-      else issues.push(...validate(s.properties![k], x, `${path}.${k}`));
-    }
-  } else if (s.type === "array") {
-    if (!Array.isArray(v)) return [`${path}: array required`];
-    if (v.length < (s.minItems ?? 0) || v.length > (s.maxItems ?? 200))
-      return [`${path}: row count outside allowed bounds`];
-    v.forEach((x, i) =>
-      issues.push(...validate(s.items!, x, `${path}[${i + 1}]`)),
-    );
-  } else if (s.type === "string") {
-    if (typeof v !== "string") return [`${path}: text required`];
-    if (v.length > (s.maxLength ?? 20000))
-      issues.push(`${path}: text too long`);
-    if (s.enum && !s.enum.includes(v))
-      issues.push(`${path}: unsupported choice`);
-  } else if (s.type === "number") {
-    if (
-      typeof v !== "number" ||
-      !Number.isFinite(v) ||
-      (s.minimum !== undefined && v < s.minimum)
-    )
-      issues.push(`${path}: finite number in range required`);
-  }
-  return issues;
-}
+import { escapeText } from "./escape-inputs.js";
+import {
+  type Row,
+  type Schema,
+  text,
+  num,
+  choice,
+  object,
+  array,
+  count,
+  iso,
+  day,
+  safeUrl,
+  validate,
+  evidence,
+  evidenceIssues,
+  unique,
+  report,
+  claimTokens,
+  missingClaims,
+  normalizeQuote,
+  canonicalUrl,
+  hasDash,
+  superlative,
+  placeholder,
+  parseEmails,
+  parseNewsletter,
+  readerText,
+} from "./checker-common.js";
 const registry: Record<string, { tool: Tool; run: (a: Row) => Row }> = {};
 function define(
   name: string,
@@ -159,105 +62,259 @@ function define(
     run,
   };
 }
-const evidence = object(
-  {
-    id: text,
-    claim: text,
-    source: text,
-    source_date: text,
-    excerpt: text,
-    status: choice("user_supplied", "unverified", "conflicting"),
-  },
-  ["id", "claim", "source", "source_date", "excerpt", "status"],
-);
-const evidenceIssues = (rows: Row[]) =>
-  rows.flatMap((r, i) => {
-    const out: string[] = [];
-    if (!safeUrl(r.source))
-      out.push(`Evidence ${i + 1}: source must be an HTTP(S) URL`);
-    if (!iso(r.source_date)) out.push(`Evidence ${i + 1}: source date invalid`);
-    if (r.status !== "user_supplied")
-      out.push(`Evidence ${i + 1}: ${r.status}`);
-    if (!r.excerpt.trim()) out.push(`Evidence ${i + 1}: excerpt missing`);
-    return out;
-  });
-const unique = (rows: Row[], key: string) => {
-  const seen = new Set<string>();
-  return rows.flatMap((r, i) => {
-    const k = String(r[key]).trim().toLowerCase();
-    if (seen.has(k)) return [`Row ${i + 1}: duplicate ${key}`];
-    seen.add(k);
-    return [];
-  });
-};
-const report = (issues: string[], data: Row, limitations: string[]) => ({
-  status: issues.length ? "CHECKS_FOUND" : "NO_MECHANICAL_ISSUES",
-  issues,
-  ...data,
-  limitations: [
-    "Only supplied data was checked. No page was fetched, model called, message sent or truth independently verified.",
-    ...limitations,
-  ],
-});
-
 define(
   "competitive_evidence_check",
-  "Check a supplied comparison for evidence gaps, duplicate criteria, unresolved ownership and unsupported verdicts. Does not research or write attacks.",
-  object({
-    relationship: choice(
-      "unrelated_confirmed_by_user",
-      "same_group",
-      "unknown",
-    ),
-    criteria: array(
-      object({
-        criterion: text,
-        buyer_need: text,
-        our_evidence_id: text,
-        alternative_evidence_id: text,
-        verdict: choice("advantage", "parity", "gap", "unknown"),
-      }),
-      1,
-    ),
-    evidence: array(evidence),
-  }),
+  "Check supplied comparison evidence, source status, number/unit matches, missing sides, same-source pairs and source recency. Ask for the review date; never invent evidence or call a pasted source verified.",
+  object(
+    {
+      relationship: choice(
+        "unrelated_confirmed_by_user",
+        "same_group",
+        "unknown",
+      ),
+      as_of: text,
+      stale_after_days: num,
+      criteria: array(
+        object(
+          {
+            criterion: text,
+            buyer_need: text,
+            our_evidence_id: text,
+            alternative_evidence_id: text,
+            verdict: choice("advantage", "parity", "gap", "unknown"),
+          },
+          ["criterion", "buyer_need", "verdict"],
+        ),
+        1,
+      ),
+      evidence: array(evidence),
+    },
+    ["relationship", "as_of", "criteria", "evidence"],
+  ),
   (a) => {
-    const issues = evidenceIssues(a.evidence);
+    const window = a.stale_after_days ?? 90,
+      issues = evidenceIssues(a.evidence, a.as_of, window);
+    if (!iso(a.as_of)) issues.push("Review date invalid; use YYYY-MM-DD.");
     issues.push(
       ...unique(a.evidence, "id"),
       ...unique(a.criteria, "criterion"),
     );
-    const ids = new Map(a.evidence.map((e: Row) => [e.id, e]));
     if (a.relationship !== "unrelated_confirmed_by_user")
       issues.push(
         a.relationship === "same_group"
           ? "Same-group relationship: targeted competitive use is held."
           : "Ownership relationship is unresolved.",
       );
+    const ids = new Map<string, Row>(a.evidence.map((e: Row) => [e.id, e]));
     const matrix = a.criteria.map((c: Row, i: number) => {
-      const missing = [c.our_evidence_id, c.alternative_evidence_id].filter(
-        (id) => !ids.has(id),
-      );
-      if (missing.length)
-        issues.push(`Criterion ${i + 1}: missing linked evidence`);
+      const ours = ids.get(c.our_evidence_id),
+        other = ids.get(c.alternative_evidence_id),
+        missing = !ours || !other;
+      if (missing)
+        issues.push(
+          "Criterion " +
+            (i + 1) +
+            ": missing linked evidence; an unknown side stays unknown.",
+        );
+      if (ours && other && c.our_evidence_id === c.alternative_evidence_id)
+        issues.push(
+          "Criterion " +
+            (i + 1) +
+            ": same evidence ID is cited for both sides.",
+        );
       if (
         c.verdict !== "unknown" &&
-        [c.our_evidence_id, c.alternative_evidence_id].some((id) => {
-          const e = ids.get(id) as Row | undefined;
-          return !e || e.status !== "user_supplied";
-        })
+        (!ours ||
+          !other ||
+          ours.status !== "verified_opened" ||
+          other.status !== "verified_opened")
       )
         issues.push(
-          `Criterion ${i + 1}: verdict exceeds the supplied evidence status`,
+          "Criterion " +
+            (i + 1) +
+            ": verdict exceeds the supplied evidence status",
         );
-      return { ...c, evidenceLinksPresent: !missing.length };
+      if (c.verdict === "advantage" && ours && other) {
+        const left = claimTokens(ours.excerpt, true),
+          right = claimTokens(other.excerpt, true);
+        if (
+          left.some((l) =>
+            right.some((r) => l.unit && l.unit === r.unit && l.value < r.value),
+          )
+        )
+          issues.push(
+            "Criterion " +
+              (i + 1) +
+              ": claimed advantage conflicts with a lower comparable number; confirm which direction is better.",
+          );
+      }
+      return { ...c, evidenceLinksPresent: !missing };
     });
-    return report(issues, { matrix, relationship: a.relationship }, [
-      "A supplied verdict remains the user assessment. Evidence presence does not establish superiority, current pricing, ownership or a factual weakness.",
-    ]);
+    return report(
+      issues,
+      {
+        matrix,
+        relationship: a.relationship,
+        asOf: a.as_of,
+        staleAfterDays: window,
+        windowSource:
+          a.stale_after_days === undefined
+            ? "example review window"
+            : "supplied",
+      },
+      [
+        "Interview/document dates may be month-only; recency uses the end of that month and future checks use its start.",
+        "A supplied verdict is not a proven advantage; direction, scope, pricing and ownership need human review.",
+      ],
+    );
   },
 );
 
+const sequenceDefaults: Record<string, number[] | null> = {
+  cold_outreach: [1, 3, 7, 12, 17],
+  warm_follow_up: [0, 3, 7],
+  post_demo: [0, 2, 5, 10],
+  proposal_follow_up: [1, 3, 7, 12],
+  referral_request: [1, 4, 9],
+  re_engagement: null,
+};
+define(
+  "sales_sequence_check",
+  "Check an authored sequence pasted with Subject: headings or supplied as email rows. Uses the skill's six sequence types and labelled example send days, preserves first-send gaps, and checks dates, repeated sentences, misleading subjects and number/unit evidence. Ask for missing scheduling facts. Sends nothing.",
+  object(
+    {
+      type: choice(...Object.keys(sequenceDefaults)),
+      start: text,
+      anchor: choice("trigger", "first_send"),
+      days: array(num, 1),
+      pasted_text: text,
+      emails: array(
+        object(
+          { subject: text, body: text, ask: text, evidence_ids: array(text) },
+          ["subject", "body", "evidence_ids"],
+        ),
+        1,
+      ),
+      evidence: array(evidence),
+    },
+    ["type", "start", "anchor", "emails", "evidence"],
+  ),
+  (a) => {
+    const issues = evidenceIssues(a.evidence),
+      defaults = sequenceDefaults[a.type],
+      days: number[] = a.days ?? defaults?.slice(0, a.emails.length) ?? [];
+    if (!iso(a.start)) issues.push("Start date invalid");
+    if (!days.length)
+      issues.push(
+        "This sequence type has no example default; supply day offsets.",
+      );
+    if (days.some((n: number) => !Number.isInteger(n) || n > 3660))
+      issues.push("Days must be whole offsets within ten years");
+    if (days.some((n: number, i: number) => i > 0 && n <= days[i - 1]))
+      issues.push("Day offsets must be strictly increasing");
+    if (days.length !== a.emails.length)
+      issues.push("Email count differs from send-day count");
+    const ids = new Map<string, Row>(a.evidence.map((e: Row) => [e.id, e])),
+      asks = new Set<string>(),
+      sentences = new Set<string>();
+    a.emails.forEach((e: Row, i: number) => {
+      const label = "Email " + (i + 1) + ": ",
+        ask = (e.ask ?? "").trim().toLowerCase();
+      if (!ask)
+        issues.push(
+          label + "ask not separately confirmed; review the pasted question.",
+        );
+      else if (asks.has(ask)) issues.push(label + "repeated ask");
+      if (ask) asks.add(ask);
+      if (/^\s*(re|fw|fwd)\s*:/i.test(e.subject))
+        issues.push(label + "misleading reply or forward subject");
+      if (
+        /[!]/.test(e.subject + " " + e.body) ||
+        hasDash(e.subject + " " + e.body)
+      )
+        issues.push(label + "exclamation mark or dash");
+      const linked = e.evidence_ids.map((id: string) => ids.get(id));
+      if (linked.some((e: Row | undefined) => !e))
+        issues.push(label + "unknown evidence reference");
+      if (
+        missingClaims(
+          e.body,
+          linked
+            .filter(Boolean)
+            .map((e: Row) => e.excerpt)
+            .join("\n"),
+          true,
+        ).length
+      )
+        issues.push(
+          label +
+            "numeric claim has no matching number and unit in linked evidence",
+        );
+      const local = new Set<string>();
+      for (const sentence of e.body
+        .split(/(?<=[.!?])\s+/)
+        .map(normalizeQuote)
+        .filter((s: string) => count(s) >= 4)) {
+        const key = sentence.toLowerCase();
+        if (sentences.has(key))
+          issues.push(label + "repeated sentence from another email");
+        local.add(key);
+      }
+      local.forEach((x) => sentences.add(x));
+    });
+    let prior = -Infinity,
+      base = iso(a.start) ? new Date(a.start + "T00:00:00Z") : null,
+      firstMoved = false;
+    if (base && a.anchor === "first_send") {
+      const original = +base;
+      while (base.getUTCDay() % 6 === 0) base.setUTCDate(base.getUTCDate() + 1);
+      firstMoved = +base !== original;
+      base.setUTCDate(base.getUTCDate() - (days[0] ?? 0));
+    }
+    const dates =
+      base &&
+      days.length &&
+      !issues.some((x) => /Day offsets|Days must/.test(x))
+        ? days.map((offset, i) => {
+            const d = new Date(+base!);
+            d.setUTCDate(d.getUTCDate() + offset);
+            const requested =
+              i === 0 && firstMoved ? a.start : d.toISOString().slice(0, 10);
+            while (d.getUTCDay() % 6 === 0 || +d <= prior)
+              d.setUTCDate(d.getUTCDate() + 1);
+            prior = +d;
+            return {
+              offset,
+              requested,
+              scheduled: d.toISOString().slice(0, 10),
+              weekday: day(d.toISOString().slice(0, 10)),
+              moved: requested !== d.toISOString().slice(0, 10),
+            };
+          })
+        : [];
+    const thin = a.emails.every((e: Row) => count(e.body) < 5);
+    if (thin)
+      issues.unshift("Too little email text to check a substantive sequence.");
+    return report(
+      issues,
+      {
+        emailCount: a.emails.length,
+        dates,
+        days,
+        daysSource: a.days ? "your value" : "example default",
+        inputMode: a.pasted_text ? "pasted text" : "email rows",
+        counts: a.emails.map((e: Row) => ({
+          subjectCharacters: [...e.subject].length,
+          bodyWords: count(e.body),
+        })),
+      },
+      [
+        "Example send days are not benchmarks. UTC calendar dates, no holiday or timezone scheduling. Deal Execution release remains held.",
+      ],
+      thin,
+    );
+  },
+);
 define(
   "proposal_structure_check",
   "Check a proposal outline for buyer-problem links, proof references, commercial and implementation sections, next actions and supplied brand tokens.",
@@ -330,123 +387,117 @@ define(
   },
 );
 
-define(
-  "sales_sequence_check",
-  "Check an authored sales sequence against caller-supplied day offsets, weekend scheduling, distinct asks, subject honesty and proof references. No messages are sent.",
-  object({
-    type: choice(
-      "cold_outreach",
-      "post_demo",
-      "proposal_followup",
-      "re_engagement",
-    ),
-    start: text,
-    anchor: choice("trigger", "first_send"),
-    days: array(num, 1),
-    emails: array(
-      object({
-        subject: text,
-        body: text,
-        ask: text,
-        evidence_ids: array(text),
-      }),
-      1,
-    ),
-    evidence: array(evidence),
-  }),
-  (a) => {
-    const issues = evidenceIssues(a.evidence);
-    if (!iso(a.start)) issues.push("Start date invalid");
-    if (a.days.some((n: number) => !Number.isInteger(n) || n > 3660))
-      issues.push("Days must be whole offsets within ten years");
-    if (a.days.some((n: number, i: number) => i > 0 && n <= a.days[i - 1]))
-      issues.push("Day offsets must be strictly increasing");
-    if (a.days.length !== a.emails.length)
-      issues.push("Email count differs from send-day count");
-    const ids = new Set(a.evidence.map((e: Row) => e.id));
-    const asks = new Set<string>();
-    a.emails.forEach((e: Row, i: number) => {
-      const ask = e.ask.trim().toLowerCase();
-      if (asks.has(ask)) issues.push(`Email ${i + 1}: repeated ask`);
-      asks.add(ask);
-      if (/^\s*(re|fwd)\s*:/i.test(e.subject))
-        issues.push(`Email ${i + 1}: misleading reply or forward subject`);
-      if (/[!\u2013\u2014]/u.test(e.subject + " " + e.body))
-        issues.push(`Email ${i + 1}: exclamation mark or long dash`);
-      if (e.evidence_ids.some((id: string) => !ids.has(id)))
-        issues.push(`Email ${i + 1}: unknown evidence reference`);
-      if (tokens(e.body).length && !e.evidence_ids.length)
-        issues.push(`Email ${i + 1}: numeric claim has no evidence link`);
-    });
-    let prior = -Infinity;
-    const dates =
-      iso(a.start) && !issues.some((x) => /Day offsets|Days must/.test(x))
-        ? a.days.map((offset: number) => {
-            const d = new Date(a.start + "T00:00:00Z");
-            d.setUTCDate(
-              d.getUTCDate() +
-                offset -
-                (a.anchor === "first_send" ? a.days[0] : 0),
-            );
-            const requested = d.toISOString().slice(0, 10);
-            while (d.getUTCDay() % 6 === 0 || +d <= prior)
-              d.setUTCDate(d.getUTCDate() + 1);
-            prior = +d;
-            return {
-              offset,
-              requested,
-              scheduled: d.toISOString().slice(0, 10),
-              weekday: day(d.toISOString().slice(0, 10)),
-              moved: requested !== d.toISOString().slice(0, 10),
-            };
-          })
-        : [];
-    return report(
-      issues,
-      {
-        emailCount: a.emails.length,
-        dates,
-        counts: a.emails.map((e: Row) => ({
-          subjectCharacters: [...e.subject].length,
-          bodyWords: count(e.body),
-        })),
-      },
-      [
-        "All day offsets are caller supplied, not benchmarks. Dates use UTC calendar dates and weekend adjustment, with no holiday or timezone scheduling. No semantic truth check or send action occurs. Deal Execution release remains held.",
-      ],
-    );
-  },
+// The published schema describes either a paste or rows; validation retains all
+// row requirements after the deterministic paste adapter has run.
+const validationSchemas = new Map(
+  Object.entries(registry).map(([name, entry]) => [
+    name,
+    entry.tool.inputSchema as Schema,
+  ]),
 );
-
-export const waveTools: Tool[] = Object.values(registry).map((x) => x.tool);
+for (const [name, rows, required] of [
+  ["sales_sequence_check", "emails", ["type", "start", "anchor"]],
+  ["launch_copy_check", "assets", []],
+  ["newsletter_source_check", "items", []],
+] as [string, string, string[]][]) {
+  const entry = registry[name];
+  if (entry)
+    entry.tool.inputSchema = {
+      ...entry.tool.inputSchema,
+      required,
+      anyOf: [
+        { required: ["pasted_text"] },
+        { required: validationSchemas.get(name)!.required },
+      ],
+    };
+}
+// Held definitions stay in source for review but cannot be listed or called.
+const held = new Set(["prompt_structure_check", "proposal_structure_check"]);
+export const waveTools: Tool[] = Object.values(registry)
+  .map((x) => x.tool)
+  .filter((t) => !held.has(t.name));
 export const isWaveTool = (name: string) =>
-  Object.prototype.hasOwnProperty.call(registry, name);
+  !held.has(name) && Object.prototype.hasOwnProperty.call(registry, name);
 export function callWaveTool(name: string, args: unknown): CallToolResult {
   if (!isWaveTool(name))
     return {
       isError: true,
-      content: [{ type: "text", text: "Unknown wave tool." }],
+      content: [{ type: "text", text: "Unknown or held wave tool." }],
     };
-  const entry = registry[name];
-  const schema = entry.tool.inputSchema as Schema;
-  const record = args as Row | undefined;
-  const missing = (schema.required ?? []).filter(
-    (k) =>
-      schema.properties?.[k].type === "string" &&
-      !schema.properties[k].enum &&
-      (!record || typeof record[k] !== "string" || !record[k].trim()),
-  );
-  if (missing.length)
+  const entry = registry[name],
+    schema = validationSchemas.get(name)!;
+  let record = args as Row;
+  let effective = schema;
+  const provided = validate({ ...schema, required: [] }, args);
+  if (provided.length)
     return {
       isError: true,
       content: [
         {
           type: "text",
-          text: `Missing required input for ${name}: ${missing.join(", ")}. INVALID_INPUT: provide the missing text fields.`,
+          text: JSON.stringify(
+            { status: "INVALID_INPUT", issues: provided },
+            null,
+            2,
+          ),
         },
       ],
     };
-  const problems = validate(schema, args);
+  if (record?.pasted_text) {
+    record = { ...record };
+    const pasted = record.pasted_text as string;
+    if (name === "sales_sequence_check") {
+      if (record.emails)
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "INVALID_INPUT: supply pasted text or email rows, not both.",
+            },
+          ],
+        };
+      record.emails = parseEmails(pasted);
+      record.evidence ??= [];
+    }
+    if (name === "launch_copy_check") {
+      if (record.assets)
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "INVALID_INPUT: supply pasted text or assets, not both.",
+            },
+          ],
+        };
+      record.assets = pasted
+        .split(/\r?\n/)
+        .filter((s) => s.trim())
+        .map((text, i) => ({ label: "Line " + (i + 1), text }));
+      record.claims ??= [];
+      record.dates ??= [];
+      record.quotes ??= [];
+    }
+    if (name === "newsletter_source_check") {
+      if (record.items)
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "INVALID_INPUT: supply pasted text or story rows, not both.",
+            },
+          ],
+        };
+      record.items = parseNewsletter(pasted);
+      record.cutoff ??= "";
+      record.issue_date ??= "";
+      record.lead_index ??= 0;
+      effective = { ...schema, required: ["items"] };
+    }
+  }
+  const problems = validate(effective, record);
   if (problems.length)
     return {
       isError: true,
@@ -462,14 +513,9 @@ export function callWaveTool(name: string, args: unknown): CallToolResult {
       ],
     };
   try {
-    const result = escapeDeep({
-      ...entry.run(args as Row),
-      sellerSector:
-        (args as Row).your_sector ??
-        "not supplied; no sector inference applied",
-    });
+    const result = entry.run(record);
     return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      content: [{ type: "text", text: readerText(result, escapeText) }],
       structuredContent: result,
     };
   } catch {

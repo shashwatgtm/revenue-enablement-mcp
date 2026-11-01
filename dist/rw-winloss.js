@@ -267,6 +267,11 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
             const rw = wordsOf(reason);
             const near = v ? v.objections.map((o) => ({ o, n: wordsOf(o.objection).filter((w) => rw.includes(w)).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 1).map((x) => x.o) : [];
             const readings = [];
+            // Read absence of an accountable person, not an inferred product defect.
+            const ownershipGap = reason.split(/[.;!?]|\bbut\b|\bwhile\b/i).some(clause => /\b(?:no|without|missing|unassigned)\s+(?:(?:clear|named|decision|executive|internal|accountable)\s+)*(?:owner|sponsor)\b|\b(?:owner|sponsor)\b.{0,35}\b(?:not|never)\s+(?:(?:been|yet|clearly)\s+)*(?:assigned|appointed|named|identified)\b|\b(?:owner|sponsor)\b.{0,20}\b(?:unassigned|missing|absent)\b/i.test(clause)
+                && !/\b(?:not|no longer)\s+(?:missing|unassigned|absent)|\b(?:no|without)\s+(?:ownership|sponsorship)\s+gap/i.test(clause));
+            if (ownershipGap)
+                readings.push('Ownership gap: the reported reason says no accountable owner or sponsor was assigned. This is a reported reason, not a proven root cause. Ask who could have owned the decision and what prevented someone from being assigned.');
             // the alternatives the reason names
             for (const a of weighed)
                 if (shares(reason, a.text) >= 1 || r.includes(a.handle.toLowerCase()))
@@ -297,7 +302,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
                 readings.push(`A bundle loss: the buyer preferred one vendor for more than ${name} covers. Ask whether ${name} could have partnered for the missing part, or qualified out earlier.`);
             if (/price|cost|budget|expensive|cheaper|discount/.test(r))
                 readings.push(`Price or budget: ${hasV ? `at ${D.money(dealValue)} the buyer had to justify the spend` : 'the buyer had to justify the spend'}${weighed.length ? ` against ${(0, rw_common_ts_1.andList)(handles.slice(0, 2), 'or')}` : ''}. Check whether the value case was agreed in the buyer's own numbers before price came up${deciders.length ? `, and whether ${refs(deciders)} saw it` : ''}.`);
-            if (/feature|product|capabilit|missing|gap|integrat/.test(r))
+            if (/feature|product|capabilit|integrat/.test(r) || (!ownershipGap && /missing|gap/.test(r)))
                 readings.push('A product or fit gap: decide whether the gap was real or a demonstration problem, and whether the requirement could have been shaped earlier.');
             if (/timing|priority|later|next year|freeze|no decision|season|quarter|migration/.test(r))
                 readings.push(`Timing or priority: the reason carries a timing element${/season|quarter|freeze/.test(r) ? ' (the calendar of the buyer)' : ''}. Look for the event that would have made this urgent, and whether the status quo was acceptable to them${cycle ? `; the deal ran ${days(cycle)}, so ask what changed in that time` : ''}.`);

@@ -12,3 +12,12 @@ for(const v of verticals)for(const name of Object.keys(fixtures))test('R7 '+v+' 
  for(const text of ['Price is too high','It is more money than we planned to commit']){const t=await call(name,{...fixtures[name],your_solution:v+' workflow vendor',[field]:name==='account_plan_builder'?'Objections: '+text:text});assert.match(t,price)}
  const t=await call(name,{...fixtures[name],your_solution:v+' workflow vendor',[field]:name==='account_plan_builder'?'Objections: Price is not an issue for us':'Price is not an issue for us'});assert.doesNotMatch(t,price);
 });
+
+for(const v of verticals)for(const name of Object.keys(fixtures))for(const [label,exact,same,opposite,signature]of [
+ ['security','Security review is required','Customer records leaked outside the company','Security is not an issue for us',/where the data is stored and processed/],
+ ['offline','We need offline support','The app must work while trucks lose coverage','We do not need offline support',/what waits until the (?:device|phone or device) reconnects/]
+])test('R7 '+v+' '+name+' '+label+' triad',async()=>{
+ const field=name==='deal_strategy_coach'||name==='mutual_action_plan_generator'?'blockers':name==='account_plan_builder'?'account_notes':'known_objections';
+ for(const text of [exact,same]){const t=await call(name,{...fixtures[name],your_solution:v+' workflow vendor',[field]:name==='account_plan_builder'?'Objections: '+text:text});assert.match(t,signature)}
+ const t=await call(name,{...fixtures[name],your_solution:v+' workflow vendor',[field]:name==='account_plan_builder'?'Objections: '+opposite:opposite});assert.doesNotMatch(t,signature);
+});

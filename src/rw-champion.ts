@@ -133,7 +133,14 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const outClaims: Item[] = outs.filter((o) => o.label || isStat(o.text)).map((o) => ({ text: o.text, label: o.label || 'a claim you gave' }));
   const claimy = outClaims.length > 0;
   const alts = d.splitItems(competitiveContext).map((x) => x.replace(/[.]+$/, ''));
-  const bud = budgetContext.replace(/[.]+$/, '');
+  const budgetClauses = budgetContext.split(/[;\n.]/).map(x => x.trim()).filter(Boolean);
+  const affirmativeBudget = budgetClauses.filter(x => !/\b(?:not|no|unknown|unconfirmed|tentative|proposed|pending)\b/i.test(x));
+  const approvedCost = affirmativeBudget.find(x => /\b(?:approved|authori[sz]ed|confirmed)\b/i.test(x) && /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(x));
+  const bud = approvedCost?.match(/(?:[$€£]\s*[\d,]+(?:\.\d+)?|\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?)/i)?.[0] ?? '';
+  const authority = affirmativeBudget.map(x => x.match(/\b(?:decision owner|approval owner|budget authority)\s*:\s*(.+)/i)?.[1]).find(Boolean) ?? '';
+  const canRecommend = Boolean(bud && authority);
+  const request = canRecommend ? 'recommend that we approve' : 'request validation of the business case for';
+  const budgetReview = `## Business case confirmation\n\n| Item | Status |\n| --- | --- |\n| Approved cost | ${bud || 'Unknown; confirm the approved amount and its source'} |\n| Value | ${keyValuePoints ? 'Supplied claims to validate against a customer baseline, period and full costs' : 'Unknown; establish the value case'} |\n| Decision owner and authority | ${authority || 'Unknown; identify who can authorize this purchase'} |\n\nBudget timing and context, as supplied: ${budgetContext || 'Unknown'}.\n\n${canRecommend ? 'The named owner must still confirm the value evidence and scope before approving a purchase.' : 'Request a business case review. Do not recommend purchase approval until cost, value and decision authority are confirmed.'}`;
   const urg = urgencyDrivers.replace(/[.]+$/, '');
   const wins = championWins.replace(/[.]+$/, '');
   const typed = d.splitItems(knownObjections).map((x) => x.replace(/^"|"$/g, '').trim()).filter(Boolean);
@@ -162,7 +169,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const steps = modernising && ctx.model === 'services' && /service levels?|sla\b/i.test(stepsAll[0] || '') ? [`agree the first application or workload to modernise, the measure that shows it worked, and the scope of the service`, ...stepsAll.slice(1)] : stepsAll;
   const stepFirst = low(steps[0] || 'agree the scope, the owners and the measure');
   const stepLast = low(steps[steps.length - 1] || 'review the result and decide the wider rollout');
-  const askLine = `${bud ? `approve ${P} at ${bud}` : `approve ${P}`} and the first step: ${stepFirst}`;
+  const askLine = `${canRecommend ? `approve ${P} at ${bud}` : `validate the business case for ${P}`} and the first step: ${stepFirst}`;
   const aim = outs[0] ? low(outs[0].head) : '';
   const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
   const quotedReturn = outClaims.find((c) => /\b(?:roi|return on investment|payback|return)\b/i.test(c.text));
@@ -214,7 +221,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   if (!outs.length) sharpen.push('key value points (it would state what the reader should expect; now no outcome is stated)');
   if (!typed.length) sharpen.push(fromSector ? `known objections (it would replace the usual questions of ${v!.name} with the ones you expect)` : 'known objections (it would add an answer to each; none is answered now)');
   if (!alts.length) sharpen.push('competitive context (it would name the alternatives and the way of working today)');
-  if (!bud) sharpen.push('budget context (it would put a price in the asset; now none is stated)');
+  if (!bud) sharpen.push('approved amount and decision authority in the budget context (it would allow a purchase recommendation after the value case is validated)');
   if (!urg) sharpen.push('urgency drivers (it would give a reason to act now and a date; now none is set)');
   if (!wins) sharpen.push('champion wins (it would add your own stake as a note to you; now there is none)');
   if (product.caps.length < 2) sharpen.push('your solution (list the parts of the product with a few words on what each does; it would let the answers point to the part that fits each question)');
@@ -224,10 +231,10 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     executive_brief: () => [
       head(`Executive Brief for ${d.cap(target)}`),
       `${memoLines(`Re: Recommendation on ${P}`)}`,
-      `## Recommendation\n\nI recommend that we go ahead with ${P}.${bud ? ` The cost is ${bud}.` : ''}${urg ? ` The timing: ${urg}.` : ''}`,
+      `## Recommendation\n\nI ${request} ${P}.${bud ? ` The cost is ${bud}.` : ''}${urg ? ` The timing: ${urg}.` : ''}`,
       overview ? `## What it is\n\n${overview}` : '',
       outs.length ? `## What we expect to get\n\n${outBullets}${claimNote ? `\n\n${claimNote}` : ''}` : '',
-      alts.length ? `## What else we looked at\n\n${altsSentence}${aim ? ` I recommend ${P}; the point that decides it is ${aim}.` : ''}` : '',
+      alts.length ? `## What else we looked at\n\n${altsSentence}${aim ? ` I ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}; the point that decides it is ${aim}.` : ''}` : '',
       bud ? `## What it costs\n\n${bud}. ${noReturn}` : '',
       answers.length ? `## Questions you may have\n\n${qa(false)}` : "",
       `## Decision requested\n\nI am asking you to ${askLine}.`,
@@ -237,7 +244,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     internal_business_case: () => [
       head('Internal Business Case'),
       memoLines(`Subject: Business case for ${P}`),
-      `I recommend that we approve ${P}${bud ? `, at ${bud}` : ''}.${aim ? ` The aim: ${aim}.` : ''}${urg ? ` The timing: ${urg}.` : ''} The rest of this note says what it is, what we expect to get, what it costs, what could go wrong and how I would start.`,
+      `I ${request} ${P}${bud ? `, at ${bud}` : ''}.${aim ? ` The aim: ${aim}.` : ''}${urg ? ` The timing: ${urg}.` : ''} The rest of this note says what it is, what we expect to get, what it costs, what could go wrong and how I would start.`,
       alts.length ? `## Where we are today\n\n${alts.length > 1 ? `The options in front of us are ${altList}.` : `The option in front of us is ${altList}.`}${aim ? ` What we want instead: ${aim}.` : ''}` : '',
       `## What we propose\n\n${overview || `We are proposing ${P}.`}`,
       outs.length ? `## What we expect to get\n\n${outBullets}${claimNote ? `\n\n${claimNote}` : ''}` : '',
@@ -275,13 +282,13 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
       head(`Email to ${target}`),
       `Subject: ${P}: a recommendation for your decision`,
       `Hi,`,
-      `I am writing to recommend ${P}${kind ? `, ${/^(?:a|an|the)\s/i.test(kind) ? low(kind) : /^[a-z]/.test(kind) ? aAn(kind) : `described as ${kind}`}` : ''}${bud ? `, at ${bud}` : ''}.${urg ? ` The timing matters: ${urg}.` : ''}`,
+      `I am writing to ${canRecommend ? 'recommend' : 'request a business case review for'} ${P}${kind ? `, ${/^(?:a|an|the)\s/i.test(kind) ? low(kind) : /^[a-z]/.test(kind) ? aAn(kind) : `described as ${kind}`}` : ''}${bud ? `, at ${bud}` : ''}.${urg ? ` The timing matters: ${urg}.` : ''}`,
       outs.length ? `What we expect to get:\n${outBullets}${claimNote ? `\n\n${claimNote}` : ''}` : '',
-      alts.length ? `${altsSentence}${aim ? ` I recommend ${P}; the point that decides it is ${aim}.` : ''}` : '',
+      alts.length ? `${altsSentence}${aim ? ` I ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}; the point that decides it is ${aim}.` : ''}` : '',
       answers.length ? `Questions I expect, with short answers:\n${answers.map((x) => `- ${x.o} ${x.a.say.split(/(?<=[.?!])\s+(?=[A-Z])/)[0]}`).join('\n')}` : '',
       `Could we take 15 minutes to go through it? I would ask you to ${askLine}.`,
       `Thanks,${sign ? `\n${sign}${championName && championRole ? `\n${championRole}` : ''}` : ''}`,
-      `## Short version\n\nHi,\n\nI recommend ${P}${bud ? `, at ${bud}` : ''}.${aim ? ` The aim: ${aim}.` : ''} Could I have 15 minutes with you?${urg ? ` The timing: ${urg}.` : ''}${sign ? `\n\n${sign}` : ''}`,
+      `## Short version\n\nHi,\n\nI ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}${bud ? `, at ${bud}` : ''}.${aim ? ` The aim: ${aim}.` : ''} Could I have 15 minutes with you?${urg ? ` The timing: ${urg}.` : ''}${sign ? `\n\n${sign}` : ''}`,
       checks, stake,
     ].filter(Boolean).join('\n\n'),
 
@@ -303,7 +310,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
     competitive_comparison: () => [
       head('Competitive Comparison'),
       `${P} against the alternatives\nPrepared for: ${target}${who ? `\nBy: ${who}` : ''}`,
-      `## Summary\n\n${alts.length ? `${altsSentence} ` : 'No alternative was named, so none is compared. '}${aim ? `I recommend ${P}; the point that decides it is ${aim}.` : `I recommend ${P}.`}`,
+      `## Summary\n\n${alts.length ? `${altsSentence} ` : 'No alternative was named, so none is compared. '}${aim ? `I ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}; the point that decides it is ${aim}.` : `I ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}.`}`,
       alts.length ? `## How each option stands\n\n${(() => {
         const pool = outs.filter((o) => !o.label && !isStat(o.text)).length ? outs.filter((o) => !o.label && !isStat(o.text)) : outs;
         const used = new Set<Outcome>();
@@ -341,7 +348,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
         ].join('\n\n');
       })()}` : '',
       `## The risk of doing nothing\n\n${alts.length ? `The options in front of us today are ${altList}. ` : ''}${v ? `The numbers to put against staying as we are: ${joinList(v.metrics.slice(0, 3))}.` : ''}${urg ? ` The timing: ${urg}.` : ''}`,
-      `## Conclusion\n\nI recommend that we go ahead with ${P}${answers.length ? `, on the condition that the pilot settles the points above` : ''}.${bud ? ` The cost is ${bud}.` : ''}`,
+      `## Conclusion\n\nI ${request} ${P}${answers.length ? `, on the condition that the pilot settles the points above` : ''}.${bud ? ` The cost is ${bud}.` : ''}`,
       stake,
     ].filter(Boolean).join('\n\n'),
   };
@@ -350,5 +357,5 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   const body = nameTyped && nameTyped !== P && P !== 'the solution' ? body0.replace(/^(#[^\n]*)/, `$1\n\nThe seller's description opens with "${nameTyped}"; this note calls it ${P}.`) : body0;
   const familyKnown = familyOf(target, investment) !== 'other';
   void familyKnown; void clip;
-  return `${body}\n\n${sharpenLine ? `${sharpenLine}\n\n` : ''}${d.footer}`.replace(/\n{4,}/g, '\n\n\n');
+  return `${budgetReview}\n\n${body}\n\n${sharpenLine ? `${sharpenLine}\n\n` : ''}${d.footer}`.replace(/\n{4,}/g, '\n\n\n');
 }

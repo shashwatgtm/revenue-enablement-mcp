@@ -3036,41 +3036,21 @@ ${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}
 
     risk_mitigation: () => `# Risk Assessment & Mitigation
 
-## Ensuring Success for ${customerName}
+## Supplied risks and controls for ${customerName}
 
-### Risk Categories
+The risk statements below come from the supplied customer challenges. Probability and impact have not been assessed. The supplied implementation approach is a proposed control, not evidence that the control has passed.
 
-*Typical risks (not from your input): replace the ratings and mitigations with your own.*
+| Supplied risk or requirement | Probability | Impact | Supplied control to validate | Control owner | Acceptance evidence |
+| --- | --- | --- | --- | --- | --- |
+${(challenges.length ? challenges : ['Unknown; identify the customer risk or requirement']).map(c => `| ${c.trim().replace(/\|/g, '/')} | Not assessed | Not assessed | ${implementationApproach ? implementationApproach.replace(/\|/g, '/') : 'Unknown; agree a control'} | Unknown; name the accountable control owner | Unknown; agree the test, retained evidence and buyer signoff |`).join('\n')}
 
-#### Implementation Risks
+## Next decision
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Timeline overrun | Medium | Medium | Phased approach, buffer time |
-| Integration challenges | Medium | High | Early technical validation |
-| Resource constraints | Low | Medium | Clear resource planning |
-| Scope creep | Medium | High | Defined scope, change control |
+Confirm the owner of each control and the evidence the buyer will accept. For access and retained evidence requirements, review the permissions and retained audit record from the supplied pilot before granting live access. Assess probability and impact with the customer before adding a risk rating.
 
-#### Operational Risks
+${implementationApproach ? `The approach you supplied: ${implementationApproach}` : 'No implementation control was supplied.'}
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| User adoption | Medium | High | Change management program |
-| System performance | Low | High | Performance testing, SLAs |
-| Data quality | Medium | Medium | Data validation protocols |
-| Business continuity | Low | Critical | Disaster recovery plan |
-${v ? `\n### Risks ${v.name} buyers raise\n\n${v.objections.map((o) => `- **${o.objection}:** ${o.response}`).join('\n')}\n` : ''}
-### Commitments
-
-*Include only the commitments you actually offer:*
-- **SLA:** the service level in your contract, and the credit if you miss it
-- **Support:** your support hours
-- **Security:** your security practices
-- **Success:** your success model
-
----
-
-*Add a closing line only if it is true for ${P}.*`,
+No probability, impact rating, service level or acceptance result is invented.`,
 
     success_metrics: () => `# Success Metrics & Measurement
 

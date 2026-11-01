@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { sectorChoiceNotice } from './text-signals.ts';
 import { signal, readSignal, SIGNALS, evidenceLine, hasSignal } from './text-signals.ts';
 
 /**
@@ -2048,7 +2049,7 @@ function executeWinLossAnalyzer(args: Record<string, unknown>): string {
 function executeTool(name: string, args: Record<string, unknown>): string {
   setYourSector(args.your_sector);
   try {
-    return runTool(name, args);
+    return sectorChoiceNotice(name,args,text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}}) + runTool(name,args);
   } finally {
     setYourSector(undefined);
   }

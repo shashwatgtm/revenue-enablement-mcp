@@ -1,3 +1,4 @@
+import { widgetTextSchema } from "./widget-text-schema.ts";
 import { composeResources } from "./resource-handlers.js";
 import { WIDGET_ORIGIN } from "./widget-origin.ts";
 import { BUILD_PROFILE } from './build-profile.ts';
@@ -27,6 +28,7 @@ export function attachWidgets(server: Server): void {
             Object.prototype.hasOwnProperty.call(selected, t.name)
               ? {
                   ...t,
+                  outputSchema: widgetTextSchema(t.outputSchema),
                   _meta: {
                     ...t._meta,
                     ui: {
@@ -51,15 +53,15 @@ export function attachWidgets(server: Server): void {
           .join("\n");
         if (typeof text === "string") {
           const display: any = { ...result.structuredContent, ...widgetPayload(request.params.name, WIDGETS[request.params.name], text) };
-          const facts: any = {};
+          const facts: any = { plainText: text };
           if (BUILD_PROFILE.payload === 'full') return { ...result, structuredContent: display };
-          // Display data and caller context are delivered only to the component.
+          // Rich display data stays in the component; every host also gets the full text.
           if (display.marketSizing) {
             const { toolArgumentsEncoded, ...summary } = display.marketSizing;
             display.marketSizing = summary;
           }
           const { structuredContent, ...plain } = result;
-          return { ...plain, ...(Object.keys(facts).length ? { structuredContent: facts } : {}), _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
+          return { ...plain, structuredContent: facts, _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
         }
       }
       return result;

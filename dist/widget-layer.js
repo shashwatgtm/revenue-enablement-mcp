@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachWidgets = attachWidgets;
+const widget_text_schema_ts_1 = require("./widget-text-schema.js");
 const resource_handlers_js_1 = require("./resource-handlers.js");
 const widget_origin_ts_1 = require("./widget-origin.js");
 const build_profile_ts_1 = require("./build-profile.js");
@@ -23,6 +24,7 @@ function attachWidgets(server) {
                 tools: result.tools.map((t) => Object.prototype.hasOwnProperty.call(selected, t.name)
                     ? {
                         ...t,
+                        outputSchema: (0, widget_text_schema_ts_1.widgetTextSchema)(t.outputSchema),
                         _meta: {
                             ...t._meta,
                             ui: {
@@ -44,16 +46,16 @@ function attachWidgets(server) {
                 .join("\n");
             if (typeof text === "string") {
                 const display = { ...result.structuredContent, ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text) };
-                const facts = {};
+                const facts = { plainText: text };
                 if (build_profile_ts_1.BUILD_PROFILE.payload === 'full')
                     return { ...result, structuredContent: display };
-                // Display data and caller context are delivered only to the component.
+                // Rich display data stays in the component; every host also gets the full text.
                 if (display.marketSizing) {
                     const { toolArgumentsEncoded, ...summary } = display.marketSizing;
                     display.marketSizing = summary;
                 }
                 const { structuredContent, ...plain } = result;
-                return { ...plain, ...(Object.keys(facts).length ? { structuredContent: facts } : {}), _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
+                return { ...plain, structuredContent: facts, _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
             }
         }
         return result;

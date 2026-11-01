@@ -271,7 +271,9 @@ export function evidenceIssues(rows: Row[], asOf?: string, window = 90) {
   return rows.flatMap((r, i) => {
     const out: string[] = [],
       label = "Evidence " + (i + 1) + ": ";
-    if ((!r.source_type || r.source_type === "url") && !safeUrl(r.source))
+    if (!r.source_type && !safeUrl(r.source))
+      out.push(label + "row ID " + (r.id || "not supplied") + ": missing source_type. Allowed values: url, interview, document, internal_record. Confirm internal_record or document for this non URL source; the record has not been opened or verified.");
+    else if (r.source_type === "url" && !safeUrl(r.source))
       out.push(
         label +
           "source must be an HTTP(S) URL, or identify an interview, document or internal record",

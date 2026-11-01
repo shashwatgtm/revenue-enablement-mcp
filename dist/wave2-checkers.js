@@ -61,7 +61,7 @@ define("competitive_evidence_check", "Check supplied comparison evidence, source
                 other.status !== "verified_opened"))
             issues.push("Criterion " +
                 (i + 1) +
-                ": verdict exceeds the supplied evidence status");
+                " (" + c.criterion + "): verdict exceeds the supplied evidence status. Confirm the source status actually supported for " + (c.our_evidence_id || "the first source") + " and " + (c.alternative_evidence_id || "the alternative source") + "; keep the verdict unknown until both sides have comparable verified evidence.");
         if (c.verdict === "advantage" && ours && other) {
             const left = (0, checker_common_ts_1.claimTokens)(ours.excerpt, true), right = (0, checker_common_ts_1.claimTokens)(other.excerpt, true);
             if (left.some((l) => right.some((r) => l.unit && l.unit === r.unit && l.value < r.value)))

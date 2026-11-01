@@ -132,7 +132,7 @@ define(
         issues.push(
           "Criterion " +
             (i + 1) +
-            ": verdict exceeds the supplied evidence status",
+            " (" + c.criterion + "): verdict exceeds the supplied evidence status. Confirm the source status actually supported for " + (c.our_evidence_id || "the first source") + " and " + (c.alternative_evidence_id || "the alternative source") + "; keep the verdict unknown until both sides have comparable verified evidence.",
         );
       if (c.verdict === "advantage" && ours && other) {
         const left = claimTokens(ours.excerpt, true),

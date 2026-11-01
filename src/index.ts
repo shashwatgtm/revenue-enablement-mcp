@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import { BUILD_PROFILE } from './build-profile.ts';
+import {reserveTools,isReserveTool,callReserveTool} from './reserve-tools.ts';
+import { attachWidgets } from './widget-layer.ts';
+import { waveTools, isWaveTool, callWaveTool } from './wave2-checkers.ts';
 
 /**
  * Revenue Enablement MCP v1.0.0
@@ -3444,11 +3448,15 @@ export function createServer(): Server {
     { capabilities: { tools: {} } }
   );
 
+  if (BUILD_PROFILE.profile !== "current") attachWidgets(server);
+
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: Object.values(tools).map((tool) => withMeta(tool)),
+    tools: [...Object.values(tools).map((tool) => withMeta(tool)), ...(BUILD_PROFILE.profile === "wave" ? waveTools : []), ...(BUILD_PROFILE.profile === "wave" ? reserveTools() : [])],
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (BUILD_PROFILE.profile === "wave" && isReserveTool(request.params.name)) return callReserveTool(request.params.name,request.params.arguments);
+    if (BUILD_PROFILE.profile === "wave" && isWaveTool(request.params.name)) return callWaveTool(request.params.name, request.params.arguments);
     // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
     // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
     const typed = joinAbbreviations(cleanDeep(request.params.arguments)) as Record<string, unknown> | undefined;

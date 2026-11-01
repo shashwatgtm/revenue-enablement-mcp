@@ -14,15 +14,17 @@ const rpc = async (method, params) => {
   }), {});
   return (await r.json()).result;
 };
+const profileModule = await import('../dist/build-profile.js');
+const builtProfile = (profileModule.BUILD_PROFILE ?? profileModule.default.BUILD_PROFILE).profile;
 const { tools } = await rpc("tools/list", {});
 const isText = (p) => p && p.type === "string" && !Array.isArray(p.enum);
 // A present value for the other required fields, so the refusal names only the blank field.
 const present = (p) => (Array.isArray(p.enum) ? p.enum[0] : p.type === "string" ? "Example text" : p.type === "number" || p.type === "integer"
-  ? Math.max(typeof p.minimum === "number" ? p.minimum : 1, 1) + 1 : p.type === "boolean" ? true : p.type === "array" ? [] : {});
+  ? Math.max(typeof p.minimum === "number" ? p.minimum : 1, 1) + 1 : p.type === "boolean" ? true : p.type === "array" ? Array.from({length:p.minItems ?? 0},()=>present(p.items)) : Object.fromEntries((p.required ?? []).map(k=>[k,present(p.properties[k])])));
 const withText = tools.filter((t) => (t.inputSchema.required || []).some((k) => isText(t.inputSchema.properties[k])));
 
-test("the tools with a required text field are all counted (9)", () => {
-  assert.equal(withText.length, 9, withText.map((t) => t.name).join(", "));
+test("the tools with a required text field are counted for the built profile", () => {
+  assert.equal(withText.length, builtProfile === "wave" ? 12 : 9, withText.map((t) => t.name).join(", "));
 });
 
 for (const t of withText) {
@@ -35,7 +37,11 @@ for (const t of withText) {
         const r = await rpc("tools/call", { name: t.name, arguments: { ...base, [field]: blank } });
         const text = r.content.map((c) => c.text).join("\n");
         assert.equal(r.isError, true, text.slice(0, 200));
-        assert.ok(text.startsWith(`Missing required input for ${t.name}: ${field}. `), text.slice(0, 200));
+        if (["competitive_evidence_check", "sales_sequence_check"].includes(t.name)) {
+          const refusal = JSON.parse(text);
+          assert.equal(refusal.status, "INVALID_INPUT");
+          assert.ok(refusal.issues.includes(`$.${field}: required`), text);
+        } else assert.ok(text.startsWith(`Missing required input for ${t.name}: ${field}. `), text.slice(0, 200));
       });
     }
     test(`${t.name}: ${field} with real text inside spaces is not refused as missing`, async () => {

@@ -2,6 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+const profileModule = await import('../dist/build-profile.js');
+const builtProfile = (profileModule.BUILD_PROFILE ?? profileModule.default.BUILD_PROFILE).profile;
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));
 let nextId = 1;
 const rpc = async (method, params) => {
@@ -17,10 +19,12 @@ const SERVICES = "Voxel, a managed IT services firm: round the clock monitoring 
 const BASE = { framework: "meddpicc", your_solution: SERVICES, prospect_industry: "banks and lenders" };
 const VALUES = ["logistics_tech", "fintech", "saas", "vertical_saas", "ai_native", "ites", "telecom", "software", "cybersecurity", "other"];
 
-test("every tool declares an optional your_sector with the ten choices", async () => {
+test("every existing tool declares an optional your_sector with the ten choices", async () => {
   const { result: { tools } } = await rpc("tools/list", {});
-  assert.equal(tools.length, 12);
-  for (const t of tools) {
+  assert.equal(tools.length, builtProfile === "wave" ? 15 : 12);
+  const existing = tools.filter(t => !["negotiation_trade_check", "competitive_evidence_check", "sales_sequence_check"].includes(t.name));
+  assert.equal(existing.length, 12);
+  for (const t of existing) {
     const p = t.inputSchema.properties.your_sector;
     assert.ok(p, t.name);
     assert.deepEqual(p.enum, VALUES);

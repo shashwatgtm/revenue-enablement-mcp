@@ -1,0 +1,1 @@
+{"version":3,"file":"widget-registry.js","sourceRoot":"","sources":["../src/widget-registry.ts"],"names":[],"mappings":";;;AAAa,QAAA,OAAO,GAA2B;IAC7C,uBAAuB,EAAE,yBAAyB;IAClD,oBAAoB,EAAE,sBAAsB;IAC5C,yBAAyB,EAAE,2BAA2B;IACtD,4BAA4B,EAAE,8BAA8B;IAC5D,iBAAiB,EAAE,mBAAmB;CACvC,CAAC"}

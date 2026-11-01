@@ -1,0 +1,322 @@
+[
+  {
+    "input": {
+      "mode": "discount",
+      "value": "36 lakh",
+      "discount_percent": 20,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 3600000,
+      "discount_percent": 20,
+      "revenue_at_risk": 720000,
+      "value_after_discount": 2880000,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": 2879999,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "discount",
+      "value": "1.2 crore",
+      "discount_percent": 5,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 12000000,
+      "discount_percent": 5,
+      "revenue_at_risk": 600000,
+      "value_after_discount": 11400000,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": 11399999,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "discount",
+      "value": "2.675",
+      "discount_percent": 10,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 2.67,
+      "discount_percent": 10,
+      "revenue_at_risk": 0.27,
+      "value_after_discount": 2.4,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": 1.4,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "discount",
+      "value": "100.05",
+      "discount_percent": 12.5,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 100.05,
+      "discount_percent": 12.5,
+      "revenue_at_risk": 12.51,
+      "value_after_discount": 87.54,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": 86.54,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "discount",
+      "value": "0",
+      "discount_percent": 0,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 0,
+      "discount_percent": 0,
+      "revenue_at_risk": 0,
+      "value_after_discount": 0,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": -1,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "discount",
+      "value": "40,00,000",
+      "discount_percent": 100,
+      "trades": [
+        {
+          "get": "term",
+          "give": "rate",
+          "worth": "-1.005"
+        }
+      ]
+    },
+    "expected": {
+      "value": 4000000,
+      "discount_percent": 100,
+      "revenue_at_risk": 4000000,
+      "value_after_discount": 0,
+      "trades": [
+        {
+          "trade": "term",
+          "worth": -1.0
+        }
+      ],
+      "net_after_trades": -1,
+      "label": "your figures; the worth of each trade is the value you put on it"
+    }
+  },
+  {
+    "input": {
+      "mode": "multiyear",
+      "annual": "1000000",
+      "discounts": [
+        0,
+        5,
+        10
+      ]
+    },
+    "expected": {
+      "annual": 1000000,
+      "years": 3,
+      "by_year": [
+        {
+          "year": 1,
+          "list": 1000000,
+          "discount_percent": 0,
+          "after": 1000000
+        },
+        {
+          "year": 2,
+          "list": 1000000,
+          "discount_percent": 5,
+          "after": 950000
+        },
+        {
+          "year": 3,
+          "list": 1000000,
+          "discount_percent": 10,
+          "after": 900000
+        }
+      ],
+      "total_at_list": 3000000,
+      "total_after": 2850000,
+      "given_up": 150000,
+      "label": "your figures"
+    }
+  },
+  {
+    "input": {
+      "mode": "multiyear",
+      "annual": "99.99",
+      "discounts": [
+        12.5,
+        25,
+        0
+      ]
+    },
+    "expected": {
+      "annual": 99.99,
+      "years": 3,
+      "by_year": [
+        {
+          "year": 1,
+          "list": 99.99,
+          "discount_percent": 12.5,
+          "after": 87.49
+        },
+        {
+          "year": 2,
+          "list": 99.99,
+          "discount_percent": 25,
+          "after": 74.99
+        },
+        {
+          "year": 3,
+          "list": 99.99,
+          "discount_percent": 0,
+          "after": 99.99
+        }
+      ],
+      "total_at_list": 299.97,
+      "total_after": 262.47,
+      "given_up": 37.5,
+      "label": "your figures"
+    }
+  },
+  {
+    "input": {
+      "mode": "multiyear",
+      "annual": "2.675",
+      "discounts": [
+        0,
+        50
+      ]
+    },
+    "expected": {
+      "annual": 2.67,
+      "years": 2,
+      "by_year": [
+        {
+          "year": 1,
+          "list": 2.67,
+          "discount_percent": 0,
+          "after": 2.67
+        },
+        {
+          "year": 2,
+          "list": 2.67,
+          "discount_percent": 50,
+          "after": 1.33
+        }
+      ],
+      "total_at_list": 5.34,
+      "total_after": 4,
+      "given_up": 1.34,
+      "label": "your figures"
+    }
+  },
+  {
+    "input": {
+      "mode": "gap",
+      "value": "1000000",
+      "gap_percent": 30
+    },
+    "expected": {
+      "value": 1000000,
+      "gap_percent": 30,
+      "gap_amount": 300000,
+      "competitor_price_if_gap_holds": 700000,
+      "label": "your figures; the gap is what the buyer said, not checked"
+    }
+  },
+  {
+    "input": {
+      "mode": "gap",
+      "value": "100.05",
+      "gap_percent": 12.5
+    },
+    "expected": {
+      "value": 100.05,
+      "gap_percent": 12.5,
+      "gap_amount": 12.51,
+      "competitor_price_if_gap_holds": 87.54,
+      "label": "your figures; the gap is what the buyer said, not checked"
+    }
+  },
+  {
+    "input": {
+      "mode": "gap",
+      "value": "0",
+      "gap_percent": 100
+    },
+    "expected": {
+      "value": 0,
+      "gap_percent": 100,
+      "gap_amount": 0,
+      "competitor_price_if_gap_holds": 0,
+      "label": "your figures; the gap is what the buyer said, not checked"
+    }
+  }
+]

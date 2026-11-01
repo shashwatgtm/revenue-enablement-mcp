@@ -1,0 +1,9 @@
+import {BUILD_PROFILE} from '../dist/build-profile.js';
+import test from 'node:test';import assert from 'node:assert/strict';
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js';
+import {waveTools} from '../dist/wave2-checkers.js';import {inputs} from './wave2-checkers.test.mjs';
+const entry=process.env.WAVE_SERVER_ENTRY||'index';const mod=await import(`../dist/${entry}.js`);const createServer=mod.createServer??mod.default?.createServer;
+test('new checkers through real MCP client and server over in-memory transport',async()=>{
+ const server=createServer();const client=new Client({name:'wave-protocol-test',version:'test'});const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)]);
+ try{const listed=(await client.listTools()).tools;for(const name of ['prompt_structure_check','proposal_structure_check']){assert.ok(!listed.some(t=>t.name===name));assert.equal((await client.callTool({name,arguments:{}})).isError,true);}for(const t of waveTools){const definition=listed.find(x=>x.name===t.name);if(BUILD_PROFILE.profile!=='wave'){assert.equal(definition,undefined);const hidden=await client.callTool({name:t.name,arguments:inputs[t.name]});assert.equal(hidden.isError,true);continue;}assert.ok(definition);assert.deepEqual(definition.inputSchema,t.inputSchema);const result=await client.callTool({name:t.name,arguments:inputs[t.name]});assert.ok(!result.isError,JSON.stringify(result));assert.equal(result.structuredContent.status,'NO_MECHANICAL_ISSUES');assert.match(result.content[0].text.split('\n')[0],/No mechanical issues found/);assert.ok(result.content[0].text.includes('No page was fetched'));}}finally{await client.close();await server.close();}
+});

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachWidgets = attachWidgets;
+const resource_handlers_js_1 = require("./resource-handlers.js");
 const widget_origin_ts_1 = require("./widget-origin.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -57,15 +58,15 @@ function attachWidgets(server) {
         }
         return result;
     }));
-    register(types_js_1.ListResourcesRequestSchema, async () => ({
+    const listWidgets = async () => ({
         resources: Object.entries(selected).map(([name, title]) => ({
             uri: uri(name),
             name: title + " result",
             mimeType: "text/html;profile=mcp-app",
             description: name === "tam_sam_som_calculator" ? "Market sizing result; recalculate when the host enables tool calls." : "Result view with the complete source text.",
         })),
-    }));
-    register(types_js_1.ReadResourceRequestSchema, async (request) => {
+    });
+    const readWidget = async (request) => {
         const entry = Object.entries(selected).find(([name]) => uri(name) === request.params.uri);
         if (!entry)
             throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, "Unknown result resource");
@@ -90,6 +91,7 @@ function attachWidgets(server) {
                 },
             ],
         };
-    });
+    };
+    (0, resource_handlers_js_1.composeResources)(server, listWidgets, readWidget);
 }
 //# sourceMappingURL=widget-layer.js.map

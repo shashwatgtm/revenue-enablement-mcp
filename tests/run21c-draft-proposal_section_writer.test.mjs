@@ -62,5 +62,5 @@ test("with nothing given the next steps say what to add, once, and keep no place
   const t = await call({ section_type: "executive_summary", your_solution: "Pingwell, a business messaging platform: text messages, one time passwords and delivery reports through one API" });
   assert.doesNotMatch(t, PLACEHOLDER);
   assert.ok(!t.includes("Review this proposal and provide feedback"));
-  assert.match(next(t), /add customer_challenges/);
+  assert.match(next(t), /add customer challenges/);
 });

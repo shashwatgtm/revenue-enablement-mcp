@@ -35,7 +35,7 @@ test("no buyer figure: at most three numbered asks, each naming the input it fil
     const sec = t.slice(t.indexOf("## The numbers to ask for"), t.indexOf("Then run roi_business_case_builder again"));
     const asks = sec.split("\n").filter((l) => /^\d+\. /.test(l));
     assert.ok(asks.length >= 1 && asks.length <= 3, JSON.stringify(extra) + ": " + asks.length);
-    for (const a of asks) assert.match(a, /`(?:current_annual_cost|expected_improvement_percent|solution_price|annual_value_estimate)`/);
+    for (const a of asks) assert.match(a, /`(?:current annual cost|expected improvement percent|solution price|annual value estimate)`/);
     if (extra.current_annual_cost) assert.ok(!asks.some((a) => /`current_annual_cost`/.test(a)), "asks for the cost it was given");
     if (extra.expected_improvement_percent) assert.ok(!asks.some((a) => /`expected_improvement_percent`/.test(a)), "asks for the share it was given");
   }

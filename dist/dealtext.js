@@ -1,9 +1,4 @@
 "use strict";
-// Run 20 round 1b (D92): text helpers shared by the Revenue tools. Pure functions, no network, no figures (B82).
-// They exist so that text a user typed is cut and reused by parts that are really there: a product description is split into its
-// name, its kind and its listed parts; contacts become one row each with the role the user stated; proof becomes items with their
-// labels; an objection is answered by its kind. Nothing here says a fact about the user's product: where a fact is needed, the
-// helper says what to confirm.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.weekdayName = exports.isoDate = exports.upperFirst = exports.lowerFirstWord = void 0;
 exports.typedLength = typedLength;
@@ -32,6 +27,12 @@ exports.describeWith = describeWith;
 exports.aAn = aAn;
 exports.splitFeatureList = splitFeatureList;
 exports.capitaliseSolutionPhrase = capitaliseSolutionPhrase;
+const text_signals_ts_1 = require("./text-signals.js");
+// Run 20 round 1b (D92): text helpers shared by the Revenue tools. Pure functions, no network, no figures (B82).
+// They exist so that text a user typed is cut and reused by parts that are really there: a product description is split into its
+// name, its kind and its listed parts; contacts become one row each with the role the user stated; proof becomes items with their
+// labels; an objection is answered by its kind. Nothing here says a fact about the user's product: where a fact is needed, the
+// helper says what to confirm.
 // ---------------------------------------------------------------------------------------------------------------------------
 // Splitting
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -341,17 +342,17 @@ function parseContacts(text, investmentBuyer = false) {
 function tagKind(tag) {
     if (!tag)
         return null;
-    if (/champion|sponsor|advocate/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /champion|sponsor|advocate/i, 'champion'))
         return 'champion';
-    if (/economic/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /economic/i))
         return 'economic';
-    if (/buyer|decision|signs?|approver/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /buyer|decision|signs?|approver/i))
         return 'buyer';
-    if (/block|against|oppos|detract|negative/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /block|against|oppos|detract|negative/i))
         return 'blocker';
-    if (/user/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /user/i))
         return 'user';
-    if (/influenc|evaluat|technical|neutral|supporter|support/.test(tag))
+    if ((0, text_signals_ts_1.hasSignal)(tag, /influenc|evaluat|technical|neutral|supporter|support/i))
         return 'influencer';
     return 'other';
 }
@@ -373,18 +374,23 @@ function parseProof(text) {
         }
         const quoteLike = /\bquote\b|\bwords\b|\bsaid\b/i.test(label) || /^(?:customer|ceo|cfo|cio|cto|ciso|cso|vp|head|director)\b[^:]{0,60}:/i.test(body) || /^[A-Z][A-Za-z.' -]{2,40}\b(?:CFO|CEO|CIO|CTO|CISO|CSO|VP|Director|Head)\b[^:]{0,40}:/.test(body);
         let kind = 'story';
-        if (RECOGNITION.test(body) && !/\d+\s?%/.test(body))
+        const held = (0, text_signals_ts_1.signal)(body, 'adverse_result').state === 'affirmed' || ['negated', 'unclear'].includes((0, text_signals_ts_1.signal)(body, 'positive_result').state);
+        if (held) {
+            kind = 'story';
+            label = (label ? label + '; ' : '') + 'adverse or unconfirmed: not a customer result';
+        }
+        else if ((0, text_signals_ts_1.hasSignal)(body, RECOGNITION, 'recognition') && !/\d+\s?%/.test(body))
             kind = 'recognition';
         else if (quoteLike)
             kind = 'quote';
         // "500,000 companies use X, including 98% of the Fortune 500" is scale, not a result: no change is reported
         else if (SCALE.test(body) && !/\b(?:cut|cuts|reduc\w+|increas\w+|improv\w+|faster|fewer|lower|higher|saved?|saves|grew|grow\w*|jumped|boost\w+|achiev\w+|doubl\w+|half)\b/i.test(body))
             kind = 'scale';
-        else if (RESULT.test(body))
+        else if ((0, text_signals_ts_1.hasSignal)(body, RESULT, 'positive_result'))
             kind = 'result';
         else if (SCALE.test(body))
             kind = 'scale';
-        return { text: body, label, kind };
+        return { text: body, label, kind, ...(held ? { held: true } : {}) };
     }).filter((p) => typedLength(p.text) > 2);
 }
 /** The label to show for an item, in words a reader can check ("a customer quote on the company's website"). */

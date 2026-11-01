@@ -41,7 +41,12 @@ for (const t of withText) {
           const refusal = JSON.parse(text);
           assert.equal(refusal.status, "INVALID_INPUT");
           assert.ok(refusal.issues.includes(`$.${field}: required`), text);
-        } else assert.ok(text.startsWith(`Missing required input for ${t.name}: ${field}. `), text.slice(0, 200));
+        } else {
+        assert.ok(text.startsWith('Missing required input for '), text.slice(0,200));
+        assert.ok(text.includes(field.replace(/_/g, ' ')), text.slice(0,200));
+        assert.ok(!text.includes(t.name), 'D2 tool identifier must not be the reader label');
+        if(field.includes('_'))assert.ok(!text.includes(field), 'D2 field identifier must not be the reader label');
+        }
       });
     }
     test(`${t.name}: ${field} with real text inside spaces is not refused as missing`, async () => {

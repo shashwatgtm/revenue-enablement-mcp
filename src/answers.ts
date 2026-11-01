@@ -1,3 +1,5 @@
+import { clearanceAdvice } from './text-signals.ts';
+import { readSignal, SIGNALS, evidenceLine } from './text-signals.ts';
 // Run 20 round 1b (D92): how an objection, blocker or buyer question is answered, and what each kind of buyer role cares about.
 // Rule B82: no statistic, benchmark or named-company fact. Rule: nothing is said about the user's own product that the user did
 // not type; where a fact is needed, the answer says what to confirm ("Confirm before you say it").
@@ -206,6 +208,7 @@ const KINDS: Kind[] = [
 
 /** Answers one objection, blocker or buyer question by its kind, from the user's own words and the sector's usual objections. */
 export function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer {
+  const clearance=clearanceAdvice(text); if(clearance)return {kind:'clearance',how:clearance,confirm:'the required reviewers, scope and written approval record',ask:'Which required approval, if any, is still outstanding?',sector:''};
   const t = text.trim();
   const p = ctx.product || 'your product';
   let sector = '';
@@ -220,9 +223,12 @@ export function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer 
   }
   // "Why do shipping charges vary ..." asks for a reason, whatever word it uses
   const ordered = /^why (?:do|does|is|are)\b/i.test(t) ? [KINDS.find((k) => k.id === 'why')!, ...KINDS] : KINDS;
-  for (const k of ordered) {
-    if (k.test.test(t)) return { kind: k.id, ...k.build(t, ctx, p), sector };
+  const readings = ordered.map(k => ({k, reading: readSignal(t, k.test, SIGNALS[k.id])}));
+  for (const {k, reading} of readings) {
+    if (reading.state === 'affirmed') { const built = k.build(t,ctx,p); return {kind:k.id,...built,how:built.how+' '+evidenceLine('Sentence read',reading),sector}; }
   }
+  const denied = readings.find(x => x.reading.state === 'negated' || x.reading.state === 'unclear');
+  if (denied) return {kind:'not_confirmed',how:'No objection is confirmed by this wording. '+evidenceLine('Sentence read',denied.reading),confirm:'whether the buyer is raising a concern or saying it is absent',ask:'Is there an unresolved concern here?',sector:''};
   return {
     kind: 'general',
     how: `Answer the exact question asked ("${clip(t, 110).replace(/"/g, "'")}") in two parts: the facts the buyer needs, then what you will do next. If you do not have a fact yet, say when you will have it rather than guess.`,

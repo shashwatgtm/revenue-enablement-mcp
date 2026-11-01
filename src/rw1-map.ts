@@ -53,7 +53,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const solutionIn = str('your_solution');
 
   const closeInput = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-  if (isNaN(closeInput.getTime())) return `target_close_date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
+  if (isNaN(closeInput.getTime())) return `target close date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
   const today = new Date();
   // whole calendar days between the two dates (the time of day is ignored: 2026-10-09 to 2026-12-15 is 67 days at any hour)
   const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));
@@ -399,16 +399,16 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
 This only works as a mutual plan once the buyer has corrected the dates and the owners; update it as things change.`);
 
   const miss: string[] = [];
-  if (!champion) miss.push('`buyer_champion` (it would change who keeps the plan alive on the buyer\'s side and owns the first meetings)');
-  if (!economic && !ownerLed) miss.push('`economic_buyer` (it would change who approves the business case and owns the final approvals)');
-  if (!evalIn) miss.push('`technical_evaluators` (it would change the owners of the technical and security steps, which now use roles)');
-  if (!procurement && !ownerLed) miss.push('`procurement_contact` (it would change the owner of the legal, vendor registration and payment steps)');
-  if (!reqIn) miss.push('`known_requirements` (it would change the criteria table, now empty, into one row for each with a test)');
-  if (!stepsIn) miss.push('`known_process_steps` (it would change the milestones, which would then include the buyer\'s own approvals with dates)');
+  if (!champion) miss.push('`buyer champion` (it would change who keeps the plan alive on the buyer\'s side and owns the first meetings)');
+  if (!economic && !ownerLed) miss.push('`economic buyer` (it would change who approves the business case and owns the final approvals)');
+  if (!evalIn) miss.push('`technical evaluators` (it would change the owners of the technical and security steps, which now use roles)');
+  if (!procurement && !ownerLed) miss.push('`procurement contact` (it would change the owner of the legal, vendor registration and payment steps)');
+  if (!reqIn) miss.push('`known requirements` (it would change the criteria table, now empty, into one row for each with a test)');
+  if (!stepsIn) miss.push('`known process steps` (it would change the milestones, which would then include the buyer\'s own approvals with dates)');
   if (!blockersIn) miss.push('`blockers` (it would change the Risks & Blockers table, which would then answer each one)');
-  if (!solutionIn) miss.push('`your_solution` (it would change the evaluation steps to fit what you sell and how it is priced)');
-  if (!args.current_stage) miss.push('`current_stage` (it would change the first phase; it is read as evaluation now)');
-  if (!targetCloseDate) miss.push('`target_close_date` (it is required; the plan used a date 60 days out as an example)');
+  if (!solutionIn) miss.push('`your solution` (it would change the evaluation steps to fit what you sell and how it is priced)');
+  if (!args.current_stage) miss.push('`current stage` (it would change the first phase; it is read as evaluation now)');
+  if (!targetCloseDate) miss.push('`target close date` (it is required; the plan used a date 60 days out as an example)');
   out.push(miss.length ? `**To sharpen this plan, give:**\n\n${miss.map((x) => `- ${x}`).join('\n')}\n\n*Last updated ${isoDate(today)}.*` : `*Last updated ${isoDate(today)}.*`);
   return out.join('\n\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }

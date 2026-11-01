@@ -125,7 +125,7 @@ test("what was not given is named once, at the end, with what it would change", 
   const t = await call({ framework: "bant", prospect_role: "VP Sales" });
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
   const tail = t.slice(t.indexOf("To sharpen this, give:"));
-  for (const k of ["prospect_industry", "known_pain_points", "your_solution", "known_metrics"]) assert.match(tail, new RegExp(`${k} \\(it would`), k);
+  for (const k of ["prospect_industry", "known_pain_points", "your_solution", "known_metrics"]) assert.match(tail, new RegExp(`${k.replace(/_/g, " ")} \\(it would`), k);
   assert.doesNotMatch(t, PLACEHOLDER);
   assert.ok(questions(t).length >= 8);
   assert.doesNotMatch(out.Quillbase, /To sharpen this, give: [^\n]*(?:prospect_industry|prospect_role|known_pain_points|known_metrics)/);

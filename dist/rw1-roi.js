@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildRoiStructure = buildRoiStructure;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 42 (owner approval, 17 October 2026; ported from run 26q): roi_business_case_builder without the buyer's figures. No example hours, headcount,
 // hourly rate or share of revenue is applied: the method is explained in plain words, the figures the input gives are used only as stated and labelled,
 // and at most three missing numbers are asked for.
@@ -152,13 +153,13 @@ function buildRoiStructure(args, i, d) {
         out.push(`## What the buyer pays\n\nAt the annual price you gave (${money(i.solutionPrice)}), the value the buyer sees must be above ${money(i.solutionPrice)} a year for any positive return, and above ${money(i.solutionPrice * 2)} a year to return the price twice over. Over three years the buyer pays ${money(i.solutionPrice * 3)} before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first${model === 'transactions' ? `, and enter the yearly spend you expect at the buyer's volume${unit ? ` of ${unit}s` : ''}` : ''}.`);
     }
     if (i.revenueGiven || i.employeesGiven)
-        out.push(`\`annual_revenue\` and \`employee_count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
+        out.push(`\`annual revenue\` and \`employee count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
     const flags = [];
-    const smallWords = /\b(?:smb|small|micro|d2c|startups?)\b/i.test(`${i.customerName} ${args.industry || ''}`);
+    const smallWords = (0, text_signals_ts_1.sizeReading)(`${i.customerName} ${args.industry || ''}`, /\b(?:smb|small|micro|d2c|startups?)\b/i).state === 'affirmed';
     if (args.company_size === 'enterprise' && smallWords)
-        flags.push('You set company_size to enterprise, but the customer is described as SMB or small in its name; check which is right, because the size changes who reviews the case and what price is realistic.');
-    if (args.company_size === 'smb' && /\b(?:enterprise|large|global)\b/i.test(i.customerName))
-        flags.push('You set company_size to SMB, but the customer is described as large or enterprise in its name; check which is right, because the size changes who reviews the case.');
+        flags.push('You set company size to enterprise, but the customer is described as SMB or small in its name; check which is right, because the size changes who reviews the case and what price is realistic.');
+    if (args.company_size === 'smb' && (0, text_signals_ts_1.sizeReading)(i.customerName, /\b(?:enterprise|large|global)\b/i).state === 'affirmed')
+        flags.push('You set company size to SMB, but the customer is described as large or enterprise in its name; check which is right, because the size changes who reviews the case.');
     if (/\bIndia(?:n)?\b|\brupees?\b|\bINR\b|\blakhs?\b|\bcrores?\b/i.test(`${i.yourSolution} ${i.customerName} ${i.knownMetrics} ${i.currentProcess}`))
         flags.push('Your inputs mention India; the price field is in dollars, so if your price is in rupees, convert it first.');
     if (flags.length)
@@ -181,7 +182,7 @@ function buildRoiStructure(args, i, d) {
                 partUse.add(part);
             return `| ${d.cap(l.text)} | ${q} |${parts.length ? ` ${part || 'none matches by its words'} |` : ''}`;
         });
-        out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current_annual_cost\`.\n\n| Cost line | What to count |${parts.length ? ` Part of ${P} that answers it |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${rows.join('\n')}`);
+        out.push(`## Cost lines to price\n\nEach way of working that ${P} would replace is a cost line. Put a yearly cost on each one, then add them: that sum is \`current annual cost\`.\n\n| Cost line | What to count |${parts.length ? ` Part of ${P} that answers it |` : ''}\n|---|---|${parts.length ? '---|' : ''}\n${rows.join('\n')}`);
     }
     // ---- the quoted results ----
     const credibility = (p) => /\bseries [a-e]\b|valuation|funding|\braised\s+(?:us\$|\$|€|£|₹|rs\.?\s?\d|inr|\d[\d,.]*\s?(?:m|bn|k|million|billion|crore|cr)\b|a\s+(?:series|round)|capital)|\bfunding round\b|\bround\b(?!\s+the\s+clock)|\bipo\b|acquir\w+/i.test(p.text); // "raised first attempt delivery rate" is a result; "raised $20M" is funding
@@ -249,7 +250,7 @@ function buildRoiStructure(args, i, d) {
             default: return {
                 title: 'Cost reduction',
                 where: 'Less money spent on the work or on the failure it causes today: hours, rework, errors, outside spend.',
-                figure: 'what the problem or the current process costs the buyer in a year (current_annual_cost) and the share they expect to remove (expected_improvement_percent)',
+                figure: 'what the problem or the current process costs the buyer in a year (current annual cost) and the share they expect to remove (expected improvement percent)',
                 qs: [costLines.length > 1 ? 'Which of the cost lines above is the largest, and who owns its budget?' : 'Where does the cost of this problem show up in the budget today (people, outside spend, rework, fees)?', `Which part of each line would ${P} actually remove, and which part stays?`, 'What would the buyer\'s finance contact need to see to accept the saving as real: a ledger line, a headcount plan, a contract that ends?'],
             };
         }
@@ -269,13 +270,13 @@ function buildRoiStructure(args, i, d) {
     const refText = refs.length ? ` The figures you quoted (${refs.map((x) => `"${x.fig}", from ${(0, rw1_common_ts_1.quoted)((0, dealtext_ts_1.clip)(x.src.replace(/:.*$/, ''), 60))}`).join('; ')}) are another organisation's results, as you gave them: use them to ask whether the buyer expects something similar, not as the buyer's own share.` : '';
     const ask = [];
     if (!costGiven)
-        ask.push(`**What does the problem${costLines.length ? ` (${costLines.slice(0, 2).map((c) => (0, rw1_common_ts_1.lowerStart)((0, rw1_common_ts_1.stripEnd)(c))).join('; ')})` : ''} cost ${who} in a year today**, in people's time, rework, errors and outside spend? This is \`current_annual_cost\`.`);
+        ask.push(`**What does the problem${costLines.length ? ` (${costLines.slice(0, 2).map((c) => (0, rw1_common_ts_1.lowerStart)((0, rw1_common_ts_1.stripEnd)(c))).join('; ')})` : ''} cost ${who} in a year today**, in people's time, rework, errors and outside spend? This is \`current annual cost\`.`);
     if (!pctGiven)
-        ask.push(`**What share of that cost does ${who} expect ${P} to remove**, and what is that based on (their own history, a pilot)?${refText} This is \`expected_improvement_percent\`.`);
+        ask.push(`**What share of that cost does ${who} expect ${P} to remove**, and what is that based on (their own history, a pilot)?${refText} This is \`expected improvement percent\`.`);
     if (!i.priceGiven)
-        ask.push(`**What will ${P} cost ${who} a year, all in?** This is \`solution_price\`.`);
+        ask.push(`**What will ${P} cost ${who} a year, all in?** This is \`solution price\`.`);
     else if (ask.length < 3)
-        ask.push(`**If ${who} can value the result directly, what is it worth to them in a year?** This is \`annual_value_estimate\`, and it can replace the two numbers above.`);
+        ask.push(`**If ${who} can value the result directly, what is it worth to them in a year?** This is \`annual value estimate\`, and it can replace the two numbers above.`);
     out.push(`## How the return will be worked out
 
 No return is shown yet because the two numbers it rests on can only come from ${who}: what the problem costs them in a year, and the share of that cost ${P} would remove. This tool does not fill them with example hours, headcount, rates or industry averages. Once ${who} gives them, the yearly value is that cost times that share (or the yearly value ${who} states directly). The return is that value less ${i.priceGiven && i.solutionPrice > 0 ? `the price you gave (${money(i.solutionPrice)} a year)` : 'the yearly price'}, compared with the price; payback is the number of months of value it takes to cover the price; and the three-year figure is three years of value less three years of price. Each is also shown at half and at one and a half times the value, so the buyer sees how much the case depends on the share they chose.
@@ -284,16 +285,16 @@ No return is shown yet because the two numbers it rests on can only come from ${
 
 ${ask.slice(0, 3).map((x, n) => `${n + 1}. ${x}`).join('\n')}
 
-Then run roi_business_case_builder again with them.`);
+Then run ROI Business Case Builder again with them.`);
     const sharpen = [];
     if (!args.customer_name)
-        sharpen.push('`customer_name` (it would change the title and every question, which now say "your customer")');
+        sharpen.push('`customer name` (it would change the title and every question, which now say "your customer")');
     if (!args.industry && !industryWords)
         sharpen.push('`industry` (it would change the buyer-side risks and reviews in this case)');
     if (!i.currentProcess)
-        sharpen.push('`current_process` (it would change the cost lines to price: one line for each way of working it replaces)');
+        sharpen.push('`current process` (it would change the cost lines to price: one line for each way of working it replaces)');
     if (!i.knownMetrics)
-        sharpen.push('`known_metrics` (it would change the reference points: results you can quote, kept apart from the buyer\'s figures)');
+        sharpen.push('`known metrics` (it would change the reference points: results you can quote, kept apart from the buyer\'s figures)');
     if (sharpen.length)
         out.push(`**To sharpen this case, give:**\n\n${sharpen.map((x) => `- ${x}`).join('\n')}`);
     void mw;

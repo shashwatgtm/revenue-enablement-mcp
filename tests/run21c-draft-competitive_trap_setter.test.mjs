@@ -133,5 +133,5 @@ test("a sparse call says once what is not given and keeps no placeholder", async
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1); // run 22 (rev-w3): named once at the end, with what each input would change
   assert.doesNotMatch(t, BRACKET);
   assert.doesNotMatch(t, DASH);
-  assert.doesNotMatch(t, /your solution/i);
+  assert.doesNotMatch(t.split("To sharpen this")[0], /your solution/i);
 });

@@ -1,5 +1,5 @@
 import type { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { escapeText } from "./escape-inputs.js";
+import { escapeText } from "./escape-inputs.ts";
 import {
   type Row,
   type Schema,
@@ -27,7 +27,7 @@ import {
   parseEmails,
   parseNewsletter,
   readerText,
-} from "./checker-common.js";
+} from "./checker-common.ts";
 const registry: Record<string, { tool: Tool; run: (a: Row) => Row }> = {};
 function define(
   name: string,

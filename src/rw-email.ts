@@ -195,7 +195,13 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     // the user's own plural ("payouts") is kept when the sector word is the singular ("payout")
     const last = (best.toLowerCase().match(/[a-z]+$/) || [''])[0];
     const pl = last && text.toLowerCase().match(new RegExp(`\\b${last}(?:s|es)\\b`));
-    return pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
+    const out = pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
+    // run 42C: a one word sector term that is only the front of the user's noun phrase ("carrier" in "carrier onboarding") is said with its noun
+    if (!/\s/.test(out)) {
+      const nx = text.match(new RegExp(`\\b${out}\\s+([a-z]{5,})\\b`, 'i'));
+      if (nx && !/(?:ed|ly|[^s]s)$/i.test(nx[1]) && !/^(?:that|which|their|these|those|about|because|before|after|where|while|across|every|other|often|still|never|always|rather|should|would|could|there|since)$/i.test(nx[1])) return `${out} ${nx[1].toLowerCase()}`;
+    }
+    return out;
   };
   // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages"); a leading "high" or "rising" is dropped
   const atom0 = atomsP[0] || '';
@@ -245,7 +251,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
 
   // ---- the value: the aim, and the figures that came with it ----
   const valueItems = listItems(valueText).map((x) => parseProof(x)[0] || { text: x, label: '', kind: 'story' as const });
-  const mainItem = valueItems.find((x) => !x.label) || valueItems[0];
+  const mainItem = valueItems.find((x) => !x.held && !x.label) || valueItems.find(x => !x.held);
   let aim = (mainItem?.text || '').replace(/[.]+$/, '').trim();
   // "<an aim in words>: 40% faster ..., 30% lower ...": the figures after the colon are proof (used once, with the same source), the aim stays short
   const extraClaims: ProofItem[] = [];
@@ -265,7 +271,8 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   // ---- the proof: split into atoms, ranked for this reader, each used once ----
   const proofItems = parseProof(proofText);
   const rank = `${painText} ${persona} ${industry} ${(vv?.metrics || []).join(' ')}`;
-  const bag0 = [...proofItems, ...valueClaims];
+  const heldProof = [...proofItems, ...valueItems].filter(p => p.held);
+  const bag0 = [...proofItems, ...valueClaims].filter(p => !p.held);
   const bag = atomsOf(bag0, rank, `${painText} ${persona} ${industry}`);
   // the sender's own headline figure (from the value proposition) is used before a customer's figure of the same weight
   for (const a of bag) if (valueClaims.includes(a.item)) a.score += 2;
@@ -596,29 +603,30 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   // ---- what the sender checks, then what was not given (once, at the end) ----
   const checks: string[] = [`Add the recipient's name after "${hello.replace(',', '')}" if you have it; the emails do not guess it.`];
   if (sequenceType === 'event_follow_up') checks.push('Name the event in email 1; the emails do not guess it.');
-  const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
+  const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => !x.held && a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
   if (everyItem.length) checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${proofPhrase(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
   // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
   const spokenTo = `${solution} ${valueText} ${proofText}`;
   const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2 && !related(a, spokenTo));
   if (atomsP.length && unspoken.length) checks.push(`Nothing you gave speaks to: ${unspoken.map((x) => `“${clip(x, 90)}”`).join('; ')}. Add a part of the product, a result or a customer line that answers ${unspoken.length === 1 ? 'it' : 'them'}; until then the emails can only name ${unspoken.length === 1 ? 'it' : 'them'}.`);
   const sharpen: string[] = [];
-  if (!persona) sharpen.push('`target_persona` (a role): it would change the questions and the worries in the emails from general ones to those of that role, and the subject lines to suit it.');
-  if (!industry) sharpen.push('`target_industry`: it would change the emails from the persona alone to the sector\'s own roles and measures.');
-  if (!painText) sharpen.push('`specific_pain_point`: it would change email 1 from a question about the topic to the problem in your words, and give email 3 a second angle.');
-  if (!valueText) sharpen.push('`key_value_prop`: it would change the emails from saying what the product is to saying what you aim for.');
-  if (!proofText) sharpen.push('`social_proof` (a result, a customer quote or an award you may name): it would change emails 2, 3 and 5 from questions to quoted evidence; without it no email quotes a result or a customer.');
-  if (!ctaIn) sharpen.push('`call_to_action`: it would change the ask from a short call to your own wording.');
-  if (!senderIn) sharpen.push(`\`sender_context\` (your name and role): it would change the signature from "The ${name} team" to you.`);
+  if (!persona) sharpen.push('`target persona` (a role): it would change the questions and the worries in the emails from general ones to those of that role, and the subject lines to suit it.');
+  if (!industry) sharpen.push('`target industry`: it would change the emails from the persona alone to the sector\'s own roles and measures.');
+  if (!painText) sharpen.push('`specific pain point`: it would change email 1 from a question about the topic to the problem in your words, and give email 3 a second angle.');
+  if (!valueText) sharpen.push('`key value prop`: it would change the emails from saying what the product is to saying what you aim for.');
+  if (!proofText) sharpen.push('`social proof` (a result, a customer quote or an award you may name): it would change emails 2, 3 and 5 from questions to quoted evidence; without it no email quotes a result or a customer.');
+  if (!ctaIn) sharpen.push('`call to action`: it would change the ask from a short call to your own wording.');
+  if (!senderIn) sharpen.push(`\`sender context\` (your name and role): it would change the signature from "The ${name} team" to you.`);
   const sharpenBlock = sharpen.length ? `\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}` : '';
 
   const fixed = EMAIL_COUNTS[sequenceType] || emails.length;
   const emailsText = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? (args.num_emails as number).toLocaleString('en-US') : `${fixed}`;
-  const fixedNote = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? `\n*This sequence type has ${fixed} emails and num_emails is not used yet: add or remove emails to match the number you need.*` : '';
+  const fixedNote = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? `\n*This sequence type has ${fixed} emails and num emails is not used yet: add or remove emails to match the number you need.*` : '';
   const notes = ctx.v ? `\n\n---\n\n${sellerSw ? `### Sector notes: ${ctx.v.name}\n- The notes for this sector describe a software company's own customers, so they are left out for a buyer${indLow ? ` in ${indLow}` : ' in another industry'}.` : sectorBlock(ctx.v)}` : '';
   const solutionLine = solution.length <= 160 ? solution : P.label || clip(solution, 120);
   return `# ${TITLES[sequenceType] || sequenceType} Sequence
 
+${heldProof.length ? `**Evidence held:** Adverse or unconfirmed statements are not used as proof in these emails. Confirm a positive result before adding customer proof. Sentence read: ${heldProof.map(p => p.text).join("; ")}.\n` : ""}
 ## Target: ${persona ? `${persona}${indLow && !indInPersona ? ` in ${indLow}` : ''}` : indLow ? `buyers in ${indLow}` : 'not given'}
 ## Solution: ${solutionLine}
 ## Tone: ${tone}

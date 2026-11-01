@@ -48,6 +48,7 @@ export interface ProofItem {
     /** what the user said it is: "customer quote", "page claim", "case study title" ... or '' */
     label: string;
     kind: 'result' | 'quote' | 'recognition' | 'scale' | 'story';
+    held?: boolean;
 }
 export declare function parseProof(text: string): ProofItem[];
 /** The label to show for an item, in words a reader can check ("a customer quote on the company's website"). */

@@ -53,7 +53,7 @@ function profileForSeller(v, model, input) {
     return (0, sub_industry_ts_1.withGeneralNotes)(generalUnlessClear(forced ? v : (0, verticals_ts_1.profileFor)(v, model, input), input), Array.isArray(input.seller) ? input.seller : []);
 }
 function sectorSetPhrase(v) {
-    return v ? `set by your_sector as ${v.name}` : 'set by your_sector to other, so the wording stays neutral';
+    return v ? `from your choice: ${v.name}` : 'from your choice of other, so the wording stays neutral';
 }
 /** Run 42Q: when your_sector is set, the business model comes only from business_model, from the seller's own charge words, or from the
  *  set sector's usual model. A generic software word ("platform", "products", "technology") is not a charge word, and the usual model of a

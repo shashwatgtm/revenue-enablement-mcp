@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildChampionKit = buildChampionKit;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (rewrite of champion_enablement_kit). The old kit pasted an objection label into a sentence ("the owner of 'Integration effort'"), answered
 // with "I do not have a fact", repeated the whole value statement under every answer, and spoke of questions "you raised" when none were given.
 // This builder writes the asset in the champion's voice from the inputs: the value points once, with the vendor's claims labelled as the vendor's;
@@ -23,6 +24,18 @@ function buildChampionKit(args, d) {
     const targetGiven = (0, rw_kit_ts_1.splitNotes)(given('target_stakeholder')).text;
     const yourSolution = given('your_solution');
     const keyValuePoints = given('key_value_points');
+    const valueRisk = (0, text_signals_ts_1.claimRisk)(keyValuePoints);
+    if (valueRisk.hold)
+        return `# Recommendation on the proposed purchase
+
+**Hold the purchase recommendation.** The supplied value points include ${valueRisk.reason}. They do not support recommending that the buyer proceed.
+
+**Statement read:** ${keyValuePoints}
+
+## Decision needed
+1. Confirm the result, its period and source with the customer.
+2. Establish whether the proposed change caused it and whether the problem is resolved.
+3. Have the budget owner review the corrected value case before anyone forwards a positive recommendation.`;
     const knownObjections = given('known_objections');
     const competitiveContext = given('competitive_context');
     const budgetContext = given('budget_context');
@@ -194,27 +207,27 @@ function buildChampionKit(args, d) {
     // ---- what was not given, once ----
     const sharpen = [];
     if (!championName)
-        sharpen.push('champion_name (it would sign the asset)');
+        sharpen.push('champion name (it would sign the asset)');
     if (!championRole)
-        sharpen.push('champion_role (it would fill the From line and the voice of the asset)');
+        sharpen.push('champion role (it would fill the From line and the voice of the asset)');
     if (!targetGiven)
-        sharpen.push('target_stakeholder (it would set who the asset is written for; now it is written for leadership)');
+        sharpen.push('target stakeholder (it would set who the asset is written for; now it is written for leadership)');
     else if (sameRole)
-        sharpen.push(`target_stakeholder (it would change the To line and the reader notes: it now names the same role as champion_role, ${championRole}, so name the person above the champion who must approve)`);
+        sharpen.push(`target stakeholder (it would change the To line and the reader notes: it now names the same role as champion role, ${championRole}, so name the person above the champion who must approve)`);
     if (!outs.length)
-        sharpen.push('key_value_points (it would state what the reader should expect; now no outcome is stated)');
+        sharpen.push('key value points (it would state what the reader should expect; now no outcome is stated)');
     if (!typed.length)
-        sharpen.push(fromSector ? `known_objections (it would replace the usual questions of ${v.name} with the ones you expect)` : 'known_objections (it would add an answer to each; none is answered now)');
+        sharpen.push(fromSector ? `known objections (it would replace the usual questions of ${v.name} with the ones you expect)` : 'known objections (it would add an answer to each; none is answered now)');
     if (!alts.length)
-        sharpen.push('competitive_context (it would name the alternatives and the way of working today)');
+        sharpen.push('competitive context (it would name the alternatives and the way of working today)');
     if (!bud)
-        sharpen.push('budget_context (it would put a price in the asset; now none is stated)');
+        sharpen.push('budget context (it would put a price in the asset; now none is stated)');
     if (!urg)
-        sharpen.push('urgency_drivers (it would give a reason to act now and a date; now none is set)');
+        sharpen.push('urgency drivers (it would give a reason to act now and a date; now none is set)');
     if (!wins)
-        sharpen.push('champion_wins (it would add your own stake as a note to you; now there is none)');
+        sharpen.push('champion wins (it would add your own stake as a note to you; now there is none)');
     if (product.caps.length < 2)
-        sharpen.push('your_solution (list the parts of the product with a few words on what each does; it would let the answers point to the part that fits each question)');
+        sharpen.push('your solution (list the parts of the product with a few words on what each does; it would let the answers point to the part that fits each question)');
     const sharpenLine = sharpen.length ? `To sharpen this, give: ${sharpen.join('; ')}.` : '';
     const assets = {
         executive_brief: () => [

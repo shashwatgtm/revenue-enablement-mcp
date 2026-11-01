@@ -243,7 +243,7 @@ test("what was not given is named once, at the end, with what it would change", 
   const t = await call({ demo_type: "executive_overview", your_solution: "Ledgerwing, a bank data API for lenders: Verify (check a borrower's bank account and routing number), Watch (sanctions and watchlist screening) and Income (confirm a borrower's income from bank records)" });
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
   const tail = t.slice(t.indexOf("To sharpen this, give:"));
-  for (const k of ["primary_audience", "key_pain_points", "must_show_features", "desired_outcome", "known_objections"]) assert.match(tail, new RegExp(`${k}[^;]*\\(it would`), k);
+  for (const k of ["primary_audience", "key_pain_points", "must_show_features", "desired_outcome", "known_objections"]) assert.match(tail, new RegExp(`${k.replace(/_/g, " ")}[^;]*\\(it would`), k);
   assert.ok(t.indexOf("To sharpen this, give:") > t.indexOf("### Part 5"), "after the script");
   assert.ok(t.length - t.indexOf("To sharpen this, give:") < 1800, "at the end");
   assert.doesNotMatch(t, PLACEHOLDER);
@@ -285,7 +285,7 @@ test("a description with no named parts still gives steps from the pains, and sa
   const titles = stepBlocks(t).map(stepTitle);
   assert.ok(titles.length >= 2, titles.join(" | "));
   assert.match(t, /one time passwords arrive late/);
-  assert.match(t, /To sharpen this, give: [^\n]*your_solution/);
+  assert.match(t, /To sharpen this, give: [^\n]*your solution/);
 });
 
 test("time parts add up to the demo length and a short demo says so", async () => {
@@ -417,7 +417,7 @@ test("round 4: a step built from a problem with no part to show says to the sell
   const steps = demoSteps(bright);
   const fromPain = steps.filter((b) => /^\*\*Step \d+: A live case of/.test(b));
   assert.ok(fromPain.length >= 1, "a step for a problem no part answers");
-  for (const b of fromPain) assert.match(b, /Note for you, not for the room: [^\n]*no part of your_solution/);
+  for (const b of fromPain) assert.match(b, /Note for you, not for the room: [^\n]*no part of your solution/);
 });
 
 // ---- round 5: titles are not pasted pains, market statements are not "what you told me", people see the part of their own work, credit questions are answered ----

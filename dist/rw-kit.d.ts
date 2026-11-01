@@ -121,4 +121,7 @@ export declare function dedupeAnswers(list: {
     say: string;
     ask: string;
 }[]): void;
+/** Run 42C: an objection typed as "Question? The pricing FAQ says <answer>." is the question; the sentence that reports what a page says is the user's source,
+ *  not part of what the buyer asks, and is never pasted into a spoken reply. */
+export declare function objectionAsked(x: string): string;
 //# sourceMappingURL=rw-kit.d.ts.map

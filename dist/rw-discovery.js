@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildDiscoveryBank = buildDiscoveryBank;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (rewrite of discovery_question_bank). Fresh judges scored the old lists 3 to 4: the pain statement was pasted whole into five questions, a
 // question made no sense ("the targets a CIO answers for"), the product was called by its category noun ("cloud platform", "enterprise AI platform"),
 // the economic buyer was assumed to be someone other than the person in the room, the buyer's industry was only repeated as a label, and the parts of
@@ -28,6 +29,15 @@ function buildDiscoveryBank(args, d) {
     // a bracket that only says where the title came from is a source note: the questions use the title without it
     const prospectRole = (0, rw_kit_ts_1.splitNotes)(prospectRoleTyped).text;
     const knownPainPoints = text('known_pain_points');
+    const contact = (0, text_signals_ts_1.contactDeclined)(knownPainPoints, args.contact_permission);
+    if (contact.state === 'affirmed')
+        return `# Discovery outreach hold
+
+**Do not contact this person again without renewed permission.** Their refusal is not a business pain to probe.
+
+**Sentence read:** ${contact.evidence.join('; ')}
+
+Record the contact preference and pause outreach. Work from existing authorized records; resume a conversation only if they later give permission.`;
     const knownMetrics = text('known_metrics');
     const dealStage = args.deal_stage || 'discovery';
     const yourSolution = text('your_solution');
@@ -300,17 +310,17 @@ function buildDiscoveryBank(args, d) {
     // ---- what was not given, once, at the end ----
     const sharpen = [];
     if (!prospectIndustry)
-        sharpen.push('prospect_industry (it would add the questions a buyer in that industry asks of any vendor)');
+        sharpen.push('prospect industry (it would add the questions a buyer in that industry asks of any vendor)');
     if (!prospectRole)
-        sharpen.push('prospect_role (it would add the section for the person you meet and decide whether they sign)');
+        sharpen.push('prospect role (it would add the section for the person you meet and decide whether they sign)');
     if (!knownPainPoints)
-        sharpen.push('known_pain_points (it would turn the questions from the area to the pain, one statement at a time)');
+        sharpen.push('known pain points (it would turn the questions from the area to the pain, one statement at a time)');
     if (!yourSolution)
-        sharpen.push('your_solution (it would add a question on each part of the product, closest to the pain first)');
+        sharpen.push('your solution (it would add a question on each part of the product, closest to the pain first)');
     else if (product.caps.length < 2)
-        sharpen.push('your_solution (list the parts of the product with a few words on what each does; it would add a question on each part)');
+        sharpen.push('your solution (list the parts of the product with a few words on what each does; it would add a question on each part)');
     if (!knownMetrics)
-        sharpen.push('known_metrics (it would replace the sector\'s usual measure with the number the prospect gave)');
+        sharpen.push('known metrics (it would replace the sector\'s usual measure with the number the prospect gave)');
     const sharpenLine = sharpen.length ? `To sharpen this, give: ${sharpen.join('; ')}.\n\n` : '';
     const painContext = pains.length > 1 ? `- **Known Pain Points:**\n${pains.map((p, i) => `  ${i + 1}. ${p}`).join('\n')}\n` : knownPainPoints ? `- **Known Pain Points:** ${knownPainPoints}\n` : '';
     const kindLine = product.kind && !(0, rw_kit_ts_1.wordsOf)(product.kind, false).every((w) => (0, rw_kit_ts_1.wordsOf)(P, false).includes(w)) ? `, ${product.kind}` : '';

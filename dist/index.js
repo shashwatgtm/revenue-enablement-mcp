@@ -7,6 +7,11 @@ const build_profile_ts_1 = require("./build-profile.js");
 const reserve_tools_ts_1 = require("./reserve-tools.js");
 const widget_layer_ts_1 = require("./widget-layer.js");
 const wave2_checkers_ts_1 = require("./wave2-checkers.js");
+const text_signals_ts_1 = require("./text-signals.js");
+const decision_limits_ts_1 = require("./decision-limits.js");
+const text_signals_ts_2 = require("./text-signals.js");
+const text_signals_ts_3 = require("./text-signals.js");
+const text_signals_ts_4 = require("./text-signals.js");
 /**
  * Revenue Enablement MCP v1.0.0
  * Deal Strategy, ROI Calculators, Account Planning & Sales Enablement
@@ -252,7 +257,7 @@ const tools = {
                 },
                 known_contacts: {
                     type: 'string',
-                    description: 'Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account_notes'
+                    description: 'Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account notes'
                 },
                 current_products: {
                     type: 'string',
@@ -281,10 +286,14 @@ const tools = {
     // Tool 2: Deal Strategy Coach
     deal_strategy_coach: {
         name: 'deal_strategy_coach',
-        description: 'Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.',
+        description: 'Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.',
         inputSchema: {
             type: 'object',
             properties: {
+                blocker_status: { type: 'string', enum: ['none', 'present', 'unknown'], description: 'Ask whether any blocker is present. A confirmed typed fact overrides word reading.' },
+                economic_buyer_engagement: { type: 'string', enum: ['engaged', 'not_engaged', 'unknown'], description: 'Ask whether the budget holder actively participates in this decision. Overrides word reading.' },
+                incumbent_status: { type: 'string', enum: ['present', 'none', 'unknown'], description: 'Ask whether the buyer already uses a competing supplier. Overrides word reading.' },
+                project_status: { type: 'string', enum: ['active', 'cancelled', 'unknown'], description: 'Ask whether the project is still active. A cancelled project is held, without a close plan.' },
                 deal_name: {
                     type: 'string',
                     description: 'Deal/opportunity name'
@@ -344,6 +353,7 @@ const tools = {
         inputSchema: {
             type: 'object',
             properties: {
+                contact_permission: { type: 'string', enum: ['allowed', 'declined', 'unknown'], description: 'Optional confirmed fact. Ask whether this person permits further contact; this answer overrides contact-refusal wording in the notes.' },
                 framework: {
                     type: 'string',
                     enum: ['meddpicc', 'bant', 'spiced', 'challenger', 'gap_selling', 'all'],
@@ -385,7 +395,7 @@ const tools = {
     // Tool 4: ROI Business Case Builder
     roi_business_case_builder: {
         name: 'roi_business_case_builder',
-        description: 'Build an ROI business case from the buyer\'s own figures: annual_value_estimate, or current_annual_cost with expected_improvement_percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
+        description: 'Build an ROI business case from the buyer\'s own figures: annual value estimate, or current annual cost with expected improvement percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -395,7 +405,7 @@ const tools = {
                 },
                 industry: {
                     type: 'string',
-                    description: 'The customer\'s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer\'s own figures (annual_value_estimate, or current_annual_cost with expected_improvement_percent)'
+                    description: 'The customer\'s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer\'s own figures (annual value estimate, or current annual cost with expected improvement percent)'
                 },
                 company_size: {
                     type: 'string',
@@ -428,7 +438,7 @@ const tools = {
                 },
                 known_metrics: {
                     type: 'string',
-                    description: 'Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer\'s figures; to turn the buyer\'s figures into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate'
+                    description: 'Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer\'s figures; to turn the buyer\'s figures into the value, give current annual cost and expected improvement percent, or annual value estimate'
                 },
                 current_annual_cost: {
                     type: 'number',
@@ -995,7 +1005,7 @@ function readContext(explicitModel, input) {
     v = (0, sector_read_ts_1.profileForSeller)(v, m.model, input);
     m = (0, sector_read_ts_1.modelUnderSetSector)(m, v, input); // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
+    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; describe how you charge for advice that fits it';
     return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).
@@ -1018,6 +1028,9 @@ function sectorNotes(v, what = 'all') {
 }
 // The answer pattern for one objection or blocker typed by the user: the sector's pattern when it matches, else a pattern by kind.
 function answerFor(text, v) {
+    const clearance = (0, text_signals_ts_1.clearanceAdvice)(text);
+    if (clearance)
+        return clearance;
     const t = text.toLowerCase();
     if (v) {
         for (const o of v.objections) {
@@ -1086,7 +1099,17 @@ function executeDealStrategyCoach(args) {
     const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
     const P = brief.short || 'your solution';
     const bctx = { product: brief.short, sectorObjections: dealCtx.v?.objections, sectorName: dealCtx.v?.name, model: dealCtx.model };
-    const compItems = splitItems(competitors);
+    const buyerRead = (0, text_signals_ts_4.signal)(economicBuyer, 'engaged');
+    const incumbentRead = (0, text_signals_ts_4.signal)(competitors, 'incumbent');
+    const blockerRead = (0, text_signals_ts_4.blockerReading)(blockers);
+    const buyerEngaged = args.economic_buyer_engagement ? args.economic_buyer_engagement === 'engaged' : buyerRead.state === 'affirmed';
+    const incumbentPresent = args.incumbent_status ? args.incumbent_status === 'present' : incumbentRead.state === 'affirmed';
+    const blockerPresent = args.blocker_status ? args.blocker_status === 'present' : blockerRead.state === 'affirmed';
+    const cancelledRead = (0, text_signals_ts_4.signal)([blockers, nextSteps].join('; '), 'cancelled');
+    const cancelled = args.project_status ? args.project_status === 'cancelled' : cancelledRead.state === 'affirmed';
+    if (cancelled)
+        return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project status is cancelled.' : (0, text_signals_ts_4.evidenceLine)('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
+    const compItems = splitItems(competitors).filter(c => !['negated', 'unclear'].includes((0, text_signals_ts_4.signal)(c, 'incumbent').state));
     // Calculate deal health
     let healthScore = 70; // Start at 70
     let healthFactors = [];
@@ -1108,7 +1131,7 @@ function executeDealStrategyCoach(args) {
         healthFactors.push('High risk: No champion identified');
     }
     // Economic buyer
-    if (economicBuyer && economicBuyer.toLowerCase().includes('engaged')) {
+    if (buyerEngaged) {
         healthScore += 10;
         healthFactors.push('Economic buyer engaged');
     }
@@ -1140,19 +1163,22 @@ function executeDealStrategyCoach(args) {
         healthFactors.push(`Note: ${daysInStage} days in stage (above this tool's example threshold for the stage)`);
     }
     // Competitor impact
-    if (competitors && competitors.toLowerCase().includes('incumbent')) {
+    if (incumbentPresent) {
         healthScore -= 10;
         healthFactors.push('Note: Competing against incumbent');
     }
-    else if (competitors) {
+    else if (compItems.length && args.incumbent_status !== 'none') {
         healthScore -= 5;
         healthFactors.push('Note: Active competition');
     }
     // Blockers impact
-    if (blockers) {
+    if (blockerPresent) {
         healthScore -= 10;
         healthFactors.push('High risk: Known blockers present');
     }
+    healthFactors.push(args.economic_buyer_engagement ? `Economic buyer fact supplied: ${args.economic_buyer_engagement}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Economic buyer text', buyerRead));
+    healthFactors.push(args.incumbent_status ? `Incumbent fact supplied: ${args.incumbent_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Competition text', incumbentRead));
+    healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Blocker text', blockerRead));
     healthScore = Math.max(0, Math.min(100, healthScore));
     let healthStatus = 'Healthy';
     if (healthScore < 50) {
@@ -1389,8 +1415,8 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
 
 `;
     }
-    if (blockers) {
-        const items = splitItems(blockers);
+    if (blockers?.trim() && args.blocker_status !== 'none' && blockerRead.state !== 'negated') {
+        const items = ((0, text_signals_ts_1.clearanceBlocker)(blockers).state === 'absent' ? splitItems(blockers) : (0, text_signals_ts_4.clauses)(blockers)).filter(b => (0, text_signals_ts_4.blockerReading)(b).state !== 'negated');
         specificRecs += `
 ### Blocker Mitigation
 
@@ -1436,7 +1462,7 @@ ${[
         `- **Champion:** ${championStatus === 'no_champion' ? 'none yet. Finding one comes before anything else.' : championStatus === 'potential_champion' ? 'a potential champion. Test them: do they have access to the buyer and a reason to push?' : championStatus === 'confirmed_champion' ? 'confirmed. Give them the material to sell internally.' : 'several contacts engaged (multi-threaded). Keep each one informed.'}`,
         `- **Economic buyer:** ${economicBuyer ? economicBuyer : `unknown.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}.` : ''}`}`,
         compItems.length ? `- **Competition:** ${compItems.length} named (${(0, dealtext_ts_1.joinList)(compItems.map((c) => (0, dealtext_ts_1.clip)(c, 60)))}). Each is a row in the competitive table below.` : '- **Competition:** none named. Ask what they do today, including doing it by hand.',
-        blockers ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
+        blockerPresent ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
         dealCtx.v ? `- **How deals usually run in ${dealCtx.v.name}:** ${dealCtx.v.salesMotion}` : '',
     ].filter(Boolean).join('\n')}
 
@@ -1453,7 +1479,7 @@ ${specificRecs}
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
 ${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
-3. **Advance the deal**: ${nextSteps || (blockers ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
+3. **Advance the deal**: ${nextSteps || (blockerPresent ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
 4. **Update CRM**: Document all new information
 
 ### This Week
@@ -1717,6 +1743,10 @@ ${EXAMPLES}
     const paybackMonths = (investment / totalValue) * 12;
     const threeYearValue = totalValue * 3;
     const threeYearNet = threeYearValue - (investment * 3);
+    const implausibleValue = revenueGiven && annualRevenue > 0 && totalValue > annualRevenue;
+    if (implausibleValue)
+        confidenceLevel = 'Low';
+    const consistencyHold = implausibleValue ? `**CRITICAL: annual value assumption needs review.** The stated annual value (${money(totalValue)}) exceeds the customer's entire annual revenue (${money(annualRevenue)}). This is not automatically impossible, but the inputs do not justify it. Hold any investment recommendation until the buyer's finance owner reconciles the scope, time period, gross versus net value and double counting. The arithmetic below is unchanged and is not a decision to proceed.\n\n` : '';
     // Run 19 D80 (problem 5): confidence is never raised by metrics the calculation does not use.
     // Display text (output only; every figure above is unchanged)
     const nc = 'not computed';
@@ -1744,7 +1774,7 @@ ${EXAMPLES}
             : `Technology (your industry "${industry}" matched none of the built-in sets: ${Object.keys(benchmarks).join(', ')})`;
     const confidenceText = userValue !== null
         ? `${confidenceLevel}: the value comes from your own figures (${userValueText}); confirm them with the buyer`
-        : `${confidenceLevel}: the value figures rest on example assumptions, not on the customer's data${knownMetrics ? '. The metrics you supplied are listed below; add current_annual_cost and expected_improvement_percent (or annual_value_estimate) to turn them into the value' : ''}`;
+        : `${confidenceLevel}: the value figures rest on example assumptions, not on the customer's data${knownMetrics ? '. The metrics you supplied are listed below; add current annual cost and expected improvement percent (or annual value estimate) to turn them into the value' : ''}`;
     const exampleOnly = userValue === null;
     const VL = exampleOnly ? ` ${EXAMPLE}` : '';
     const timelineText = `${implementationTimeline}${args.implementation_timeline ? '' : ` ${EXAMPLE}`}`;
@@ -1760,7 +1790,7 @@ ${EXAMPLES}
     const printedNet = printedSum([printedValue, -investment]);
     return `# ROI Business Case: ${customerName}
 
-*Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
+${consistencyHold}*Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*
 
 ## Executive Summary
 
@@ -1800,7 +1830,7 @@ ${ignoredInputs ? `*Not used in this calculation: the ${ignoredInputs} you suppl
 | **Total Quantified Value** | ${valueComputed ? `**${money(printedValue)}**${VL}` : nc} |
 | **Annual Investment** | ${invCell(investment)}${priceSupplied ? '' : ` ${EXAMPLE}`} |
 | **Net Annual Benefit** | ${valueComputed ? `${usd(printedNet)}${VL}` : nc} |
-${exampleOnly && valueComputed && priceSupplied && !priceIsZero && roi > 500 ? `\n*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current_annual_cost and expected_improvement_percent, or annual_value_estimate).*\n` : ''}
+${exampleOnly && valueComputed && priceSupplied && !priceIsZero && roi > 500 ? `\n*This ROI comes from the tool's example assumptions and is too high to show a buyer as it is. Add the buyer's own figures (current annual cost and expected improvement percent, or annual value estimate).*\n` : ''}
 
 ### Key Metrics
 
@@ -1869,10 +1899,10 @@ ${EXAMPLES}
 
 ## One-Page Executive Summary
 
-### Why ${yourSolution} for ${customerName}
+${consistencyHold}### Why ${yourSolution} for ${customerName}
 
 **The Problem:**
-${currentProcess ? currentProcess : "Not given. Add current_process, in the customer's own words, and it will be shown here."}
+${currentProcess ? currentProcess : "Not given. Add current process, in the customer's own words, and it will be shown here."}
 
 **The Solution:**
 ${yourSolution} addresses these challenges${(() => { const ps = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '').parts; return ps.length ? ` through ${(0, dealtext_ts_1.joinList)(ps.slice(0, 4))}` : ''; })()}.
@@ -1891,7 +1921,7 @@ ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 *Confidence: ${confidenceLevel.toLowerCase()}. ${exampleOnly ? 'The value figures rest on example assumptions until you replace them with customer-provided metrics.' : 'The value comes from the figures you supplied; confirm them with the buyer before sharing.'}*
 
-${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [knownMetrics, currentProcess], buyer: [args.industry, customerName] }); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current_annual_cost and expected_improvement_percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
+${(() => { const c = readContext(undefined, { seller: [yourSolution], context: [knownMetrics, currentProcess], buyer: [args.industry, customerName] }); return c.v ? `${sectorNotes(c.v, 'metrics')}\n- **Turn one of these into the value:** ask the buyer what ${c.v.metrics[0]} costs them today, then use current annual cost and expected improvement percent.\n\n` : ''; })()}${SUGGESTIONS_FOOTER}`;
 }
 // Run 21b: MAP_EVAL and DEMO_SHOW were written around one kind of company in each vertical (last mile delivery, FMCG retail execution, spend and expense,
 // operators and enterprise connectivity, cloud security, API testing). They are used only for that kind; every other company of the vertical gets the generic entry.
@@ -1982,7 +2012,10 @@ function executeWinLossAnalyzer(args) {
 function executeTool(name, args) {
     (0, sector_read_ts_1.setYourSector)(args.your_sector);
     try {
-        return runTool(name, args);
+        const limit = (0, decision_limits_ts_1.decisionLimit)(name, args);
+        if (limit.stop)
+            return limit.text;
+        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
     }
     finally {
         (0, sector_read_ts_1.setYourSector)(undefined);
@@ -2015,7 +2048,7 @@ function runTool(name, args) {
         case 'competitive_trap_setter':
             return executeCompetitiveTrapSetter(args);
         default:
-            return `Tool ${name} not recognized. Available tools: account_plan_builder, deal_strategy_coach, discovery_question_bank, roi_business_case_builder, mutual_action_plan_generator, win_loss_analyzer, proposal_section_writer, email_sequence_generator, demo_script_builder, pricing_negotiation_guide, champion_enablement_kit, competitive_trap_setter`;
+            return `Tool ${name} not recognized. Available tools: Account Plan Builder, Deal Strategy Coach, Discovery Question Bank, ROI Business Case Builder, Mutual Action Plan Generator, Win/Loss Analyzer, Proposal Section Writer, Email Sequence Generator, Demo Script Builder, Pricing Negotiation Guide, Champion Enablement Kit, Competitive Trap Setter`;
     }
 }
 // Ways to restructure a deal when the budget is the problem, by how the seller charges (no figure but the user's own deal value).
@@ -2059,7 +2092,8 @@ function executePricingNegotiationGuide(args) {
     const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' }];
     const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
     const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
-    const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
+    const priceDirection = (0, text_signals_ts_4.hasSignal)(competitorPrice, /\b(above|higher|more expensive|more than)\b/i) ? 'higher' : (0, text_signals_ts_4.hasSignal)(competitorPrice, /\b(below|lower|cheaper|less than)\b/i) ? 'lower' : 'unclear';
+    const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
     const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
     const haveValue = hasValue(args.deal_value) && dealValue > 0;
     const options = restructureOptions(ctx.model, dealValue, haveValue, lowerFirstIfCommon(pilot));
@@ -2074,20 +2108,21 @@ function executePricingNegotiationGuide(args) {
     const vFirst = (0, dealtext_ts_1.pickProof)(vItems, 1, ['result', 'quote', 'story', 'scale', 'recognition'])[0] || vItems[0];
     const valueQuoted = vFirst ? (0, dealtext_ts_1.proofPhrase)(vFirst).replace(/[.]$/, '') : valueDelivered.trim().replace(/[.]$/, '');
     const valueListText = vItems.length > 1 ? `${vItems.map((x) => `- ${(0, dealtext_ts_1.proofPhrase)(x)}${x.label ? ` (${(0, dealtext_ts_1.proofSource)(x)})` : ''}`).join('\n')}\nThese are claims you gave; check each is current before you quote it.` : '';
-    const valueReframe = !valueDelivered
+    const valueRisk = (0, text_signals_ts_2.claimRisk)(valueDelivered);
+    const valueReframe = valueRisk.hold ? `The value case is not established: ${valueRisk.reason}. Hold the value-based price defense until the buyer confirms a supported result. Statement read: ${valueDelivered}` : !valueDelivered
         ? `
 "Before we discuss price, let's revisit the value we identified together.${v ? ` What does ${v.metrics[0]} cost you today, and what would it be worth to move it?` : ' What does this problem cost you today, and what would it be worth to fix it?'}${hasValue(args.deal_value) ? ` At ${dealValueText}, how does that compare?` : ''}"
 
-(Add value_delivered to put the buyer's own value points here instead of a question.)`
+(Add value delivered to put the buyer's own value points here instead of a question.)`
         : `
 "Before we discuss price, let's revisit what this has already delivered: ${valueQuoted}.
 ${hasValue(args.deal_value) ? `At ${dealValueText}, is that result worth more to you than the ${hasValue(args.discount_requested) ? `${discountRequested}%` : 'discount'} you are asking for?"` : 'What is that result worth to you in a year?" (add the deal value to compare the price with it)'}`;
     // ---- the deal, the leverage and the approver, shown in every scenario ----
     const claimWords = /\b(?:first|only|largest|leading|best|most|#1|unique|fastest|cheapest)\b/i;
-    const leverageLine = yourLeverage
-        ? `**Your leverage (your input):** ${yourLeverage.trim().replace(/[.]$/, '')}. Use it once, as the reason the price is what it is, and have the evidence ready.${claimWords.test(yourLeverage) ? ' It contains a claim ("first", "only", "largest", "leading" or similar): keep the source for it to hand, because the buyer will ask.' : ''}`
-        : `**Your leverage:** none given. Add your_leverage (a capability they need, a timeline, switching costs, an invested champion) and this guide builds the price conversation around it.`;
-    const theirLine = buyerLeverage ? `**Their leverage (your input):** ${buyerLeverage.trim().replace(/[.]$/, '')}. Answer it with the value case, not with a discount.` : '';
+    const leverageLine = (0, text_signals_ts_2.claimRisk)(yourLeverage).hold || /\b(?:no|not|without)\b[^.]{0,30}\b(?:exclusive|unique|advantage|leverage)/i.test(yourLeverage) ? `**Leverage not established:** ${yourLeverage}. Do not use this as a reason to defend the price. Compare the written quotes for the same scope, units, term and service commitments before deciding.` : yourLeverage
+        ? `**Your leverage (your input):** ${yourLeverage.trim().replace(/[.]$/, '')}. Use it as a price argument only after the buyer confirms it matters and the evidence supports it. Compare the written quotes for the same scope, units and service commitments.${claimWords.test(yourLeverage) ? ' It contains a claim ("first", "only", "largest", "leading" or similar): keep the source for it to hand, because the buyer will ask.' : ''}`
+        : `**Your leverage:** none given. Add your leverage (a capability they need, a timeline, switching costs, an invested champion) and this guide builds the price conversation around it.`;
+    const theirLine = buyerLeverage ? `**Their leverage (your input):** ${buyerLeverage.trim().replace(/[.]$/, '')}. Compare the written quote and its scope before deciding whether the value case supports the price.` : '';
     const dealBlock = `## Your deal
 
 | Factor | Value |
@@ -2273,9 +2308,9 @@ If budget genuinely isn't available:
 4. **Create urgency** only with a real reason (say this only if it is true)`,
         competitor_pricing: () => `# Competitor Pricing Response
 
-## Situation: Competitor has lower price
+## Situation: ${priceDirection === 'higher' ? 'Competitor quote is higher' : priceDirection === 'lower' ? 'Competitor has lower price' : 'Price direction is not clear'}
 
-${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a gap of ${gapMatch[1]}%${haveValue ? `: on your ${dealValueText} deal that is ${money(dealValue * Number(gapMatch[1]) / 100)} a year` : ''})` : ''}` : 'No competitor price was given (competitor_price).'}
+${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a gap of ${gapMatch[1]}%${haveValue ? `: on your ${dealValueText} deal that is ${money(dealValue * Number(gapMatch[1]) / 100)} a year` : ''})` : ''}` : 'No competitor price was given (competitor price).'}
 
 ---
 
@@ -2656,7 +2691,7 @@ function executeProposalSectionWriter(args) {
     const claims = claimsIn(keyDifferentiators, yourSolution.length < 200 ? yourSolution : '');
     const rollout = implementationApproach
         ? `${lineStartDigits(cap(implementationApproach.trim().replace(/[.]$/, '')))}.`
-        : (MAP_EVAL[stockKey(v, modelKey)] || []).length ? `No rollout plan was given (implementation_approach). For a product of this kind${v ? ` (${v.name})` : ''} a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[0].m)}; (2) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[(MAP_EVAL[stockKey(v, modelKey)] || []).length > 2 ? 2 : 1].m)}.` : `No rollout plan was given (implementation_approach). Describe the phases, who is involved on both sides and when value starts.`;
+        : (MAP_EVAL[stockKey(v, modelKey)] || []).length ? `No rollout plan was given (implementation approach). For a product of this kind${v ? ` (${v.name})` : ''} a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[0].m)}; (2) ${lowerFirstIfCommon((MAP_EVAL[stockKey(v, modelKey)] || [])[(MAP_EVAL[stockKey(v, modelKey)] || []).length > 2 ? 2 : 1].m)}.` : `No rollout plan was given (implementation approach). Describe the phases, who is involved on both sides and when value starts.`;
     const audienceLine = primaryAudience && AUDIENCE_NOTE[primaryAudience] ? `*Audience: written for ${AUDIENCE_NOTE[primaryAudience]}.*\n\n` : '';
     const claimsBlock = claims.length ? `\n### Claims to source before you send\n\nThese statements are yours. A buyer will ask for the source of each, so add it or soften the wording:\n${claims.map((c) => `- ${q(c)}`).join('\n')}\n` : '';
     const sectorProof = v ? `In ${v.name}, the evidence that lands is this: ${proofOf(v)}.` : '';
@@ -2697,14 +2732,14 @@ function executeProposalSectionWriter(args) {
     const xClaims = claimsIn(xDiffs.join('\n'), yourSolution.length < 200 ? yourSolution : '');
     const execLead = [
         toneStyle.lead,
-        xChallenges.length ? `${customerName}${industryNote} told us about ${xChallenges.length === 1 ? `one problem: ${tidy(leadCut(xChallenges[0]))}` : `${xChallenges.length} problems, starting with this: ${tidy(leadCut(xChallenges[0]))}`}.` : `No challenges were given to this tool: add customer_challenges to open on ${customerName}'s own problem.`,
+        xChallenges.length ? `${customerName}${industryNote} told us about ${xChallenges.length === 1 ? `one problem: ${tidy(leadCut(xChallenges[0]))}` : `${xChallenges.length} problems, starting with this: ${tidy(leadCut(xChallenges[0]))}`}.` : `No challenges were given to this tool: add customer challenges to open on ${customerName}'s own problem.`,
         xDiffs.length ? `${P} is our answer, and the first reason is this: ${tidy(xDiffs[0])}.` : `${P} is our answer.`,
         outcomes.length ? `The result we propose to be held to: ${cleanClaim(outcomes[0])}.` : '',
         pricing ? `The investment is ${tidy(pricing)}.` : '',
     ].filter(Boolean).join(' ');
     const stockFirst = (MAP_EVAL[stockKey(v, modelKey)] || [])[0];
     const stepList = [
-        xChallenges.length ? `Confirm the scope with ${customerName}: ${xChallenges.join(' ').length > 160 ? `the ${xChallenges.length === 1 ? 'problem' : `${xChallenges.length} problems`} listed under The Opportunity` : (0, dealtext_ts_1.joinList)(xChallenges.slice(0, 3).map(tidy))}.` : `Confirm the scope with ${customerName} (add customer_challenges to name it here).`,
+        xChallenges.length ? `Confirm the scope with ${customerName}: ${xChallenges.join(' ').length > 160 ? `the ${xChallenges.length === 1 ? 'problem' : `${xChallenges.length} problems`} listed under The Opportunity` : (0, dealtext_ts_1.joinList)(xChallenges.slice(0, 3).map(tidy))}.` : `Confirm the scope with ${customerName} (add customer challenges to name it here).`,
         implementationApproach ? `Agree the rollout: ${tidy(implementationApproach)}.` : stockFirst ? `Agree the rollout, starting from this: ${lowerFirstIfCommon(tidy(stockFirst.m))}.` : '',
         outcomes.length ? `Agree the measure and its baseline: ${cleanClaim(outcomes[0])}.` : '',
         pricing ? `Confirm the investment: ${tidy(pricing)}.` : '',
@@ -2716,7 +2751,7 @@ function executeProposalSectionWriter(args) {
         xClaims.length ? `- Claims to source before you send: a buyer will ask for the source of each, so add it or soften the wording: ${xClaims.map((c) => q(c)).join('; ')}.` : '',
         xFigures.length ? `- Figures to source: ${xFigures.map((c) => q(c)).join('; ')}.` : '',
         annotations.length ? `- Research notes taken out of the client text (confirm each with the customer or drop it): ${annotations.join('; ')}.` : '',
-        customerIndustry ? `- customer_industry (${customerIndustry}) is named in the opening only. Add one sentence on how ${P} is used in ${customerIndustry}: the sector notes below describe the seller's side.` : '',
+        customerIndustry ? `- customer industry (${customerIndustry}) is named in the opening only. Add one sentence on how ${P} is used in ${customerIndustry}: the sector notes below describe the seller's side.` : '',
     ].filter(Boolean);
     const beforeSend = beforeLines.length ? `### Before you send (for you, not for the client)\n\n${beforeLines.join('\n')}` : '';
     const bullets = (items, fallback) => (items.length ? items.map((c) => `- ${c.trim()}`).join('\n') : fallback);
@@ -2734,17 +2769,17 @@ ${solutionText}
 
 ### The Opportunity
 
-${customerChallenges ? `Key challenges for ${customerName}:\n\n${bullets(xChallenges, '')}${kindLine ? `\n\n${kindLine}` : ''}` : `No challenges were given. Add customer_challenges, in ${customerName}'s own words, to complete this section.`}
+${customerChallenges ? `Key challenges for ${customerName}:\n\n${bullets(xChallenges, '')}${kindLine ? `\n\n${kindLine}` : ''}` : `No challenges were given. Add customer challenges, in ${customerName}'s own words, to complete this section.`}
 
 ### Our Recommendation
 
 What ${P} offers ${customerName}:
 
-${bullets(xDiffs, `- No differentiators were given. Add key_differentiators: the two or three reasons ${customerName} should choose ${P}, each with its evidence.`)}
+${bullets(xDiffs, `- No differentiators were given. Add key differentiators: the two or three reasons ${customerName} should choose ${P}, each with its evidence.`)}
 
 ### Expected Outcomes
 
-${outcomes.length ? outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n') : `No success metrics were given. Add success_metrics.${v ? ` For a product of this kind (${v.name}) the usual ones are ${(0, dealtext_ts_1.joinList)(v.metrics.slice(0, 4))}; agree the measure and the baseline with ${customerName}.` : ''}`}
+${outcomes.length ? outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n') : `No success metrics were given. Add success metrics.${v ? ` For a product of this kind (${v.name}) the usual ones are ${(0, dealtext_ts_1.joinList)(v.metrics.slice(0, 4))}; agree the measure and the baseline with ${customerName}.` : ''}`}
 
 ### How We Will Get There
 
@@ -2756,7 +2791,7 @@ ${pricing ? `Investment: ${pricing}` : 'No pricing was given. Add pricing here, 
 
 ### Why ${P}
 
-${xDiffs.length ? `${P} stands out for ${customerName} on the ${xDiffs.length === 1 ? 'point' : `${xDiffs.length} points`} above. We propose to prove ${xDiffs.length === 1 ? 'it' : 'them'} the way a buyer of this kind of product checks: ${v ? `${proofOf(v)}.` : `on ${customerName}'s own case before any commitment.`}` : `No differentiators were given, so the reasons to choose ${P} are not stated here: add key_differentiators.`}
+${xDiffs.length ? `${P} stands out for ${customerName} on the ${xDiffs.length === 1 ? 'point' : `${xDiffs.length} points`} above. We propose to prove ${xDiffs.length === 1 ? 'it' : 'them'} the way a buyer of this kind of product checks: ${v ? `${proofOf(v)}.` : `on ${customerName}'s own case before any commitment.`}` : `No differentiators were given, so the reasons to choose ${P} are not stated here: add key differentiators.`}
 
 ### Next Steps
 
@@ -2773,7 +2808,7 @@ ${beforeSend}`,
 
 This section sets out the problems that ${P} is proposed to solve.
 
-${challenges.length ? `Key challenges for ${customerName}:\n\n${challenges.map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** Ask ${customerName} how this affects their team and their results, and write it here in their words.${v ? ` In ${v.name} this usually shows up in ${(0, dealtext_ts_1.joinList)(v.metrics.slice(i % 3, (i % 3) + 2).length ? v.metrics.slice(i % 3, (i % 3) + 2) : v.metrics.slice(0, 2))}.` : ''}\n\n**Root Cause:** What ${customerName} told you: process gaps, technology limits or resource constraints.\n\n**Cost of Inaction:** What ${customerName} said happens if nothing changes.\n`).join('\n')}` : `No challenges were given. Add customer_challenges, in ${customerName}'s own words, and this section writes one block for each.`}
+${challenges.length ? `Key challenges for ${customerName}:\n\n${challenges.map((c, i) => `### Challenge ${i + 1}: ${c.trim()}\n\n**Impact:** Ask ${customerName} how this affects their team and their results, and write it here in their words.${v ? ` In ${v.name} this usually shows up in ${(0, dealtext_ts_1.joinList)(v.metrics.slice(i % 3, (i % 3) + 2).length ? v.metrics.slice(i % 3, (i % 3) + 2) : v.metrics.slice(0, 2))}.` : ''}\n\n**Root Cause:** What ${customerName} told you: process gaps, technology limits or resource constraints.\n\n**Cost of Inaction:** What ${customerName} said happens if nothing changes.\n`).join('\n')}` : `No challenges were given. Add customer challenges, in ${customerName}'s own words, and this section writes one block for each.`}
 
 ## The Cost of the Current State
 
@@ -2782,7 +2817,7 @@ Put a number from ${customerName} against each row. Do not enter a figure they d
 | Impact area | What to find out |
 |-------------|------------------|
 | Time | The hours spent each week on the manual work or the workarounds |
-| Money | What the problem costs in a year (the roi_business_case_builder tool needs this) |
+| Money | What the problem costs in a year (the ROI Business Case Builder tool needs this) |
 | Risk | What one incident or failure costs, and how often it happens |
 | Growth | What the problem stops ${customerName} from doing |
 ${v ? `\n${sectorNotes(v, 'metrics')}\n` : ''}
@@ -2801,13 +2836,13 @@ ${brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)(brief)}.` : `${P} is the 
 
 ### Core Capabilities
 
-${diffs.length ? diffs.map((d, i) => `**${i + 1}. ${d.trim()}**\nSay which of ${customerName}'s challenges this answers, and show it on ${customerName}'s own case.\n`).join('\n') : brief.parts.length ? `${P} includes:\n\n${brief.parts.map((p, i) => `**${i + 1}. ${cap(p)}**\n`).join('\n')}` : `No differentiators or parts were given. Add key_differentiators or describe the parts in your_solution, after a colon.`}
+${diffs.length ? diffs.map((d, i) => `**${i + 1}. ${d.trim()}**\nSay which of ${customerName}'s challenges this answers, and show it on ${customerName}'s own case.\n`).join('\n') : brief.parts.length ? `${P} includes:\n\n${brief.parts.map((p, i) => `**${i + 1}. ${cap(p)}**\n`).join('\n')}` : `No differentiators or parts were given. Add key differentiators or describe the parts in your solution, after a colon.`}
 
 ### Feature-to-Value Mapping
 
 | Your Challenge | Our Capability | Business Value |
 |----------------|----------------|----------------|
-${(challenges.length ? challenges : ['(add customer_challenges)']).slice(0, 4).map((c, i) => `| ${c.trim()} | ${brief.parts[i] ? cap((0, dealtext_ts_1.partLabel)(brief.parts[i])) : 'Choose the part of ' + P + ' that answers it'} | ${v ? `A change in ${v.metrics[i % v.metrics.length]} that you can show` : 'A result you can show'} |`).join('\n')}
+${(challenges.length ? challenges : ['(add customer challenges)']).slice(0, 4).map((c, i) => `| ${c.trim()} | ${brief.parts[i] ? cap((0, dealtext_ts_1.partLabel)(brief.parts[i])) : 'Choose the part of ' + P + ' that answers it'} | ${v ? `A change in ${v.metrics[i % v.metrics.length]} that you can show` : 'A result you can show'} |`).join('\n')}
 
 ### Security & Compliance
 
@@ -2913,7 +2948,7 @@ ${pricing ? `### Investment Summary\n\n${pricing}` : `### Investment Summary\n\n
 
 ### Value Justification
 
-The value is ${customerName}'s own figure. Use the roi_business_case_builder tool with their cost or value figures to produce the return, payback and three-year value; none is made up here.
+The value is ${customerName}'s own figure. Use the ROI Business Case Builder tool with their cost or value figures to produce the return, payback and three-year value; none is made up here.
 
 | Value category | What to measure with ${customerName} |
 |----------------|--------------------------------------|
@@ -3024,11 +3059,11 @@ ${EXAMPLES}
 
 ### Who We Are
 
-${brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)(brief)}.` : `${P} is the solution this proposal recommends.`} Add who it helps and what it does for them in your_solution.
+${brief.kind ? `${P} ${(0, dealtext_ts_1.describeWith)(brief)}.` : `${P} is the solution this proposal recommends.`} Add who it helps and what it does for them in your solution.
 
 ### Why Companies Choose Us
 
-${diffs.length ? diffs.map((d) => `- ${d.trim()}`).join('\n') : '- No differentiators were given. Add key_differentiators.'}
+${diffs.length ? diffs.map((d) => `- ${d.trim()}`).join('\n') : '- No differentiators were given. Add key differentiators.'}
 ${claimsBlock}
 ### By the Numbers
 
@@ -3323,7 +3358,7 @@ function joinAbbreviations(value) {
 function checkRequiredInputs(name, args) {
     const tool = tools[name];
     if (!tool) {
-        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).join(', ')}.`;
+        return `Unknown tool: ${(0, escape_inputs_ts_1.escapeText)(String(name))}. Available tools: ${Object.keys(tools).map(text_signals_ts_2.readerLabel).join(', ')}.`;
     }
     const required = tool.inputSchema.required ?? [];
     // Run 16 R16-10 (rule B52): a required text (a string with no fixed list of choices) that is empty or only whitespace counts as missing.
@@ -3331,7 +3366,7 @@ function checkRequiredInputs(name, args) {
     const blankText = (key) => typeof args?.[key] === "string" && args[key].trim() === "" && props[key]?.type === "string" && !Array.isArray(props[key]?.enum);
     const missing = required.filter((key) => args?.[key] === undefined || args?.[key] === null || blankText(key));
     if (missing.length > 0) {
-        return `Missing required input for ${name}: ${missing.join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
+        return `Missing required input for ${(0, text_signals_ts_2.readerLabel)(name)}: ${missing.map(text_signals_ts_2.readerLabel).join(', ')}. Provide ${missing.length === 1 ? 'it' : 'them'} and call the tool again.`;
     }
     // Decision N2 (run 6) and run 7: schema limits at any depth, choices, money text and single amounts.
     const problems = [];
@@ -3356,17 +3391,21 @@ function checkRequiredInputs(name, args) {
     }
     // Run 15 R15-32 (edge-case matrix): a discount is a percentage, so over 100 cannot be priced; a target close date must not be past.
     if (name === "pricing_negotiation_guide" && typeof args?.discount_requested === "number" && args.discount_requested > 100) {
-        problems.push("discount_requested must be 100 or less (it is a percentage of the deal value)");
+        problems.push("discount requested must be 100 or less (it is a percentage of the deal value)");
     }
     if (name === "mutual_action_plan_generator" && typeof args?.target_close_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.target_close_date.trim())) {
         const close = new Date(args.target_close_date.trim() + "T23:59:59Z");
         if (!isNaN(close.getTime()) && close.getTime() < Date.now())
-            problems.push(`target_close_date ${(0, escape_inputs_ts_1.escapeText)(args.target_close_date.trim())} is in the past; use a future date in the format YYYY-MM-DD`);
+            problems.push(`target close date ${(0, escape_inputs_ts_1.escapeText)(args.target_close_date.trim())} is in the past; use a future date in the format YYYY-MM-DD`);
     }
     if (problems.length > 0) {
-        return `Invalid input for ${name}: ${problems.join("; ")}.`;
+        return `Invalid input for ${(0, text_signals_ts_2.readerLabel)(name)}: ${problems.map(text_signals_ts_2.readerIssue).join("; ")}.`;
     }
     return null;
+}
+for (const tool of Object.values(tools)) {
+    Object.assign((tool.inputSchema.properties ??= {}), (0, decision_limits_ts_1.decisionInputs)(tool.name));
+    tool.description += (0, decision_limits_ts_1.decisionHelp)(tool.name);
 }
 function createServer() {
     const server = new index_js_1.Server({ name: exports.SERVER_NAME, version: exports.SERVER_VERSION }, { capabilities: { tools: {} } });

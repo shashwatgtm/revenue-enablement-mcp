@@ -50,9 +50,9 @@ test("win_loss_analyzer competitor_analysis: deal inputs are used, no blank temp
   assert.match(r.text, /Lanehop/);
   // the sector's usual loss reasons (logistics tech) and a precise ask for what is missing
   assert.match(r.text, /We already have a TMS|Drivers will not use a new app/);
-  assert.match(r.text, /`deal_outcome`/);
-  assert.match(r.text, /`loss_reason`/);
-  assert.match(r.text, /`competitor_won`/);
+  assert.match(r.text, /`deal outcome`/);
+  assert.match(r.text, /`loss reason`/);
+  assert.match(r.text, /`competitor won`/);
   assert.match(r.text, /not given|not supplied/i);
 });
 
@@ -73,7 +73,7 @@ test("win_loss_analyzer: a different company gets its own alternatives and secto
 test("win_loss_analyzer single_deal with no outcome still gives the structure and asks for the outcome", async () => {
   const r = await call("win_loss_analyzer", { analysis_type: "single_deal", your_solution: ANSWERLOOP, deal_value: 80000, stakeholders_involved: "Head of Customer Experience (champion), CISO (against)" });
   assert.doesNotMatch(r.text, /Not specified/);
-  assert.match(r.text, /`deal_outcome`/);
+  assert.match(r.text, /`deal outcome`/);
   assert.match(r.text, /Head of Customer Experience/);
   assert.match(r.text, /CISO/);
   assert.match(r.text, /AI gets answers wrong|Data privacy|Can we trust an agent to act on its own/);

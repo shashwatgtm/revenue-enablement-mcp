@@ -28,7 +28,7 @@ test("your_sector ites: a services firm that names products and technology is so
   assert.match(modelLine(s), /^Business model: software subscription/);
   // business_model given wins over everything (pricing guide takes it)
   const p = await call("pricing_negotiation_guide", { scenario: "discount_request", deal_value: 100000, discount_requested: 10, your_solution: SERVICES, business_model: "saas", your_sector: "ites" });
-  assert.match(modelLine(p), /from business_model/);
+  assert.match(modelLine(p), /from your answer/);
 });
 
 test("demo: a list of integration names is one claim; the steps answer the pains", async () => {

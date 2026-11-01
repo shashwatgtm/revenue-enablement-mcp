@@ -1,3 +1,4 @@
+import { hasSignal } from './text-signals.ts';
 // Run 22 (rewrite of account_plan_builder, mutual_action_plan_generator and roi_business_case_builder): helpers the three rewritten tools share.
 // Pure text functions: no network, no figures, no file access (rule 8, B82). They read what the user typed and the sector notes in verticals.ts;
 // where a fact about the user's own product would be needed, the text says what to bring or confirm, and never states it.
@@ -397,16 +398,16 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
   const modelT = MODEL_TRADES[ctx.model === 'sim' ? 'transactions' : ctx.stated === false && ctx.model === 'saas' ? 'unknown' : ctx.model || 'unknown'];
   const named = namedThings(text, [P, ctx.P]).filter((s) => !/^(?:API|APIs|SDK|Does|Can|Is|How|Why|What)$/i.test(s));
   const relevant = partFor(text, ctx.parts);
-  const mk = (id: string, answer: string, bring: string, ask: string): QAnswer => ({ id, answer, bring, ask });
+  const mk = (id: string, answer: string, bring: string, ask: string): QAnswer => ({ id, answer: answer + ` Sentence read: "${text}".`, bring, ask });
 
-  if (/\b(?:without|not|only) (?:a |the |buying )?(?:suite|bundle|package)|buy (?:a |an )?(?:single|one)\b|single .{0,25}\bproduct|just (?:one|the)\b/i.test(t) && /\b(?:buy|purchase|get|sign|take)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:without|not|only) (?:a |the |buying )?(?:suite|bundle|package)|buy (?:a |an )?(?:single|one)\b|single .{0,25}\bproduct|just (?:one|the)\b/i) && hasSignal(t, /\b(?:buy|purchase|get|sign|take)\b/i)) {
     return mk('packaging-single', `Answer yes or no first, then how it works: say whether ${P} sells its parts on their own or only in suites, what each suite contains, and what it costs to move from one to the next. If only suites exist, show the smallest suite that covers what the buyer needs now${needs ? ` (${needs})` : ''}, and say what they do not use.`, `the current packaging of ${P}: what is sold alone, what is sold in suites, and how each is priced`, 'Which of the parts do you need in the first year, and which can wait?');
   }
-  if (/\b(?:add|more|extra|additional)\b.{0,30}\b(?:licen[cs]es?|users?|seats?|capacity|volume)\b|only one product in|for only one/i.test(t)) {
+  if (hasSignal(t, /\b(?:add|more|extra|additional)\b.{0,30}\b(?:licen[cs]es?|users?|seats?|capacity|volume)\b|only one product in|for only one/i)) {
     return mk('packaging-add', `Answer in the buyer's terms: can more of one product be added without moving to a larger package, how is the added amount priced, and does it start at once or at renewal. If the answer is no, say what the next package adds so the buyer can weigh it.`, `the rules of ${P} for adding to one product inside a package, with an example price`, 'How much more of that product do you expect to need, and by when?');
   }
-  if (/\b(?:choose|pick|select|decide|right|which)\b.{0,40}\b(?:suite|package|plan|edition|tier|bundle|product)\b|\bhow do (?:i|we) choose\b|\bfigure out what (?:you|we|i) (?:actually )?need|\bwhat (?:do|should) (?:i|we) need\b|\boverlap\w*/i.test(t)) {
-    const overlap = /overlap|too many/i.test(t);
+  if (hasSignal(t, /\b(?:choose|pick|select|decide|right|which)\b.{0,40}\b(?:suite|package|plan|edition|tier|bundle|product)\b|\bhow do (?:i|we) choose\b|\bfigure out what (?:you|we|i) (?:actually )?need|\bwhat (?:do|should) (?:i|we) need\b|\boverlap\w*/i)) {
+    const overlap = hasSignal(t, /overlap|too many/i);
     return mk(overlap ? 'overlap' : 'packaging-choose',
       overlap
         ? `Do not argue that there is no overlap. Draw it line by line: for each tool the buyer already runs${ctx.alternatives.length ? ` (such as ${some(ctx.alternatives.map(lowerStart), 2)})` : ''}, say what it does, what ${P} does and where the two meet, then say plainly which one should stay and which should go. The buyer needs only what removes a gap or a duplicate cost.`
@@ -414,16 +415,16 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
       `a one page map from each of the buyer's problems to the part of ${P} that answers it, and which tool it would replace or sit beside`,
       'Which problem hurts most this year, and which tools do you already own that touch it?');
   }
-  if (/\b(?:real|total|hidden|true|full|actual) cost|beyond (?:the )?(?:licen[cs]e|price|subscription|fee)|cost of (?:owning|stitching|running)|tco\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:real|total|hidden|true|full|actual) cost|beyond (?:the )?(?:licen[cs]e|price|subscription|fee)|cost of (?:owning|stitching|running)|tco\b/i)) {
     const lines = (text.match(/:\s*(.+)$/) || ['', ''])[1];
     const parts = lines ? splitTopLevel(lines.replace(/\s+and\s+/g, ', ')).map(stripEnd) : [];
     return mk('tco', `Answer with a short cost table instead of a defence: one row for each cost the buyer named${parts.length ? ` (${joinList(parts)})` : ' (set-up, integration, tuning and the people who run it)'}, filled in for ${P} and for the way they work today${ctx.alternatives.length ? ` (${lowerStart(ctx.alternatives[0])})` : ''}, using the buyer's own figures. Where you have no figure, say so and ask for theirs.`, `what set-up, integration, tuning and running ${P} has taken for customers of a similar size, only if you can show it`, 'Which of these costs does your team carry today without anyone counting it?');
   }
-  if (/\b(?:cheap(?:est|er)?|lowest|lower (?:price|cost)|less expensive|cheaper)\b/i.test(t) || /\bprice\b.{0,30}\b(?:lower|less|cheaper)\b|\bcompare\b.{0,30}\bcost\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:cheap(?:est|er)?|lowest|lower (?:price|cost)|less expensive|cheaper)\b/i) || hasSignal(t, /\bprice\b.{0,30}\b(?:lower|less|cheaper)\b|\bcompare\b.{0,30}\bcost\b/i)) {
     const unit = unitFor(text, ctx);
     return mk('cheapest', `Do not claim it is the cheapest. Take the buyer's last invoice or usage report and price the same activity both ways, ${unit ? `${unit} and ` : ''}including every fee, so the comparison is theirs and not yours. Where the lower figure is not yours, say what the difference buys (${needs || 'what the buyer named as important'}).`, `your price list, how the price is built${unit ? ` (${unit})` : ''}, and every fee that is not in the headline rate`, 'Can you show me your last month of activity so we can price the same month both ways?');
   }
-  if (/\bpay[- ]as[- ]you[- ]go\b|\bwithout (?:a )?(?:contract|commitment)\b|\bprepaid\b|\btop[- ]?up\b/i.test(t) && /\b(?:what|which|available|include\w*|offer\w*|can i|do you)\b/i.test(t)) {
+  if (hasSignal(t, /\bpay[- ]as[- ]you[- ]go\b|\bwithout (?:a )?(?:contract|commitment)\b|\bprepaid\b|\btop[- ]?up\b/i) && hasSignal(t, /\b(?:what|which|available|include\w*|offer\w*|can i|do you)\b/i)) {
     return mk('payg', `List, product by product${ctx.parts.length ? ` (${some(ctx.parts, 5)})` : ''}, what can be used on pay as you go and what needs a contract: for each, the price basis, any minimum spend or top up, and what a committed plan adds. Never present a product as pay as you go unless your price list says so.`, `which of ${P}'s products are sold pay as you go and which need a contract, from the price list`, 'Which of these would you start with, and what monthly volume do you expect?');
   }
   const startM = text.match(/^(?:can|could|how (?:do|can)) (?:i|we)\b.{0,12}\b(?:get started|start|begin|sign up|set up)\b.{0,8}?\bwith\s+(.+)$/i);
@@ -431,71 +432,71 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
     const items = splitTopLevel(startM[1].replace(/,?\s+(?:or|and)\s+/gi, ', ')).map(stripEnd).filter(Boolean);
     return mk('start-with', `Answer item by item (${joinList(items)}): for each, say whether it can be started today, what has to be registered, approved or set up before the first live use and how long that takes, and what the first live use looks like. Do not say "yes" to the whole list if one item has a lead time.`, `the start steps and lead times of ${joinList(items)}, from ${P}'s own documentation`, `Which of ${joinList(items, 'or')} do you need live first?`);
   }
-  if (/\bexceed\w*\b[^?]{0,40}\b(?:limits?|caps?|quota|allowance|concurrency)\b|\b(?:concurrency|rate|request|api|quota)\s+limits?\b|\bover (?:the |my |our )?(?:limit|quota|cap)\b|\bhit(?:ting)? (?:the |my |our )?(?:limit|quota|cap)\b/i.test(t)) {
+  if (hasSignal(t, /\bexceed\w*\b[^?]{0,40}\b(?:limits?|caps?|quota|allowance|concurrency)\b|\b(?:concurrency|rate|request|api|quota)\s+limits?\b|\bover (?:the |my |our )?(?:limit|quota|cap)\b|\bhit(?:ting)? (?:the |my |our )?(?:limit|quota|cap)\b/i)) {
     return mk('over-limit', `Answer in three parts: what happens at the limit (new requests wait in a queue, are refused, or are served and billed on), how the limit is raised and how fast, and what the buyer can see before they reach it. Say which of these ${P} does today; do not promise a behaviour you cannot show.`, `what ${P} does when a limit is reached, how a limit is raised and how long that takes, from its documentation`, 'At your busiest hour, how many do you expect at once, and how often do you reach that?');
   }
-  if (/\b(?:spending|spend|usage|credit|daily|monthly)\s+(?:limits?|caps?|alerts?|controls?)\b|\bset (?:a |an )?(?:limits?|caps?|budgets?|alerts?)\b|\blimits? on (?:my|the|our)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:spending|spend|usage|credit|daily|monthly)\s+(?:limits?|caps?|alerts?|controls?)\b|\bset (?:a |an )?(?:limits?|caps?|budgets?|alerts?)\b|\blimits? on (?:my|the|our)\b/i)) {
     return mk('limits', `Answer yes or no, then how: at which level a limit can be set (account, product or user), what happens when it is reached (traffic or use stops, or only an alert goes out), who can change it, and how fast a change takes effect.`, `${P}'s controls for limits and alerts, and what each one does when it is reached`, 'When a limit is reached, do you want use to stop, or only a warning?');
   }
-  if (/\b(?:prices?|rates?|fees?|costs?|charges?)\b.{0,25}\b(?:vary|varies|differ|differs|change)\b/i.test(t) || /\bvary by\b|\bdiffer by\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:prices?|rates?|fees?|costs?|charges?)\b.{0,25}\b(?:vary|varies|differ|differs|change)\b/i) || hasSignal(t, /\bvary by\b|\bdiffer by\b/i)) {
     const by0 = (text.match(/\b(?:by|per|across)\s+([a-z ]{3,30}?)(?:\?|$| and )/i) || [])[1];
     const by = by0 ? stripEnd(by0).replace(/^country$/i, 'countries').replace(/^region$/i, 'regions').replace(/^destination$/i, 'destinations').replace(/^plan$/i, 'plans') : '';
     return mk('price-varies', `Answer yes or no, then show it: ask which ${by ? stripEnd(by) : 'countries, regions or plans'} the buyer actually uses, send the rates for just those, and say what drives a difference where your price list shows one.`, `the rate table for the ${by ? stripEnd(by) : 'countries or regions'} the buyer uses, and the rule behind any difference`, `Which ${by ? stripEnd(by) : 'countries or regions'} carry most of your volume?`);
   }
-  if (/\b(?:subscription|licen[cs]e|perpetual|on[- ]prem\w*|desktop)\b/i.test(t) && /\b(?:purchase|buy|pay|get|switch|move|convert)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:subscription|licen[cs]e|perpetual|on[- ]prem\w*|desktop)\b/i) && hasSignal(t, /\b(?:purchase|buy|pay|get|switch|move|convert)\b/i)) {
     return mk('buy-model', `Answer with the ways of buying that exist${ctx.parts.length || ctx.sellerText ? ' for this product' : ''}: a licence, a subscription, or a mix, and for each what it means for upgrades, support and the data. Say yes or no to the form the buyer asked for before anything else, and what it costs to move from one to the other later.`, `the ways ${P} can be bought (licence, subscription, cloud, hybrid), and what each includes, from the price list`, 'Which would you prefer: paying once with yearly upkeep, or paying each year, and why?');
   }
-  if (/\b(?:do|will|would|am|are) (?:i|we)\b.{0,20}\b(?:pay|be charged|get charged|billed)\b|\bcharged for\b|\bbilled for\b|\bpay for\b|\b(?:does|do|will|would)\b[^?]{0,40}\bcharge(?:s)? for\b|\bround(?:s|ed|ing)? up\b|\bbilling increments?\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:do|will|would|am|are) (?:i|we)\b.{0,20}\b(?:pay|be charged|get charged|billed)\b|\bcharged for\b|\bbilled for\b|\bpay for\b|\b(?:does|do|will|would)\b[^?]{0,40}\bcharge(?:s)? for\b|\bround(?:s|ed|ing)? up\b|\bbilling increments?\b/i)) {
     return mk('usage-billing', `Answer from the billing rules, using the case in the question: say what counts as billable in this case (used, idle, connected, or only present on the account), how the amount is rounded, when it starts and stops, and show a worked invoice for exactly that case. If the rule has an exception, state it first.`, `${P}'s billing rules for this case: what is billable, from when to when, and what is not`, 'Which of your items would sit idle, and for how long, in a typical month?');
   }
-  if (/\bcustom (?:pricing|quote|plan|terms)|tailored (?:pricing|plan|to)|volume (?:pricing|discount|tiers?)|enterprise pricing|pricing .{0,30}\b(?:scale|volume|deployment|needs)\b/i.test(t)) {
+  if (hasSignal(t, /\bcustom (?:pricing|quote|plan|terms)|tailored (?:pricing|plan|to)|volume (?:pricing|discount|tiers?)|enterprise pricing|pricing .{0,30}\b(?:scale|volume|deployment|needs)\b/i)) {
     return mk('custom-price', `Say plainly whether a tailored price exists, then how it is built: what the buyer must give (volumes, how fast they ramp, the term), and the structures you can offer for it. Possible trades: ${joinList(modelT.slice(0, 3))}. Ask for their expected volumes before you name any figure.`, `which structures and limits your price list allows for a tailored price, and who approves one`, 'What volume do you expect in the first year, and how fast does it ramp?');
   }
-  if (/\bdiscount|\bnegotiat/i.test(t)) {
+  if (hasSignal(t, /\bdiscount|\bnegotiat/i)) {
     return mk('discount', `Agree what the buyer gives in return before any number moves. Possible trades: ${joinList(modelT.slice(0, 3))}. Tie any change to a written term and keep the structure of the price intact.`, 'the discount limits you are allowed to work within, and who approves a change', 'What could you commit to that would make a lower price possible?');
   }
-  if ((/\b(?:free|trial|try|sandbox|test(?:ing)? it|proof of concept|poc|pilot)\b/i.test(t) && /\b(?:can|do|does|could|is there|how)\b/i.test(t)) || /\btest\b.{0,40}\bbefore (?:committing|buying|signing|we commit|paying)\b/i.test(t)) {
+  if ((hasSignal(t, /\b(?:free|trial|try|sandbox|test(?:ing)? it|proof of concept|poc|pilot)\b/i) && hasSignal(t, /\b(?:can|do|does|could|is there|how)\b/i)) || hasSignal(t, /\btest\b.{0,40}\bbefore (?:committing|buying|signing|we commit|paying)\b/i)) {
     return mk('trial', `Say plainly what the buyer can try before paying: a free trial, a paid pilot or a sandbox, what each includes and for how long. If ${P} offers none of these, offer the smallest proof that answers their main question${needs ? ` (${needs})` : ''}, with the measure written down first.`, `what ${P} offers for a first test, its limits and its length`, 'What would you need to see in a first test to say yes?');
   }
-  if (/\b(?:refund\w*|cancel\w*|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|annual maintenance|maintenance fee|renew\w*|credits?|expire\w*)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:refund\w*|cancel\w*|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|annual maintenance|maintenance fee|renew\w*|credits?|expire\w*)\b/i)) {
     return mk('terms', `Answer from the written terms, in one place: what is paid and when, what is refundable, what happens on cancellation, and whether a minimum, a commitment or a maintenance fee applies. Never say "no commitment" or "fully refundable" unless the written terms say so.${ctx.model === 'transactions' ? ' For a usage priced deal, say whether pay as you go has any minimum spend, and what a committed plan adds.' : ''}`, `the current billing, refund and cancellation terms of ${P}, including any minimum or maintenance fee`, 'What would the terms need to say for this to be an easy yes?');
   }
-  if (/\boverages?\b|\bgo(?:es)? (?:over|above) (?:the |my |our )?(?:plan|allowance|quota|included)|\bbeyond (?:the |my |our )?(?:plan|allowance|included)|\bexcess (?:usage|use)\b/i.test(t)) {
+  if (hasSignal(t, /\boverages?\b|\bgo(?:es)? (?:over|above) (?:the |my |our )?(?:plan|allowance|quota|included)|\bbeyond (?:the |my |our )?(?:plan|allowance|included)|\bexcess (?:usage|use)\b/i)) {
     const plan = (text.match(/\b(?:on|in|under) (?:the )?([A-Z][A-Za-z0-9]*(?: [A-Z][A-Za-z0-9]*)?) plan\b/) || [])[1];
     return mk('overage', `Answer from the written rules of ${plan ? `the ${plan} plan` : 'the plan'} with a worked month that goes over: what counts as over, the rate for the extra use compared with the rate inside the plan, whether use stops or is billed on, and when the buyer is told.`, `the written overage rules of ${plan ? `the ${plan} plan` : 'the plan'} in ${P}'s price list, with an example month`, 'How far over the plan do you expect to go in a busy month?');
   }
-  if (/\b(?:reduc\w+|lower\w*|cut(?:ting)?|sav(?:e|ing)\w*|bring(?:ing)? down|control\w*|manag\w+|optimi[sz]\w+|minimi[sz]\w+)\b[^?]{0,50}\b(?:costs?|spend|expenses?|fees)\b/i.test(t) && /^(?:how|can|could|what|will|does|do)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:reduc\w+|lower\w*|cut(?:ting)?|sav(?:e|ing)\w*|bring(?:ing)? down|control\w*|manag\w+|optimi[sz]\w+|minimi[sz]\w+)\b[^?]{0,50}\b(?:costs?|spend|expenses?|fees)\b/i) && hasSignal(t, /^(?:how|can|could|what|will|does|do)\b/i)) {
     const where = (text.match(/\b(?:reduc\w+|lower\w*|cut(?:ting)?|sav(?:e|ing)\w*|bring(?:ing)? down|control\w*|manag\w+|optimi[sz]\w+|minimi[sz]\w+)\s+(?:the\s+|their\s+|our\s+)?([a-z][a-z \-]{2,40}?\s(?:costs?|spend|expenses?|fees))/i) || [])[1];
     return mk('outcome-cost', `Answer with the way the cost comes down, not with a price list: where ${where ? `the ${stripEnd(where)} sit` : 'the cost sits'} today (run, support, upgrades, licences or people), which part of it ${P} takes over or removes, and how the quality of the work is protected${ctx.model === 'services' ? ' (service levels, service credits and a parallel run)' : ''}. Use the buyer's own figures for today's cost, and show one case where it came down only if that customer has agreed.`, `a case with the cost before and after and the quality kept, only if the customer has agreed to share it; otherwise say what you can show and what you cannot`, 'Where does most of the cost sit today: running it, supporting it, upgrading it, licences or people?');
   }
-  if (/\b(?:how much|price|pricing|priced|costs?|fees?|charges?|budget|afford\w*|expensive|rates?)\b/i.test(t) && !/\bcompar/i.test(t)) {
+  if (hasSignal(t, /\b(?:how much|price|pricing|priced|costs?|fees?|charges?|budget|afford\w*|expensive|rates?)\b/i, 'price') && !hasSignal(t, /\bcompar/i)) {
     const unit = unitFor(text, ctx);
     return mk('price', `Answer with how ${P} is priced${unit ? ` (${unit})` : ''} and one worked example on the buyer's own volumes, with every charge on the page. Then set the figure next to what the problem costs them today${ctx.alternatives.length ? ` (${lowerStart(ctx.alternatives[0])})` : ''}, so the price is read against their own cost and not on its own.`, `${P}'s price list and exactly what it includes; use a competitor's price only from a quote the buyer shows you`, 'What would this need to be compared with for the price to make sense to you?');
   }
-  if (/\bwhy not\b|\balready (?:have|use|has|got|own)\b|\bextend (?:the|our|what)\b|\bwe (?:have|use|built|run) (?:a|an|our|the)\b|\bin-?house\b|\bbuild (?:it|this)\b|\bour (?:own )?(?:erp|crm|tms|wms|system|tool)s? (?:already|has|does)\b/i.test(t)) {
+  if (hasSignal(t, /\bwhy not\b|\balready (?:have|use|has|got|own)\b|\bextend (?:the|our|what)\b|\bwe (?:have|use|built|run) (?:a|an|our|the)\b|\bin-?house\b|\bbuild (?:it|this)\b|\bour (?:own )?(?:erp|crm|tms|wms|system|tool)s? (?:already|has|does)\b/i)) {
     const cur = ctx.alternatives.length ? ` (${shortAlt(ctx.alternatives[0])})` : '';
     return mk('incumbent', `Start from what their current setup does not do${cur}, in their words, and what that gap costs them. Position ${P} alongside it where you can and replace it only where the gap is clear. Draw the overlap line by line and honestly, including what the current tool does better.`, `what ${P} covers that the current setup does not, and what the current setup covers that ${P} does not`, 'What does the current setup not do today, and what does that cost you?');
   }
   const deployAsked = [...new Set((text.match(/\bon-?prem\w*|\bprivate cloud\b|\bself-?host\w*|\bhybrid\b|\bvpc\b|\bair-?gapped\b|\bdedicated (?:cloud|instance|tenant)\b|\bon our own servers\b/gi) || []).map((x) => x.toLowerCase()))];
-  if (deployAsked.length && /^(?:can|could|do|does|is|are|will|would)\b/i.test(t)) {
+  if (deployAsked.length && hasSignal(t, /^(?:can|could|do|does|is|are|will|would)\b/i)) {
     const said = (ctx.sellerText.match(/\b(?:in the cloud|on the cloud|self-?hosted|on-?prem\w*|private cloud|hybrid|vpc|air-?gapped)(?:(?:,| or| and|,? and)\s*(?:in the cloud|self-?hosted|on-?prem\w*|private cloud|hybrid|vpc|air-?gapped|cloud|dedicated|public cloud))*/i) || [])[0];
     return mk('deploy-options', `Answer yes or no for each option the buyer named (${joinList(deployAsked, 'or')}), then say what each one needs: what the buyer runs and what ${P} runs, who updates it, how it is supported, and how the price differs.${said ? ` Your description says it is available ${said}, so start from that and say which of the buyer's options it covers.` : ''}`, `which of ${joinList(deployAsked, 'or')} ${P} supports today, with the limits and the price difference, from its own documentation`, 'Which of your rules or systems decides where it may run?');
   }
-  const integ = /\b(?:integrat\w*|connect(?:s|ed)? (?:to|with)|work(?:s)? with|plug into|apis?|sync\w*|existing (?:tools|systems|erp|stack))\b/i.test(t) || /\b(?:salesforce|netsuite|sap|oracle|erp|crm|tms|wms|siem|dms|hris|tally|quickbooks|zoho|slack|jira|splunk|servicenow)\b/i.test(t);
+  const integ = hasSignal(t, /\b(?:integrat\w*|connect(?:s|ed)? (?:to|with)|work(?:s)? with|plug into|apis?|sync\w*|existing (?:tools|systems|erp|stack))\b/i) || hasSignal(t, /\b(?:salesforce|netsuite|sap|oracle|erp|crm|tms|wms|siem|dms|hris|tally|quickbooks|zoho|slack|jira|splunk|servicenow)\b/i);
   if (integ) {
     const sys = named.filter((s) => !/^(?:ERP|CRM)$/i.test(s) || named.length === 1);
     const list = sys.length ? ` (${joinList(sys)})` : '';
     return mk('integration', `Answer system by system${list}: for each, say whether the link is built in, goes through an API or needs a file transfer, who builds it and who owns it on the buyer's side. ${relevant ? `Your description lists ${relevant.startsWith(P) ? relevant : lowerStart(relevant)}, so show that part working with their data rather than describe it. ` : ''}Offer a technical call with their IT owner and agree which data moves, in which direction and how often.`, `which of ${sys.length ? joinList(sys) : 'the buyer\'s systems'} ${P} connects to today, in what way and with what limits, from your integration documentation`, 'Which system is the master record for this data today, and who owns the connection?');
   }
   const std = (text.match(/\b(?:asc ?606|ifrs ?\d*|gaap|gdpr|dpdp|soc ?[12]|iso ?\d{4,5}|pci(?:[- ]dss)?|rbi|sebi|fedramp|hipaa|nist|gst|e-?invoic\w*)\b/gi) || []).map((x) => x.toUpperCase().replace(/\s+/g, ' '));
-  if (std.length || /\b(?:compliance|regulat\w*|certif\w*|statutory)\b/i.test(t)) {
+  if (std.length || hasSignal(t, /\b(?:compliance|regulat\w*|certif\w*|statutory)\b/i)) {
     const what = std.length ? joinList([...new Set(std)]) : 'the requirement the buyer named';
     return mk('compliance', `Name the exact rule${std.length > 1 ? 's' : ''} the buyer asked about (${what}) and answer each one separately: what in ${P} supports it, what the buyer's own team or auditor still has to do, and which document proves it. ${relevant ? `Your description lists ${lowerStart(relevant)}, so show that part producing the evidence. ` : ''}Send the document before they ask for it.`, `whether and how ${P} supports ${what}, and which certificates or reports you hold; never claim a status you cannot show`, 'Who signs off compliance on your side, and what evidence do they ask for?');
   }
-  if (/\b(?:secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|breach\w*|pii|sovereign\w*|safe\b)/i.test(t) && !/\bdifferent|differ\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|breach\w*|pii|sovereign\w*|safe\b)/i, 'security') && !hasSignal(t, /\bdifferent|differ\b/i)) {
     return mk('security', `Bring the answers before they are asked: where the data is stored and processed, who can see it, how it is protected and deleted, and what the buyer wants to check before they approve (a security or IT contact, or the owner). Offer the security documents first and a call with whoever reviews.`, `where ${P} stores and processes the buyer's data, who can reach it, and which security documents you can share`, 'What does your security team need to see before they approve a new vendor?');
   }
-  if (/\b(?:differ\w*|different|vs\.?|versus|compared? (?:to|with)|instead of|better than|why .{1,40}\bover\b|over (?:a |an |the )?\S+|main difference)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:differ\w*|different|vs\.?|versus|compared? (?:to|with)|instead of|better than|why .{1,40}\bover\b|over (?:a |an |the )?\S+|main difference)\b/i)) {
     // "Why do enterprises choose A over B?": the subject and the verb are not part of what is compared
     const m = text.match(/\bwhy (?:do|does|did|would|should|will|can) (?:[a-z][a-z-]*(?: [a-z][a-z-]*){0,2}) (?:choose|pick|prefer|select|buy|use|go with|trust|hire|appoint|engage|opt for) (.+?) (?:over|instead of|rather than|versus|vs\.?) (?:a |an |the )?(.+)$/i)
       || text.match(/\bwhy (?:do |should |would |choose )?(.+?) (?:over|instead of|rather than) (?:a |an |the )?(.+)$/i) || text.match(/\bhow (?:does|do|is|are) (?:a |an |the )?(.+?) (?:differ|different) from (?:a |an |the )?(.+)$/i) || text.match(/\bbetween (.+?) and (.+)$/i);
@@ -503,37 +504,37 @@ export function answerQuestion(raw: string, ctx: QACtx): QAnswer {
     const b = m ? stripEnd(m[2]) : (ctx.alternatives[0] ? shortAlt(ctx.alternatives[0]) : 'the other option');
     return mk('difference', `Answer it as a difference in what ${a} and ${b} are each for, on the points this buyer cares about${needs ? ` (${needs})` : ''}, and not as a feature list. Set ${a} next to ${b} on those points, show each on the buyer's own case, and say plainly when ${b} is the better choice for something.`, `what ${a} and ${b} each do today, from your own documentation; do not claim a difference you cannot show`, 'What are you trying to get done with it, and what have you tried so far?');
   }
-  if (/\b(?:can|do|does|will|could) (?:we|you|it|i|they)\b.{0,40}\b(?:all|every|each|any)\b|\b(?:countries|regions|cities|languages|markets|currencies)\b/i.test(t) && /^(?:can|do|does|will|could|is|are)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:can|do|does|will|could) (?:we|you|it|i|they)\b.{0,40}\b(?:all|every|each|any)\b|\b(?:countries|regions|cities|languages|markets|currencies)\b/i) && hasSignal(t, /^(?:can|do|does|will|could|is|are)\b/i)) {
     return mk('coverage', `Answer item by item, not with "all": for each country, region, language or case in the buyer's list, say whether it is supported today, supported after set-up or approval, or not supported, and what that costs. Ask for their list first and send it back marked up.`, `which of the buyer's items ${P} supports today, which need set-up or approval and how long that takes, and which it does not support`, 'Which of these matter first, and which could wait for a later wave?');
   }
-  if (/\b(?:suitable|right for|fit for|fit our|work(?:s)? for|enterprises?|growing|at scale|scale|specific .{0,25}(?:workflows?|codes?|processes)|cost codes)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:suitable|right for|fit for|fit our|work(?:s)? for|enterprises?|growing|at scale|scale|specific .{0,25}(?:workflows?|codes?|processes)|cost codes)\b/i)) {
     if (ctx.model === 'services') {
       return mk('fit', `Answer with a staged plan on the buyer's own case instead of a plain yes: ask for the three applications or workloads that would be hardest to move (age, size, dependencies and the rules that apply to them), and for each say what ${P} has done on a case like it, what it would do first and what it would not take on. Then offer a pilot on the one that matters most, with a parallel run and exit criteria.`, `the kinds of work ${P} has delivered that match the buyer's cases, from its own project notes; a reference of similar size only if the customer has agreed`, 'Which three applications or workloads would you want to see handled before you believe it?');
     }
     return mk('fit', `Answer with the buyer's own hardest cases, by name, instead of a plain yes: ask for the three that would break a weaker option (the size, the number of sites or entities, the special rules), and for each say whether it works today, works with set-up, or is not supported. Then offer a test on the one that matters most.`, `which of the buyer's cases ${P} supports today, which need configuration and which it does not support; a reference of similar size only if the customer has agreed`, 'Which three cases would you want to see working before you believe it?');
   }
-  if (/\b(?:time to (?:learn|tune|set)|take time|steep|learning curve|too complex|complex to|hard to (?:use|learn|configure))\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:time to (?:learn|tune|set)|take time|steep|learning curve|too complex|complex to|hard to (?:use|learn|configure))\b/i)) {
     return mk('effort', `Do not argue the point; agree that tailoring takes effort and show how it is managed: what works out of the box, who tunes the rest in the first weeks (your team or theirs), and how long it takes to a first useful result. Offer a short pilot so the buyer can measure the effort themselves.`, `what is configured by default in ${P}, what a typical customer tunes, and the time it took for a customer of a similar size`, 'Who on your side would own the tuning, and how much of their week can they give it?');
   }
-  if (/\b(?:set ?up|implement\w*|onboard\w*|go[- ]live|how long|timeline|time to|deploy\w*|roll ?out|migrat\w*|cut-?over|transition)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:set ?up|implement\w*|onboard\w*|go[- ]live|how long|timeline|time to|deploy\w*|roll ?out|migrat\w*|cut-?over|transition)\b/i)) {
     return mk('setup', `Give a dated plan, not a promise: the steps from signing to first use, who does what on each side, and what the buyer must have ready. For this deal that means ${modelWords(ctx.model, ctx.sellerText).setup}. Offer to agree the plan before the contract is signed.`, `the set-up time you have achieved for customers of a similar size and what ${P} needs from the buyer; give a range only if you can show it`, 'What has to be live, and by when, for this to count as a success for you?');
   }
-  if (/\b(?:adopt\w*|will (?:not|n't) use|won'?t use|training|resist\w*|change management|buy-?in)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:adopt\w*|will (?:not|n't) use|won'?t use|training|resist\w*|change management|buy-?in)\b/i)) {
     return mk('adoption', `Plan adoption with the people who will use it: a small first group, one measure of use agreed before the start, and a named owner on the buyer's side. Let that group's results make the case for the rest.`, `the adoption you have seen with customers of a similar kind (share it only with their consent) and the training ${P} provides`, 'Who would use this every day, and what would make them keep using it?');
   }
-  if (/\b(?:accura\w*|reliab\w*|precise\w*|gps|error rate|hallucinat\w*|explain\w*|false positives?)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:accura\w*|reliab\w*|precise\w*|gps|error rate|hallucinat\w*|explain\w*|false positives?)\b/i)) {
     return mk('accuracy', `Offer a test the buyer can check for themselves: run it on their own data or history, compare it with what they use today, and agree the measure and the pass mark before the test starts.`, `what accuracy or error you have measured for ${P}, on whose data and how; do not quote a figure you cannot show`, 'How would you judge, on your own data, that it is good enough?');
   }
-  if (/\b(?:offline|no (?:internet|network|signal)|low connectivity|remote areas?)\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:offline|no (?:internet|network|signal)|low connectivity|remote areas?)\b/i, 'offline')) {
     return mk('offline', `Answer with the working: what a user can still do with no signal, what waits until the device reconnects, and how a clash is settled when two people change the same record. Offer to test it in a low-signal area with their own users.`, `which functions of ${P} work offline today and how data syncs when the connection returns`, 'In which places do your people lose signal, and what do they do then?');
   }
-  if (/\b(?:another|other|different|own|any)\b.{0,25}\b(?:providers?|models?|vendors?|clouds?)\b|\block-?in\b/i.test(t)) {
+  if (hasSignal(t, /\b(?:another|other|different|own|any)\b.{0,25}\b(?:providers?|models?|vendors?|clouds?)\b|\block-?in\b/i)) {
     return mk('choice', `Answer with the list: which providers, models or clouds ${P} works with today, how a buyer switches between them, and what stays portable if they leave. Show one switch live if you can.`, `the list of providers or models ${P} supports now, and how switching works in practice`, 'Which provider or model do you need to keep the option of using?');
   }
-  if (/^(?:what|how) (?:should|do|happens|can|will)|^what if|\bwhat happens\b|\bwhat (?:should|do) (?:i|we) do\b|^can i\b|^do i\b/i.test(t)) {
+  if (hasSignal(t, /^(?:what|how) (?:should|do|happens|can|will)|^what if|\bwhat happens\b|\bwhat (?:should|do) (?:i|we) do\b|^can i\b|^do i\b/i)) {
     return mk('process', `Answer as a short procedure for this case: what the buyer sees, who acts, within what time, and what it costs them. ${relevant ? `Point to ${lowerStart(relevant)} where it applies. ` : ''}Put the same answer in the proposal, so it is not given from memory on every call.`, `${P}'s documented process and service levels for this case, from your operations documents`, 'Has this happened to you before, and what did you do then?');
   }
-  if (/^why (?:do|does|is|are)\b/i.test(t)) {
+  if (hasSignal(t, /^why (?:do|does|is|are)\b/i)) {
     return mk('why', `Explain the cause in the buyer's terms first, then show where they can see it and where they can change it. A clear reason is worth more than a long defence.`, `the rules behind it in ${P}, from your own pricing or product rules`, 'Which case surprised you, and what did you expect to see?');
   }
   // anything else: the shared answer for its kind, with the sector pattern only when nothing more specific was found

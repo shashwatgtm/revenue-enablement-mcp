@@ -1,3 +1,4 @@
+import { hasSignal, signal, readSignal, SIGNALS } from './text-signals.ts';
 // Run 20 round 1b (D92): text helpers shared by the Revenue tools. Pure functions, no network, no figures (B82).
 // They exist so that text a user typed is cut and reused by parts that are really there: a product description is split into its
 // name, its kind and its listed parts; contacts become one row each with the role the user stated; proof becomes items with their
@@ -307,12 +308,12 @@ export function parseContacts(text: string, investmentBuyer = false): Contact[] 
 /** Plain words for a stated tag ("economic buyer" stays; "buyer" is the person who decides). */
 export function tagKind(tag: string | null): 'champion' | 'economic' | 'buyer' | 'blocker' | 'user' | 'influencer' | 'other' | null {
   if (!tag) return null;
-  if (/champion|sponsor|advocate/.test(tag)) return 'champion';
-  if (/economic/.test(tag)) return 'economic';
-  if (/buyer|decision|signs?|approver/.test(tag)) return 'buyer';
-  if (/block|against|oppos|detract|negative/.test(tag)) return 'blocker';
-  if (/user/.test(tag)) return 'user';
-  if (/influenc|evaluat|technical|neutral|supporter|support/.test(tag)) return 'influencer';
+  if (hasSignal(tag, /champion|sponsor|advocate/i, 'champion')) return 'champion';
+  if (hasSignal(tag, /economic/i)) return 'economic';
+  if (hasSignal(tag, /buyer|decision|signs?|approver/i)) return 'buyer';
+  if (hasSignal(tag, /block|against|oppos|detract|negative/i)) return 'blocker';
+  if (hasSignal(tag, /user/i)) return 'user';
+  if (hasSignal(tag, /influenc|evaluat|technical|neutral|supporter|support/i)) return 'influencer';
   return 'other';
 }
 
@@ -326,6 +327,7 @@ export interface ProofItem {
   /** what the user said it is: "customer quote", "page claim", "case study title" ... or '' */
   label: string;
   kind: 'result' | 'quote' | 'recognition' | 'scale' | 'story';
+  held?: boolean;
 }
 const RECOGNITION = /\b(?:named|leader|award|recogni(?:[sz]\w*|tion)|featured|frost radar|magic quadrant|analyst|excellence|ranked|ranking|everest|hfs|isg|kuppingercole|gartner|forrester|idc|g2\b|enterprise innovator|major contender|certified|empanel\w*)\b/i;
 const RESULT = /\d[\d,.]*\s?(?:%|x\b|X\b|percent|hours?|days?|weeks?|months?|minutes?|crore|lakhs?|million|billion|mn\b|bn\b|m\b)|\b(?:\d+x|half|doubl\w+|triple\w*)\b|\bsav(?:ed|ing|es)\b|\b(?:cut|cuts|reduc\w+|improv\w+|increas\w+|faster|fewer|lower|higher|grew|grow\w*|jumped|boost\w+|achiev\w+)\b/i;
@@ -342,13 +344,15 @@ export function parseProof(text: string): ProofItem[] {
     if (m) { body = m[1].trim(); label = m[2].trim(); }
     const quoteLike = /\bquote\b|\bwords\b|\bsaid\b/i.test(label) || /^(?:customer|ceo|cfo|cio|cto|ciso|cso|vp|head|director)\b[^:]{0,60}:/i.test(body) || /^[A-Z][A-Za-z.' -]{2,40}\b(?:CFO|CEO|CIO|CTO|CISO|CSO|VP|Director|Head)\b[^:]{0,40}:/.test(body);
     let kind: ProofItem['kind'] = 'story';
-    if (RECOGNITION.test(body) && !/\d+\s?%/.test(body)) kind = 'recognition';
+    const held = signal(body, 'adverse_result').state === 'affirmed' || ['negated','unclear'].includes(signal(body, 'positive_result').state);
+    if (held) { kind = 'story'; label = (label ? label + '; ' : '') + 'adverse or unconfirmed: not a customer result'; }
+    else if (hasSignal(body, RECOGNITION, 'recognition') && !/\d+\s?%/.test(body)) kind = 'recognition';
     else if (quoteLike) kind = 'quote';
     // "500,000 companies use X, including 98% of the Fortune 500" is scale, not a result: no change is reported
     else if (SCALE.test(body) && !/\b(?:cut|cuts|reduc\w+|increas\w+|improv\w+|faster|fewer|lower|higher|saved?|saves|grew|grow\w*|jumped|boost\w+|achiev\w+|doubl\w+|half)\b/i.test(body)) kind = 'scale';
-    else if (RESULT.test(body)) kind = 'result';
+    else if (hasSignal(body, RESULT, 'positive_result')) kind = 'result';
     else if (SCALE.test(body)) kind = 'scale';
-    return { text: body, label, kind };
+    return { text: body, label, kind, ...(held ? {held:true} : {}) };
   }).filter((p) => typedLength(p.text) > 2);
 }
 

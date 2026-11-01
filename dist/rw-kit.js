@@ -22,6 +22,7 @@ exports.youify = youify;
 exports.outcomeHead = outcomeHead;
 exports.answerObjection = answerObjection;
 exports.dedupeAnswers = dedupeAnswers;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (rewrite of demo_script_builder, champion_enablement_kit and discovery_question_bank): shared pure helpers.
 // Why this file exists: the three tools used to paste the user's text into a scaffold. The judges scored that 2 to 3 because a statistic became a
 // demo step, a product was paired with the wrong pain, one pain was split in two, and an objection was answered by a template that did not answer
@@ -708,80 +709,80 @@ const STANDARDS = /\b(?:asc ?606|ifrs ?\d*|gaap|gdpr|dpdp|soc ?[12](?: type [i]+
 function objectionKind(t0, sectorLabels = []) {
     // "cost codes" and "job cost" name a thing to be covered; they are not a question about price
     const t = t0.trim().replace(/\bcost (?:codes?|cent(?:er|re)s?|types?|plus|variance|accounting)\b|\bjob costs?\b/gi, 'cost_code');
-    if (/\bdiscount|rebate|special pric|price match|negotiable|lower price|better price|cheaper rate/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bdiscount|rebate|special pric|price match|negotiable|lower price|better price|cheaper rate/i))
         return 'discount';
-    if (/\b(?:free trial|free tier|free version|for free|freemium|trial|sandbox|proof of concept|\bpoc\b|test.?drive|demo account)\b|\btry\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:free trial|free tier|free version|for free|freemium|trial|sandbox|proof of concept|\bpoc\b|test.?drive|demo account)\b|\btry\b/i))
         return 'try';
-    if (/\bswitch(?:ing)? (?:cost|effort)|migration (?:cost|effort)|cost of (?:switching|moving)/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bswitch(?:ing)? (?:cost|effort)|migration (?:cost|effort)|cost of (?:switching|moving)/i))
         return 'switchcost';
-    if (/real cost|total cost|hidden cost|beyond the licen[cs]e|cost of ownership|\btco\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /real cost|total cost|hidden cost|beyond the licen[cs]e|cost of ownership|\btco\b/i))
         return 'totalcost';
-    if (/incremental|in stages|in phases|phase by phase|step by step|gradual|without a full|big[- ]bang|rip[- ]and[- ]replace|start small/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /incremental|in stages|in phases|phase by phase|step by step|gradual|without a full|big[- ]bang|rip[- ]and[- ]replace|start small/i))
         return 'phased';
-    if (/^how (?:do|can|could|would|should)\b[^?]*\b(?:reduce|lower|cut|improve|increase|raise|save|speed up|shorten|grow|avoid|prevent|keep|maintain)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^how (?:do|can|could|would|should)\b[^?]*\b(?:reduce|lower|cut|improve|increase|raise|save|speed up|shorten|grow|avoid|prevent|keep|maintain)\b/i))
         return 'achieve';
-    if (/\b(?:more|less) secure|\bsafer\b|secure than/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:more|less) secure|\bsafer\b|secure than/i))
         return 'securecompare';
-    if (/\bcheap(?:est|er)?\b|lowest (?:price|cost)|undercut/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bcheap(?:est|er)?\b|lowest (?:price|cost)|undercut/i))
         return 'cheapest';
-    if (/overlap|\balready\b|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat|\bkeep (?:parts|some|using|my|our|the)\b[^?]*\b(?:current|existing|stack|tools|systems)|\b(?:parts|some) of (?:my|our) (?:current|existing)|(?:current|existing) (?:tech )?stack/i.test(t) && !/\b(?:cost|price|fee)s?\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /overlap|\balready\b|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat|\bkeep (?:parts|some|using|my|our|the)\b[^?]*\b(?:current|existing|stack|tools|systems)|\b(?:parts|some) of (?:my|our) (?:current|existing)|(?:current|existing) (?:tech )?stack/i) && !(0, text_signals_ts_1.hasSignal)(t, /\b(?:cost|price|fee)s?\b/i))
         return 'overlap';
-    if (/\b(?:annual|yearly|monthly|multi-?year)\s+(?:plan|contract|billing|subscription)s?\b|\bshould (?:i|we) (?:get|take|choose|buy|go|pick)[^?]*\b(?:annual|monthly|yearly|plan)\b|\bwhich plan\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:annual|yearly|monthly|multi-?year)\s+(?:plan|contract|billing|subscription)s?\b|\bshould (?:i|we) (?:get|take|choose|buy|go|pick)[^?]*\b(?:annual|monthly|yearly|plan)\b|\bwhich plan\b/i))
         return 'planchoice';
-    if (/\brefunds?|cancell?(?:ation)?s?|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|maintenance fee|annual fee|renewal|notice period|expire|expiry|roll ?over|carry over/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\brefunds?|cancell?(?:ation)?s?|pay again|next month|minimum|maximum|commitment|lock-?in|set-?up fee|maintenance fee|annual fee|renewal|notice period|expire|expiry|roll ?over|carry over/i))
         return 'terms';
-    if (/\b(?:suite|bundle|package|tier|edition|add-?ons?|licen[cs]es?|single (?:\w+ )?product|one product|sku)\b|\bneed (?:the |all |to (?:buy|take) )?(?:whole|entire|full|complete)\b|\bonly (?:part|some) of\b/i.test(t) || /\b(?:buy|purchase|pay for) (?:only|just|a single|one)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:suite|bundle|package|tier|edition|add-?ons?|licen[cs]es?|single (?:\w+ )?product|one product|sku)\b|\bneed (?:the |all |to (?:buy|take) )?(?:whole|entire|full|complete)\b|\bonly (?:part|some) of\b/i) || (0, text_signals_ts_1.hasSignal)(t, /\b(?:buy|purchase|pay for) (?:only|just|a single|one)\b/i))
         return 'packaging';
-    if (/\b(?:included|separate|extra|on top|hidden|additional|other|any more)\b/i.test(t) && /\b(?:price|pricing|fees?|costs?|charges?)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:included|separate|extra|on top|hidden|additional|other|any more)\b/i) && (0, text_signals_ts_1.hasSignal)(t, /\b(?:price|pricing|fees?|costs?|charges?)\b/i))
         return 'included';
-    if (/\b(?:based on|priced (?:per|by|on)|billed (?:per|by|on)|pricing model|pricing structure|per (?:seat|user|room|site|property|transaction|message|call|month))\b/i.test(t) && /\b(?:price|pricing|priced|billed|charged?)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\b(?:based on|priced (?:per|by|on)|billed (?:per|by|on)|pricing model|pricing structure|per (?:seat|user|room|site|property|transaction|message|call|month))\b/i) && (0, text_signals_ts_1.hasSignal)(t, /\b(?:price|pricing|priced|billed|charged?)\b/i))
         return 'pricebasis';
-    if (/\bbill(?:ed|ing)?\b|\binvoic(?:e|ed|ing)\b|charged (?:monthly|yearly|annually|upfront|in advance)/i.test(t) && !/\b(?:costs?|price|pricing|fees?)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bbill(?:ed|ing)?\b|\binvoic(?:e|ed|ing)\b|charged (?:monthly|yearly|annually|upfront|in advance)/i) && !(0, text_signals_ts_1.hasSignal)(t, /\b(?:costs?|price|pricing|fees?)\b/i))
         return 'billing';
-    if (/\bhow much\b|\bcosts?\b|\bprice|\bpricing|\bfees?\b|expensive|afford|\bbudget\b|\bcharges?\b/i.test(t) && !/^(?:why|how)\b.*\b(?:vary|differ)/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bhow much\b|\bcosts?(?! codes?\b)\b|\bprice|\bpricing|\bfees?\b|expensive|afford|\bbudget\b|\bcharges?\b/i, 'price') && !(0, text_signals_ts_1.hasSignal)(t, /^(?:why|how)\b.*\b(?:vary|differ)/i))
         return 'howmuch';
-    if (STANDARDS.test(t) || /complian|regulat|certif|\baudit/i.test(t)) {
+    if ((0, text_signals_ts_1.hasSignal)(t, STANDARDS) || (0, text_signals_ts_1.hasSignal)(t, /complian|regulat|certif|\baudit/i)) {
         STANDARDS.lastIndex = 0;
         return 'compliance';
     }
     STANDARDS.lastIndex = 0;
-    if (/secur|privacy|data (?:protection|residency)|encrypt|breach|sovereign/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /secur|privacy|data (?:protection|residency)|encrypt|breach|sovereign/i, 'security'))
         return 'security';
-    if (/overlap|already (?:have|use)|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /overlap|already (?:have|use)|in-?house|too many tools|point tools|best-of-breed|stitch|consolidat/i))
         return 'overlap';
-    if (/\bspecialist|\bspecialis[ez]|domain (?:expertise|knowledge|experience)|industry (?:expertise|experience|knowledge)|vertical (?:expertise|experience)/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bspecialist|\bspecialis[ez]|domain (?:expertise|knowledge|experience)|industry (?:expertise|experience|knowledge)|vertical (?:expertise|experience)/i))
         return 'expertise';
-    if (/differ|different|\bvs\.?\b|versus|compared? (?:to|with)|comparison|instead of|better than|rather than|\bover (?:a |an |the |other |standard |general )?\w+/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /differ|different|\bvs\.?\b|versus|compared? (?:to|with)|comparison|instead of|better than|rather than|\bover (?:a |an |the |other |standard |general )?\w+/i))
         return 'compare';
-    if (/how long|timeline|implementation|go[- ]live|roll ?out|time to (?:value|live)|how soon|how quickly/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /how long|timeline|implementation|go[- ]live|roll ?out|time to (?:value|live)|how soon|how quickly/i))
         return 'timeline';
-    if (/integrat|connect(?:s|ed)? (?:to|with)|work(?:s)? with|\bplug\b|\bapis?\b|\bsync|salesforce|netsuite|\bsap\b|oracle|\berp\b|\bcrm\b|existing (?:tools|systems)/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /integrat|connect(?:s|ed)? (?:to|with)|work(?:s)? with|\bplug\b|\bapis?\b|\bsync|salesforce|netsuite|\bsap\b|oracle|\berp\b|\bcrm\b|existing (?:tools|systems)/i))
         return 'integration';
-    if (/\boffline|without (?:a )?(?:network|internet|signal)|no (?:internet|network|signal)|low connectivity/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\boffline|without (?:a )?(?:network|internet|signal)|no (?:internet|network|signal)|low connectivity/i, 'offline'))
         return 'offline';
-    if (/uptime|downtime|outages?|availability|failover|\bsla\b|service levels?|reliab\w*\b.*\b(?:uptime|availability|outages?)|(?:uptime|availability|outages?)\b.*reliab/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /uptime|downtime|outages?|availability|failover|\bsla\b|service levels?|reliab\w*\b.*\b(?:uptime|availability|outages?)|(?:uptime|availability|outages?)\b.*reliab/i))
         return 'uptime';
-    if (/accura|reliab|\bgps\b|precise|hallucinat|wrong answers?|false positives?/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /accura|reliab|\bgps\b|precise|hallucinat|wrong answers?|false positives?/i))
         return 'accuracy';
-    if (/adopt|will (?:not|n't) use|will not change|won'?t change|change how (?:they|we|our)|training|resist|change management|learn(?:ing)? (?:and tune|curve)|time to learn|too complex|take time to learn/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /adopt|will (?:not|n't) use|will not change|won'?t change|change how (?:they|we|our)|training|resist|change management|learn(?:ing)? (?:and tune|curve)|time to learn|too complex|take time to learn/i))
         return 'adoption';
-    if (/\bsuitable|right for|good fit|fit for|good for|works? for|\benterprises?\b|large (?:companies|enterprises)|small (?:business|compan)/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /\bsuitable|right for|good fit|fit for|good for|works? for|\benterprises?\b|large (?:companies|enterprises)|small (?:business|compan)/i))
         return 'suitability';
-    if (/^why (?:do|does|did|would)\b.*\b(?:migrate|move|switch|leave)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^why (?:do|does|did|would)\b.*\b(?:migrate|move|switch|leave)\b/i))
         return 'switch';
-    if (/^(?:can|could|may)\b/i.test(t) || /^(?:do|does|will|would|is there|are there)\b/i.test(t) && /\b(?:use|bring|choose|run|import|export|customi[sz]e|configure|extend|support|handle|cover|choose|add|change|fit|match|speak|reach)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^(?:can|could|may)\b/i) || (0, text_signals_ts_1.hasSignal)(t, /^(?:do|does|will|would|is there|are there)\b/i) && (0, text_signals_ts_1.hasSignal)(t, /\b(?:use|bring|choose|run|import|export|customi[sz]e|configure|extend|support|handle|cover|choose|add|change|fit|match|speak|reach)\b/i))
         return 'canuse';
-    if (/^(?:what (?:is|are|does)|what's)\b/i.test(t) || /^how (?:do|does|is|are)\b[^?]*\b(?:translate|convert|map to|calculated?|work out|counted|measured)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^(?:what (?:is|are|does)|what's)\b/i) || (0, text_signals_ts_1.hasSignal)(t, /^how (?:do|does|is|are)\b[^?]*\b(?:translate|convert|map to|calculated?|work out|counted|measured)\b/i))
         return 'define';
-    if (/^why (?:do|does|is|are)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^why (?:do|does|is|are)\b/i))
         return 'why';
-    if (/^what if (?:i|we) (?:am|are|'m|'re)\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^what if (?:i|we) (?:am|are|'m|'re)\b/i))
         return 'mycase';
-    if (/^(?:what (?:should|do|happens|can)|what if|how (?:do|can|should) (?:i|we))\b/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /^(?:what (?:should|do|happens|can)|what if|how (?:do|can|should) (?:i|we))\b/i))
         return 'process';
-    if (/proof|reference|case stud|track record|evidence|customers like/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /proof|reference|case stud|track record|evidence|customers like/i))
         return 'proof';
-    if (/not now|next (?:year|quarter)|later|priority|timing|budget cycle|freeze/i.test(t))
+    if ((0, text_signals_ts_1.hasSignal)(t, /not now|next (?:year|quarter)|later|priority|timing|budget cycle|freeze/i))
         return 'timing';
     if (sectorLabels.some((l) => l.toLowerCase() === t.toLowerCase()))
         return 'general';
@@ -882,9 +883,11 @@ function answerObjection(o, c) {
     const sellerV = c.voice === 'seller';
     const P = c.P || 'the product';
     const Ps = /s$/i.test(P) ? `${P}'` : `${P}'s`;
-    const t = o.trim().replace(/[?!.]+$/, '');
+    const t = o.trim().replace(/(?:\\?[?!.])+$/, '');
     const labels = (c.sectorObjections || []).map((x) => x.objection);
     let kind = objectionKind(t, labels);
+    if (kind === 'general' && ['price', 'security', 'offline'].some(k => ['negated', 'unclear'].includes((0, text_signals_ts_1.signal)(t, k).state)))
+        return { kind: 'not_confirmed', say: `No objection is confirmed by this wording. The fact was not clear. Sentence read: ${t}.`, ask: 'Is there an unresolved concern here?', check: 'whether the buyer is raising a concern or saying it is absent', sector: '', risk: 'No risk inferred from a negated concern.' };
     const model = c.model;
     const painHit = c.pains.map((p, i) => ({ p, i, s: closeness(p, t) })).sort((a, b) => b.s - a.s || a.i - b.i)[0];
     const painIdx = painHit && painHit.s > 0 ? painHit.i : 0;
@@ -970,7 +973,7 @@ function answerObjection(o, c) {
     const done = (say, ask, check, k = kind, risk = '') => {
         const said = say.filter(Boolean);
         const anchor = anchorOf(said.join(' '), k);
-        return { kind: k, say: (anchor ? [...said, anchor] : said).join(' '), ask, check, sector, risk: risk || RISK[k] || RISK.general };
+        return { kind: k, say: (anchor ? [...said, anchor] : said).join(' ') + ` Sentence read: ${t}.`, ask, check, sector, risk: risk || RISK[k] || RISK.general };
     };
     const drivers = model ? PRICE_DRIVERS[model] : 'what you use, how much of it, and what is included';
     const startAt = c.shown && c.shown.length ? `the parts you saw today (${(0, dealtext_ts_1.joinList)(c.shown.slice(0, 4))})` : c.caps.length ? `the parts you want to start with (${(0, dealtext_ts_1.joinList)(c.caps.slice(0, 3).map((x) => x.name))})` : 'the parts you want to start with';

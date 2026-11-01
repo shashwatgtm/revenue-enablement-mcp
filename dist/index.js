@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
+exports.createServer = createServer;
+const text_signals_ts_1 = require("./text-signals.js");
 /**
  * Revenue Enablement MCP v1.0.0
  * Deal Strategy, ROI Calculators, Account Planning & Sales Enablement
@@ -18,9 +22,6 @@
  * 11. champion_enablement_kit - Internal selling tools
  * 12. competitive_trap_setter - Landmine questions for deals
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
-exports.createServer = createServer;
 const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
@@ -277,10 +278,14 @@ const tools = {
     // Tool 2: Deal Strategy Coach
     deal_strategy_coach: {
         name: 'deal_strategy_coach',
-        description: 'Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation.',
+        description: 'Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. Ask the user to confirm blocker_status, economic_buyer_engagement, incumbent_status and project_status when those facts affect the score; typed facts take precedence over text.',
         inputSchema: {
             type: 'object',
             properties: {
+                blocker_status: { type: 'string', enum: ['none', 'present', 'unknown'], description: 'Ask whether any blocker is present. A confirmed typed fact overrides word reading.' },
+                economic_buyer_engagement: { type: 'string', enum: ['engaged', 'not_engaged', 'unknown'], description: 'Ask whether the budget holder actively participates in this decision. Overrides word reading.' },
+                incumbent_status: { type: 'string', enum: ['present', 'none', 'unknown'], description: 'Ask whether the buyer already uses a competing supplier. Overrides word reading.' },
+                project_status: { type: 'string', enum: ['active', 'cancelled', 'unknown'], description: 'Ask whether the project is still active. A cancelled project is held, without a close plan.' },
                 deal_name: {
                     type: 'string',
                     description: 'Deal/opportunity name'
@@ -1082,7 +1087,17 @@ function executeDealStrategyCoach(args) {
     const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
     const P = brief.short || 'your solution';
     const bctx = { product: brief.short, sectorObjections: dealCtx.v?.objections, sectorName: dealCtx.v?.name, model: dealCtx.model };
-    const compItems = splitItems(competitors);
+    const buyerRead = (0, text_signals_ts_1.signal)(economicBuyer, 'engaged');
+    const incumbentRead = (0, text_signals_ts_1.signal)(competitors, 'incumbent');
+    const blockerRead = (0, text_signals_ts_1.readSignal)(blockers, new RegExp(text_signals_ts_1.SIGNALS.blocker.source + '|' + text_signals_ts_1.SIGNALS.price.source, 'i'), /\b(price|cost|budget|security|legal|procurement|approval|data|integration|offline)\b/i);
+    const buyerEngaged = args.economic_buyer_engagement ? args.economic_buyer_engagement === 'engaged' : buyerRead.state === 'affirmed';
+    const incumbentPresent = args.incumbent_status ? args.incumbent_status === 'present' : incumbentRead.state === 'affirmed';
+    const blockerPresent = args.blocker_status ? args.blocker_status === 'present' : blockerRead.state === 'affirmed';
+    const cancelledRead = (0, text_signals_ts_1.signal)([blockers, nextSteps].join('; '), 'cancelled');
+    const cancelled = args.project_status ? args.project_status === 'cancelled' : cancelledRead.state === 'affirmed';
+    if (cancelled)
+        return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project_status is cancelled.' : (0, text_signals_ts_1.evidenceLine)('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
+    const compItems = splitItems(competitors).filter(c => (0, text_signals_ts_1.signal)(c, 'incumbent').state !== 'negated');
     // Calculate deal health
     let healthScore = 70; // Start at 70
     let healthFactors = [];
@@ -1104,7 +1119,7 @@ function executeDealStrategyCoach(args) {
         healthFactors.push('High risk: No champion identified');
     }
     // Economic buyer
-    if (economicBuyer && economicBuyer.toLowerCase().includes('engaged')) {
+    if (buyerEngaged) {
         healthScore += 10;
         healthFactors.push('Economic buyer engaged');
     }
@@ -1136,19 +1151,22 @@ function executeDealStrategyCoach(args) {
         healthFactors.push(`Note: ${daysInStage} days in stage (above this tool's example threshold for the stage)`);
     }
     // Competitor impact
-    if (competitors && competitors.toLowerCase().includes('incumbent')) {
+    if (incumbentPresent) {
         healthScore -= 10;
         healthFactors.push('Note: Competing against incumbent');
     }
-    else if (competitors) {
+    else if (compItems.length && args.incumbent_status !== 'none') {
         healthScore -= 5;
         healthFactors.push('Note: Active competition');
     }
     // Blockers impact
-    if (blockers) {
+    if (blockerPresent) {
         healthScore -= 10;
         healthFactors.push('High risk: Known blockers present');
     }
+    healthFactors.push(args.economic_buyer_engagement ? `Economic buyer fact supplied: ${args.economic_buyer_engagement}; typed fact used.` : (0, text_signals_ts_1.evidenceLine)('Economic buyer text', buyerRead));
+    healthFactors.push(args.incumbent_status ? `Incumbent fact supplied: ${args.incumbent_status}; typed fact used.` : (0, text_signals_ts_1.evidenceLine)('Competition text', incumbentRead));
+    healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : (0, text_signals_ts_1.evidenceLine)('Blocker text', blockerRead));
     healthScore = Math.max(0, Math.min(100, healthScore));
     let healthStatus = 'Healthy';
     if (healthScore < 50) {
@@ -1385,7 +1403,7 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
 
 `;
     }
-    if (blockers) {
+    if (blockers?.trim() && args.blocker_status !== 'none' && blockerRead.state !== 'negated') {
         const items = splitItems(blockers);
         specificRecs += `
 ### Blocker Mitigation
@@ -1432,7 +1450,7 @@ ${[
         `- **Champion:** ${championStatus === 'no_champion' ? 'none yet. Finding one comes before anything else.' : championStatus === 'potential_champion' ? 'a potential champion. Test them: do they have access to the buyer and a reason to push?' : championStatus === 'confirmed_champion' ? 'confirmed. Give them the material to sell internally.' : 'several contacts engaged (multi-threaded). Keep each one informed.'}`,
         `- **Economic buyer:** ${economicBuyer ? economicBuyer : `unknown.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}.` : ''}`}`,
         compItems.length ? `- **Competition:** ${compItems.length} named (${(0, dealtext_ts_1.joinList)(compItems.map((c) => (0, dealtext_ts_1.clip)(c, 60)))}). Each is a row in the competitive table below.` : '- **Competition:** none named. Ask what they do today, including doing it by hand.',
-        blockers ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
+        blockerPresent ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
         dealCtx.v ? `- **How deals usually run in ${dealCtx.v.name}:** ${dealCtx.v.salesMotion}` : '',
     ].filter(Boolean).join('\n')}
 
@@ -1449,7 +1467,7 @@ ${specificRecs}
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
 ${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
-3. **Advance the deal**: ${nextSteps || (blockers ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
+3. **Advance the deal**: ${nextSteps || (blockerPresent ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
 4. **Update CRM**: Document all new information
 
 ### This Week
@@ -2055,7 +2073,8 @@ function executePricingNegotiationGuide(args) {
     const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' }];
     const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
     const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
-    const competitorLine = gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
+    const priceDirection = (0, text_signals_ts_1.hasSignal)(competitorPrice, /\b(above|higher|more expensive|more than)\b/i) ? 'higher' : (0, text_signals_ts_1.hasSignal)(competitorPrice, /\b(below|lower|cheaper|less than)\b/i) ? 'lower' : 'unclear';
+    const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
     const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
     const haveValue = hasValue(args.deal_value) && dealValue > 0;
     const options = restructureOptions(ctx.model, dealValue, haveValue, lowerFirstIfCommon(pilot));
@@ -2269,7 +2288,7 @@ If budget genuinely isn't available:
 4. **Create urgency** only with a real reason (say this only if it is true)`,
         competitor_pricing: () => `# Competitor Pricing Response
 
-## Situation: Competitor has lower price
+## Situation: ${priceDirection === 'higher' ? 'Competitor quote is higher' : priceDirection === 'lower' ? 'Competitor has lower price' : 'Price direction is not clear'}
 
 ${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a gap of ${gapMatch[1]}%${haveValue ? `: on your ${dealValueText} deal that is ${money(dealValue * Number(gapMatch[1]) / 100)} a year` : ''})` : ''}` : 'No competitor price was given (competitor_price).'}
 

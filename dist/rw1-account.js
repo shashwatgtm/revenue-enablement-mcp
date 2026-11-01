@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildAccountPlan = buildAccountPlan;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22: account_plan_builder, rewritten. The plan is written from the inputs: who decides (one row per contact, with what each cares about),
 // where the account can grow (the parts of the product against the account's own pain), the alternatives it uses today (a different question
 // for each), an answer for each objection, and 90 days built from all of that. Tier and expansion potential keep the old rule on ARR (D80).
@@ -67,7 +68,7 @@ function buildAccountPlan(args, d) {
     const existing = arr > 0;
     // ---- the notes: objections (after "Objections:") and the rest ----
     const m = notesIn.match(/objections?\s*:\s*([\s\S]*)$/i);
-    const objections = m ? d.splitItems(m[1].replace(/[.]+\s*$/, '')) : [];
+    const objections = m && !/\bno\s+$/i.test(notesIn.slice(0, m.index)) ? d.splitItems(m[1].replace(/[.]+\s*$/, '')) : [];
     const noteRest = m ? notesIn.slice(0, m.index).trim() : notesIn;
     const hypothetical = HYPOTHETICAL.test(notesIn);
     const noteLines = noteSentences(noteRest);
@@ -116,7 +117,7 @@ function buildAccountPlan(args, d) {
             usedStep.set(step, c.title);
         return `| ${c.raw} | ${partWord(c)} | ${caresCell} | ${stepCell} |`;
     });
-    const hasChampion = !!champ || /champion/i.test(contactsText);
+    const hasChampion = !!champ || (0, text_signals_ts_1.hasSignal)(contactsText, /champion/i, 'champion');
     const hasBuyer = buyerContacts.length > 0 || /economic buyer|budget|cfo|ceo|coo/i.test(contactsText);
     // ---- the alternatives and the objections ----
     const threats = (0, rw1_common_ts_1.readThreats)(d.splitItems(threatsIn));

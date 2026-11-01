@@ -289,7 +289,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     };
     // ---- the value: the aim, and the figures that came with it ----
     const valueItems = (0, rw_common_ts_1.listItems)(valueText).map((x) => (0, dealtext_ts_1.parseProof)(x)[0] || { text: x, label: '', kind: 'story' });
-    const mainItem = valueItems.find((x) => !x.label) || valueItems[0];
+    const mainItem = valueItems.find((x) => !x.held && !x.label) || valueItems.find(x => !x.held);
     let aim = (mainItem?.text || '').replace(/[.]+$/, '').trim();
     // "<an aim in words>: 40% faster ..., 30% lower ...": the figures after the colon are proof (used once, with the same source), the aim stays short
     const extraClaims = [];
@@ -314,7 +314,8 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // ---- the proof: split into atoms, ranked for this reader, each used once ----
     const proofItems = (0, dealtext_ts_1.parseProof)(proofText);
     const rank = `${painText} ${persona} ${industry} ${(vv?.metrics || []).join(' ')}`;
-    const bag0 = [...proofItems, ...valueClaims];
+    const heldProof = [...proofItems, ...valueItems].filter(p => p.held);
+    const bag0 = [...proofItems, ...valueClaims].filter(p => !p.held);
     const bag = atomsOf(bag0, rank, `${painText} ${persona} ${industry}`);
     // the sender's own headline figure (from the value proposition) is used before a customer's figure of the same weight
     for (const a of bag)
@@ -712,7 +713,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const checks = [`Add the recipient's name after "${hello.replace(',', '')}" if you have it; the emails do not guess it.`];
     if (sequenceType === 'event_follow_up')
         checks.push('Name the event in email 1; the emails do not guess it.');
-    const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
+    const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => !x.held && a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
     if (everyItem.length)
         checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${(0, dealtext_ts_1.proofPhrase)(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
     // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
@@ -743,6 +744,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const solutionLine = solution.length <= 160 ? solution : P.label || (0, dealtext_ts_1.clip)(solution, 120);
     return `# ${TITLES[sequenceType] || sequenceType} Sequence
 
+${heldProof.length ? `**Evidence held:** Adverse or unconfirmed statements are not used as proof in these emails. Confirm a positive result before adding customer proof. Sentence read: ${heldProof.map(p => p.text).join("; ")}.\n` : ""}
 ## Target: ${persona ? `${persona}${indLow && !indInPersona ? ` in ${indLow}` : ''}` : indLow ? `buyers in ${indLow}` : 'not given'}
 ## Solution: ${solutionLine}
 ## Tone: ${tone}

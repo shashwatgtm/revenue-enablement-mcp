@@ -9,6 +9,7 @@ exports.buildDemoScript = buildDemoScript;
 //  4. each objection is answered from the inputs and the business model (answerObjection), where it would come up;
 //  5. what was not given is named once, at the end, with what it would change.
 // No fact about the product is added: a line says what the user's description says, or says what to confirm.
+const text_signals_ts_1 = require("./text-signals.js");
 const escape_inputs_ts_1 = require("./escape-inputs.js");
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
@@ -40,7 +41,7 @@ function joinNameLists(ms) {
         }
         // run 42B: a page claim, a group membership, a track record or a recognition is said, never shown:
         // a membership, ownership, track record or certification phrase is a claim, whatever its label
-        if (rw_kit_ts_1.CLAIM_PHRASE.test(f.text.trim())) {
+        if ((0, text_signals_ts_1.readSignal)(f.text, new RegExp(rw_kit_ts_1.CLAIM_PHRASE.source.replace(/^\^/, ''), 'i')).state === 'affirmed') {
             claims.push(f);
             continue;
         }
@@ -138,7 +139,9 @@ function buildDemoScript(args, d) {
     const painWord = (i) => low(pains[i]);
     // a short pain is named by its own words; a long one by "the first problem you described" (its words were played back once in the opening)
     const pRef = (i) => (0, rw_kit_ts_1.painRef)(low(pains[i]), i);
-    const ms = joinNameLists((0, rw_kit_ts_1.readMustShow)(mustShowFeatures));
+    const rawMustShow = (0, rw_kit_ts_1.readMustShow)(mustShowFeatures);
+    const unconfirmed = [...rawMustShow.flows, ...rawMustShow.claims].filter(x => ['negated', 'unclear'].includes((0, text_signals_ts_1.signal)(x.text, 'company_claim').state));
+    const ms = joinNameLists({ flows: rawMustShow.flows.filter(x => !unconfirmed.includes(x)), claims: rawMustShow.claims.filter(x => !unconfirmed.includes(x)) });
     const claimsAll = [...ms.claims];
     for (const e of painSet.evidence)
         claimsAll.push({ text: e, label: 'from your pain points' });
@@ -365,7 +368,7 @@ function buildDemoScript(args, d) {
     const claimSay = (items) => `${items.map((c) => c.text.replace(/[.]+$/, '')).join('; ')}.`;
     const claimLabels = (items) => [...new Set(items.map((c) => c.label || 'a claim you gave'))].join('; ');
     // ---- objections ----
-    const typed = d.splitItems(knownObjections).map((o) => (0, escape_inputs_ts_1.escapePiece)(o.replace(/^"|"$/g, '').trim())).filter(Boolean);
+    const typed = d.splitItems(knownObjections).map((o) => (0, escape_inputs_ts_1.escapePiece)((0, rw_kit_ts_1.objectionAsked)(o.replace(/^"|"$/g, '').trim()))).filter(Boolean);
     const fromSector = !typed.length && !!v;
     const objections = typed.length ? typed : fromSector ? v.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
     const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
@@ -663,7 +666,7 @@ ${intro1}
 
 ${ctx.line}
 
----
+${unconfirmed.length ? `**Unconfirmed input held:** These statements are denied or unclear. They are not demo steps or spoken proof: ${unconfirmed.map(x => x.text).join("; ")}. Confirm the fact before using it.\n\n` : ""}---
 
 ## The plan
 

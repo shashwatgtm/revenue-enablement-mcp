@@ -195,7 +195,13 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
     // the user's own plural ("payouts") is kept when the sector word is the singular ("payout")
     const last = (best.toLowerCase().match(/[a-z]+$/) || [''])[0];
     const pl = last && text.toLowerCase().match(new RegExp(`\\b${last}(?:s|es)\\b`));
-    return pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
+    const out = pl ? best.replace(new RegExp(`${last}$`, 'i'), pl[0]) : best;
+    // run 42C: a one word sector term that is only the front of the user's noun phrase ("carrier" in "carrier onboarding") is said with its noun
+    if (!/\s/.test(out)) {
+      const nx = text.match(new RegExp(`\\b${out}\\s+([a-z]{5,})\\b`, 'i'));
+      if (nx && !/(?:ed|ly|[^s]s)$/i.test(nx[1]) && !/^(?:that|which|their|these|those|about|because|before|after|where|while|across|every|other|often|still|never|always|rather|should|would|could|there|since)$/i.test(nx[1])) return `${out} ${nx[1].toLowerCase()}`;
+    }
+    return out;
   };
   // the words before the first verb of the first pain clause ("selling across MENA", "phishing and scam messages"); a leading "high" or "rising" is dropped
   const atom0 = atomsP[0] || '';

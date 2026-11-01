@@ -6,13 +6,14 @@
 //  4. each objection is answered from the inputs and the business model (answerObjection), where it would come up;
 //  5. what was not given is named once, at the end, with what it would change.
 // No fact about the product is added: a line says what the user's description says, or says what to confirm.
+import { signal, readSignal } from './text-signals.ts';
 import { escapePiece } from './escape-inputs.ts';
 import { parseContacts, familyOf, levelOf, joinList, clip, solutionBrief, type Contact } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import { buyerLens, type Vertical, type BusinessModel } from './verticals.ts';
 import {
   readPains, painShort, painRef, painType, SHOW, groupsOf, DEMO_VERB, CLAIM_PHRASE, readProduct, toCapability, productName, productHead, readMustShow, fit, overlap, wordsOf, lensFor, capText, capSay, upFirst,
-  answerObjection, dedupeAnswers, splitNotes, type Capability, type Item, type AnswerCtx, type Answer,
+  answerObjection, objectionAsked, dedupeAnswers, splitNotes, type Capability, type Item, type AnswerCtx, type Answer,
 } from './rw-kit.ts';
 
 /** Run 42Q: a list of names after "integrations with" (or "connects to", "works with") is one item, not one step per name; when the
@@ -33,7 +34,7 @@ function joinNameLists(ms: { flows: Item[]; claims: Item[] }): { flows: Item[]; 
     if (NAME_LIST_HEAD.test(f.text.trim())) { open = { head: f, names: [] }; groups.push(open); order.push(open); continue; }
     // run 42B: a page claim, a group membership, a track record or a recognition is said, never shown:
     // a membership, ownership, track record or certification phrase is a claim, whatever its label
-    if (CLAIM_PHRASE.test(f.text.trim())) { claims.push(f); continue; }
+    if (readSignal(f.text, new RegExp(CLAIM_PHRASE.source.replace(/^\^/, ''), 'i')).state === 'affirmed') { claims.push(f); continue; }
     // a recognition labelled as a claim ("named a must-try tool by ...") is said, not shown
     if ((/\bclaims?\b/i.test(f.label || '') && RECOGNITION.test(f.text)) || /^(?:named|recogni[sz]ed|ranked|rated|awarded|featured|trusted by|loved by)\b/i.test(f.text.trim())) { claims.push(f); continue; }
     order.push(f);
@@ -153,7 +154,9 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const painWord = (i: number): string => low(pains[i]);
   // a short pain is named by its own words; a long one by "the first problem you described" (its words were played back once in the opening)
   const pRef = (i: number): string => painRef(low(pains[i]), i);
-  const ms = joinNameLists(readMustShow(mustShowFeatures));
+  const rawMustShow = readMustShow(mustShowFeatures);
+  const unconfirmed = [...rawMustShow.flows,...rawMustShow.claims].filter(x => ['negated','unclear'].includes(signal(x.text,'company_claim').state));
+  const ms = joinNameLists({flows:rawMustShow.flows.filter(x=>!unconfirmed.includes(x)),claims:rawMustShow.claims.filter(x=>!unconfirmed.includes(x))});
   const claimsAll: Item[] = [...ms.claims];
   for (const e of painSet.evidence) claimsAll.push({ text: e, label: 'from your pain points' });
   const people: { title: string; given: string; contact: Contact | null; primary: boolean }[] = [];
@@ -317,7 +320,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const claimLabels = (items: Item[]): string => [...new Set(items.map((c) => c.label || 'a claim you gave'))].join('; ');
 
   // ---- objections ----
-  const typed = d.splitItems(knownObjections).map((o) => escapePiece(o.replace(/^"|"$/g, '').trim())).filter(Boolean);
+  const typed = d.splitItems(knownObjections).map((o) => escapePiece(objectionAsked(o.replace(/^"|"$/g, '').trim()))).filter(Boolean);
   const fromSector = !typed.length && !!v;
   const objections = typed.length ? typed : fromSector ? v!.objections.slice(0, 3).map((o) => d.cap(o.objection)) : [];
   const itPerson = people.find((p) => p.contact && (p.contact.family === 'it' || p.contact.family === 'engineering'))?.title || '';
@@ -584,7 +587,7 @@ ${intro1}
 
 ${ctx.line}
 
----
+${unconfirmed.length ? `**Unconfirmed input held:** These statements are denied or unclear. They are not demo steps or spoken proof: ${unconfirmed.map(x=>x.text).join("; ")}. Confirm the fact before using it.\n\n` : ""}---
 
 ## The plan
 

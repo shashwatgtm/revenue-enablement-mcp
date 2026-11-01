@@ -480,7 +480,7 @@ export const upFirst = (s: string): string => s.charAt(0).toUpperCase() + s.slic
 // ---------------------------------------------------------------------------------------------------------------------------
 export interface Item { text: string; label: string }
 /** Run 42B: a membership, ownership, track record or certification phrase is a claim to say, never a flow to show. */
-export const CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
+export const CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|(?:positioned|recogni[sz]ed|placed|ranked|rated|listed|named) (?:as|in|by|among)\b|(?:a |an |our )?(?:select |premier |gold |silver |certified |registered |preferred )?(?:partner|reseller|integrator) (?:in|of|with|within)\b|presence in\b|(?:offices?|customers?|clients?|support|available|operations?|teams?|data cent(?:er|re)s?|locations?) (?:in|across|on|around|from)\b|(?:headquartered|based|founded|established) (?:in|since)\b|(?:over|more than|\d[\d,.+]*) (?:years|countries|customers|clients|users|employees|offices)\b|(?:the )?(?:fastest|largest|biggest)\b|number one\b|#1\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
 export function readMustShow(text: string): { flows: Item[]; claims: Item[] } {
   const flows: Item[] = [], claims: Item[] = [];
   const t = (text || '').trim();
@@ -1157,4 +1157,12 @@ export function dedupeAnswers(list: { say: string; ask: string }[]): void {
     a.say = kept.join('').replace(/\s+/g, ' ').trim() || 'The answer just above covers this too.';
     if (a.ask && seen.has(a.ask)) a.ask = ''; else if (a.ask) seen.add(a.ask);
   }
+}
+
+/** Run 42C: an objection typed as "Question? The pricing FAQ says <answer>." is the question; the sentence that reports what a page says is the user's source,
+ *  not part of what the buyer asks, and is never pasted into a spoken reply. */
+export function objectionAsked(x: string): string {
+  const t = x.trim();
+  const m = t.match(/^(.+?\?)\s+(?:the|its|their|this|that|our)\s+[^.?!]{0,60}?\b(?:says|said|states|lists|shows|notes|reports|explains|mentions)\b/i);
+  return m && m[1].length >= 12 ? m[1].replace(/\?+$/, '?') : t;
 }

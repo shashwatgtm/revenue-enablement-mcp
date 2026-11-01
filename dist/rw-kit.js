@@ -22,6 +22,7 @@ exports.youify = youify;
 exports.outcomeHead = outcomeHead;
 exports.answerObjection = answerObjection;
 exports.dedupeAnswers = dedupeAnswers;
+exports.objectionAsked = objectionAsked;
 const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (rewrite of demo_script_builder, champion_enablement_kit and discovery_question_bank): shared pure helpers.
 // Why this file exists: the three tools used to paste the user's text into a scaffold. The judges scored that 2 to 3 because a statistic became a
@@ -604,7 +605,7 @@ function capSay(c) {
 const upFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 exports.upFirst = upFirst;
 /** Run 42B: a membership, ownership, track record or certification phrase is a claim to say, never a flow to show. */
-exports.CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
+exports.CLAIM_PHRASE = /^(?:(?:a |an )?(?:part|member|subsidiary|unit|division|arm|brand) of\b|(?:positioned|recogni[sz]ed|placed|ranked|rated|listed|named) (?:as|in|by|among)\b|(?:a |an |our )?(?:select |premier |gold |silver |certified |registered |preferred )?(?:partner|reseller|integrator) (?:in|of|with|within)\b|presence in\b|(?:offices?|customers?|clients?|support|available|operations?|teams?|data cent(?:er|re)s?|locations?) (?:in|across|on|around|from)\b|(?:headquartered|based|founded|established) (?:in|since)\b|(?:over|more than|\d[\d,.+]*) (?:years|countries|customers|clients|users|employees|offices)\b|(?:the )?(?:fastest|largest|biggest)\b|number one\b|#1\b|owned by\b|backed by\b|operated in production\b|(?:in )?production (?:at|with|for)\b|used (?:by|in)\b|serving\b|financially backed\b|certified\b|compliant with\b|(?:iso|soc ?2|pci|hipaa|gdpr)\b)/i;
 function readMustShow(text) {
     const flows = [], claims = [];
     const t = (text || '').trim();
@@ -1345,5 +1346,12 @@ function dedupeAnswers(list) {
         else if (a.ask)
             seen.add(a.ask);
     }
+}
+/** Run 42C: an objection typed as "Question? The pricing FAQ says <answer>." is the question; the sentence that reports what a page says is the user's source,
+ *  not part of what the buyer asks, and is never pasted into a spoken reply. */
+function objectionAsked(x) {
+    const t = x.trim();
+    const m = t.match(/^(.+?\?)\s+(?:the|its|their|this|that|our)\s+[^.?!]{0,60}?\b(?:says|said|states|lists|shows|notes|reports|explains|mentions)\b/i);
+    return m && m[1].length >= 12 ? m[1].replace(/\?+$/, '?') : t;
 }
 //# sourceMappingURL=rw-kit.js.map

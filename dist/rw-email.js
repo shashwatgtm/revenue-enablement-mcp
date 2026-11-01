@@ -176,7 +176,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const inIndSubj = indLow && !indInPersona && indLow.length <= 24 ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
     const inInd = indLow && !indInPersona ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
     const anOf = (w) => `${/^(?:[aeiou]|8\b|8\d|11|18)/i.test(w.trim()) ? 'an' : 'a'} ${w.trim()}`;
-    const name = P.name || P.ref;
+    const name = P.name || solution || P.ref;
     // ---- the pain, in clauses used once each ----
     const atomsP = painAtoms(painText);
     let pi = 0;
@@ -477,25 +477,16 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // ---- tone, sender, ask ----
     const hello = tone === 'casual' ? 'Hi,' : 'Hello,';
     const closing = { professional: 'Regards,', casual: 'Thanks,', urgent: 'Regards,', consultative: 'Best regards,', provocative: 'Regards,' }[tone] || 'Regards,';
-    const senderLine = senderIn || `The ${name} team`;
+    const senderLine = senderIn || '(Add your name and role before sending.)';
     const sig = `${closing}\n${senderLine}`;
     const ctaRaw = (ctaIn || 'short call').replace(/[.?!]+$/, '');
-    const ctaVerb = /^(book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(ctaRaw);
+    const ctaVerb = /^(confirm|name|identify|agree|choose|select|share|send|introduce|approve|book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(ctaRaw);
     const ctaText = ctaVerb ? D.lower(ctaRaw) : (/^(a|an|the|one|our|my)\b/i.test(ctaRaw) ? D.lower(ctaRaw) : anOf(D.lower(ctaRaw)));
     const WHEN = tone === 'urgent' ? ['this week', 'early next week', 'by the end of next week', 'this month'] : ['next week', 'in the next two weeks', 'later this month', 'at a time that suits you'];
     const ask = (i) => {
         const when = WHEN[i % WHEN.length];
-        if (ctaVerb) {
-            if (tone === 'casual')
-                return `Want to ${ctaText} ${when}?`;
-            if (tone === 'urgent')
-                return `Can we ${ctaText} ${when}?`;
-            if (tone === 'provocative')
-                return `If I am wrong, it costs little to ${ctaText} and find out. ${(0, dealtext_ts_1.upperFirst)(when)}?`;
-            if (tone === 'professional')
-                return `I would welcome the chance to ${ctaText} ${when}.`;
-            return `Would you like to ${ctaText} ${when}?`;
-        }
+        if (ctaVerb)
+            return (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.sentenceCase)(ctaRaw));
         if (tone === 'casual')
             return `Up for ${ctaText} ${when}?`;
         if (tone === 'urgent')
@@ -590,7 +581,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
                     f.push(nextQ()); return f.filter((x, i, a) => x && a.indexOf(x) === i).map((x, i) => `${i + 1}. ${x}`).join('\n'); })()}`,
                 morePain.length ? `${morePain.length === 1 ? 'One more part of the problem' : `${['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'][morePain.length] || morePain.length} more parts of the problem`}, in case ${morePain.length === 1 ? 'it is' : 'they are'} yours too: ${morePain.map((x) => x.replace(/[.]+$/, '')).join('; ')}.` : '',
                 r5.length ? facts(r5) : '', leftover,
-                `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`
+                ctaVerb ? ask(3) : `If you want to talk any of it through, reply and I will make the time for ${ctaText}.`
             ]);
         },
         warm_follow_up: () => {
@@ -677,7 +668,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             ]);
             const r4 = take(['recognition'], 1);
             mail('Week 6', 'An open door', `If ${topic} is on your list`, [
-                `If ${topic} is on your list, ${ctaVerb ? `you can ${ctaText}` : `I am happy to set up ${ctaText}`} at a time that suits you.`, r4.length ? facts(r4) : '', rest(), (0, rw_common_ts_1.endSentence)(`A last question: ${nextQ()}`)
+                ctaVerb ? ask(3) : `If ${topic} is on your list, I am happy to set up ${ctaText} at a time that suits you.`, r4.length ? facts(r4) : '', rest(), (0, rw_common_ts_1.endSentence)(`A last question: ${nextQ()}`)
             ]);
         },
         event_follow_up: () => {
@@ -697,13 +688,13 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             mail('Day 1', 'Introduction', `An introduction on ${topic}?`, [
                 `I am looking to speak with people${inInd} about ${atomsP[0] ? painRef(atomsP[0]) : topic}.`,
                 `Is that you, or is there someone you would point me to${otherRoles.length ? `, perhaps your ${(0, dealtext_ts_1.joinList)(otherRoles, 'or')}` : ''}?`,
-                `I would ask them for ${ctaText}, nothing more.`
+                ctaVerb ? ask(0) : `I would ask them for ${ctaText}, nothing more.`
             ]);
             const r2 = take(['result', 'scale', 'quote', 'story'], 1);
             mail('Day 4', 'A note to forward', `A note to forward on ${topic}`, [
                 `Here are a few lines about ${name} that you can forward as they are.`,
                 [whatIs, aimLine, atomsP[0] ? `The problem it starts from: ${atomsP[0]}.` : '', r2.length ? facts(r2) : ''].filter(Boolean).join(' '),
-                `They can reply to me directly for ${ctaText}.`
+                ctaVerb ? ask(1) : `They can reply to me directly for ${ctaText}.`
             ]);
             const r3 = take(['recognition', 'quote', 'story', 'result', 'scale'], 1);
             mail('Day 9', 'Last ask', `Thank you, and one last ask on ${topic}`, [
@@ -742,7 +733,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     if (!ctaIn)
         sharpen.push('`call to action`: it would change the ask from a short call to your own wording.');
     if (!senderIn)
-        sharpen.push(`\`sender context\` (your name and role): it would change the signature from "The ${name} team" to you.`);
+        sharpen.push(`\`sender context\` (your name and role): add your name and role before sending.`);
     const sharpenBlock = sharpen.length ? `\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}` : '';
     const fixed = exports.EMAIL_COUNTS[sequenceType] || emails.length;
     const emailsText = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? args.num_emails.toLocaleString('en-US') : `${fixed}`;

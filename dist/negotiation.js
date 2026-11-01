@@ -250,11 +250,34 @@ function negotiation(a) {
 }, ["deal_kind", "mode", "currency"]), (a) => {
     const r = negotiation(a);
     const asset = r.champion;
+    const money = (value) => value.toLocaleString(a.currency?.toUpperCase() === "INR" ? "en-IN" : "en-US", { maximumFractionDigits: 2 }) +
+        " " +
+        a.currency;
+    const moneySummary = r.money?.revenue_at_risk !== undefined
+        ? "You give up " +
+            money(r.money.revenue_at_risk) +
+            "; " +
+            money(r.money.value_after_discount) +
+            " after discount (your figures)."
+        : r.money?.given_up !== undefined
+            ? "You give up " +
+                money(r.money.given_up) +
+                "; " +
+                money(r.money.total_after) +
+                " over the supplied years (your figures)."
+            : r.money?.gap_amount !== undefined
+                ? "Buyer-stated gap: " +
+                    money(r.money.gap_amount) +
+                    "; implied alternative price " +
+                    money(r.money.competitor_price_if_gap_holds) +
+                    " if that unverified gap holds."
+                : (r.next ??
+                    "Supply the missing deal figures before calculating a concession.");
     return {
         title: "Negotiation and champion review",
         summary: [
+            moneySummary,
             "Scope: " + r.scope,
-            r.next ?? "Numbers: your figures, computed by server code",
             "Approval: none granted",
             r.question ?? "Confirm the deal scope first",
         ],
@@ -306,7 +329,7 @@ function negotiation(a) {
         ],
         data: r,
         limitations: [
-            "Money is a TypeScript port of the pinned concession arithmetic. Values use the currency you supplied; no exchange-rate conversion occurs.",
+            "Concession amounts are calculated from your figures. Values use the currency you supplied; no exchange-rate conversion occurs.",
             "Trade worth is a seller estimate, not additional contract revenue. Unpriced trades remain unpriced.",
             "Buyer-stated competitor gaps remain unverified; computed implied price is not represented as a fetched competitor price.",
             "A reply deadline remains a reply deadline. No discount, legal term, signature, message or approval is executed.",

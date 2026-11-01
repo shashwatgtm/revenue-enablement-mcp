@@ -119,6 +119,9 @@ Record the contact preference and pause outreach. Work from existing authorized 
         [/competi|alternative/i, `What else are you considering for ${critA}, including doing nothing?`],
         [/metric|baseline|number/i, `How do you measure ${M1} today?`],
     ];
+    const metricGaps = knownMetrics.split(/[;\n]/).map(x => x.trim()).filter(x => /\b(?:unknown|unconfirmed|not (?:yet )?(?:known|confirmed|measured|available))\b/i.test(x) && !/\b(?:not|no longer)\s+(?:unknown|unconfirmed)\b/i.test(x));
+    const unanswered = [...metricGaps.map(g => ({ gap: g, question: /\b(?:duration|how long)\b/i.test(g) ? 'For the last outage, when did customer impact start and end, and what record supports that duration?' : `What is the missing measure in "${g}", for which period and cohort?`, evidence: 'A dated source, the measurement window, affected customers and the person who owns the measure.' })), ...d.splitItems(gapsToFill).map(g => ({ gap: g, question: GAP_QUESTIONS.find(([re]) => re.test(g))?.[1] || `What evidence would resolve "${g}"?`, evidence: 'The buyer answer, its source and date, and the named person who can confirm it.' }))].slice(0, 5);
+    const firstQuestions = `## Unanswered questions first\n${unanswered.length ? unanswered.map((x, i) => `${i + 1}. ${x.question}\n   Evidence to establish: ${x.evidence}\n   Gap supplied: ${x.gap}`).join('\n\n') : 'No explicit unanswered metric or information gap was supplied. Confirm the next missing decision with the buyer before selecting questions from the optional bank.'}\n\n`;
     const gaps = d.splitItems(gapsToFill);
     const gapRows = gaps.map((g) => { const m = GAP_QUESTIONS.find(([re]) => re.test(g)); return `- **${d.cap(g)}:** ${m ? m[1] : `Can you walk me through ${low(g)} for ${critA}?`}`; });
     const gapSection = gaps.length ? `## Gaps to fill first\n\nYou said these are still open, so ask about them before anything else:\n${gapRows.join('\n')}\n\n---\n\n` : '';
@@ -328,6 +331,7 @@ Record the contact preference and pause outreach. Work from existing authorized 
     const solutionLine = yourSolution ? `${nameTyped && nameTyped !== P ? `${nameTyped} (called ${P} in the questions)` : P}${kindLine}${product.caps.length >= 2 ? `. Parts: ${product.caps.map(rw_kit_ts_1.capText).join('; ')}` : ''}` : 'not given';
     let output = `# Discovery Question Bank
 
+${firstQuestions}
 ## Context
 - **Prospect Industry:** ${prospectIndustry || 'not given'}
 - **Contact Role:** ${prospectRoleTyped || 'not given'}
@@ -337,6 +341,9 @@ ${painContext}${knownMetrics ? `- **Known Metrics:** ${knownMetrics}\n` : ''}${g
 ${ctx.line}
 
 ---
+
+## Optional full question bank
+Use only the sections needed after the unanswered questions above.
 
 ${openSection}${gapSection}${roleSection}${lensSection}${sectorSection}${painSection}${partSection}`;
     if (framework === 'meddpicc' || framework === 'all')

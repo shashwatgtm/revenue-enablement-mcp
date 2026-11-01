@@ -115,6 +115,8 @@ function buildDemoScript(args, d) {
     const durationGiven = hasValue(args.demo_duration) && demoDuration === args.demo_duration;
     const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
     const mustShowFeatures = given('must_show_features');
+    const acceptanceFeatures = mustShowFeatures.split(/[;\n]/).map(x => x.trim().replace(/[.]+$/, '')).filter(Boolean);
+    const acceptanceRows = acceptanceFeatures.map(feature => `| ${feature} | Demonstrate "${feature}" on the buyer's sample; record the observed result | Unknown; name the buyer approver | Unagreed; ask the buyer what must be true and how they will check it |`).join('\n');
     const knownObjections = given('known_objections');
     const outcomeText = given('desired_outcome').replace(/[.]+$/, '');
     const ctx = d.readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
@@ -593,6 +595,7 @@ function buildDemoScript(args, d) {
     const rest = unattached.slice(3);
     const nextOpt = v ? low(d.stock(v, modelKey).next) : '';
     const closeBlock = [
+        acceptanceFeatures.length ? 'Say: "Before we agree a pilot, let us review each recorded acceptance condition. Who approves it, what observation counts as a pass, and which conditions remain unagreed? I will send those conditions and the evidence for your confirmation."' : 'Say: "Which capabilities and pass conditions must the buyer agree before a pilot?"',
         `Say: "Here is what we covered. ${say(recap)}"`,
         rest.length ? `Say: "Some more context: ${say(claimSay(rest))}" *(${claimLabels(rest)}; have the source ready)*` : '',
         ...atClose.map(objectionBlock),
@@ -661,6 +664,11 @@ function buildDemoScript(args, d) {
     const kindSentence = product.kind && kindWords.some((w) => !skipP.some((x) => x === w || w.startsWith(x) || x.startsWith(w))) ? (/^(?:a|an|the)\s/i.test(product.kind) ? `${P} is ${product.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(product.kind) ? `${P} is ${/^[aeiou]/i.test(product.kind) ? 'an' : 'a'} ${product.kind}.` : `${P} is described as ${product.kind}.`) : '';
     const intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
     return `# Demo Script: ${typeLabel}
+
+## Acceptance conditions to agree before the script
+${acceptanceFeatures.length ? `| Must show | Expected observation to confirm | Buyer approver | Pass condition |\n| --- | --- | --- | --- |\n${acceptanceRows}` : 'No must show features supplied. Name the buyer task and agree the observation, approver and pass condition before using this script.'}
+No acceptance criterion is treated as agreed from a feature name alone. Keep the buyer's wording and evidence beside each condition.
+
 
 ${intro1}
 

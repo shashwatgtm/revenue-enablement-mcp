@@ -30,20 +30,20 @@ test("every tool declares an optional your_sector with the ten choices", async (
 
 test("your_sector decides the sector over contrary text", async () => {
   const a = await call("discovery_question_bank", { ...BASE, your_sector: "cybersecurity" });
-  assert.match(sectorLine(a), /set by your_sector as cybersecurity/);
+  assert.match(sectorLine(a), /from your choice: cybersecurity/);
   const b = await call("discovery_question_bank", { ...BASE, your_sector: "fintech" });
-  assert.match(sectorLine(b), /set by your_sector as fintech/);
+  assert.match(sectorLine(b), /from your choice: fintech/);
   const c = await call("discovery_question_bank", { ...BASE, your_sector: "other" });
   assert.match(sectorLine(c), /neutral/);
   assert.doesNotMatch(c, /### Sector notes/);
   // a tool that reads the sector in its own module
   const d = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost", your_solution: SERVICES, deal_details: "lost to a larger vendor", your_sector: "telecom" });
-  assert.match(sectorLine(d), /set by your_sector as telecom/);
+  assert.match(sectorLine(d), /from your choice: telecom/);
 });
 
 test("an unknown your_sector is refused with the list of choices and is not repeated", async () => {
   const t = await call("discovery_question_bank", { ...BASE, your_sector: "<img src=x onerror=1> bogus" });
-  assert.match(t, /your_sector must be one of: logistics_tech/);
+  assert.match(t, /your selected sector must be one of: logistics_tech/);
   assert.doesNotMatch(t, /bogus|<img/);
 });
 

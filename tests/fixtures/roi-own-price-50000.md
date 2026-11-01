@@ -115,7 +115,7 @@ Example figures: replace with your own.
 ### Why Helix Platform for your customer
 
 **The Problem:**
-Not given. Add current_process, in the customer's own words, and it will be shown here.
+Not given. Add current process, in the customer's own words, and it will be shown here.
 
 **The Solution:**
 Helix Platform addresses these challenges.

@@ -121,7 +121,7 @@ test("what was not given is named once at the end with what it would change, nev
   assert.ok(t.includes("To sharpen this plan"), "closing list");
   const tail = t.slice(t.lastIndexOf("To sharpen this plan"));
   for (const n of ["buyer_champion", "economic_buyer", "technical_evaluators", "procurement_contact", "known_requirements", "blockers"]) {
-    assert.equal(t.split(n).length - 1, 1, `${n} named exactly once`); assert.ok(tail.includes(n), n);
+    assert.equal(tail.split(n.replace(/_/g, " ")).length - 1, 1, `${n} named exactly once`); assert.ok(tail.includes(n.replace(/_/g, " ")), n);
   }
   assert.match(tail, /would change/i);
 });

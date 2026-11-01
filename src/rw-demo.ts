@@ -431,7 +431,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   };
   const confirm = [
     keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so before I show anything: what is the one thing you most want solved?"`,
-    untied.length ? `Ask: "Which part of ${P} would you most want to see for ${joinList(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your_solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
+    untied.length ? `Ask: "Which part of ${P} would you most want to see for ${joinList(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
     ...people.map((_p, qi) => (qi === riskQi && riskClaims.length ? `Say: "For ${personRef(qi)}, here is the evidence the page claims: ${say(claimSay(riskClaims))} Which of these match what you ask for, and what else would you need?" *(${claimLabels(riskClaims)}; have the source ready)*\n\n${askFor(qi)}` : askFor(qi))),
     lens ? `Ask: "${lens.checks[0]}"` : '',
     `Ask: "${typeQuestion[demoType] || typeQuestion.first_look}"`,
@@ -499,8 +499,8 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     if (second !== undefined && !seenPain.has(second) && !s.fromPain) { seenPain.add(second); lines.push(`Say: "It also bears on ${say(pRef(second))}."`); }
     if (s.claims.length) lines.push(`Say: "For the record: ${say(claimSay(s.claims))}" *(${claimLabels(s.claims)}; have the source ready)*`);
     // what a step lacks is said to the seller, never to the room
-    if (s.fromPain && shown.some((x) => !x.fromPain)) lines.push(`*(Note for you, not for the room: no part of your_solution is tied to ${main >= 0 ? say(pRef(main)) : 'this problem'}, so the step walks the problem itself; decide before the call which part you will show.)*`);
-    else if (s.cap && !s.cap.desc && !s.flow) lines.push(`*(Note for you, not for the room: your_solution gives only the name ${s.cap.name}, so the lines here do not say what it does.)*`);
+    if (s.fromPain && shown.some((x) => !x.fromPain)) lines.push(`*(Note for you, not for the room: no part of your solution is tied to ${main >= 0 ? say(pRef(main)) : 'this problem'}, so the step walks the problem itself; decide before the call which part you will show.)*`);
+    else if (s.cap && !s.cap.desc && !s.flow) lines.push(`*(Note for you, not for the room: your solution gives only the name ${s.cap.name}, so the lines here do not say what it does.)*`);
     lines.push(`Ask: "${say(main >= 0 ? sh.ask : partAsk(s, i))}"`);
     for (const o of s.objections) lines.push(objectionBlock(o));
     return lines.join('\n');
@@ -538,18 +538,18 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const checks = objections.map((o) => [o, answers.get(o)!] as const).map(([o, a]) => `- "${o.replace(/[?.]+$/, '')}": ${a.check}.`);
   const noDesc = shown.filter((s) => s.cap && !s.cap.desc && !s.flow).map((s) => s.cap!.name);
   const sharpen: string[] = [];
-  if (!primaryAudience) sharpen.push('primary_audience (it would change who the opening speaks to and the first question)');
+  if (!primaryAudience) sharpen.push('primary audience (it would change who the opening speaks to and the first question)');
   if (!attendees) sharpen.push('attendees (it would add a row and a question for each person, and choose the parts they should see)');
-  if (!customerIndustry) sharpen.push('customer_industry (it would change the questions that speak to the buyer\'s own industry)');
-  if (!keyPainPoints) sharpen.push('key_pain_points (it would choose which parts are shown and what the playback says; now the steps follow the order of your description)');
-  if (!competitorContext) sharpen.push('competitor_context (it would add a side by side line and sharpen the difference answers)');
-  if (!durationGiven) sharpen.push('demo_duration (30 minutes used; it would change the number of steps)');
-  if (!mustShowFeatures) sharpen.push(`must_show_features (it would fix the flows that are always shown; now the steps come from ${product.caps.length ? 'the parts named in your_solution' : pains.length ? 'your pain points' : 'the usual demo list of this kind of seller'})`);
-  if (!knownObjections) sharpen.push(fromSector ? 'known_objections (it would replace the usual objections of the sector with the ones you expect)' : 'known_objections (it would add a spoken answer to each; none is answered now)');
-  if (!outcomeText) sharpen.push('desired_outcome (it would change the close; now it agrees the next step)');
-  if (product.caps.length < 2) sharpen.push('your_solution (list the parts of the product with a few words on what each does; it would make the steps the product\'s own parts)');
-  else if (noDesc.length) sharpen.push(`a few words on what ${joinList(noDesc.slice(0, 4))} ${noDesc.length === 1 ? 'does' : 'do'} in your_solution (the step uses only the name, so the spoken line cannot say what ${noDesc.length === 1 ? 'it does' : 'each does'})`);
-  if (notShownFlows.length) sharpen.push(`more minutes in demo_duration (${joinList(notShownFlows)} did not fit in the ${demo} ${demo === 1 ? "minute" : "minutes"} of demo)`);
+  if (!customerIndustry) sharpen.push('customer industry (it would change the questions that speak to the buyer\'s own industry)');
+  if (!keyPainPoints) sharpen.push('key pain points (it would choose which parts are shown and what the playback says; now the steps follow the order of your description)');
+  if (!competitorContext) sharpen.push('competitor context (it would add a side by side line and sharpen the difference answers)');
+  if (!durationGiven) sharpen.push('demo duration (30 minutes used; it would change the number of steps)');
+  if (!mustShowFeatures) sharpen.push(`must show features (it would fix the flows that are always shown; now the steps come from ${product.caps.length ? 'the parts named in your solution' : pains.length ? 'your pain points' : 'the usual demo list of this kind of seller'})`);
+  if (!knownObjections) sharpen.push(fromSector ? 'known objections (it would replace the usual objections of the sector with the ones you expect)' : 'known objections (it would add a spoken answer to each; none is answered now)');
+  if (!outcomeText) sharpen.push('desired outcome (it would change the close; now it agrees the next step)');
+  if (product.caps.length < 2) sharpen.push('your solution (list the parts of the product with a few words on what each does; it would make the steps the product\'s own parts)');
+  else if (noDesc.length) sharpen.push(`a few words on what ${joinList(noDesc.slice(0, 4))} ${noDesc.length === 1 ? 'does' : 'do'} in your solution (the step uses only the name, so the spoken line cannot say what ${noDesc.length === 1 ? 'it does' : 'each does'})`);
+  if (notShownFlows.length) sharpen.push(`more minutes in demo duration (${joinList(notShownFlows)} did not fit in the ${demo} ${demo === 1 ? "minute" : "minutes"} of demo)`);
   const notesLine = sourceNotes.length ? `Notes in your inputs, kept out of the spoken lines: ${sourceNotes.map((n) => `(${n})`).join('; ')}.` : '';
   const inAnswerLine = shownInAnswer.length ? `Shown only when asked: ${shownInAnswer.map((n) => `${n} (in the answer to "${answerOf(n)!.replace(/[?.]+$/, '')}")`).join('; ')}.` : '';
   const notShownLine = notShownAll.length ? `Not shown: ${notShownAll.join('; ')}.${notShownFlows.length ? ` Not used in the draft: ${notShownFlows.join('; ')} because the demo has room for ${shown.length} step${shown.length === 1 ? '' : 's'}; add minutes or move them to a follow-up session.` : ''}` : '';

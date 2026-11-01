@@ -31,7 +31,7 @@ for (const type of TYPES) {
     for (const [i, e] of emails(t).entries()) assert.ok((e.split("**Body:**")[1] || "").length > 130, `email ${i + 1} is thin`);
     assert.match(t, /education/i);
     assert.match(t, /single view of students across marketing, admissions and support/);
-    assert.match(t.split("## Before you send")[1] || "", /social_proof/, "Before you send says what to add");
+    assert.match(t.split("## Before you send")[1] || "", /social proof/, "Before you send says what to add");
     assert.doesNotMatch(t.split("## Before you send")[0], /renewal rate|time to value|activation|expansion|drop off|onboarding|churn/i, "software measures for an education buyer");
     // parts that are not in the pain are not made the topic of the emails
     assert.doesNotMatch(t.split("## Before you send")[0].replace(/^## Solution:.*$/m, ""), /mobile app|Helpline|field visits/i, "drift to parts that are not in the pain");

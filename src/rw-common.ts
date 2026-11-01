@@ -26,7 +26,7 @@ const FIXED_LINK = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site surve
 const SOFTWARE_CUES2 = /\b(?:software|saas|platforms?|apps?|apis?|tools?|dashboards?|subscriptions?|cloud|portal|systems?|crm|erp|engine|sdk)\b/i;
 const SERVICE_WORDS2 = /\b(?:outsourc\w*|bpo\b|managed (?:services?|operations|network|it)|consult\w*|staffing|fte\b|retainer|time and materials|statement of work|(?:contact|call) cent(?:re|er)s?|service desk|professional services|dedicated teams?|engineering services|business services)\b/i;
 const MODEL_LINE2 = /Business model: [^]*?\.\*$/;
-const NEUTRAL_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
+const NEUTRAL_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your solution to change them.*';
 /** The shared reader leaves a kind of telecom company unnamed when the seller's words name two of its sub-types ("voice and SMS APIs ... SIP trunking" names messaging and business voice). The kind the seller names
  *  first is the one it sells first (the same rule the reader applies between verticals), so the sub-type whose words open the seller's text is used here; no tie is broken when both open it together. */
 function firstSubtype(v: Vertical | null, sellerText: string): Vertical | null {
@@ -43,7 +43,7 @@ export function readSector(explicitModel: unknown, input: { seller: unknown[]; c
   const m = modelUnderSetSector(m0, v, input);   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
   const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
   const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-  const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from business_model' : m.how === 'sector' ? 'the usual model in this sector, assumed; set business_model to change it' : 'read from your inputs; set business_model to change it'})` : 'not clear from your inputs; set business_model (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
+  const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; set how you charge (saas, services, connectivity, transactions, marketplace, hardware_software or investment) for advice that fits it';
   const sellerText = (input.seller || []).filter((x): x is string => typeof x === 'string').join(' . ');
   const allText = [sellerText, ...((input.context || []) as unknown[]).filter((x): x is string => typeof x === 'string')].join(' . ');
   let line = `*Sector: ${sector}. Business model: ${model}.*`;

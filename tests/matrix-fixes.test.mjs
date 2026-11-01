@@ -18,7 +18,7 @@ const call = async (name, args) => {
 test("pricing_negotiation_guide: a discount over 100% is refused in plain words", async () => {
   const r = await call("pricing_negotiation_guide", { scenario: "discount_request", deal_value: 1000, discount_requested: 150 });
   assert.equal(r.isError, true);
-  assert.match(r.text, /discount_requested must be 100 or less/);
+  assert.match(r.text, /discount requested must be 100 or less/);
   const ok = await call("pricing_negotiation_guide", { scenario: "discount_request", deal_value: 1000, discount_requested: 100 });
   assert.equal(ok.isError, false);
 });
@@ -26,7 +26,7 @@ test("pricing_negotiation_guide: a discount over 100% is refused in plain words"
 test("mutual_action_plan_generator: a target close date in the past is refused in plain words", async () => {
   const r = await call("mutual_action_plan_generator", { deal_name: "Clinic Group A", target_close_date: "2020-01-01" });
   assert.equal(r.isError, true);
-  assert.match(r.text, /target_close_date 2020-01-01 is in the past/);
+  assert.match(r.text, /target close date 2020-01-01 is in the past/);
 });
 
 test("email_sequence_generator: num_emails 0 is shown as given, not replaced by 5", async () => {
@@ -63,7 +63,7 @@ test("win_loss_analyzer: a deal value of 0 is shown as given, 1 day is singular,
 test("win_loss_analyzer: a loss with no stated reason says what the reason would add, and prints no empty section", async () => {
   const r = await call("win_loss_analyzer", { analysis_type: "single_deal", deal_outcome: "lost" });
   // run 22 (rev-w3): what is not given is named once, at the end, under "To sharpen this, give:", with what each input would change
-  assert.match(r.text, /To sharpen this, give:[\s\S]*`loss_reason`[^\n]*would change/);
+  assert.match(r.text, /To sharpen this, give:[\s\S]*`loss reason`[^\n]*would change/);
   assert.equal((r.text.match(/To sharpen this, give:/g) || []).length, 1);
   assert.doesNotMatch(r.text, /##[^\n]*\n\n(?:##|$)/);
 });

@@ -133,14 +133,14 @@ test("the memo is addressed to the person to convince; a champion and a target o
   const same = await call({ ...LEDGERWING, champion_name: undefined, champion_role: "technology leaders", target_stakeholder: "technology leaders" });
   assert.doesNotMatch(same, /^From: technology leaders$/m);
   assert.equal((same.match(/To sharpen this, give:/g) || []).length, 1);
-  assert.match(same.slice(same.indexOf("To sharpen this, give:")), /target_stakeholder[^;]*\(it would/);
+  assert.match(same.slice(same.indexOf("To sharpen this, give:")), /target stakeholder[^;]*\(it would/);
 });
 
 test("when no objection was given, the sector's usual ones are answered as questions to expect, not as questions the reader raised", async () => {
   const t = await call({ asset_type: "internal_business_case", your_solution: BRANCHWIRE.your_solution, champion_role: "Head of IT Operations", target_stakeholder: "Chief Risk Officer", key_value_points: BRANCHWIRE.key_value_points });
   assert.doesNotMatch(t, /You raised|you raised/);
   assert.match(t, /## Questions I expect/);
-  assert.match(t.slice(t.indexOf("To sharpen this, give:")), /known_objections \(it would/);
+  assert.match(t.slice(t.indexOf("To sharpen this, give:")), /known objections \(it would/);
 });
 
 test("more than one risk is listed, from the objections and the sector", () => {
@@ -176,7 +176,7 @@ test("what was not given is named once at the end with what it would change", as
   const t = await call({ asset_type: "executive_brief", your_solution: "Ledgerwing, a bank data API for lenders: Verify (check a borrower's bank account and routing number) and Watch (sanctions and watchlist screening)" });
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
   const tail = t.slice(t.indexOf("To sharpen this, give:"));
-  for (const k of ["champion_role", "target_stakeholder", "key_value_points", "known_objections", "budget_context", "urgency_drivers"]) assert.match(tail, new RegExp(`${k}[^;]*\\(it would`), k);
+  for (const k of ["champion_role", "target_stakeholder", "key_value_points", "known_objections", "budget_context", "urgency_drivers"]) assert.match(tail, new RegExp(`${k.replace(/_/g, " ")}[^;]*\\(it would`), k);
   assert.doesNotMatch(t, PLACEHOLDER);
   assert.doesNotMatch(out.Ledgerwing, /To sharpen this, give: [^\n]*(?:champion_role|key_value_points|known_objections|budget_context)/);
 });

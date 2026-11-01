@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildWinLoss = buildWinLoss;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (writer rev-w3): win_loss_analyzer, rewritten. The product the user named is kept in the title, the write-up and the inputs table;
 // each alternative the buyer weighed is named once by a short handle (a long phrase is never said again); the stated reason is read against
 // the alternatives, the people and the figures the user gave; every part of the deal that the user listed is asked about; what is missing
@@ -72,6 +73,15 @@ function buildWinLoss(args, D) {
     const analysisType = args.analysis_type || 'single_deal';
     const outcome = args.deal_outcome || '';
     const details = (args.deal_details || '').trim();
+    const lossRead = (0, text_signals_ts_1.outcomeReading)(details);
+    if (outcome === 'won' && lossRead.state === 'affirmed')
+        return `# Win/loss analysis
+
+**Outcome conflict:** the selected outcome is won, but the notes describe a loss. No win conclusion or win rate is issued until these agree.
+
+**Sentence read:** ${lossRead.evidence.join('; ')}
+
+Confirm the buyer's actual decision and correct the selected outcome or notes before analyzing why it happened.`;
     const reason = (args.loss_reason || '').trim();
     const wonBy = (args.competitor_won || '').trim();
     const dealValue = args.deal_value || 0;
@@ -184,7 +194,7 @@ function buildWinLoss(args, D) {
         else if (outcome === 'no_decision')
             para.push(`**This deal ended with no decision.** ${sizeSentence}`.trim());
         else if (outcome === 'mixed')
-            para.push(`**You marked this outcome as mixed.** Split the deals into won, lost and no_decision and run the tool for each, or use \`deal_portfolio\` with a summary in \`multiple_deals\`. ${sizeSentence}`.trim());
+            para.push(`**You marked this outcome as mixed.** Split the deals into won, lost and no_decision and run the tool for each, or use \`deal_portfolio\` with a summary in \`multiple deals\`. ${sizeSentence}`.trim());
         else
             para.push(`**The deal.** ${solution ? `${name} was in this deal.` : 'No facts about the deal itself were given.'} ${sizeSentence}`.trim());
         // what was sold, and to whom
@@ -249,7 +259,7 @@ function buildWinLoss(args, D) {
             para.push(`**What the buyer weighed.** ${lead}\n\n${each.join('\n')}`);
         }
         else {
-            para.push(`**What the buyer weighed.** No alternative was named in your inputs, so there is no comparison to read yet. The first question below asks the buyer what else they were weighing${seg ? ` as a ${seg.replace(/^an? /i, '')} buyer` : ''}; write the answer into \`deal_details\` and the comparison will follow.`);
+            para.push(`**What the buyer weighed.** No alternative was named in your inputs, so there is no comparison to read yet. The first question below asks the buyer what else they were weighing${seg ? ` as a ${seg.replace(/^an? /i, '')} buyer` : ''}; write the answer into \`deal details\` and the comparison will follow.`);
         }
         // the reason
         if (outcome === 'lost' && reason) {
@@ -393,27 +403,27 @@ function buildWinLoss(args, D) {
     // ---- what was not given, once, at the end ----
     const sharpen = [];
     if (!solution)
-        sharpen.push('`your_solution`: it would change "the product" in this write-up to the name you sell and let the questions follow its parts.');
+        sharpen.push('`your solution`: it would change "the product" in this write-up to the name you sell and let the questions follow its parts.');
     if (!outcome && !isPortfolio)
-        sharpen.push(`\`deal_outcome\` (won, lost or no_decision): it would change this from a description of the deal into a write-up of who the deal was won against or lost to.`);
+        sharpen.push(`\`deal outcome\` (won, lost or no_decision): it would change this from a description of the deal into a write-up of who the deal was won against or lost to.`);
     if (!reason && outcome !== 'won' && !isPortfolio)
-        sharpen.push(`\`loss_reason\` (the buyer's own words and who said it): it would change this from a list of questions into a reading of why ${name} ${outcome === 'no_decision' ? 'did not get a decision' : 'lost'}, set against the alternatives and the people above.`);
+        sharpen.push(`\`loss reason\` (the buyer's own words and who said it): it would change this from a list of questions into a reading of why ${name} ${outcome === 'no_decision' ? 'did not get a decision' : 'lost'}, set against the alternatives and the people above.`);
     if (outcome === 'won' && !reason && !/\b(?:chose|because)\b/i.test(details) && !isPortfolio)
-        sharpen.push(`the buyer's reason for choosing ${name}, in \`deal_details\`: it would change the win from an outcome into a reason you can repeat.`);
+        sharpen.push(`the buyer's reason for choosing ${name}, in \`deal details\`: it would change the win from an outcome into a reason you can repeat.`);
     if (!wonBy && outcome !== 'won' && !isPortfolio)
-        sharpen.push(`\`competitor_won\`: it would change the comparison from the alternatives you described to the one that decided the deal${weighed.length ? ` (you described ${(0, rw_common_ts_1.andList)(handles.map(q))})` : ''}; write "no decision" if the buyer chose none.`);
+        sharpen.push(`\`competitor won\`: it would change the comparison from the alternatives you described to the one that decided the deal${weighed.length ? ` (you described ${(0, rw_common_ts_1.andList)(handles.map(q))})` : ''}; write "no decision" if the buyer chose none.`);
     if (!hasV)
-        sharpen.push('`deal_value`: it would add the price question and the size of the commitment to the review.');
+        sharpen.push('`deal value`: it would add the price question and the size of the commitment to the review.');
     if (!hasD)
-        sharpen.push('`sales_cycle_days`: it would add the question of which stage took longest.');
+        sharpen.push('`sales cycle days`: it would add the question of which stage took longest.');
     if (!contacts.length)
-        sharpen.push('`stakeholders_involved`: it would change the people section from a list of sector roles to the real buying group, with a question for each person.');
+        sharpen.push('`stakeholders involved`: it would change the people section from a list of sector roles to the real buying group, with a question for each person.');
     else if (!contacts.some((c) => c.tag))
         sharpen.push(`a position in brackets after each stakeholder, for example ${q(`${contacts[0].title} (supporter)`)} or "(against)": it would let the review ask who backed ${name} and who did not.`);
     if (!details && !isPortfolio)
-        sharpen.push('`deal_details`: it would add the buyer, the alternatives and the notes to the write-up.');
+        sharpen.push('`deal details`: it would add the buyer, the alternatives and the notes to the write-up.');
     if (isPortfolio && !multiple)
-        sharpen.push('`multiple_deals`: one deal per line, for example "deal name, lost, value, days, reason, who won": it would turn this into counts and patterns across the deals.');
+        sharpen.push('`multiple deals`: one deal per line, for example "deal name, lost, value, days, reason, who won": it would turn this into counts and patterns across the deals.');
     const sharpenBlock = sharpen.length ? `## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}\n\n` : '';
     // ---- the inputs as given ----
     const rows = [];

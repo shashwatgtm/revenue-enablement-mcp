@@ -140,7 +140,7 @@ test("what is not given is named once, at the end, with what each would change; 
   assert.ok(t.indexOf("To sharpen this, give:") > t.lastIndexOf("### Email 5"), "the line is after the last email");
   assert.doesNotMatch(t, /Not given:/);
   const tail = t.slice(t.indexOf("To sharpen this, give:"));
-  for (const k of ["specific_pain_point", "social_proof", "call_to_action", "sender_context", "target_industry", "key_value_prop"]) assert.match(tail, new RegExp(k));
+  for (const k of ["specific_pain_point", "social_proof", "call_to_action", "sender_context", "target_industry", "key_value_prop"]) assert.match(tail, new RegExp(k.replace(/_/g, " ")));
   assert.match(tail, /would change|would let|would give|it would/i);
   assert.doesNotMatch(draftPart(t), PLACEHOLDER);
   assert.equal(emails(t).length, 5);

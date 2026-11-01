@@ -730,23 +730,23 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         checks.push(`Nothing you gave speaks to: ${unspoken.map((x) => `“${(0, dealtext_ts_1.clip)(x, 90)}”`).join('; ')}. Add a part of the product, a result or a customer line that answers ${unspoken.length === 1 ? 'it' : 'them'}; until then the emails can only name ${unspoken.length === 1 ? 'it' : 'them'}.`);
     const sharpen = [];
     if (!persona)
-        sharpen.push('`target_persona` (a role): it would change the questions and the worries in the emails from general ones to those of that role, and the subject lines to suit it.');
+        sharpen.push('`target persona` (a role): it would change the questions and the worries in the emails from general ones to those of that role, and the subject lines to suit it.');
     if (!industry)
-        sharpen.push('`target_industry`: it would change the emails from the persona alone to the sector\'s own roles and measures.');
+        sharpen.push('`target industry`: it would change the emails from the persona alone to the sector\'s own roles and measures.');
     if (!painText)
-        sharpen.push('`specific_pain_point`: it would change email 1 from a question about the topic to the problem in your words, and give email 3 a second angle.');
+        sharpen.push('`specific pain point`: it would change email 1 from a question about the topic to the problem in your words, and give email 3 a second angle.');
     if (!valueText)
-        sharpen.push('`key_value_prop`: it would change the emails from saying what the product is to saying what you aim for.');
+        sharpen.push('`key value prop`: it would change the emails from saying what the product is to saying what you aim for.');
     if (!proofText)
-        sharpen.push('`social_proof` (a result, a customer quote or an award you may name): it would change emails 2, 3 and 5 from questions to quoted evidence; without it no email quotes a result or a customer.');
+        sharpen.push('`social proof` (a result, a customer quote or an award you may name): it would change emails 2, 3 and 5 from questions to quoted evidence; without it no email quotes a result or a customer.');
     if (!ctaIn)
-        sharpen.push('`call_to_action`: it would change the ask from a short call to your own wording.');
+        sharpen.push('`call to action`: it would change the ask from a short call to your own wording.');
     if (!senderIn)
-        sharpen.push(`\`sender_context\` (your name and role): it would change the signature from "The ${name} team" to you.`);
+        sharpen.push(`\`sender context\` (your name and role): it would change the signature from "The ${name} team" to you.`);
     const sharpenBlock = sharpen.length ? `\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}` : '';
     const fixed = exports.EMAIL_COUNTS[sequenceType] || emails.length;
     const emailsText = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? args.num_emails.toLocaleString('en-US') : `${fixed}`;
-    const fixedNote = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? `\n*This sequence type has ${fixed} emails and num_emails is not used yet: add or remove emails to match the number you need.*` : '';
+    const fixedNote = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? `\n*This sequence type has ${fixed} emails and num emails is not used yet: add or remove emails to match the number you need.*` : '';
     const notes = ctx.v ? `\n\n---\n\n${sellerSw ? `### Sector notes: ${ctx.v.name}\n- The notes for this sector describe a software company's own customers, so they are left out for a buyer${indLow ? ` in ${indLow}` : ' in another industry'}.` : sectorBlock(ctx.v)}` : '';
     const solutionLine = solution.length <= 160 ? solution : P.label || (0, dealtext_ts_1.clip)(solution, 120);
     return `# ${TITLES[sequenceType] || sequenceType} Sequence

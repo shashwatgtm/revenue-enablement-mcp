@@ -54,7 +54,7 @@ test("the product the user named is in the title, the write-up and the inputs, a
 test("without a product the answer says so once and still reads", async () => {
   const t = await call({ analysis_type: "single_deal", deal_outcome: "no_decision", deal_details: "The buyer paused the project after a reorganisation", sales_cycle_days: 200 });
   assert.match(t, /To sharpen this, give:/);
-  assert.match(t, /your_solution/);
+  assert.match(t, /your solution/);
   assert.doesNotMatch(draftPart(t), PLACEHOLDER);
 });
 
@@ -105,7 +105,7 @@ test("a missing outcome and reason are named once, at the end, with what each wo
   const t = await call(HARBOR);
   assert.equal(count(t, "To sharpen this, give:"), 1);
   const tail = t.slice(t.indexOf("To sharpen this, give:"));
-  assert.match(tail, /deal_outcome/); assert.match(tail, /loss_reason/);
+  assert.match(tail, /deal outcome/); assert.match(tail, /loss reason/);
   assert.match(tail, /would change|would turn|would name|would let|it would/i);
   assert.doesNotMatch(t.split("To sharpen this, give:")[0].split("\n").slice(0, 6).join("\n"), /Not given/);
   assert.doesNotMatch(draftPart(t), PLACEHOLDER);

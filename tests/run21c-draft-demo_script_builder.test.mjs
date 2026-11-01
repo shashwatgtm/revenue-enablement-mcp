@@ -155,10 +155,10 @@ test("a missing input is named once and the draft still reads whole", async () =
   const t = await call({ demo_type: "executive_overview", your_solution: "Quarrywise, a construction management platform for general contractors: bid management, change orders, daily logs and subcontractor payments" });
   // run 22: what was not given is named once, at the end, as "To sharpen this, give: ..." with what each would change
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1);
-  assert.match(t, /To sharpen this, give:[^\n]*primary_audience/);
-  assert.match(t, /To sharpen this, give:[^\n]*key_pain_points/);
-  assert.match(t, /To sharpen this, give:[^\n]*must_show_features/);
-  assert.match(t, /To sharpen this, give:[^\n]*desired_outcome/);
+  assert.match(t, /To sharpen this, give:[^\n]*primary audience/);
+  assert.match(t, /To sharpen this, give:[^\n]*key pain points/);
+  assert.match(t, /To sharpen this, give:[^\n]*must show features/);
+  assert.match(t, /To sharpen this, give:[^\n]*desired outcome/);
   assert.doesNotMatch(t, PLACEHOLDER);
   assert.doesNotMatch(t, /[–—]/);
   assert.match(t, /^On screen: /m);

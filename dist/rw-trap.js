@@ -599,7 +599,7 @@ Ask these as open questions, so the buyer finds the gaps of ${compLabel} in thei
 ${aims.length ? aims.map((a, i) => `- "${aimAsk(a, i)}"${aimSource && i === 0 ? ` (your source for the priorities: ${aimSource})` : ''}`).join('\n') : buyerPriorities ? '- The priorities you gave are figures only, so there is no aim to ask about yet. Ask the buyer what they want to achieve, then use the figures below with their source.' : '- No priorities were given, so there is no question here yet.'}
 ${figureItems.length ? `\nFigures you gave, with their source: ${figureItems.map((f) => q(f)).join('; ')}. Ask for the buyer's own number first, and quote these only with that source.\n` : ''}${sectorQ || personaQ ? `\n### From the evaluator's role and the sector\n${[personaQ, sectorQ].filter(Boolean).join('\n')}\n` : ''}
 ### Capability Landmines
-${read.length ? weakBlocksOf().join('\n\n') : `No weak points were given (competitor_weaknesses), so there is no landmine yet. Add what you know about ${compLabel} and each note becomes a question here.`}
+${read.length ? weakBlocksOf().join('\n\n') : `No weak points were given (competitor weaknesses), so there is no landmine yet. Add what you know about ${compLabel} and each note becomes a question here.`}
 
 ### ${implLabel}
 ${implementationQs.map((x) => `- ${x}`).join('\n')}
@@ -609,7 +609,7 @@ ${isVendor && supportMention ? `\n### Support Landmines\n- "What does the suppor
 
 ### Criteria to Establish Early
 
-${strengths.length ? `Agree these as criteria before anyone is shortlisted. For each one, the question to put to every option is the same: can it show this on one of your own cases?\n\n${strengths.map((s, i) => { const a = aimFor(s); return `- Criterion ${i + 1}: ${/^with\b/i.test(s) ? `Works ${lowerKeep(s)}` : (0, dealtext_ts_1.upperFirst)(s)}${a && a.length <= 100 ? ` (${wantPhrase(a)})` : ''}`; }).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${name} can show live, and each one becomes a criterion here.`}
+${strengths.length ? `Agree these as criteria before anyone is shortlisted. For each one, the question to put to every option is the same: can it show this on one of your own cases?\n\n${strengths.map((s, i) => { const a = aimFor(s); return `- Criterion ${i + 1}: ${/^with\b/i.test(s) ? `Works ${lowerKeep(s)}` : (0, dealtext_ts_1.upperFirst)(s)}${a && a.length <= 100 ? ` (${wantPhrase(a)})` : ''}`; }).join('\n')}` : `No demonstrable strengths were given (your strengths). Add what ${name} can show live, and each one becomes a criterion here.`}
 ${credentials.length ? `\n### Credentials (mention them, do not make them criteria)\n\nThese cannot be demonstrated in an evaluation. Say them in a sentence when they answer a concern:\n${credentials.map((s) => `- ${(0, dealtext_ts_1.upperFirst)(s)}`).join('\n')}\n` : ''}${claimsHere.length ? `\n### Claims to source\n\nThe buyer will ask for the source of: ${(0, dealtext_ts_1.joinList)(claimsHere.map((c) => q((0, dealtext_ts_1.clip)(c, 90))))}. Have it ready, or soften the wording.\n` : ''}
 ### How to Suggest Criteria
 
@@ -622,12 +622,12 @@ ${isVendor ? `Suggest the buyer ask these questions when speaking with the refer
 ${read.length || aims.length ? [
             ...read.flatMap((r) => r.qs.map((x) => `- "${nonVendor(isVendor ? toPeers(x.q) : toPeers(x.q))}"`)),
             ...aims.slice(0, 2).map((a) => `- "${isVendor ? (startsWant(a) ? `Since you started with ${competitor}, has it helped you ${lowerKeep(a)}, and what did you measure?` : `Since you started with ${competitor}, how has it done on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`) : (startsWant(a) ? `${/[a-z]s$/i.test(compLabel) && !/(?:ss|us|is)$/i.test(compLabel) ? 'Have' : 'Has'} ${compLabel} helped you ${lowerKeep(a)}, and what did you measure?` : `How does ${here} do on this: ${lowerKeep(a).replace(/:\s+/g, ', ')}? What did you measure?`)}"`),
-        ].join('\n') : `- No weak points or priorities were given, so there is nothing specific to ask a reference yet. Add competitor_weaknesses or buyer_priorities.`}`,
+        ].join('\n') : `- No weak points or priorities were given, so there is nothing specific to ask a reference yet. Add competitor weaknesses or buyer priorities.`}`,
         technical_requirements: () => `## ${software ? 'Technical Requirements' : 'Requirements'} (Traps)
 
 ### RFP or Requirements Document
 
-${strengths.length ? `Each requirement is accepted only if it is shown live and ${personaName ? `the ${personaName} signs off` : 'the evaluation team signs off'} the result.\n\n${strengths.map((s, i) => (s.length > 80 ? `${i + 1}. Criterion ${i + 1}, shown live on your own case` : `${i + 1}. Shown live on your own case: ${lowerKeep(s)}`)).join('\n')}` : `No demonstrable strengths were given (your_strengths). Add what ${name} can show live and each one becomes a requirement here.`}
+${strengths.length ? `Each requirement is accepted only if it is shown live and ${personaName ? `the ${personaName} signs off` : 'the evaluation team signs off'} the result.\n\n${strengths.map((s, i) => (s.length > 80 ? `${i + 1}. Criterion ${i + 1}, shown live on your own case` : `${i + 1}. Shown live on your own case: ${lowerKeep(s)}`)).join('\n')}` : `No demonstrable strengths were given (your strengths). Add what ${name} can show live and each one becomes a requirement here.`}
 
 ### Evaluation Scenarios
 
@@ -645,7 +645,7 @@ Ask about the contract of ${competitor} (nothing here says ${competitor} has the
 `}
 ### Your Own Terms
 
-${(() => { const own = strengths.filter((s) => /\b(?:price|pricing|annual|monthly|fees?|free (?:trial|tier|plan|of charge|onboarding|set-?up|migration|support)|included|contract|terms?|licen[cs]e|seats?|service credits?|credits? (?:back|for)|refunds?|trial|pilot|commitment|per (?:seat|user|month|year|transaction))\b/i.test(s)); return own.length ? `Terms you gave among your strengths: ${own.map((s) => (s.length > 120 ? `criterion ${strengths.indexOf(s) + 1}` : q(s))).join('; ')}. Put them in the contract in the same words.` : 'No terms of your own were given among your strengths (your_strengths). Add the ones you can put in the contract and they appear here.'; })()}`,
+${(() => { const own = strengths.filter((s) => /\b(?:price|pricing|annual|monthly|fees?|free (?:trial|tier|plan|of charge|onboarding|set-?up|migration|support)|included|contract|terms?|licen[cs]e|seats?|service credits?|credits? (?:back|for)|refunds?|trial|pilot|commitment|per (?:seat|user|month|year|transaction))\b/i.test(s)); return own.length ? `Terms you gave among your strengths: ${own.map((s) => (s.length > 120 ? `criterion ${strengths.indexOf(s) + 1}` : q(s))).join('; ')}. Put them in the contract in the same words.` : 'No terms of your own were given among your strengths (your strengths). Add the ones you can put in the contract and they appear here.'; })()}`,
     };
     // ---- the set-up ----
     const kindLine = isVendor ? '' : kind === 'approach' ? ` That is the buyer's current approach (called the current approach below), a way of working and not a vendor, so there is no contract, reference list or support desk to ask about; the questions below are about how the buyer works today.` : kind === 'provider' ? ` That describes the providers the buyer uses today, not one named vendor and not a tool, so the questions ask about the buyer's own experience with them; there is no demo to book and no single contract or reference list to ask about.` : ` That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer's own experience with them; there is no single contract or reference list to ask about.`;
@@ -690,19 +690,19 @@ ${stageLine[stage] || stageLine.mid}
     // ---- what was not given, once, at the end ----
     const sharpen = [];
     if (!yourSolution)
-        sharpen.push('`your_solution`: it would change "the product" in this draft to the name you sell and let the criteria follow its parts.');
+        sharpen.push('`your solution`: it would change "the product" in this draft to the name you sell and let the criteria follow its parts.');
     if (!competitor)
         sharpen.push('`competitor`: it would change "the competitor" to a named vendor, a kind of tool or a way of working, and the wording of every section would follow.');
     if (!weaknesses.length)
-        sharpen.push(`\`competitor_weaknesses\`: it would change the landmine section from a prompt to one question per weak point of ${compLabel}.`);
+        sharpen.push(`\`competitor weaknesses\`: it would change the landmine section from a prompt to one question per weak point of ${compLabel}.`);
     if (!allStrengths.length)
-        sharpen.push('`your_strengths`: it would change the criteria, the requirements and the stage tactics from prompts to the things you can show live.');
+        sharpen.push('`your strengths`: it would change the criteria, the requirements and the stage tactics from prompts to the things you can show live.');
     if (!args.evaluation_stage)
-        sharpen.push('`evaluation_stage`: it would change the stage tactic from the mid stage that is assumed to the stage you are in.');
+        sharpen.push('`evaluation stage`: it would change the stage tactic from the mid stage that is assumed to the stage you are in.');
     if (!personaName)
-        sharpen.push('`buyer_persona`: it would change the questions to the worries of that role and name who signs off the requirements.');
+        sharpen.push('`buyer persona`: it would change the questions to the worries of that role and name who signs off the requirements.');
     if (!buyerPriorities)
-        sharpen.push('`buyer_priorities`: it would add questions on what the buyer told you matters, and tie each weak point to one of them.');
+        sharpen.push('`buyer priorities`: it would add questions on what the buyer told you matters, and tie each weak point to one of them.');
     if (sharpen.length)
         output += `\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}\n`;
     output += `\n${footer}\n`;

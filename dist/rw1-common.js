@@ -721,8 +721,8 @@ const SEAT_WORDS = /\bper[- ](?:seat|user|agent|member|employee|licen[cs]e|month
  *  in a software sector or a software seller in a services sector; the wording of the plan still follows it, and the line says so. The line also no longer tells the user to
  *  set business_model, which these three tools do not take. */
 const MODEL_LINE = /Business model: [^]*?\.\*$/;
-const ASSUMED_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
-const MIXED_LINE = 'Business model: your words point to both a subscription and usage pricing, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your_solution to change them.*';
+const ASSUMED_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); confirm how you charge.*';
+const MIXED_LINE = 'Business model: your words point to both a subscription and usage pricing, so the notes below follow the usual shape for this sector (assumed); confirm how you charge.*';
 function plainModelLine(line) {
     if (!MODEL_LINE.test(line))
         return line;
@@ -730,7 +730,7 @@ function plainModelLine(line) {
     if (/assumed/.test(m) && !/read from the product description|read from your wording/.test(m))
         return line.replace(MODEL_LINE, ASSUMED_LINE);
     if (/^Business model: not clear from your inputs/.test(m))
-        return line.replace(MODEL_LINE, 'Business model: not clear from your inputs; say how you are paid in your_solution for advice that fits it.*');
+        return line.replace(MODEL_LINE, 'Business model: not clear from your inputs; describe how you charge for advice that fits it.*');
     return line.replace(/; set business_model to change it\)/, ')');
 }
 /** The business model, read from the seller's own words as well as from the sector reader. `sellerText` is what the seller wrote about its own product (your_solution) and `others`
@@ -766,7 +766,7 @@ function readModel(ctxModel, ctxLine, sellerText, others, offers = []) {
     if (simSeller) {
         model = 'sim';
         changed = true;
-        line = line.replace(MODEL_LINE, 'Business model: connectivity sold through SIMs (read from the product description; not fixed sites or links; say how you are paid in your_solution to change it).*');
+        line = line.replace(MODEL_LINE, 'Business model: connectivity sold through SIMs (read from the product description; not fixed sites or links; confirm how you charge).*');
         return { model, unit, line, stated: false };
     }
     if (usageStrong && (seatWords || serviceWords) && !fixed) {

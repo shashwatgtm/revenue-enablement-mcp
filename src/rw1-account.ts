@@ -214,7 +214,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   const p2: string[] = [
     `Agree a proof${focus ? ` that centres on ${focus}` : ''}${v ? `, in the form buyers in ${v.name} trust: ${proofText}` : ', with one team and a measure fixed beforehand'}.`,
     ...(answers.length ? [`Send written answers to the ${answers.length === 1 ? 'objection' : `${answers.length} objections`} above${answers.length > 3 ? `, starting with ${answers.slice(0, 3).map((a) => quoted(a.text)).join(', ')}` : `: ${joinList(answers.map((a) => quoted(a.text)))}`}.`] : []),
-    `Build the business case in the account's own figures: the roi_business_case_builder tool needs their cost or value figures, so ask finance for them now.`,
+    `Build the business case in the account's own figures: the ROI Business Case Builder tool needs their cost or value figures, so ask finance for them now.`,
     buyer ? `Show ${buyer.title} the result they are measured on, using the baseline from the first 30 days.` : `Put the baseline and the proof result in front of whoever signs.`,
     ...(buyerCtx ? [`Start the ${buyerCtx.name} reviews described above early, beside the proof and not after it.`] : v ? [`Bring in the people who check the cost case and the fit with their systems: ${v.committee.split(';').slice(-2).map((x) => x.trim().replace(/[.]+$/, '')).join('; ')}.`] : []),
     ...(uncovered.length ? [`Bring ${joinList(uncovered.slice(0, 2))} into the conversation before the decision meeting.`] : []),
@@ -260,14 +260,14 @@ By day 90 you should have a decision on ${existing ? 'the expansion' : 'the firs
 
   // ---- what was not given ----
   const miss: string[] = [];
-  if (!arrGiven) miss.push('`current_arr` (it would change the tier and the expansion potential, which now follow the rule for a prospect)');
+  if (!arrGiven) miss.push('`current arr` (it would change the tier and the expansion potential, which now follow the rule for a prospect)');
   if (!industryIn) miss.push('`industry` (it would change the review steps and risks written for the buyer)');
-  if (!contactsText) miss.push('`known_contacts` (it would give one row for each person, with their part and a next step, in place of the generic roles above)');
-  if (!productsIn) miss.push('`current_products` (it would show which parts of the product are already in use, and so which are whitespace)');
-  if (!expansionIn) miss.push('`expansion_opportunities` (it would name the areas to grow into and their sponsors, and fill days 61 to 90)');
-  if (!threatsIn) miss.push('`competitive_threats` (it would give a question and a proof for each alternative the account uses)');
-  if (!solutionIn) miss.push('`your_solution` (it would let the plan name your product and its parts, and use them for whitespace)');
-  if (!objections.length) miss.push('`account_notes` that start with "Objections:" and list them with semicolons (it would add an answer for each)');
+  if (!contactsText) miss.push('`known contacts` (it would give one row for each person, with their part and a next step, in place of the generic roles above)');
+  if (!productsIn) miss.push('`current products` (it would show which parts of the product are already in use, and so which are whitespace)');
+  if (!expansionIn) miss.push('`expansion opportunities` (it would name the areas to grow into and their sponsors, and fill days 61 to 90)');
+  if (!threatsIn) miss.push('`competitive threats` (it would give a question and a proof for each alternative the account uses)');
+  if (!solutionIn) miss.push('`your solution` (it would let the plan name your product and its parts, and use them for whitespace)');
+  if (!objections.length) miss.push('`account notes` that start with "Objections:" and list them with semicolons (it would add an answer for each)');
   out.push(miss.length ? `**To sharpen this plan, give:**\n\n${miss.map((x) => `- ${x}`).join('\n')}\n\nThe plan is dated from today (${isoDate(today)}); review it monthly.` : `Everything this plan can use was given. What it cannot know is the renewal date and the account's priorities for the year; add them to your notes and move the dates above to match. The plan is dated from today (${isoDate(today)}); review it monthly.`);
   return out.join('\n\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }

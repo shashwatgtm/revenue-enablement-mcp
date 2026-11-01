@@ -93,6 +93,6 @@ test("missing inputs are said once, in one line, and the list still reads well",
   const t = await call({ framework: "bant", prospect_role: "VP Sales" });
   assert.equal((t.match(/To sharpen this, give:/g) || []).length, 1); // run 22: one closing line, replacing the old "Not given:" line
   assert.doesNotMatch(t, /Not given:/);
-  assert.doesNotMatch(t, /\[[^\]\n]*\]|\{[^}\n]*\}|your product|your solution/i);
+  assert.doesNotMatch(t.split("To sharpen this")[0], /\[[^\]\n]*\]|\{[^}\n]*\}|your product|your solution/i);
   assert.ok(questions(t).length >= 8);
 });

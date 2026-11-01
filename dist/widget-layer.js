@@ -40,14 +40,19 @@ function attachWidgets(server) {
                 ?.filter((c) => c.type === "text")
                 .map((c) => c.text)
                 .join("\n");
-            if (typeof text === "string")
-                return {
-                    ...result,
-                    structuredContent: {
-                        ...result.structuredContent,
-                        ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text),
-                    },
-                };
+            if (typeof text === "string") {
+                const display = { ...result.structuredContent, ...(0, widget_model_ts_1.widgetPayload)(request.params.name, widget_registry_ts_1.WIDGETS[request.params.name], text) };
+                const facts = {};
+                if (build_profile_ts_1.BUILD_PROFILE.payload === 'full')
+                    return { ...result, structuredContent: display };
+                // Display data and caller context are delivered only to the component.
+                if (display.marketSizing) {
+                    const { toolArgumentsEncoded, ...summary } = display.marketSizing;
+                    display.marketSizing = summary;
+                }
+                const { structuredContent, ...plain } = result;
+                return { ...plain, ...(Object.keys(facts).length ? { structuredContent: facts } : {}), _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
+            }
         }
         return result;
     }));

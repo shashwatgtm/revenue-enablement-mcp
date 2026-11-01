@@ -3038,7 +3038,7 @@ ${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}
 
 ## Supplied risks and controls for ${customerName}
 
-The risk statements below come from the supplied customer challenges. Probability and impact have not been assessed. The supplied implementation approach is a proposed control, not evidence that the control has passed.
+The risk statements below concern ${P} for ${customerName} and come from the supplied customer challenges. Probability and impact have not been assessed. The supplied implementation approach is a proposed control, not evidence that the control has passed.
 
 | Supplied risk or requirement | Probability | Impact | Supplied control to validate | Control owner | Acceptance evidence |
 | --- | --- | --- | --- | --- | --- |

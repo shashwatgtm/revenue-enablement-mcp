@@ -138,11 +138,18 @@ function buildChampionKit(args, d) {
     const budgetClauses = budgetContext.split(/[;\n.]/).map(x => x.trim()).filter(Boolean);
     const affirmativeBudget = budgetClauses.filter(x => !/\b(?:not|no|unknown|unconfirmed|tentative|proposed|pending)\b/i.test(x));
     const approvedCost = affirmativeBudget.find(x => /\b(?:approved|authori[sz]ed|confirmed)\b/i.test(x) && /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(x));
-    const bud = approvedCost?.match(/(?:[$€£]\s*[\d,]+(?:\.\d+)?|\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?)/i)?.[0] ?? '';
+    const approvedAmount = approvedCost?.match(/(?:[$€£]\s*[\d,]+(?:\.\d+)?|\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?)/i)?.[0] ?? '';
     const authority = affirmativeBudget.map(x => x.match(/\b(?:decision owner|approval owner|budget authority)\s*:\s*(.+)/i)?.[1]).find(Boolean) ?? '';
-    const canRecommend = Boolean(bud && authority);
+    const bud = /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(budgetContext) ? budgetContext.replace(/[.]+$/, '') : '';
+    const canRecommend = Boolean(approvedAmount && authority);
     const request = canRecommend ? 'recommend that we approve' : 'request validation of the business case for';
-    const budgetReview = `## Business case confirmation\n\n| Item | Status |\n| --- | --- |\n| Approved cost | ${bud || 'Unknown; confirm the approved amount and its source'} |\n| Value | ${keyValuePoints ? 'Supplied claims to validate against a customer baseline, period and full costs' : 'Unknown; establish the value case'} |\n| Decision owner and authority | ${authority || 'Unknown; identify who can authorize this purchase'} |\n\nBudget timing and context, as supplied: ${budgetContext || 'Unknown'}.\n\n${canRecommend ? 'The named owner must still confirm the value evidence and scope before approving a purchase.' : 'Request a business case review. Do not recommend purchase approval until cost, value and decision authority are confirmed.'}`;
+    const budgetReview = `## Business case confirmation for ${P}
+
+Approved cost for ${P}: ${approvedAmount || 'Unknown; confirm the approved amount and its source'}.
+Value to establish for ${P}: ${keyValuePoints ? 'validate the supplied claims against a customer baseline, period and full costs' : 'Unknown; establish the value case'}.
+Decision owner and authority for this purchase: ${authority || 'Unknown; identify who can authorize it'}.
+Budget timing and context, as supplied: ${budgetContext || 'Unknown'}.
+${canRecommend ? 'The named owner must still confirm the value evidence and scope before approving this purchase.' : `Request a business case review of ${P}; cost, value and decision authority must be confirmed before purchase approval.`}`;
     const urg = urgencyDrivers.replace(/[.]+$/, '');
     const wins = championWins.replace(/[.]+$/, '');
     const typed = d.splitItems(knownObjections).map((x) => x.replace(/^"|"$/g, '').trim()).filter(Boolean);
@@ -227,7 +234,7 @@ function buildChampionKit(args, d) {
         sharpen.push(fromSector ? `known objections (it would replace the usual questions of ${v.name} with the ones you expect)` : 'known objections (it would add an answer to each; none is answered now)');
     if (!alts.length)
         sharpen.push('competitive context (it would name the alternatives and the way of working today)');
-    if (!bud)
+    if (!approvedAmount)
         sharpen.push('approved amount and decision authority in the budget context (it would allow a purchase recommendation after the value case is validated)');
     if (!urg)
         sharpen.push('urgency drivers (it would give a reason to act now and a date; now none is set)');
@@ -361,6 +368,6 @@ function buildChampionKit(args, d) {
     const familyKnown = (0, dealtext_ts_2.familyOf)(target, investment) !== 'other';
     void familyKnown;
     void dealtext_ts_1.clip;
-    return `${budgetReview}\n\n${body}\n\n${sharpenLine ? `${sharpenLine}\n\n` : ''}${d.footer}`.replace(/\n{4,}/g, '\n\n\n');
+    return `${body}\n\n${budgetReview}\n\n${sharpenLine ? `${sharpenLine}\n\n` : ''}${d.footer}`.replace(/\n{4,}/g, '\n\n\n');
 }
 //# sourceMappingURL=rw-champion.js.map

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildRoiStructure = buildRoiStructure;
+const text_signals_ts_1 = require("./text-signals.js");
 // Run 42 (owner approval, 17 October 2026; ported from run 26q): roi_business_case_builder without the buyer's figures. No example hours, headcount,
 // hourly rate or share of revenue is applied: the method is explained in plain words, the figures the input gives are used only as stated and labelled,
 // and at most three missing numbers are asked for.
@@ -154,10 +155,10 @@ function buildRoiStructure(args, i, d) {
     if (i.revenueGiven || i.employeesGiven)
         out.push(`\`annual revenue\` and \`employee count\` describe the customer's size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.`);
     const flags = [];
-    const smallWords = /\b(?:smb|small|micro|d2c|startups?)\b/i.test(`${i.customerName} ${args.industry || ''}`);
+    const smallWords = (0, text_signals_ts_1.sizeReading)(`${i.customerName} ${args.industry || ''}`, /\b(?:smb|small|micro|d2c|startups?)\b/i).state === 'affirmed';
     if (args.company_size === 'enterprise' && smallWords)
         flags.push('You set company size to enterprise, but the customer is described as SMB or small in its name; check which is right, because the size changes who reviews the case and what price is realistic.');
-    if (args.company_size === 'smb' && /\b(?:enterprise|large|global)\b/i.test(i.customerName))
+    if (args.company_size === 'smb' && (0, text_signals_ts_1.sizeReading)(i.customerName, /\b(?:enterprise|large|global)\b/i).state === 'affirmed')
         flags.push('You set company size to SMB, but the customer is described as large or enterprise in its name; check which is right, because the size changes who reviews the case.');
     if (/\bIndia(?:n)?\b|\brupees?\b|\bINR\b|\blakhs?\b|\bcrores?\b/i.test(`${i.yourSolution} ${i.customerName} ${i.knownMetrics} ${i.currentProcess}`))
         flags.push('Your inputs mention India; the price field is in dollars, so if your price is in rupees, convert it first.');

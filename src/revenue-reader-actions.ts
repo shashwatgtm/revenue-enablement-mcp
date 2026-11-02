@@ -50,5 +50,16 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
    `Demand generation head: compare the ${solution} proposal audience with the account brief before reuse; remove this case's claims unless the new account has matching evidence.`,
   ]};
  }
+
+ if(name==='deal_strategy_coach'){
+  const deal=label(a.deal_name,'this deal'),stage=label(a.deal_stage,'the stated stage'),buyer=label(a.economic_buyer,'economic buyer not identified'),champion=label(a.champion_status,'champion status not supplied').replace(/_/g,' ');
+  return {meaning:`The advice supports choosing the next evidence check for ${deal} at ${stage}. The rubric does not establish buyer participation, purchase authority or a close probability. Treat the buyer and champion records as facts to verify, not completed approval steps.`,evidence:`direct buyer confirmation contradicts the recorded authority, participation, acceptance condition or blocker`,roles:[
+   `Founder: challenge whether the ${stage} label for ${deal} is supported by a buyer action; request the action record before endorsing progression.`,
+   `CEO: confirm the delivery effort reserved for ${deal} before approving more spend; release no additional commitment until the buyer decision path is verified.`,
+   `CMO: check whether the proof used for ${solution} answers the buyer's stated concern before adding sales material; do not infer that a proposal proves interest.`,
+   `CRO: resolve the buyer record "${buyer}" through direct confirmation before advancing ${deal}; record the approver's participation and acceptance condition.`,
+   `Demand generation head: ask the account owner to verify the recorded status "${champion}" before copying this contact profile into outreach; distinguish a contact from confirmed advocacy.`,
+  ]};
+ }
  return undefined;
 }

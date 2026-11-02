@@ -443,7 +443,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const openPain = (): string => {
     const a = nextPain();
     if (!a) return `I am writing${inInd ? ` to people${inInd}` : ''} about ${topic}.${nextQ() ? ` ${nextQ()}` : ''}`;
-    return tone === 'provocative' ? `A direct question: ${painRef(a)} Is that true on your side?` : painStatement(a);
+    return tone === 'provocative' ? `A direct question: ${painRef(a)} Is that true on your side?` : `Does this describe your team: “${a.replace(/[.?!]+$/, '')}”?`;
   };
   // the second and third part of the problem: a clause with its own verb is added to the first in a sentence of its own; a fragment is introduced
   const alsoPain = (p2: string, p3: string): string => {
@@ -462,7 +462,7 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const builders: Record<string, () => void> = {
     cold_outreach: () => {
       const first = atomsP[0] || '';
-      mail('Day 1', 'Opening', subjPain(first, `A question on ${topic}`), [openPain(), [whatIs, covers].filter(Boolean).join(' '), aimLine, strongest(), technical || practitioner ? endSentence(`A question to start with${inInd ? ` for teams${inInd}` : ''}: ${nextQ()}`) : '', ask(0)]);
+      mail('Day 1', 'Opening', `A question on ${topic}`, [openPain(), [whatIs, covers].filter(Boolean).join(' '), aimLine, strongest(), technical || practitioner ? endSentence(`A question to start with${inInd ? ` for teams${inInd}` : ''}: ${nextQ()}`) : '', ask(0)]);
       const r2 = take(technical ? ['result', 'scale', 'story'] : ['result', 'scale'], 2);
       mail('Day 3', 'Result and question', r2.length ? `A result on ${topic}` : `One question on ${topic}`, [r2.length ? facts(r2) : measuresLine, qLead(nextQ()), ask(1)]);
       const r3 = take(['quote', 'story'], 2);

@@ -88,3 +88,11 @@ test('Overnight distinct case evidence checks: roi_business_case_builder',async(
  const a={...cases.find(x=>x.tool==='roi_business_case_builder').args}; delete a.expected_improvement_percent;
  const text=await call('roi_business_case_builder',a),r=roles(text); assert.match(r.join('\n'),/unconfirmed improvement/);assert.doesNotMatch(r.join('\n'),/unstated%|undefined|NaN/);
  });
+
+test('Second pass: cold email asks whether the reported pain applies before asserting it',async()=>{
+ const a=cases.find(x=>x.tool==='email_sequence_generator').args;const t=await call('email_sequence_generator',a);
+ const opening=t.split('### Email 1:')[1].split('### Email 2:')[0];
+ assert.match(opening,/Subject:\*\* A question on/);
+ assert.match(opening,/Does this describe your team: “Two receptionists can book the same appointment slot”\?/);
+ assert.doesNotMatch(opening,/\n\nTwo receptionists can book/);
+});

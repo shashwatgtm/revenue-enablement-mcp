@@ -117,5 +117,16 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
    `Demand generation head: check that the brief for ${solution} reaches only the agreed buying group and has an owner for questions; do not classify the contact as a champion until advocacy is confirmed.`,
   ]};
  }
+
+ if(name==='competitive_trap_setter'){
+  const rival=label(a.competitor,'the named alternative'),strength=typeof a.your_strengths==='string' && /;|\n/.test(a.your_strengths) ? 'one of the listed strengths' : label(a.your_strengths,'the claimed strength'),weakness=label(a.competitor_weaknesses,'the claimed alternative weakness');
+  return {meaning:`The questions support a buyer controlled comparison of ${solution} and ${rival}. A supplied weakness is a hypothesis, not a verified fact about the alternative. Test the same case and acceptance criterion on both.`,evidence:`the alternative passes the agreed test, the proposed strength cannot be demonstrated, or the buyer does not value the distinction`,roles:[
+   `Founder: ask the buyer whether "${strength}" changes their decision before endorsing the comparison; drop the distinction if it is not material.`,
+   `CEO: approve only the effort needed for an equal scope comparison of ${solution} and ${rival}; check that costs and test conditions are recorded for both.`,
+   `CMO: verify "${weakness}" before using it externally; keep an unverified prospect observation out of factual claims about ${rival}.`,
+   `CRO: ask the buyer to run the same example through ${rival} and ${solution} with an agreed pass condition; record contrary results as well as failures.`,
+   `Demand generation head: use the buyer validated criterion for ${solution} to review a fresh audience sample; do not use the unverified weakness of ${rival} as a targeting fact.`,
+  ]};
+ }
  return undefined;
 }

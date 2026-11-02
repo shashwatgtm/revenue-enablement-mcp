@@ -71,3 +71,9 @@ test('Overnight distinct case evidence checks: champion_enablement_kit',async()=
  const checks=["40 hours a month.*measured savings", "CFO.*budget authority", "No pilot saving or budget approval yet.*unmeasured", "conversation with CFO.*introduction", "advocacy is confirmed"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: competitive_trap_setter',async()=>{
+ const a=cases.find(x=>x.tool==='competitive_trap_setter').args; const text=await call('competitive_trap_setter',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["next owner and affected depot.*material", "equal scope.*Existing TMS", "not independently verified.*externally", "same example.*Existing TMS.*contrary", "unverified weakness.*targeting fact"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

@@ -120,14 +120,14 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
 
   const closeInput = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
   if (isNaN(closeInput.getTime())) return `target close date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
+  const ctx = reframeSector(d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] }), solutionIn);
   const constraintReview = constrainedPlan(dealName, targetCloseDate, stepsIn, reqIn, blockersIn);
-  if (constraintReview) return constraintReview;
+  if (constraintReview) return constraintReview.replace('\n\n', `\n\n${ctx.line}\n\n`);
   const today = new Date();
   // whole calendar days between the two dates (the time of day is ignored: 2026-10-09 to 2026-12-15 is 67 days at any hour)
   const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));
 
   const industryWords = cleanIndustry(industryFromTitle(dealName));
-  const ctx = reframeSector(d.readContext(undefined, { seller: [solutionIn || 'the solution'], context: [reqIn, evalIn, blockersIn, dealName], role: [champion, economic] }), solutionIn);
   const v = ctx.v;
   const investment = ctx.model === 'investment';
   const brief = briefOf(solutionIn, [dealName, blockersIn, reqIn, evalIn, champion, economic]);

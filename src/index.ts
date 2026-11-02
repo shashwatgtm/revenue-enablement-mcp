@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { withReadingGuide } from './reader-actions.ts';
+import { regionNotes } from './region-reader.ts';
+import { regionalInputs } from './region-adapter.ts';
 import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
@@ -3492,7 +3494,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>),
+            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>) + (decisionLimit(name, args as Record<string, unknown>).stop ? '' : regionNotes(regionalInputs(typed))),
           },
         ],
       };

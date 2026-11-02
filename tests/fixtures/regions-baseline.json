@@ -1,0 +1,1439 @@
+{
+  "contract": {
+    "tools": [
+      {
+        "name": "account_plan_builder",
+        "description": "Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "account_name": {
+              "type": "string",
+              "description": "Company/account name"
+            },
+            "industry": {
+              "type": "string",
+              "description": "Industry vertical"
+            },
+            "current_arr": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Current ARR with this account (0 for prospects)"
+            },
+            "known_contacts": {
+              "type": "string",
+              "description": "Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account notes"
+            },
+            "current_products": {
+              "type": "string",
+              "description": "Products/services they currently use from you"
+            },
+            "expansion_opportunities": {
+              "type": "string",
+              "description": "Potential expansion areas or whitespace"
+            },
+            "competitive_threats": {
+              "type": "string",
+              "description": "Known competitors in the account"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/service offering"
+            },
+            "account_notes": {
+              "type": "string",
+              "description": "Any additional context about the account"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "account_name"
+          ]
+        },
+        "title": "Account Plan Builder",
+        "annotations": {
+          "title": "Account Plan Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "deal_strategy_coach",
+        "description": "Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "blocker_status": {
+              "type": "string",
+              "enum": [
+                "none",
+                "present",
+                "unknown"
+              ],
+              "description": "Ask whether any blocker is present. A confirmed typed fact overrides word reading."
+            },
+            "economic_buyer_engagement": {
+              "type": "string",
+              "enum": [
+                "engaged",
+                "not_engaged",
+                "unknown"
+              ],
+              "description": "Ask whether the budget holder actively participates in this decision. Overrides word reading."
+            },
+            "incumbent_status": {
+              "type": "string",
+              "enum": [
+                "present",
+                "none",
+                "unknown"
+              ],
+              "description": "Ask whether the buyer already uses a competing supplier. Overrides word reading."
+            },
+            "project_status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "cancelled",
+                "unknown"
+              ],
+              "description": "Ask whether the project is still active. A cancelled project is held, without a close plan."
+            },
+            "deal_name": {
+              "type": "string",
+              "description": "Deal/opportunity name"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Deal value in dollars"
+            },
+            "deal_stage": {
+              "type": "string",
+              "enum": [
+                "prospecting",
+                "discovery",
+                "demo",
+                "proposal",
+                "negotiation",
+                "closing",
+                "stuck"
+              ],
+              "description": "Current deal stage"
+            },
+            "days_in_stage": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Days the deal has been in current stage"
+            },
+            "champion_status": {
+              "type": "string",
+              "enum": [
+                "no_champion",
+                "potential_champion",
+                "confirmed_champion",
+                "multi_threaded"
+              ],
+              "description": "Champion identification status"
+            },
+            "economic_buyer": {
+              "type": "string",
+              "description": "Economic buyer name and engagement level"
+            },
+            "competitors": {
+              "type": "string",
+              "description": "Competitors in the deal and their position"
+            },
+            "blockers": {
+              "type": "string",
+              "description": "Known blockers or objections"
+            },
+            "next_steps": {
+              "type": "string",
+              "description": "Currently planned next steps"
+            },
+            "close_date": {
+              "type": "string",
+              "description": "Target close date"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you are selling"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "deal_name",
+            "deal_stage"
+          ]
+        },
+        "title": "Deal Strategy Coach",
+        "annotations": {
+          "title": "Deal Strategy Coach",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "discovery_question_bank",
+        "description": "Writes a discovery question list from the framework you choose (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. Returns an opening for the conversation, questions in the language of the prospect's sector and on what your solution covers, the questions for each part of the framework, a closing for the call and what to say to an objection. It uses only the inputs you give and says which it did not get.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "contact_permission": {
+              "type": "string",
+              "enum": [
+                "allowed",
+                "declined",
+                "unknown"
+              ],
+              "description": "Optional confirmed fact. Ask whether this person permits further contact; this answer overrides contact-refusal wording in the notes."
+            },
+            "framework": {
+              "type": "string",
+              "enum": [
+                "meddpicc",
+                "bant",
+                "spiced",
+                "challenger",
+                "gap_selling",
+                "all"
+              ],
+              "description": "Discovery framework to use"
+            },
+            "prospect_industry": {
+              "type": "string",
+              "description": "Prospect industry for context"
+            },
+            "prospect_role": {
+              "type": "string",
+              "description": "Role of person you are meeting with"
+            },
+            "known_pain_points": {
+              "type": "string",
+              "description": "Pain points already identified"
+            },
+            "known_metrics": {
+              "type": "string",
+              "description": "Metrics/KPIs already discussed"
+            },
+            "deal_stage": {
+              "type": "string",
+              "enum": [
+                "first_call",
+                "discovery",
+                "deep_dive",
+                "technical",
+                "executive"
+              ],
+              "description": "Stage of conversation"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution for relevant questions"
+            },
+            "gaps_to_fill": {
+              "type": "string",
+              "description": "Specific information gaps to address"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "framework"
+          ]
+        },
+        "title": "Discovery Question Bank",
+        "annotations": {
+          "title": "Discovery Question Bank",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "roi_business_case_builder",
+        "description": "Build an ROI business case from the buyer's own figures: annual value estimate, or current annual cost with expected improvement percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). Ask finance for the cash-only annual benefit when an investment decision depends on cash.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "customer_name": {
+              "type": "string",
+              "description": "Customer/prospect name"
+            },
+            "industry": {
+              "type": "string",
+              "description": "The customer's industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer's own figures (annual value estimate, or current annual cost with expected improvement percent)"
+            },
+            "company_size": {
+              "type": "string",
+              "enum": [
+                "startup",
+                "smb",
+                "mid_market",
+                "enterprise"
+              ],
+              "description": "Company size tier"
+            },
+            "annual_revenue": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Customer annual revenue. Shown as your input; it is not turned into a value"
+            },
+            "employee_count": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Number of employees. Shown as your input; it is not turned into a value"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "solution_price": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Annual cost of your solution"
+            },
+            "primary_value_driver": {
+              "type": "string",
+              "enum": [
+                "revenue_increase",
+                "cost_reduction",
+                "productivity",
+                "risk_mitigation",
+                "multiple"
+              ],
+              "description": "Primary value category"
+            },
+            "known_metrics": {
+              "type": "string",
+              "description": "Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer's figures; to turn the buyer's figures into the value, give current annual cost and expected improvement percent, or annual value estimate"
+            },
+            "current_annual_cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)"
+            },
+            "expected_improvement_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Optional: the share of that annual cost the buyer expects to save, in percent (their figure)"
+            },
+            "annual_value_estimate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional: the buyer's own estimate of the annual value in dollars; used as the value when given"
+            },
+            "current_process": {
+              "type": "string",
+              "description": "How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation"
+            },
+            "implementation_timeline": {
+              "type": "string",
+              "description": "Expected implementation time. Shown in the output; not used in the calculation"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            },
+            "annual_cash_benefit": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional buyer-confirmed annual cash benefit in US dollars, excluding staff time without a cash release. Ask finance to separate cash from non-cash value. Compared with the annual solution price; a cash deficit holds the investment decision."
+            }
+          },
+          "required": [
+            "your_solution",
+            "primary_value_driver"
+          ]
+        },
+        "title": "ROI Business Case Builder",
+        "annotations": {
+          "title": "ROI Business Case Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "mutual_action_plan_generator",
+        "description": "Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "deal_name": {
+              "type": "string",
+              "description": "Deal/opportunity name"
+            },
+            "target_close_date": {
+              "type": "string",
+              "description": "Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so"
+            },
+            "current_stage": {
+              "type": "string",
+              "enum": [
+                "discovery",
+                "evaluation",
+                "proposal",
+                "negotiation",
+                "procurement"
+              ],
+              "description": "Current deal stage"
+            },
+            "buyer_champion": {
+              "type": "string",
+              "description": "Champion name and title"
+            },
+            "economic_buyer": {
+              "type": "string",
+              "description": "Economic buyer name and title"
+            },
+            "technical_evaluators": {
+              "type": "string",
+              "description": "Technical evaluators involved"
+            },
+            "procurement_contact": {
+              "type": "string",
+              "description": "Procurement contact if known"
+            },
+            "known_requirements": {
+              "type": "string",
+              "description": "Known requirements or evaluation criteria"
+            },
+            "known_process_steps": {
+              "type": "string",
+              "description": "Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone"
+            },
+            "blockers": {
+              "type": "string",
+              "description": "Known blockers or concerns"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you are selling"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "deal_name",
+            "target_close_date"
+          ]
+        },
+        "title": "Mutual Action Plan Generator",
+        "annotations": {
+          "title": "Mutual Action Plan Generator",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "win_loss_analyzer",
+        "description": "Writes a short win/loss review of one deal, a competitor pattern or a set of deals from the details you give. Returns a write-up in plain sentences that names the outcome, the stated reason in the buyer's words, what the reason points to and what the buyer weighed, then the questions for the review call and sector notes. It adds no figure or reason you did not give, and says plainly what the outcome or reason would add when it is missing.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "analysis_type": {
+              "type": "string",
+              "enum": [
+                "single_deal",
+                "deal_portfolio",
+                "competitor_analysis",
+                "loss_pattern"
+              ],
+              "description": "Type of analysis"
+            },
+            "deal_outcome": {
+              "type": "string",
+              "enum": [
+                "won",
+                "lost",
+                "no_decision",
+                "mixed"
+              ],
+              "description": "Deal outcome for single deal analysis"
+            },
+            "deal_details": {
+              "type": "string",
+              "description": "Deal details, can be rough notes, CRM export, or structured data"
+            },
+            "loss_reason": {
+              "type": "string",
+              "description": "Stated loss reason (for lost deals)"
+            },
+            "competitor_won": {
+              "type": "string",
+              "description": "Competitor who won (if applicable)"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Deal value"
+            },
+            "sales_cycle_days": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Length of sales cycle"
+            },
+            "stakeholders_involved": {
+              "type": "string",
+              "description": "Key stakeholders and their positions"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you were selling"
+            },
+            "multiple_deals": {
+              "type": "string",
+              "description": "For portfolio analysis: summary of multiple deals"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "analysis_type"
+          ]
+        },
+        "title": "Win/Loss Analyzer",
+        "annotations": {
+          "title": "Win/Loss Analyzer",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "proposal_section_writer",
+        "description": "Writes the proposal section you choose, such as an executive summary, solution overview or pricing justification, for a named buyer. Returns the section as sentences built from your solution, the buyer's challenges, your differentiators, pricing and success measures, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "section_type": {
+              "type": "string",
+              "enum": [
+                "executive_summary",
+                "problem_statement",
+                "solution_overview",
+                "implementation_plan",
+                "pricing_justification",
+                "risk_mitigation",
+                "success_metrics",
+                "company_overview",
+                "case_studies",
+                "next_steps"
+              ],
+              "description": "Proposal section to generate"
+            },
+            "customer_name": {
+              "type": "string",
+              "description": "Customer name"
+            },
+            "customer_industry": {
+              "type": "string",
+              "description": "Customer industry"
+            },
+            "primary_audience": {
+              "type": "string",
+              "enum": [
+                "c_suite",
+                "vp_level",
+                "director",
+                "manager",
+                "technical",
+                "procurement"
+              ],
+              "description": "Adds a one-line note at the top of the executive summary on what this audience looks for"
+            },
+            "customer_challenges": {
+              "type": "string",
+              "description": "Key challenges identified"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_differentiators": {
+              "type": "string",
+              "description": "Why you vs alternatives"
+            },
+            "pricing": {
+              "type": "string",
+              "description": "Pricing details if relevant"
+            },
+            "implementation_approach": {
+              "type": "string",
+              "description": "How you will implement"
+            },
+            "success_metrics": {
+              "type": "string",
+              "description": "Expected outcomes/metrics"
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "formal",
+                "consultative",
+                "bold",
+                "conservative"
+              ],
+              "description": "Tone for the proposal (changes only the opening of the executive summary)"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "section_type",
+            "your_solution"
+          ]
+        },
+        "title": "Proposal Section Writer",
+        "annotations": {
+          "title": "Proposal Section Writer",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "email_sequence_generator",
+        "description": "Writes a multi-email sequence by persona, stage and objective, such as prospecting, nurture, follow-up or re-engagement. Returns each email with its subject, send day and body, built from your solution, the pain point, the value proposition, your proof and the ask, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sequence_type": {
+              "type": "string",
+              "enum": [
+                "cold_outreach",
+                "warm_follow_up",
+                "post_demo",
+                "proposal_follow_up",
+                "re_engagement",
+                "nurture",
+                "event_follow_up",
+                "referral_request"
+              ],
+              "description": "Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline"
+            },
+            "target_persona": {
+              "type": "string",
+              "description": "Target persona (e.g., VP Sales, CTO, CFO)"
+            },
+            "target_industry": {
+              "type": "string",
+              "description": "Target industry for context"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_value_prop": {
+              "type": "string",
+              "description": "Primary value proposition"
+            },
+            "specific_pain_point": {
+              "type": "string",
+              "description": "Specific pain point to address"
+            },
+            "social_proof": {
+              "type": "string",
+              "description": "Customer names, stats, or proof points"
+            },
+            "call_to_action": {
+              "type": "string",
+              "description": "Desired action (meeting, demo, reply)"
+            },
+            "num_emails": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Accepted but not used yet: each sequence type has a fixed number of emails"
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "professional",
+                "casual",
+                "urgent",
+                "consultative",
+                "provocative"
+              ],
+              "description": "Email tone"
+            },
+            "sender_context": {
+              "type": "string",
+              "description": "Context about sender (role, shared connections, etc.)"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "sequence_type",
+            "target_persona",
+            "your_solution"
+          ]
+        },
+        "title": "Email Sequence Generator",
+        "annotations": {
+          "title": "Email Sequence Generator",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "demo_script_builder",
+        "description": "Writes a demo script for the demo type, persona and use case you choose. Returns a timed run from opening to close, with spoken lines and a step for each feature you must show, tied to the pains you name, then discussion, close and follow-up lines and sector notes. The steps come from the parts of your solution and your pains, and the answer says where they came from and what it did not get.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "demo_type": {
+              "type": "string",
+              "enum": [
+                "first_look",
+                "technical_deep_dive",
+                "executive_overview",
+                "competitive_displacement",
+                "expansion_upsell",
+                "proof_of_concept"
+              ],
+              "description": "Type of demo"
+            },
+            "primary_audience": {
+              "type": "string",
+              "description": "Primary demo audience (role/persona)"
+            },
+            "attendees": {
+              "type": "string",
+              "description": "Other attendees and their roles"
+            },
+            "customer_industry": {
+              "type": "string",
+              "description": "Customer industry"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_pain_points": {
+              "type": "string",
+              "description": "Pain points to address in demo"
+            },
+            "competitor_context": {
+              "type": "string",
+              "description": "Competitor being displaced or compared"
+            },
+            "demo_duration": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Demo duration in minutes"
+            },
+            "must_show_features": {
+              "type": "string",
+              "description": "Features that must be demonstrated"
+            },
+            "known_objections": {
+              "type": "string",
+              "description": "Known objections to address"
+            },
+            "desired_outcome": {
+              "type": "string",
+              "description": "What you want to achieve from this demo"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "demo_type",
+            "your_solution"
+          ]
+        },
+        "title": "Demo Script Builder",
+        "annotations": {
+          "title": "Demo Script Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "pricing_negotiation_guide",
+        "description": "Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests. Ask whether the user has authority to approve the proposed terms.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "scenario": {
+              "type": "string",
+              "enum": [
+                "discount_request",
+                "budget_objection",
+                "competitor_pricing",
+                "procurement_pressure",
+                "multi_year_negotiation",
+                "enterprise_agreement",
+                "renewal_negotiation"
+              ],
+              "description": "Negotiation scenario"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Current deal value"
+            },
+            "discount_requested": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Discount percentage requested"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge"
+            },
+            "competitor_price": {
+              "type": "string",
+              "description": "Competitor pricing if known"
+            },
+            "value_delivered": {
+              "type": "string",
+              "description": "Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own"
+            },
+            "buyer_leverage": {
+              "type": "string",
+              "description": "Buyer leverage points (size, reference potential, etc.)"
+            },
+            "your_leverage": {
+              "type": "string",
+              "description": "Your leverage points (unique features, timeline, etc.)"
+            },
+            "decision_timeline": {
+              "type": "string",
+              "description": "When decision needs to be made"
+            },
+            "approval_authority": {
+              "type": "string",
+              "description": "Who has final approval on pricing"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            },
+            "pricing_authority_status": {
+              "type": "string",
+              "enum": [
+                "authorized",
+                "not_authorized",
+                "unknown"
+              ],
+              "description": "Optional confirmed fact. Ask whether the user can approve this price or discount. Free-text role titles do not establish authority; unconfirmed authority holds commitment to terms."
+            }
+          },
+          "required": [
+            "scenario"
+          ]
+        },
+        "title": "Pricing Negotiation Guide",
+        "annotations": {
+          "title": "Pricing Negotiation Guide",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "champion_enablement_kit",
+        "description": "Writes an internal selling asset for your champion, such as an executive brief, an internal business case, objection responses or presentation talking points, built from your solution, the customer's situation and the objections you expect. Returns the asset in the champion's voice with the recommendation, the answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "asset_type": {
+              "type": "string",
+              "enum": [
+                "executive_brief",
+                "internal_business_case",
+                "objection_responses",
+                "presentation_talking_points",
+                "email_to_stakeholder",
+                "roi_one_pager",
+                "competitive_comparison",
+                "risk_assessment"
+              ],
+              "description": "Type of enablement asset"
+            },
+            "champion_name": {
+              "type": "string",
+              "description": "Champion name"
+            },
+            "champion_role": {
+              "type": "string",
+              "description": "Champion role/title"
+            },
+            "target_stakeholder": {
+              "type": "string",
+              "description": "Who the champion needs to convince"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_value_points": {
+              "type": "string",
+              "description": "Key value points to emphasize"
+            },
+            "known_objections": {
+              "type": "string",
+              "description": "Expected objections from stakeholders"
+            },
+            "competitive_context": {
+              "type": "string",
+              "description": "Competitive alternatives being considered"
+            },
+            "budget_context": {
+              "type": "string",
+              "description": "Budget situation and pricing"
+            },
+            "urgency_drivers": {
+              "type": "string",
+              "description": "Why act now"
+            },
+            "champion_wins": {
+              "type": "string",
+              "description": "How this makes the champion look good"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "asset_type",
+            "your_solution"
+          ]
+        },
+        "title": "Champion Enablement Kit",
+        "annotations": {
+          "title": "Champion Enablement Kit",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "competitive_trap_setter",
+        "description": "Writes landmine questions and positioning tactics against a named competitor, so the buyer's own criteria expose its weak points without negative selling. Returns the set-up, your strengths and the competitor's weak points as you gave them, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and stage-specific tactics, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "competitor": {
+              "type": "string",
+              "description": "Primary competitor to position against"
+            },
+            "competitor_weaknesses": {
+              "type": "string",
+              "description": "Known competitor weaknesses"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "your_strengths": {
+              "type": "string",
+              "description": "Your key differentiators"
+            },
+            "evaluation_stage": {
+              "type": "string",
+              "enum": [
+                "early",
+                "mid",
+                "late",
+                "finalist"
+              ],
+              "description": "Stage of competitive evaluation"
+            },
+            "buyer_priorities": {
+              "type": "string",
+              "description": "What the buyer cares most about"
+            },
+            "buyer_persona": {
+              "type": "string",
+              "description": "Role of key evaluator"
+            },
+            "trap_type": {
+              "type": "string",
+              "enum": [
+                "discovery_questions",
+                "evaluation_criteria",
+                "reference_questions",
+                "technical_requirements",
+                "commercial_terms",
+                "all"
+              ],
+              "description": "Type of competitive positioning"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "competitor",
+            "your_solution"
+          ]
+        },
+        "title": "Competitive Trap Setter",
+        "annotations": {
+          "title": "Competitive Trap Setter",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "tool": "account_plan_builder",
+      "args": {
+        "account_name": "Regional fleet account",
+        "industry": "logistics",
+        "current_arr": 24000,
+        "known_contacts": "Operations director: champion; CFO: economic buyer; depot manager: daily user",
+        "current_products": "Dispatch exception queue at one depot",
+        "expansion_opportunities": "Second depot opens in January; needs have not been confirmed",
+        "competitive_threats": "Existing TMS adds routing features",
+        "your_solution": "Dispatch planning software",
+        "account_notes": "Current customer. Champion has not introduced the second depot manager."
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Strategic account plan: Regional fleet account\n\n## The account in brief\n\nRegional fleet account is an existing account in logistics with annual recurring revenue of $24,000. This plan is about growing it with Dispatch planning software. By this tool's example rule on ARR alone the account sits in the SMB contract band. Expansion potential is unknown until a new need and its buyer are supplied and confirmed; ARR does not establish either. Your notes add: \"Current customer\" \"Champion has not introduced the second depot manager\"\n\n| Attribute | Value |\n|-----------|-------|\n| **Account** | Regional fleet account |\n| **Industry** | logistics |\n| **Account Tier** | SMB (set by this tool's rule from Current ARR) |\n| **Current ARR** | $24,000 |\n| **Expansion Potential** | Unknown; confirm a new need and its buyer before assessing expansion |\n\n*Sector: read from your inputs as logistics tech. Business model: not stated. Tell us how you charge and the plan will adjust.*\n\n## Who decides and who influences\n\nEach contact you gave is one row, with the part you stated for them; where you stated none, the part is read from the title and says so.\n\n| Contact you gave | Part in the decision | Question to verify | Owner, action and check |\n|---|---|---|---|\n| Operations director: champion | Champion, as you said | Check with Operations director: which part of Dispatch planning software they will assess | Owner: account owner with Operations director. Before the next buyer meeting: Agree a pilot site and the before-and-after measure for Dispatch planning software, and who will use it. Check: record the acceptance condition from Operations director for Dispatch planning software, the evidence they will inspect and who signs it off. Then give them a one page case to forward to CFO |\n| CFO: economic buyer | Economic buyer, as you said | Check with CFO: Which finance numbers are late or reworked each period, and what did the last review ask for on this topic? | Owner: account owner with CFO. Before the next buyer meeting: Agree the number they will check in the cost case (for example on time delivery) and who gives you the figures. Check: record the acceptance condition from CFO for Dispatch planning software, the evidence they will inspect and who signs it off. Ask whether a change that disturbs the close or leaves an audit finding is a concern in this account; record their answer |\n| depot manager: daily user | Stakeholder, read from the title | Check with depot manager: daily user: which part of Dispatch planning software they will assess | Owner: account owner with depot manager: daily user. Before the next buyer meeting: Ask what they need from this decision. Check: record the acceptance condition from depot manager: daily user for Dispatch planning software, the evidence they will inspect and who signs it off. |\n\nUsual buying committee (logistics tech): The Head of Logistics or the operations lead champions; planners and operations staff use it daily; IT checks the fit with the order, transport and warehouse systems; finance checks the cost case. None of your contacts covers Chief Operating Officer, Head of Supply Chain, Head of Logistics and Head of IT, so ask the champion who holds each part here.\n\n## Where the account can grow\n\nThey use Dispatch exception queue at one depot today (in your words). Find out what exactly the account uses of Dispatch planning software today and what it still does by other means; the gap between the two is the whitespace.\n\nThe expansion areas you named, with the person most likely to sponsor each and the proof to ask for:\n\n- **Second depot opens in January**: the likely sponsor is depot manager: daily user.\n- **Needs have not been confirmed**: ask the champion who would sponsor it.\n\nProve the first step before you ask for the next. In logistics tech, buyers trust this form of proof: a before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks.\n\n## Alternatives and competition\n\n**\"Existing TMS adds routing features\"**\n- What it tells you: a system is already paid for, integrated and approved, so the question is the gap, not the replacement.\n- Ask: \"What does it do well today, and which decision or exception does it not help with?\"\n- Prove: Show what the product covers that it does not, and say where it should stay in place.\n\nPut the account's own problem first, in its words, before any feature; agree the measure of success before the evaluation (in logistics tech: on time delivery and cost per shipment or per order); and let the gap show in their own test, not in your claim.\n\n## The next 90 days\n\n### Days 1 to 30: map the account and listen (by 2026-12-02)\n\n1. Meet Operations director and ask: \"Which part of the day goes wrong most often, and what does it cost?\"\n2. Meet CFO and ask: \"Which finance numbers are late or reworked each period, and what did the last review ask for on this topic?\"\n3. Meet depot manager: daily user and ask: \"How does this part of the work run today?\"\n4. Confirm the part each of the 3 contacts plays and find the holder of Chief Operating Officer, Head of Supply Chain and Head of Logistics.\n5. Ask the questions in the alternatives section, starting with \"Existing TMS adds routing features\", and write the answers down in the account's words.\n6. Agree the baseline: which of on time delivery, cost per shipment or per order and order cycle time the account measures today, and who owns each number.\n7. Check the dates in this plan against your own note above.\n\nBy day 30 you should have Operations director ready to bring CFO into a meeting, a baseline in the account's own numbers, and the missing roles named.\n\n### Days 31 to 60: prove the next step (by 2027-01-01)\n\n1. Agree a proof, in the form buyers in logistics tech trust: a before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks.\n2. Build the business case in the account's own figures: the ROI Business Case Builder tool needs their cost or value figures, so ask finance for them now.\n3. Show CFO the result they are measured on, using the baseline from the first 30 days.\n4. Bring in the people who check the cost case and the fit with their systems: IT checks the fit with the order, transport and warehouse systems; finance checks the cost case.\n5. Bring Chief Operating Officer and Head of Supply Chain into the conversation before the decision meeting.\n\nBy day 60 the business case should be accepted by CFO, with the proof result in the account's numbers.\n\n### Days 61 to 90: decide and widen (by 2027-01-29)\n\n1. Hold the decision meeting with CFO: set the proof result next to the baseline from the first 30 days.\n2. Agree the scope, the term and the price for the step you are asking the account to take.\n3. Take \"Second depot opens in January\" to depot manager: daily user, with the same form of proof as in the first 60 days.\n4. Take \"needs have not been confirmed\" to the sponsor Operations director names for it, with the same form of proof as in the first 60 days.\n5. Check the renewal date and have the expansion agreed before it, so it is not decided inside the renewal.\n6. Agree the next review with Operations director and what they will measure until then.\n\nBy day 90 you should have a decision on the expansion and a named sponsor for each expansion area.\n\n## This week\n\n- Brief Operations director and agree the next meeting.\n- Ask Operations director to get you a meeting with CFO within two weeks.\n- Put the first question about \"Existing TMS adds routing features\" to someone who lives with it.\n\n**To sharpen this plan, give:**\n\n- `account notes` that start with \"Objections:\" and list them with semicolons (it would add an answer for each)\n\nThe plan is dated from today (2026-11-02); review it monthly.\n\n\n## Reading the answer\n\nThe plan supports an account review for Regional fleet account. Current revenue and a proposed expansion do not establish new demand or access. Confirm the new buyer's problem and approval process before assigning expansion revenue. The conclusion needs review if the proposed expansion lacks buyer demand, the contact cannot arrange access, or current delivery economics do not support more work.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: test the proposed expansion \"Second depot opens in January; needs have not been confirmed\" with the new problem owner before endorsing growth in Regional fleet account; record whether the need is confirmed or denied.\n\nCEO: have finance separate current annual revenue of 24,000 from unapproved expansion at Regional fleet account; check delivery cost before reserving staff.\n\nCMO: verify outcomes from \"Dispatch exception queue at one depot\" before using them in an expansion story for Regional fleet account; do not extend one location's evidence to another.\n\nCRO: review \"Operations director: champion; CFO: economic buyer; depot manager: daily user\" with the account owner and arrange an introduction to the expansion approver; record access, authority and the next approval step before forecasting it.\n\nDemand generation head: compare the confirmed need in Regional fleet account with a fresh account sample before copying its profile into campaigns; exclude expansion assumptions from selection criteria.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "deal_strategy_coach",
+      "args": {
+        "deal_name": "Cybersecurity alert triage evaluation",
+        "deal_stage": "proposal",
+        "champion_status": "confirmed_champion",
+        "economic_buyer": "CISO has not attended a meeting",
+        "your_solution": "Alert triage software for a midmarket SaaS provider"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Deal Strategy Coach: Cybersecurity alert triage evaluation\n\n## Deal Health Assessment\n\n| Metric | Value |\n|--------|-------|\n| **Deal Name** | Cybersecurity alert triage evaluation |\n| **Deal Value** | not supplied |\n| **Current Stage** | Proposal |\n| **Days in Stage** | not supplied |\n| **Target Close** | Not set |\n| **Solution** | Alert triage software for a midmarket SaaS provider |\n\n### Health Score: 85/100 (Buyer engagement unconfirmed)\n\n*Set by this tool's rule: a base score adjusted for champion status, economic buyer, days in stage, competitors and blockers (the factors below).*\n\n**Health Factors:**\n- Confirmed champion\n- Note: Economic buyer identified but not engaged\n- Economic buyer text: fact was not clear.\n- Competition text: fact was not clear.\n- Blocker text: fact was not clear.\n\n### The shape of this deal\n\n- **Stage:** proposal.\n- **Champion:** confirmed. Give them the material to sell internally.\n- **Economic buyer:** CISO has not attended a meeting\n- **Competition:** none named. Ask what they do today, including doing it by hand.\n- **Blockers:** none typed. Ask what could stop this deal and write the answers down.\n\n---\n\n### Proposal Stage Strategy\n\n**Primary Objective:** Present a compelling, differentiated offer\n\n**Tactical Priorities:**\n1. **No surprises**: Proposal should confirm what's already discussed\n2. **Quantify value**: put the value in the buyer's own numbers\n3. **Differentiate**: Why you, not just why change\n4. **Create urgency**: Why now matters\n\n**Proposal Must Include:**\n- Executive summary (1 page)\n- Problem/solution alignment\n- Quantified business case\n- Implementation approach\n- Investment and ROI\n- Social proof\n- Clear next steps\n\n**Success Metrics:**\n- Proposal reviewed with champion first\n- Economic buyer sees business case\n- Timeline to decision established\n- Procurement engaged\n\n---\n\n## Immediate Actions\n\n### Next 24-48 Hours\n1. Done: champion identified. Keep them engaged\n2. **Confirm economic buyer engagement**: A named title does not establish participation or approval authority.\n3. **Confirm the buyer before committing**: Confirm the decision maker, participation and acceptance conditions before a commercial commitment. Schedule the next meeting with a clear agenda\n4. **Update CRM**: Document all new information\n\n### This Week\n- [ ] Confirm or find champion\n- [ ] Map all stakeholders\n- [ ] Understand competitive position\n- [ ] Document buying process\n- [ ] Build/refine business case\n\n---\n\n## Coaching Questions\n\nAsk yourself:\n1. **Why will they buy?** What's the compelling event?\n2. **Why will they buy from us?** What's our differentiation?\n3. **Why will they buy now?** What creates urgency?\n4. **Who decides?** Do we have the right relationships?\n5. **What can go wrong?** What are we not seeing?\n\n---\n\n*Strategy generated for proposal stage deals*\n*Review with manager weekly*\n\nSuggested timings, lengths and counts: adjust them to your own.\n\n## Reading the answer\n\nThe advice supports choosing the next evidence check for Cybersecurity alert triage evaluation at proposal. The rubric does not establish buyer participation, purchase authority or a close probability. Treat the buyer and champion records as facts to verify, not completed approval steps. The conclusion needs review if direct buyer confirmation contradicts the recorded authority, participation, acceptance condition or blocker.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: challenge whether the proposal label for Cybersecurity alert triage evaluation is supported by a buyer action; request the action record before endorsing progression.\n\nCEO: confirm the delivery effort reserved for Cybersecurity alert triage evaluation before approving more spend; release no additional commitment until the buyer decision path is verified.\n\nCMO: check whether the proof used for Alert triage software for a midmarket SaaS provider answers the buyer's stated concern before adding sales material; do not infer that a proposal proves interest.\n\nCRO: resolve the buyer record \"CISO has not attended a meeting\" through direct confirmation before advancing Cybersecurity alert triage evaluation; record the approver's participation and acceptance condition.\n\nDemand generation head: ask the account owner to verify the recorded status \"confirmed champion\" before copying this contact profile into outreach; distinguish a contact from confirmed advocacy.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "discovery_question_bank",
+      "args": {
+        "framework": "meddpicc",
+        "your_solution": "Dispatch planning software",
+        "prospect_role": "Operations director at a regional logistics fleet",
+        "known_pain_points": "Missed deliveries require depot phone calls",
+        "known_metrics": "Four hours each day spent on route adjustments across ten dispatchers"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Discovery Question Bank\n\n## Unanswered questions first\nNo explicit unanswered metric or information gap was supplied. Confirm the next missing decision with the buyer before selecting questions from the optional bank.\n\n## Context\n- **Prospect Industry:** not given\n- **Contact Role:** Operations director at a regional logistics fleet\n- **Deal Stage:** discovery\n- **Solution:** Dispatch planning software\n- **Known Pain Points:** Missed deliveries require depot phone calls\n- **Known Metrics:** Four hours each day spent on route adjustments across ten dispatchers\n\n*Sector: read from your inputs as logistics tech. Business model: not stated. Tell us how you charge and the plan will adjust.*\n\n---\n\n## Optional full question bank\nUse only the sections needed after the unanswered questions above.\n\n## Opening for a discovery conversation\n\nSay it in your own voice:\n- I would like to go deep on \"missed deliveries require depot phone calls\": where it starts, who it touches and what it costs, in terms of on time delivery, manual planning time or cost per shipment or per order.\n- Who else should be part of this conversation about Dispatch planning software, besides you?\n\n---\n\n## Questions for Operations director at a regional logistics fleet\n\nOwner: the account owner with Operations director at a regional logistics fleet. At the next discovery meeting about Dispatch planning software, ask the questions below and record the buyer’s own answer, its source and the person who can approve the next step. Check: a dated answer to that problem in the context above.\n\n- In your role, which of the numbers you answer for does that problem move, and by how much?\n- Who do you turn to first when this goes wrong, and what do they say?\n- Which part of the day goes wrong most often, and what does it cost?\n- How do you measure it today, and who owns that number?\n- What happens when plans change after work has started?\n\n---\n\n## Questions in the language of logistics tech\n\n- Which systems hold your orders, shipments and stock today, and who owns the data in them?\n- What happens when an order, a carrier or a route changes after the goods have left?\n- How do you measure on time delivery and cost per shipment today, and who owns those numbers?\n- Where do delays, damage or disputes come from today?\n- Who must approve a new logistics tool: operations, IT, finance, or the customers you serve?\n\n---\n\n## Questions on the pain you described\n\n- On \"missed deliveries require depot phone calls\": where does it start, who deals with it, and which of on time delivery or cost per shipment or per order does it show up in first?\n\n---\n\n## MEDDPICC questions\n\n### M: Metrics\n\n- You said \"four hours each day spent on route adjustments across ten dispatchers\". How is that measured today, how often, and what would that problem do to it?\n- If that problem were fixed, which of on time delivery, manual planning time or cost per shipment or per order would move first, and by how much would it have to move to matter to you?\n- What does that problem cost each month today in time, money or risk, and how did you arrive at that figure?\n\n### E: Economic buyer\n\n- Who signs off a purchase like Dispatch planning software, and have they seen that problem first-hand?\n- What would the COO or Head of Supply Chain need to see to move forward on Dispatch planning software?\n- Can we include the COO or Head of Supply Chain in the next conversation about Dispatch planning software?\n\n### D: Decision criteria\n\n- What would be a must-have in Dispatch planning software for you, and what would be nice to have?\n- How much weight do you give on time delivery when you compare options for Dispatch planning software?\n- What would make you drop an option for Dispatch planning software?\n\n### D: Decision process\n\n- What steps does a decision on Dispatch planning software go through, and who is involved at each step?\n- What date are you working back from to have that problem fixed, and what happens if it slips?\n\n### P: Paper process\n\n- What do legal, security and procurement need to see before Dispatch planning software can be signed, and how long does each take?\n- What would those reviewers look at hardest in Dispatch planning software?\n\n### I: Identify pain\n\n- On \"missed deliveries require depot phone calls\": who feels it most, and what does it cost them?\n- On that problem: what happens each week that it stays that way?\n\n### C: Champion\n\n- Besides you, who else wants that problem fixed: your head of IT or your chief financial officer?\n- If I gave you a business case for Dispatch planning software, would you take it to the COO or Head of Supply Chain?\n- What would that person need from us to push for Dispatch planning software?\n\n### C: Competition\n\n- What do you use today to deal with that problem, and what do you like about it?\n- Have you considered building this yourselves, or leaving it as it is?\n- Which other vendors are you speaking to about Dispatch planning software?\n\n---\n\n## Closing the call\n\n- Here is what I heard: one problem you want fixed with Dispatch planning software, measured today as \"four hours each day spent on route adjustments across ten dispatchers\", and the decision sits with the COO or Head of Supply Chain. Have I got that right?\n- What should I have asked about Dispatch planning software and did not?\n- I would suggest we put a baseline on on time delivery before the next call. Who can give it to us?\n\n---\n\n## If you hear an objection\n\n- If you hear \"we already have a system for this\": Ask which daily decisions or exceptions the current system does not handle today and position the product as working with it where it can, not replacing it.\n- If you hear \"integration effort\": Name the systems involved (transport, warehouse, ERP, order management) and the few data fields needed, and agree who on the buyer side owns each.\n- If you hear \"our operations team will not change how they work\": Offer a pilot at one site, lane or region and agree how adoption is measured before the pilot starts.\n- If you hear \"the cost is hard to justify on our margins\": Tie the price to cost per shipment, delays or exceptions measured in the buyer's own data, not to a general claim.\n\n---\n\n### Sector notes: logistics tech\n- **Who usually decides:** The COO or Head of Supply Chain signs; the Head of Logistics or the operations lead champions; planners and operations staff use it daily; IT checks the fit with the order, transport and warehouse systems; finance checks the cost case.\n- **Words this sector's buyers use:** shipment, carrier, consignment, lead time, exception, service level, proof of delivery, third party logistics provider, transport management system, warehouse management system. Use them where they are true for the prospect.\n- **A proof point that lands:** A before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks.\n\n## Reading the answer\n\nUse the question bank to test Dispatch planning software, beginning with three observations: ask Operations director at a regional logistics fleet for the most recent instance of \"Missed deliveries require depot phone calls\"; ask how often it happened and how the cost was counted; then ask what result and whose approval would justify changing the process. The remaining questions are optional probes, not a required script. The conclusion needs review if the buyer cannot confirm a recent instance, the metric counts a different scope or period, or the approval condition does not support a change.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask Operations director at a regional logistics fleet for a recent example of \"Missed deliveries require depot phone calls\" before accepting it as a buying problem; record a counterexample where the current process worked.\n\nCEO: have finance verify the scope and period behind \"Four hours each day spent on route adjustments across ten dispatchers\" before valuing the problem; distinguish total team effort from effort per person.\n\nCMO: check the attributed notes from Operations director at a regional logistics fleet before using \"Missed deliveries require depot phone calls\" in messaging; keep a seller hypothesis separate from the buyer's words.\n\nCRO: use the recent example, frequency and approval questions with Operations director at a regional logistics fleet first; advance only when the buyer confirms a problem and an observable acceptance condition.\n\nDemand generation head: test whether a fresh account with the same role reports \"Missed deliveries require depot phone calls\" before widening the audience; record accounts that deny it.\n\nTo sharpen this, give: prospect industry (it would add the questions a buyer in that industry asks of any vendor); your solution (list the parts of the product with a few words on what each does; it would add a question on each part).\n\nSuggested timings, lengths and counts: adjust them to your own."
+          }
+        ]
+      }
+    },
+    {
+      "tool": "roi_business_case_builder",
+      "args": {
+        "your_solution": "Invoice processing service",
+        "primary_value_driver": "cost_reduction",
+        "solution_price": 60000,
+        "current_annual_cost": 240000,
+        "expected_improvement_percent": 20,
+        "known_metrics": "CFO supplied annual processing cost includes labour only. No headcount reduction is approved.",
+        "current_process": "Manual invoice exception handling",
+        "implementation_timeline": "Eight weeks"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# ROI Business Case: your customer\n\n*Your inputs are shown as you gave them. Every other figure comes from this tool's example assumptions (not from published research or the customer's data) and is marked as an example: replace those figures with the customer's own.*\n\n## Executive Summary\n\n| Metric | Value |\n|--------|-------|\n| **Customer** | not supplied |\n| **Industry** | not supplied |\n| **Company Size** | not supplied (treated as mid market) |\n| **Est. Annual Revenue** | not supplied |\n| **Est. Employees** | not supplied |\n| **Solution** | Invoice processing service |\n| **Confidence Level** | Medium: the value comes from your own figures (20% of the current annual cost you supplied ($240,000)); confirm them with the buyer |\n\n---\n\n## Investment Summary\n\n| Investment | Year 1 | Year 2 | Year 3 |\n|------------|--------|--------|--------|\n| **Solution Cost** | $60,000 | $60,000 | $60,000 |\n| **Implementation** (Example figure: replace with your own) | $9,000 | $0 | $0 |\n| **Total Investment** | $69,000 (Example figure: replace with your own) | $60,000 | $60,000 |\n\n---\n\n## Value Breakdown\n\n### Value From Your Figures\n\n**Calculation:**\n- Annual value: 20% of the current annual cost you supplied ($240,000) = **$48,000**\n- Check with the buyer: does $240,000 cover the whole cost of the problem today, and is 20% the improvement they expect, not the best case?\n\n*Not used in this calculation: the current process and known metrics you supplied (listed under Assumptions). Replace the example figures with that data.*\n\n---\n\n## ROI Analysis\n\n### Total Annual Value\n| Category | Annual Value |\n|----------|--------------|\n| **Total Quantified Value** | **$48,000** |\n| **Annual Investment** | $60,000 |\n| **Net Annual Benefit** | -$12,000 |\n\n### Key Metrics\n\nExample figures: replace with your own.\n| Metric | Value | Example threshold |\n|--------|-------|-------------------|\n| **ROI** | -20% | >100% considered strong |\n| **Payback Period** | No payback: annual value does not exceed the recurring annual price | <12 months considered fast |\n| **3-Year Net Value** | -$36,000 | - |\n| **Value/Cost Ratio** | 0.8x | >3x considered excellent |\n\nROI and three-year net value use the recurring annual price and leave out one-time implementation costs. The payback ratio is shown only when annual value exceeds that recurring price; otherwise no payback is claimed. It is a simple annual price divided by annual value ratio, not a cash-flow forecast.\n\n---\n\n## Assumptions\n\n### Key Assumptions\n1. Implementation timeline: Eight weeks\n2. Full value realization: 6-12 months post-implementation (Example figure: replace with your own)\n3. Benchmark set used for hourly labor cost and revenue per employee: Technology (no industry supplied)\n4. Company size multiplier: 1x (mid market), used only to estimate revenue or employees that were not supplied (Example figure: replace with your own)\n\n### Current State\nManual invoice exception handling\n\n### Customer-Provided Metrics\nCFO supplied annual processing cost includes labour only. No headcount reduction is approved.\n\n### About These Figures\nThe assumptions above are examples built into this tool, not findings from published research or from the customer's data. Replace them with the customer's own figures before you share this business case.\n\n---\n\n## Sensitivity Analysis\n\nExample figures: replace with your own.\n### Conservative Scenario (50% of projected value)\n- Annual Value: $24,000\n- ROI: -60%\n- Payback: No payback: annual value does not exceed the recurring annual price\n### Aggressive Scenario (150% of projected value)\n- Annual Value: $72,000\n- ROI: 20%\n- Payback: 10.0 months\n\n---\n\n## Risk Factors & Mitigation\n\n| Risk | Impact | Mitigation |\n|------|--------|------------|\n| Delayed implementation | Lower Year 1 ROI | Phase approach, quick wins first |\n| User adoption issues | Reduced value capture | Training, change management |\n| Integration complexity | Higher implementation cost | Technical validation upfront |\n| Market changes | Assumption invalidity | Replace the example assumptions with customer data |\n\n---\n\n## Next Steps\n\n1. **Validate assumptions**: Schedule discovery to confirm metrics\n2. **Customize calculations**: Adjust with customer-provided data\n3. **Build executive presentation**: Create 1-page summary for CFO\n4. **Identify champions**: Find stakeholders who benefit from ROI\n\n---\n\n## One-Page Executive Summary\n\n### Why Invoice processing service for your customer\n\n**The Problem:**\nManual invoice exception handling\n\n**The Solution:**\nInvoice processing service addresses these challenges.\n\n**The Value:**\nExample figures: replace with your own.\n- **$48,000** in annual value\n- **-20%** ROI\n- **Payback:** No payback: annual value does not exceed the recurring annual price\n\n**Why Now:**\n- Cost of delay: $4,000/month (Example figure: replace with your own)\n- Implementation timeline: Eight weeks\n\n---\n\n*Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.*\n\n### Sector notes: fintech, spend and expense\n- **What this sector measures:** days to close the books, reconciliation effort, policy breach rate, approval cycle time, audit findings, cost per transaction, payment success rate.\n- **Words this sector's buyers use:** reconciliation, month end close, policy controls, audit trail, accounts payable, ERP posting, compliance review, approval workflow, data residency. Use them where they are true for the prospect.\n- **A proof point that lands:** Close time or reconciliation effort before and after for one entity, signed off by the finance controller.\n- **Turn one of these into the value:** ask the buyer what days to close the books costs them today, then use current annual cost and expected improvement percent.\n\nSuggested timings, lengths and counts: adjust them to your own.\n\n## Reading the answer\n\nThe calculation supports checking the supplied Invoice processing service economics. Hold the investment: the stated annual value does not cover the recurring fee. Released capacity is not cash unless a cost is removed or additional contribution is evidenced. The conclusion needs review if the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: challenge whether the 20% improvement is achievable for Invoice processing service before endorsing the case; revise scope or price if annual value does not cover the recurring fee.\n\nCEO: have finance verify the 240,000 annual cost baseline, 60,000 price period and implementation cost before committing; hold the investment while annual value is below the recurring fee.\n\nCMO: check \"CFO supplied annual processing cost includes labour only. No headcount reduction is approved.\" before publishing a return claim for Invoice processing service; do not present labour capacity as an approved cash saving.\n\nCRO: agree a buyer measurement of the 20% improvement against the 240,000 baseline before revising the proposal; require the same scope and period.\n\nDemand generation head: keep this Invoice processing service case out of positive return campaigns until the buyer confirms realized benefit and the 60,000 price period; retain any negative economics alongside it.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "mutual_action_plan_generator",
+      "args": {
+        "deal_name": "Regional bank reconciliation pilot",
+        "target_close_date": "2099-12-31",
+        "current_stage": "proposal",
+        "buyer_champion": "Finance controller",
+        "economic_buyer": "CFO",
+        "technical_evaluators": "Head of IT",
+        "procurement_contact": "Procurement manager",
+        "known_requirements": "Reconcile a redacted batch with no unexplained differences",
+        "known_process_steps": "Pilot acceptance, security review, procurement, signature",
+        "blockers": "CFO has not approved a budget; security review starts after 20 November",
+        "your_solution": "Reconciliation software"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Mutual Action Plan: Regional bank reconciliation pilot\n\n## Overview\n\nThis plan takes the deal \"Regional bank reconciliation pilot\" from the proposal stage to a signed contract on 2099-12-31: 19088 working days from 2026-11-02, 26722 calendar days. The seller is offering Reconciliation software, bought as a subscription.\n\n*Sector: read from your inputs as fintech. Business model: not stated. Tell us how you charge and the plan will adjust.*\n\n## Key Stakeholders\n\n| Role | Name | What they own in this plan |\n|------|------|-----------|\n| **Champion** | Finance controller | Keeps the plan alive on the buyer's side, gathers the evaluators and answers the open questions with us |\n| **Economic buyer** | CFO | Approves the business case and the final decision |\n| **Evaluator** | Head of IT | The integration plan, the technical validation and the IT security review |\n| **Procurement** | Procurement manager | The buyer's purchasing steps, the contract and the payment terms |\n\nOn the seller side the account executive owns the deal and the plan, a solutions engineer owns the technical validation, and an executive sponsor is called in at the phase gates and for escalation.\n\n## Success Criteria\n\nEach of the 1 things you listed is its own criterion, with the way it will be tested in the evaluation.\n\n| Criterion | How it will be tested | Judged by |\n|-----------|-----------------------|-----------|\n| Reconcile a redacted batch with no unexplained differences | Agree the measure and the pass mark with the champion, then test it on the buyer's own case | Finance controller |\n\n## Mutual Action Plan Timeline\n\nThe buyer's own process, as you gave it: \"Pilot acceptance\", \"security review\", \"procurement\" and \"signature\". Each step is placed as a milestone below.\n\n### Phase 1: Business Case & Alignment, the current stage (2026-11-02 to 2047-09-27)\n\nPut the result in a business case the economic buyer can approve, and answer every open question in writing.\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n| 1 | Present the business case, built from the buyer's own figures, to CFO | Seller (account executive) | 2030-04-26 | Pending |\n| 2 | Check the cost and value figures with the finance contact | Buyer finance contact | 2033-10-20 | Pending |\n| 3 | Agree the commercial shape of the deal: the scope, the term and the price | Seller (account executive) | 2037-04-15 | Pending |\n| 4 | Send written answers to the 2 blockers in Risks & Blockers | Both teams | 2040-10-09 | Pending |\n| 5 | Buyer's process step, in your words: Pilot acceptance | Head of IT | 2044-04-04 | Pending |\n| 6 | Buyer's process step, in your words: security review | Head of IT | 2047-09-27 | Pending |\n\n---\n\n### Phase 2: Commercial & Legal (2047-09-27 to 2068-08-23)\n\nSettle the terms and the legal text.\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n| 1 | Turn the commercial shape agreed in the business case phase into contract terms and send the draft to the buyer's legal and procurement teams | Both teams | 2051-12-04 | Pending |\n| 2 | Complete the legal review and resolve the redlines | Procurement manager | 2056-02-08 | Pending |\n| 3 | Confirm the implementation timeline and the owners on both sides: the access, the integrations and the first users | Both teams | 2060-04-14 | Pending |\n| 4 | Obtain the economic buyer's approval of the contract terms | CFO | 2064-06-19 | Pending |\n| 5 | Buyer's process step, in your words: signature | CFO | 2068-08-23 | Pending |\n\n---\n\n### Phase 3: Procurement (2068-08-23 to 2089-07-20)\n\nComplete the buyer's purchasing steps.\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n| 1 | Complete vendor registration and submit the documents the buyer's process asks for | Procurement manager | 2073-11-15 | Pending |\n| 2 | Finalize the payment terms | Procurement manager | 2079-02-06 | Pending |\n| 3 | Complete the purchasing approvals: the purchase order and the budget code | CFO | 2084-04-28 | Pending |\n| 4 | Buyer's process step, in your words: procurement | Procurement manager | 2089-07-20 | Pending |\n\n---\n\n### Phase 4: Close & Launch (2089-07-20 to 2099-12-31)\n\nSign, and agree how the first weeks run.\n\n| # | Milestone | Owner | Due Date | Status |\n|---|-----------|-------|----------|--------|\n| 1 | Contract signed | CFO | 2093-01-13 | Pending |\n| 2 | Kickoff scheduled, with the owners and the dates confirmed in the commercial phase | Both teams | 2096-07-09 | Pending |\n| 3 | Success criteria written down from the criteria above, with the pass mark for each | Seller (account executive) | 2099-12-31 | Pending |\n\n## Risks & Blockers\n\nEach blocker below is answered on its own question. Where an answer needs a fact about Reconciliation software, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n| CFO has not approved a budget | Clearance or another blocker remains outstanding: identify the required reviewer and the unresolved requirement before advancing the purchase. Sentence read: \"CFO has not approved a budget\". Sentence read: \"CFO has not approved a budget\". Confirm first: the required reviewers, scope and written approval record. | Seller with Finance controller | Open |\n| security review starts after 20 November | Bring the answers before they are asked: where the data is stored and processed, who can see it, how it is protected and deleted, and what the buyer wants to check before they approve (a security or IT contact, or the owner). Offer the security documents first and a call with whoever reviews. Sentence read: \"security review starts after 20 November\". Confirm first: where Reconciliation software stores and processes the buyer's data, who can reach it, and which security documents you can share. | Head of IT with Seller | Open |\n\n### What can move the close date\n\n- The calendar: 19088 working days for 3 stages, and the buyer's own step \"signature\" is not under your control: start it in the first week.\n- Losing the champion: if the champion leaves or is moved, Head of IT must already know the plan; keep them in the weekly loop.\n- The evaluation shows a gap: agree the pass mark for each criterion before the test starts (the 1 above), so a gap is a finding and not a surprise.\n\n## Communication Plan\n\n| Cadence | Participants | Purpose |\n|---------|--------------|---------|\n| Weekly | Finance controller and the account executive | Progress against the table above and the open questions |\n| Every two weeks | Head of IT and the solutions engineer | Progress of the tests |\n| At each phase gate (2047-09-27, 2068-08-23, 2089-07-20) | CFO and the executive sponsor | Decisions and the next phase |\n\nEscalation runs from the Finance controller to CFO first; if that does not clear it, the seller's manager goes to the buyer's executive.\n\n## Next Actions (This Week)\n\n| Priority | Action | Owner | Due |\n|----------|--------|-------|-----|\n| High | Confirm the dates and owners in this plan with Finance controller | AE | 2026-11-03 |\n| High | Book a meeting with CFO for the first phase gate | AE | 2026-11-04 |\n| Medium | Send this plan to Finance controller to edit | AE | 2026-11-02 |\n| Medium | Start \"Pilot acceptance\" now | Both | 2026-11-05 |\n\nThis only works as a mutual plan once the buyer has corrected the dates and the owners; update it as things change.\n\n*Last updated 2026-11-02.*\n\n\n## Reading the answer\n\nThis is a proposed dependency sequence for Regional bank reconciliation pilot, not a commitment to close on 2099-12-31. Agree the acceptance, review and signature owners before accepting the dates. The conclusion needs review if a dependency finishes later, the buyer cannot attend, the acceptance test fails, or the budget and signature authority remain unresolved.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: have the buyer confirm \"Reconcile a redacted batch with no unexplained differences\" before accepting the first milestone for Regional bank reconciliation pilot; record what would fail acceptance.\n\nCEO: resolve \"CFO has not approved a budget; security review starts after 20 November\" with CFO before approving resources against 2099-12-31; keep the close date proposed while budget or capacity is unconfirmed.\n\nCMO: have Head of IT confirm the evidence needed for the Regional bank reconciliation pilot technical review before circulating claims; retain the approval record and any unresolved condition.\n\nCRO: confirm lead times and signature dependencies with Procurement manager and CFO before accepting 2099-12-31; move dependent dates when an upstream review slips.\n\nDemand generation head: confirm attendance and the handoff owner for Regional bank reconciliation pilot before issuing meeting invitations; check buyer availability against 2099-12-31 rather than treating a sent invite as agreement.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "win_loss_analyzer",
+      "args": {
+        "analysis_type": "single_deal",
+        "deal_outcome": "lost",
+        "deal_details": "A $48000 telecom opportunity was lost after a 120 day cycle. NOC manager liked the demo, but procurement renewed the incumbent. We never met the economic buyer. This is one deal, not a trend.",
+        "loss_reason": "Incumbent renewal and no budget owner access",
+        "deal_value": 48000,
+        "sales_cycle_days": 120,
+        "stakeholders_involved": "NOC manager and procurement analyst",
+        "your_solution": "Network incident automation"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Win/Loss Analysis: Single Deal: Network incident automation\n\n*Sector: not clear from your inputs (name the industry for sector notes). Business model: not stated. Tell us how you charge and the plan will adjust.*\n\nAny priced offer below requires a written quote and buyer agreement.\n\n## Write-up\n\n**The product lost this deal.** The deal was worth $48,000 and ran 120 days.\n\nWhat was sold: Network incident automation.\n\n**Other notes, in your words.** \"A $48000 telecom opportunity was lost after a 120 day cycle\"; \"NOC manager liked the demo, but procurement renewed his is one deal, not a trend\".\n\n**What the buyer weighed.** No alternative was named in your inputs, so there is no comparison to read yet. The first question below asks the buyer what else they were weighing; write the answer into `deal details` and the comparison will follow.\n\n**The stated reason.** The reason the buyer gave, in the words you recorded: \"Incumbent renewal and no budget owner access\".\n\n**What the reason points to.**\n\n- Price or budget: at $48,000 the account owner needs the buyer’s approved cost case. Check whether the value case was agreed in the buyer's own numbers before price came up.\n- Incumbent decision to check: ask the buyer whether staying with the current supplier drove the loss, and record the reason in their words. The account owner should obtain that account before the loss review.\n\n**The people.** Stakeholders recorded: NOC manager and procurement analyst. No decision role or view was recorded. The account owner should confirm each person’s part before the review.\n\n## Questions for the review call\n\n1. What else was the buyer weighing besides the product: another provider, the way they work today, doing nothing or building it themselves, and who first brought it up?\n2. The deal ran 120 days: which stage took longest, and was that the buyer's process or a stall you could have moved?\n3. The deal was worth $48,000: did the price or the size of the commitment come up as a reason, and who raised it?\n4. Was the reason you recorded the real reason or the polite one, and who inside the buyer first said it?\n\n## Inputs as you gave them\n\n| Item | Value |\n|---|---|\n| **Solution** | Network incident automation |\n| **Deal Value** | $48,000 |\n| **Sales Cycle** | 120 days |\n| **Outcome** | Lost |\n| **Stated reason** | Incumbent renewal and no budget owner access |\n| **Stakeholders** | NOC manager and procurement analyst |\n\n## Reading the answer\n\nThe analysis supports investigating the lost decision for Network incident automation. This sample cannot establish a general cause or justify changing the entire sales motion. Compare deals with the same segment, scope and period and retain contrary cases. The conclusion needs review if the buyer gives a different reason or comparable wins, losses and deferred decisions do not show the proposed pattern.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: compare the reported reason \"Incumbent renewal and no budget owner access\" with a comparable win and loss for Network incident automation before changing the motion; retain cases that contradict it.\n\nCEO: have finance compare the pursuit cost and 120 day cycle for the 48,000 value opportunity before funding a process change; do not generalize one deal's economics.\n\nCMO: verify \"Incumbent renewal and no budget owner access\" with attributed buyer notes before changing a claim or campaign; separate buyer evidence from seller inference.\n\nCRO: ask NOC manager and procurement analyst for access to the actual decision maker and confirm the reason independently; record whether authority and the approval path were covered.\n\nDemand generation head: test the proposed Network incident automation selection change on a separate, comparable account cohort; agree the measure and stop rule before comparing outcomes with the current criteria.\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n- `competitor won`: it would change the comparison from the alternatives you described to the one that decided the deal; write \"no decision\" if the buyer chose none.\n- a position in brackets after each stakeholder, for example \"NOC manager and procurement analyst (supporter)\" or \"(against)\": it would let the review ask who backed the product and who did not.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "proposal_section_writer",
+      "args": {
+        "section_type": "executive_summary",
+        "your_solution": "Invoice processing service for regional insurers",
+        "customer_challenges": "Exceptions wait four days and the AP head cannot see who owns the next approval",
+        "key_differentiators": "Named exception owner and a visible review trail; improvement is unmeasured"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Executive Summary\n\n## Proposal for the customer\n\nthe customer told us about one problem: Exceptions wait four days and the AP head cannot see who owns the next approval. Invoice processing service for regional insurers is our answer, and the first reason is this: Named exception owner and a visible review trail.\n\n### The Solution\n\nInvoice processing service for regional insurers\n\n### The Opportunity\n\nKey challenges for the customer:\n\n- Exceptions wait four days and the AP head cannot see who owns the next approval\n\nFor a product like Invoice processing service for regional insurers (fintech, spend and expense), buyers usually judge a change like this by days to close the books, reconciliation effort and policy breach rate.\n\n### Our Recommendation\n\nWhat Invoice processing service for regional insurers offers the customer:\n\n- Named exception owner and a visible review trail\n- improvement is unmeasured\n\n### Expected Outcomes\n\nNo success metrics were given. Add success metrics. For a product of this kind (fintech, spend and expense) the usual ones are days to close the books, reconciliation effort, policy breach rate and approval cycle time; agree the measure and the baseline with the customer.\n\n### How We Will Get There\n\nNo rollout plan was given (implementation approach). For a product of this kind (fintech, spend and expense) a rollout usually starts like this, so use it as the first draft and put in your own phases and dates: (1) agree the pilot entity or department and the baseline (days to close the books, reconciliation effort); (2) run the pilot in parallel with the current process for one close cycle.\n\n### Investment Overview\n\nNo pricing was given. Add pricing here, or point to your pricing section.\n\n### Why Invoice processing service for regional insurers\n\nInvoice processing service for regional insurers has supplied differences to verify with the customer on the 2 points above. We propose to prove them the way a buyer of this kind of product checks: close time or reconciliation effort before and after for one entity, signed off by the finance controller.\n\n### Next Steps\n\n1. Confirm the scope with the customer: Exceptions wait four days and the AP head cannot see who owns the next approval.\n2. Agree the rollout, starting from this: agree the pilot entity or department and the baseline (days to close the books, reconciliation effort).\n\n---\n\n*We look forward to partnering with the customer to achieve these outcomes.*\n\n### Before you send (for you, not for the client)\n\n- Add one piece of evidence for each of the 2 points under Our Recommendation. For a product of this kind the evidence that lands is: close time or reconciliation effort before and after for one entity, signed off by the finance controller.\n\n---\n\n### Sector notes: fintech, spend and expense\n- **Who usually decides:** The CFO signs; the Finance Controller or the head of the affected finance team champions; internal audit and compliance review controls; IT checks ERP integration and security; HR joins when employees are affected.\n- **Words this sector's buyers use:** reconciliation, month end close, policy controls, audit trail, accounts payable, ERP posting, compliance review, approval workflow, data residency. Use them where they are true for the prospect.\n- **A proof point that lands:** Close time or reconciliation effort before and after for one entity, signed off by the finance controller.\n\n## Reading the answer\n\nThe executive summary section supports a scope conversation for Invoice processing service for regional insurers. The buyer must approve deliverables, excluded work and acceptance evidence before this becomes a commitment. An unmeasured improvement stays a hypothesis. The conclusion needs review if the buyer disputes the problem, rejects the scope or acceptance check, or measured results contradict the proposed difference.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: confirm with the buyer that \"Exceptions wait four days and the AP head cannot see who owns the next approval\" is the problem this proposal must resolve before endorsing Invoice processing service for regional insurers; record any competing priority.\n\nCEO: have the delivery lead list included work, exclusions and staff effort for Invoice processing service for regional insurers before approving the section; do not accept a delivery obligation without agreed boundaries.\n\nCMO: verify \"Named exception owner and a visible review trail; improvement is unmeasured\" against source records before approving the proposal wording; retain any unmeasured outcome as a hypothesis.\n\nCRO: ask the buyer to approve an observable acceptance condition for \"Exceptions wait four days and the AP head cannot see who owns the next approval\" and identify the signatory before sending the proposal for approval.\n\nDemand generation head: compare the Invoice processing service for regional insurers proposal audience with the account brief before reuse; remove this case's claims unless the new account has matching evidence.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "email_sequence_generator",
+      "args": {
+        "sequence_type": "cold_outreach",
+        "target_persona": "Practice manager at a regional clinic group",
+        "your_solution": "Clinic scheduling software",
+        "specific_pain_point": "Two receptionists can book the same appointment slot",
+        "social_proof": "One clinic used a shared calendar for a month; no measured reduction in double bookings."
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Cold Outreach Sequence\n\n**Evidence held:** Adverse or unconfirmed statements are not used as proof in these emails. Confirm a positive result before adding customer proof. Sentence read: no measured reduction in double bookings.\n\n## Target: Practice manager at a regional clinic group\n## Solution: Clinic scheduling software\n## Tone: professional\n## Emails: 5\n\n### Email 1: Opening (Day 1)\n\n**Subject:** Two receptionists can book the same appointment slot\n\n**Body:**\n\nHello,\n\nTwo receptionists can book the same appointment slot.\n\nI would welcome a short call next week.\n\n---\n\n### Email 2: Result and question (Day 3)\n\n**Subject:** One question on Clinic scheduling\n\n**Body:**\n\nHello,\n\nThe question that usually decides whether a change like this matters is this: When two receptionists can book the same appointment slot, what does it cost the team in a week, and who picks it up?\n\nI would welcome a short call in the next two weeks.\n\n---\n\n### Email 3: An example (Day 7)\n\n**Subject:** An example to check\n\n**Body:**\n\nHello,\n\nOne clinic used a shared calendar for a month.\n\nI would welcome a short call later this month.\n\n---\n\n### Email 4: Right person? (Day 12)\n\n**Subject:** Who looks after Clinic scheduling?\n\n**Body:**\n\nHello,\n\nI have written a few times about “Two receptionists can book the same appointment slot” and have not heard back, so I will ask plainly: is this yours, or does it sit with someone else?\n\nIf the problem is real but the timing is wrong, tell me which quarter suits you and I will come back then.\n\n---\n\n### Email 5: Questions to keep (Day 17)\n\n**Subject:** Questions on Clinic scheduling\n\n**Body:**\n\nHello,\n\nThis is my last note. Here are the questions to ask before changing how you handle Clinic scheduling, useful even if we never speak:\n1. What have you tried so far on this, and what stopped it from working?\n2. Who else feels this problem, and who would decide on a change?\n\nIf you want to talk any of it through, reply and I will make the time for a short call.\n\n---\n\n## Before you send\n\nAdd the recipient's name after \"Hello\" if you have it; the emails do not guess it.\n\nCheck these before sending. Each is used as you gave it, with the source it came with:\n- One clinic used a shared calendar for a month (as you gave it)\n\n## Reading the answer\n\nThis is a draft invitation for Practice manager at a regional clinic group to discuss Clinic scheduling software. The reported problem is a reason to ask, not proof that this recipient has it. The conclusion needs review if the recipient denies the reported problem, the example lacks support, or contact or customer permission is missing.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask whether the observation \"Two receptionists can book the same appointment slot\" is true for the intended recipient before endorsing the opening; retain a denial as evidence to revise it.\n\nCEO: name the reply owner and confirm they can deliver the proposed next step for Clinic scheduling software before approving a send; hold promises the team cannot fulfil.\n\nCMO: check \"One clinic used a shared calendar for a month; no measured reduction in double bookings.\" against its source and permission record before approving the example; do not turn an unmeasured change into a saving.\n\nCRO: ask Practice manager at a regional clinic group which next observation would justify a conversation about Clinic scheduling software; use that answer to approve or revise the reply request.\n\nDemand generation head: check contact permission, exclusions and a working reply route for Practice manager at a regional clinic group before sending; stop follow ups after a refusal and record relevance objections.\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n- `target industry`: it would change the emails from the persona alone to the sector's own roles and measures.\n- `key value prop`: it would change the emails from saying what the product is to saying what you aim for.\n- `call to action`: it would change the ask from a short call to your own wording.\n- `sender context` (your name and role): add your name and role before sending.\n\nSuggested timings, lengths and counts: adjust them to your own."
+          }
+        ]
+      }
+    },
+    {
+      "tool": "demo_script_builder",
+      "args": {
+        "demo_type": "first_look",
+        "your_solution": "Alert triage software for SOC managers at midmarket SaaS companies",
+        "known_objections": "We already have SIEM rules and cannot let a new system close alerts automatically."
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Demo Script: First look\n\n## Acceptance conditions to agree before the script\nNo must show features supplied. Name the buyer task and agree the observation, approver and pass condition before using this script.\nNo acceptance criterion is treated as agreed from a feature name alone. Keep the buyer's wording and evidence beside each condition.\n\nThe product, first look, 30 minutes (default). 3 steps, each built on a problem you named and tied to the people it matters to. The product is described as Alert triage software for SOC managers at midmarket SaaS companies.\n\n*Sector: not clear from your inputs (name the industry for sector notes). Business model: software subscription (read from your inputs; confirm how you charge).*\n\n---\n\n## The plan\n\n| Part | Time | What happens |\n|------|------|--------------|\n| Opening | 4 min | Asks for the main problem, states the outcome |\n| Confirm | 4 min | Plays the problem back |\n| Demo | 16 min | 3 steps: the workflow the buyer described, end to end, with their own example, the controls, reports and audit trail the buyer's reviewers will ask for and where it sits among the systems the buyer already runs |\n| Discussion | 4 min | 1 objection and open questions |\n| Close | 2 min | Agrees the next step |\n\n## Who sees what\n\n| Person | Role | What they came for | Shown in |\n|---|---|---|---|\n| The room | Roles not supplied | The problems you named | Every step |\n\n---\n\n## Demo Script\n\n### Part 1: Opening (4 minutes, from 0:00)\n\nSay: \"Thanks for making the time. Over the next 30 minutes I will take you through the product.\"\n\nSay: \"What I would like by the end of this session is a clear next step that we both agree.\"\n\nSay: \"The plan: first I confirm that I have your problem right, then 16 minutes of demo in 3 steps (the workflow the buyer described, end to end, with their own example, the controls, reports and audit trail the buyer's reviewers will ask for and where it sits among the systems the buyer already runs), then your questions, then the next step.\"\n\nAsk: \"Before I share my screen: what would make these 30 minutes worth it for you?\"\n\n---\n\n### Part 2: Confirm (4 minutes, from 4:00)\n\nSay: \"I have not been told your main problem, so before I show anything: what is the one thing you most want solved?\"\n\nAsk: \"What is the one thing you most want solved?\"\n\n---\n\n### Part 3: Demo (16 minutes, from 8:00)\n\nSay: \"Let me share my screen. I will keep to what you asked to see, one step at a time.\"\n\n**Step 1: The workflow the buyer described, end to end, with their own example** (about 5 minutes)\nOn screen: the product on one real case of \"The workflow the buyer described, end to end, with their own example\". Take one real case through it from its start to the result the user sees.\nSay: \"This one is for the problems you named. I will take one real case through it from its start to the result the user sees.\"\nAsk: \"How does the people who use it work with the workflow the buyer described, end to end, with their own example today, and what would change for them in the first week?\"\n\n**Step 2: The controls, reports and audit trail the buyer's reviewers will ask for** (about 5 minutes)\nOn screen: the product on one real case of \"The controls, reports and audit trail the buyer's reviewers will ask for\". Pick one live example from your side and run it through from the beginning.\nSay: \"This one is for the problems you named. I will pick one live example from your side and run it through from the beginning.\"\nAsk: \"Which number tells you the controls, reports and audit trail the buyer's reviewers will ask for is working, and who looks at that number?\"\n\n**Step 3: Where it sits among the systems the buyer already runs** (about 5 minutes)\nOn screen: the product on one real case of \"Where it sits among the systems the buyer already runs\". Run a case you chose, not one I prepared, and stop at the first thing that looks wrong.\nSay: \"This one is for the problems you named. I will run a case you choose, not one I prepared.\"\nAsk: \"What would make where it sits among the systems the buyer already runs worth keeping after a month?\"\n\n---\n\n### Part 4: Discussion (4 minutes, from 24:00)\n\nSay: \"I will stop sharing here. What did that raise for you?\"\n\nBuyer may ask: \"We already have SIEM rules and cannot let a new system close alerts automatically\"\nSay: \"Let me lay the product's parts next to what you run today, and mark what is duplicated, what only one of them does and what you could retire. Where a tool you already have does a job well, I will say keep it. Sentence read: We already have SIEM rules and cannot let a new system close alerts automatically.\"\nAsk: \"Which tools do you run today, and which of them do you trust least?\"\n\n---\n\n### Part 5: Close (2 minutes, from 28:00)\n\nSay: \"Which capabilities and pass conditions must the buyer agree before a pilot?\"\n\nSay: \"Here is what we covered. You also saw the workflow the buyer described, end to end, with their own example, the controls, reports and audit trail the buyer's reviewers will ask for and where it sits among the systems the buyer already runs.\"\n\nSay: \"What would be the right next step from here, and who should be part of it?\"\n\nIf yes. Say: \"I will send a summary of what we covered and an invite for the next step. Who else should be on it?\"\n\nIf hesitant. Say: \"Which of the problems we played back is still not answered for you? I want you to have everything you need.\"\n\n---\n\n## After The Demo\n\n- Send the written answers to: We already have SIEM rules and cannot let a new system close alerts automatically.\n- Send the summary promised in the close, and brief your champion separately.\n\n## Check before you say it\n\n- \"We already have SIEM rules and cannot let a new system close alerts automatically\": what each part of the product covers that the current tools do not, and what the current tools cover that the product does not.\n\n## Reading the answer\n\nThe script supports an acceptance discussion for Alert triage software for SOC managers at midmarket SaaS companies. Start with one buyer chosen example: agree the expected result, demonstrate only a confirmed capability, then ask the buyer to accept or reject what happened. Check whether an alert remains open until an authorized person approves closure; if this cannot be shown, record a gap rather than implying the capability exists. The conclusion needs review if the buyer rejects the observed result, the required capability is unavailable, or the objection remains unresolved.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask the buyer whether the test addresses \"We already have SIEM rules and cannot let a new system close alerts automatically.\" before endorsing the demonstration; record the observation that would disprove fit.\n\nCEO: have the delivery lead confirm a safe test environment and a named operator for Alert triage software for SOC managers at midmarket SaaS companies before committing staff; hold any live change that has no approval.\n\nCMO: compare the claims in the Alert triage software for SOC managers at midmarket SaaS companies demo with the recorded screen or service evidence before reusing them; do not infer a performance improvement from a walkthrough.\n\nCRO: agree with the buyer how to check whether an alert remains open until an authorized person approves closure before the demonstration; record pass, failure or not demonstrated against the same condition.\n\nDemand generation head: use the unresolved objection \"We already have SIEM rules and cannot let a new system close alerts automatically.\" to review the next invitation list; check that invitees face this problem before scaling demo outreach.\n\nTo sharpen this, give: primary audience (it would change who the opening speaks to and the first question); attendees (it would add a row and a question for each person, and choose the parts they should see); customer industry (it would change the questions that speak to the buyer's own industry); key pain points (it would choose which parts are shown and what the playback says; now the steps follow the order of your description); competitor context (it would add a side by side line and sharpen the difference answers); demo duration (30 minutes used; it would change the number of steps); must show features (it would fix the flows that are always shown; now the steps come from the usual demo list of this kind of seller); desired outcome (it would change the close; now it agrees the next step); your solution (list the parts of the product with a few words on what each does; it would make the steps the product's own parts).\n\nSuggested timings, lengths and counts: adjust them to your own."
+          }
+        ]
+      }
+    },
+    {
+      "tool": "pricing_negotiation_guide",
+      "args": {
+        "scenario": "competitor_pricing",
+        "deal_value": 80000,
+        "your_solution": "Managed cybersecurity alert triage service",
+        "competitor_price": "Incumbent renewal quote is $68000 a year",
+        "value_delivered": "Buyer values weekend coverage, but response time improvement has not been measured."
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Competitor Pricing Response: Managed cybersecurity alert triage service\n\n## Your deal\n\n| Factor | Value |\n|--------|-------|\n| **Solution** | Managed cybersecurity alert triage service |\n| **Deal value** | $80,000 |\n| **Decision timeline** | Not specified |\n| **Who approves** | Not specified |\n| **Competitor price** | Incumbent renewal quote is $68000 a year |\n\n**Your leverage:** none given. Add your leverage (a capability they need, a timeline, switching costs, an invested champion) and this guide builds the price conversation around it.\n\n---\n\n## Situation: Price direction is not clear\n\n**Competitor Price:** Incumbent renewal quote is $68000 a year\n\n---\n\n## Discovery Before Response\n\n### Questions to Ask:\n1. \"What's included in that price? Let's compare apples to apples.\"\n2. \"Is that their initial price or after negotiation?\"\n3. \"What about implementation, training, and support costs?\"\n4. \"Have you talked to their customers about total cost of ownership?\"\n\n### Hidden Costs to Surface:\n- Implementation fees\n- Training costs\n- Integration complexity\n- Support tiers\n- Charges that grow with volume or scope\n- Overage or excess charges\n- Contract lock-in\n\n---\n\n## Response Framework\n\n### Option 1: Win on Value, Not Price\n\n\"Which required capability would be removed to reach that price? Our pricing owner needs to confirm whether we can offer that scope.\" Do not promise a concession before that approval.\n\n### Option 2: Total Cost of Ownership\n\n\"Let me show you a total cost comparison over three years, with everything outside the quoted price: implementation, support and the time your own team spends.\" Start from your $80,000 and add the same items for the other option.\n\n### Option 3: Risk Framing\n\n\"The question isn't who's cheapest. The question is: what's the cost of getting this wrong? Is that worth the difference in price?\"\n\n---\n\n## Landmine Questions for Competitor\n\nSuggest the buyer ask the competitor:\n1. \"What's NOT included in that price?\"\n2. \"What does your highest-tier customer pay?\"\n3. \"Can I talk to a customer who's been with you three years or more about total cost?\"\n4. \"What happens when we need to scale?\"\n\n---\n\n### Sector notes: cybersecurity\n- **Objections this sector often raises:** we already have a tool for this; we have too many alerts already; integration with our existing security and it tools; we need proof before budget.\n- **A proof point that lands:** Real findings from the proof of value on the buyer's own environment, and the time it took to act on them.\n- **Words this sector's buyers use:** attack surface, exposure, alert fatigue, mean time to detect, mean time to respond, least privilege, compliance audit, risk register, threat intelligence. Use them where they are true for the prospect.\n\n## Reading the answer\n\nThis is preparation for negotiating Managed cybersecurity alert triage service. The supplied deal amount 80,000 and alternative quote \"Incumbent renewal quote is $68000 a year\" are not a like for like comparison until scope, period and exclusions match. Suggested terms require approval. The conclusion needs review if matched quote scope or period changes the comparison, delivery cost removes the margin, or the buyer cannot substantiate the claimed value.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask the buyer which requirement makes \"Buyer values weekend coverage, but response time improvement has not been measured.\" valuable before defending the 80,000 amount; retain any unmeasured benefit as a hypothesis.\n\nCEO: have finance reconcile the 80,000 amount with its period, delivery cost and minimum approved margin before authorizing a concession; name the person who can approve it.\n\nCMO: verify the source and scope of \"Buyer values weekend coverage, but response time improvement has not been measured.\" before using it to justify price; remove unsupported savings or response time claims.\n\nCRO: obtain the scope, term and exclusions behind \"Incumbent renewal quote is $68000 a year\" and the 80,000 offer before discussing a discount; record unresolved differences.\n\nDemand generation head: check that any Managed cybersecurity alert triage service pricing message uses the approved scope and period before reuse; do not turn this negotiated quote into a public price promise.\n"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "champion_enablement_kit",
+      "args": {
+        "asset_type": "executive_brief",
+        "your_solution": "Reconciliation software for a regional bank",
+        "key_value_points": "Finance controller reports 40 hours a month spent investigating exceptions. No pilot saving or budget approval yet.",
+        "target_stakeholder": "CFO"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Executive Brief for CFO\n\nRe: Recommendation on Reconciliation software for a regional bank\nTo: CFO\n\n## Recommendation\n\nI request validation of the business case for Reconciliation software for a regional bank.\n\n## What it is\n\nWe are looking at Reconciliation software for a regional bank.\n\n## What we expect to get\n\n- Finance controller reports 40 hours a month spent investigating exceptions. No pilot saving or budget approval yet\n\n## Questions you may have\n\n### We already have a provider for this\n\nWe should lay Reconciliation software for a regional bank's parts next to what we run today, and mark what is duplicated, what only one does and what we could retire. Where a tool we already have does a job well, we keep it. Sentence read: We already have a provider for this.\n\n### Security and compliance review\n\nThe question is the requirement you named. We should ask Reconciliation software for a regional bank exactly what it supports, what our own team or auditor still has to do, and for the document that proves it. Sentence read: Security and compliance review.\n\n### Reliability and uptime\n\nWe should ask Reconciliation software for a regional bank for the record, not a promise: its uptime over the last twelve months, how outages were reported, and what happens to work already in flight when one occurs. Then the service level, and what we receive if it is missed, goes in writing before we sign. Sentence read: Reliability and uptime.\n\n## Decision requested\n\nI am asking you to validate the business case for Reconciliation software for a regional bank and the first step: agree the pilot scope, a baseline and the measure we name.\n\n### About the reader\n\nOwner: the champion with CFO. Before forwarding this case for Reconciliation software for a regional bank, ask which acceptance condition CFO will check and obtain the source record. Check: the forwarded brief names that condition, its evidence and the person who can approve it.\n\nIn fintech the case is usually judged on time to go live, uptime, processing time and audit findings.\n\n### Sector notes: fintech\n- **Who usually decides:** The business owner (a chief executive, a product head or a finance head) signs; the product or operations lead champions; engineering checks the integration with the buyer's systems; risk, compliance and security review the controls, data handling and audit trail; procurement and finance check the commercial terms.\n- **Words this sector's buyers use:** regulatory review, audit trail, uptime, integration, access controls, data residency, compliance review, sign off, service level, customer onboarding. Use them where they are true for the prospect.\n- **A proof point that lands:** A before and after on one flow, product line or entity, from the buyer's own data, with the period named and the owner who signed it off.\n\n## Before you forward this\n\n- \"We already have a provider for this\": what each part of Reconciliation software for a regional bank covers that the current tools do not, and what the current tools cover that Reconciliation software for a regional bank does not.\n- \"Security and compliance review\": whether and how Reconciliation software for a regional bank supports the requirement you named, and which certificates or reports you hold; never claim a status you cannot show.\n- \"Reliability and uptime\": the uptime record of Reconciliation software for a regional bank for the last twelve months, the service level it will commit to in writing and what it pays if that level is missed.\n\n## Business case confirmation for Reconciliation software for a regional bank\n\nApproved cost for Reconciliation software for a regional bank: Unknown; confirm the approved amount and its source.\nValue to establish for Reconciliation software for a regional bank: validate the supplied claims against a customer baseline, period and full costs.\nDecision owner and authority for this purchase: Unknown; identify who can authorize it.\nBudget timing and context, as supplied: Unknown.\nRequest a business case review of Reconciliation software for a regional bank; cost, value and decision authority must be confirmed before purchase approval.\n\n## Reading the answer\n\nThe kit supports a conversation with CFO about Reconciliation software for a regional bank. A contact's reported effort or enthusiasm does not establish savings, advocacy, budget or approval authority. The conclusion needs review if the contact cannot arrange approver access, the measured result contradicts the value claim, or the buyer declines the scope or funding request.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask the contact to explain \"Finance controller reports 40 hours a month spent investigating exceptions. No pilot saving or budget approval yet.\" in their own words before endorsing the internal case; distinguish reported effort from measured savings.\n\nCEO: confirm who can authorize spending and delivery for Reconciliation software for a regional bank before supporting a purchase recommendation; ask CFO to confirm budget authority.\n\nCMO: check the source, period and measurement behind \"Finance controller reports 40 hours a month spent investigating exceptions. No pilot saving or budget approval yet.\" before approving the internal brief; keep any unmeasured benefit explicit.\n\nCRO: ask the contact to arrange a conversation with CFO and confirm willingness to advocate for Reconciliation software for a regional bank; record the introduction rather than inferring influence from title.\n\nDemand generation head: check that the brief for Reconciliation software for a regional bank reaches only the agreed buying group and has an owner for questions; do not classify the contact as a champion until advocacy is confirmed.\n\nTo sharpen this, give: champion name (it would sign the asset); champion role (it would fill the From line and the voice of the asset); known objections (it would replace the usual questions of fintech with the ones you expect); competitive context (it would name the alternatives and the way of working today); approved amount and decision authority in the budget context (it would allow a purchase recommendation after the value case is validated); urgency drivers (it would give a reason to act now and a date; now none is set); champion wins (it would add your own stake as a note to you; now there is none); your solution (list the parts of the product with a few words on what each does; it would let the answers point to the part that fits each question).\n\nSuggested timings, lengths and counts: adjust them to your own."
+          }
+        ]
+      }
+    },
+    {
+      "tool": "competitive_trap_setter",
+      "args": {
+        "competitor": "Existing TMS",
+        "your_solution": "Dispatch exception management software",
+        "your_strengths": "Shows the next owner and affected depot for each failed delivery",
+        "competitor_weaknesses": "One prospect says route changes still require phone calls; not independently verified."
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Competitive Positioning: Dispatch exception management software vs Existing TMS\n\n## The set-up\n\nThe Dispatch exception management software is in a mid stage evaluation against Existing TMS. That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer's own experience with them; there is no single contract or reference list to ask about. What you said you sell: Dispatch exception management software.\n\n*Sector: read from your inputs as logistics tech. Business model: not stated. Tell us how you charge and the plan will adjust.*\n\n### Sector notes: logistics tech\n- **Who usually decides:** The COO or Head of Supply Chain signs; the Head of Logistics or the operations lead champions; planners and operations staff use it daily; IT checks the fit with the order, transport and warehouse systems; finance checks the cost case.\n- **Words this sector's buyers use:** shipment, carrier, consignment, lead time, exception, service level, proof of delivery, third party logistics provider, transport management system, warehouse management system. Use them where they are true for the prospect.\n- **A proof point that lands:** A before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks.\n\n### Your notes (not for the buyer)\n\n**Your strengths**\n- Shows the next owner and affected depot for each failed delivery\n\n**Weak points of Existing TMS**\n- One prospect says route changes still require phone calls\n- not independently verified.\n\n---\n\n## Discovery Questions (Landmines)\n\nAsk these as open questions, so the buyer finds the gaps of Existing TMS in their own evaluation. The weak points are your notes and are never read out. For each answer, ask to see it live on the buyer's own data, not on a slide.\n\n### What the buyer told you matters\n- No priorities were given, so there is no question here yet.\n\n### From the evaluator's role and the sector\n- \"What happens when an order, a carrier or a route changes after the goods have left?\"\n- \"Where do delays, damage or disputes come from today?\"\n\n### Capability Landmines\n**Weak point 1 of Existing TMS (your note, not for the buyer):** One prospect says route changes still require phone calls\n**Landmine Question:** \"What does each option need from you before it works (phone calls), who provides it, and what does that add to the time and the cost?\"\n\n**Weak point 2 of Existing TMS (your note, not for the buyer):** Not independently verified.\n**Landmine Question:** \"How does each option handle not independently verified?\"\n\n### Questions about Existing TMS\n- \"Which tools of that kind have you tried or shortlisted, and what did the first demo not show?\"\n- \"What does keeping Existing TMS running cost you in a year, in people's time and in fees?\"\n- \"What did you have to work around, and who does that work?\"\n\n---\n\n## Evaluation Criteria Positioning\n\n### Criteria to Establish Early\n\nAgree these as criteria before anyone is shortlisted. For each one, the question to put to every option is the same: can it show this on one of your own cases?\n\n- Criterion 1: Shows the next owner and affected depot for each failed delivery\n\n### How to Suggest Criteria\n\n\"Before you evaluate anyone, it helps to agree the criteria. I would suggest one criterion for it, and I will send it with the questions. Would it help if I shared the questions to ask every option you are looking at?\"\n\n---\n\n## Reference Call Questions\n\nSuggest the buyer ask these of people who live with Existing TMS today (their own team, or peers who work the same way):\n\n- \"What does a tool of that kind need from you before it works (phone calls), who provides it, and what does that add to the time and the cost?\"\n- \"How does a tool of that kind handle not independently verified?\"\n\n---\n\n## Technical Requirements (Traps)\n\n### RFP or Requirements Document\n\nEach requirement is accepted only if it is shown live and the evaluation team signs off the result.\n\n1. Shown live on your own case: shows the next owner and affected depot for each failed delivery\n\n### Evaluation Scenarios\n\nAgree the pass mark with the buyer before each test.\n\n**Scenario 1:** give each option the same case that tests phone calls, and compare what each one does with it.\n\n**Scenario 2:** give each option the same case for weak point 2, and compare what each one does with it.\n\n---\n\n## Commercial Terms (Positioning)\n\n### Cost Comparison\n\nWhen they compare the Dispatch exception management software with Existing TMS, make sure they compare:\n- What Existing TMS cost a year in people's time, fees and the cost of its failures\n- What the Dispatch exception management software costs over the same period, including set-up and the team's time\n- What changes for the people who do the work today\n\n### Your Own Terms\n\nNo terms of your own were given among your strengths (your strengths). Add the ones you can put in the contract and they appear here.\n\n---\n\n## Stage-Specific Tactics\n\n### Mid Stage Recommendations\n\nMake sure your strongest criterion is one of the live tests, and bring the proof that lands in this sector: a before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks. Let the buyer meet the limits of Existing TMS in their own tests.\n\n## Reading the answer\n\nThe questions support a buyer controlled comparison of Dispatch exception management software and Existing TMS. A supplied weakness is a hypothesis, not a verified fact about the alternative. Test the same case and acceptance criterion on both. The conclusion needs review if the alternative passes the agreed test, the proposed strength cannot be demonstrated, or the buyer does not value the distinction.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\nFounder: ask the buyer whether \"Shows the next owner and affected depot for each failed delivery\" changes their decision before endorsing the comparison; drop the distinction if it is not material.\n\nCEO: approve only the effort needed for an equal scope comparison of Dispatch exception management software and Existing TMS; check that costs and test conditions are recorded for both.\n\nCMO: verify \"One prospect says route changes still require phone calls; not independently verified.\" before using it externally; keep an unverified prospect observation out of factual claims about Existing TMS.\n\nCRO: ask the buyer to run the same example through Existing TMS and Dispatch exception management software with an agreed pass condition; record contrary results as well as failures.\n\nDemand generation head: use the buyer validated criterion for Dispatch exception management software to review a fresh audience sample; do not use the unverified weakness of Existing TMS as a targeting fact.\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n- `evaluation stage`: it would change the stage tactic from the mid stage that is assumed to the stage you are in.\n- `buyer persona`: it would change the questions to the worries of that role and name who signs off the requirements.\n- `buyer priorities`: it would add questions on what the buyer told you matters, and tie each weak point to one of them.\n\nSuggested timings, lengths and counts: adjust them to your own.\n"
+          }
+        ]
+      }
+    }
+  ],
+  "invalid": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Missing required input for Account Plan Builder: account name. Provide it and call the tool again."
+      }
+    ],
+    "isError": true
+  },
+  "referralArgs": {
+    "account_name": "Regional fleet account",
+    "industry": "logistics",
+    "current_arr": 24000,
+    "known_contacts": "Operations director: champion; CFO: economic buyer; depot manager: daily user",
+    "current_products": "Dispatch exception queue at one depot",
+    "expansion_opportunities": "Second depot opens in January; needs have not been confirmed",
+    "competitive_threats": "Existing TMS adds routing features",
+    "your_solution": "Recommend software to buy for our team.",
+    "account_notes": "Current customer. Champion has not introduced the second depot manager."
+  },
+  "referral": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Which software fits your case is a judgement call. Ask Shashwat: book 45 minutes at https://calendly.com/shashwat-gtmhelix/45min"
+      }
+    ]
+  }
+}

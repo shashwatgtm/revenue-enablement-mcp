@@ -8,6 +8,18 @@ async function call(name,args){
  const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 }
 const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('Win loss preserves the sentence after an incumbent mention or extracted alternative',async()=>{
+ const a=cases.find(x=>x.tool==='win_loss_analyzer').args;
+ const t=await call('win_loss_analyzer',a);
+ assert.match(t,/procurement renewed the incumbent/);
+ assert.match(t,/We never met the economic buyer/);
+ assert.match(t,/This is one deal, not a trend/);
+ const named=await call('win_loss_analyzer',{...a,deal_details:'The incumbent is Example Supplier. We never met the economic buyer. This is one deal, not a trend.'});
+ assert.match(named,/Example Supplier/);
+ assert.match(named,/We never met the economic buyer/);
+ assert.match(named,/This is one deal, not a trend/);
+ assert.doesNotMatch(named,/"e never|"his is/);
+});
 test('Account expansion keeps absent demand as a constraint and daily user as a stated role',async()=>{
  const base=cases.find(x=>x.tool==='account_plan_builder').args;
  for(const caveat of ['needs have not been confirmed','Demand is unconfirmed','No confirmed expansion opportunities']){

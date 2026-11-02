@@ -1,11 +1,13 @@
-import { splitNotes } from './rw-kit.ts';
+import { splitNotes, readPains, productName } from './rw-kit.ts';
+import { solutionBrief } from './dealtext.ts';
 type Input = Record<string, unknown>;
 type Reading = {meaning: string; evidence: string; roles: string[]};
 // Inputs have already crossed the shared escaping boundary. Do not cut an escape.
 const label = (v: unknown, fallback: string): string => typeof v === 'string' && v.trim() && v.trim().length <= 150 && !/[\r\n]/.test(v) && !/^\(?\s*(?:not (?:given|supplied|stated|known)|unknown|n\/?a|none|unspecified)\s*\)?$/i.test(v) ? v.trim() : fallback;
 const num = (v: unknown, fallback: string): string => typeof v === 'number' && Number.isFinite(v) ? v.toLocaleString('en-US', {maximumFractionDigits: 6}) : fallback;
 export function revenueReading(name: string, a: Input, result: string): Reading | undefined {
- const solution=label(a.your_solution,'the supplied offer');
+ const description=typeof a.your_solution==='string' ? a.your_solution : '';
+ const solution=label(productName(solutionBrief(description),description)||description,'the supplied offer');
  if(name==='email_sequence_generator'){
   const persona=label(a.target_persona,'the intended recipient'),pain=label(a.specific_pain_point,'the supplied problem'),proof=label(a.social_proof,'the supplied proof, if any');
   return {meaning:`This is a draft invitation for ${persona} to discuss ${solution}. The reported problem is a reason to ask, not proof that this recipient has it.`,evidence:`the recipient denies the reported problem, the example lacks support, or contact or customer permission is missing`,roles:[
@@ -31,7 +33,7 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
  }
 
  if(name==='discovery_question_bank'){
-  const role=label(a.prospect_role,'the proposed buyer').replace(/\s*\((?:title of|source:)[^)]*\)/gi,''),pain=label(a.known_pain_points,'the reported problem'),metrics=label(a.known_metrics,'the unverified metric baseline');
+  const role=label(a.prospect_role,'the proposed buyer').replace(/\s*\((?:title of|source:)[^)]*\)/gi,''),pain=label(readPains(String(a.known_pain_points||'')).pains[0],'the reported problem'),metrics=label(a.known_metrics,'the unverified metric baseline');
   return {meaning:`Use the question bank to test ${solution}, beginning with three observations: ask ${role} for the most recent instance of "${pain}"; ask how often it happened and how the cost was counted; then ask what result and whose approval would justify changing the process. The remaining questions are optional probes, not a required script.`,evidence:`the buyer cannot confirm a recent instance, the metric counts a different scope or period, or the approval condition does not support a change`,roles:[
    `Founder: ask ${role} for a recent example of "${pain}" before accepting it as a buying problem; record a counterexample where the current process worked.`,
    `CEO: have finance verify the scope and period behind "${metrics}" before valuing the problem; distinguish total team effort from effort per person.`,

@@ -138,18 +138,18 @@ Suggested timings, lengths and counts: adjust them to your own.
 
 ## Reading the answer
 
-The arithmetic applies the supplied assumptions. Capacity value is not cash unless a cost is released. The conclusion needs review if new evidence changes buyer confirmed benefit, recurring price, implementation cost and the same measurement period.
+The calculation supports checking the supplied Helix Platform economics. A calculated benefit is conditional on the supplied scope, price and improvement. Released capacity is not cash unless a cost is removed or additional contribution is evidenced. The conclusion needs review if the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit.
 
 ## Decisions by role
 
 Proposed owners. Confirm the named person before acting.
 
-Founder: identify which missing fact could reverse the investment case before accepting the recommendation.
+Founder: challenge whether the unconfirmed improvement is achievable for Helix Platform before endorsing the case; revise scope or price if annual value does not cover the recurring fee.
 
-CEO: set the resource limit and stop condition for the investment case before committing budget.
+CEO: have finance verify the unstated amount annual cost baseline, 1 price period and implementation cost before committing; approve only a benefit that finance can substantiate.
 
-CMO: check whether the audience and claim in the investment case are supported by the supplied customer evidence before briefing the team.
+CMO: check "the unverified baseline" before publishing a return claim for Helix Platform; do not present labour capacity as an approved cash saving.
 
-CRO: validate buyer confirmed benefit, recurring price, implementation cost and the same measurement period with the relevant buyer or account owner before changing sales priorities.
+CRO: agree a buyer measurement of the unconfirmed improvement against the unstated amount baseline before revising the proposal; require the same scope and period.
 
-Demand generation head: compare the next account sample with the investment case before expanding outreach.
+Demand generation head: keep this Helix Platform case out of positive return campaigns until the buyer confirms realized benefit and the 1 price period; retain any negative economics alongside it.

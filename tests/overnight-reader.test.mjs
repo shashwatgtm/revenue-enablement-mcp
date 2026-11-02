@@ -8,6 +8,21 @@ async function call(name,args){
  const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 }
 const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('MAP respects unresolved buyer availability instead of assigning earlier review dates',async()=>{
+ const a=cases.find(x=>x.tool==='mutual_action_plan_generator').args;
+ for(const timing of ['security review starts after 20 November','security review begins on November 20','security review cannot start before next Monday','security review starts after 2026-11-20']){
+  const t=await call('mutual_action_plan_generator',{...a,blockers:timing});
+  assert.match(t,/Schedule held for the buyer's constraints/);
+  assert.ok(t.includes(timing));
+  assert.doesNotMatch(t,/### Phase \d|Start "Pilot acceptance" now/);
+  assert.match(t,/Confirm the year, earliest start and duration/);
+ }
+ const t=await call('mutual_action_plan_generator',{...a,blockers:'Budget review pending'});
+ assert.match(t,/### Phase \d/);
+ const timeline=t.split('## Mutual Action Plan Timeline')[1].split('## Risks')[0];
+ assert.ok(timeline.indexOf("Buyer's process step, in your words: procurement")<timeline.indexOf("Buyer's process step, in your words: signature"));
+ const close=timeline.split('Close & Launch')[1];assert.match(close,/process step, in your words: signature/);
+});
 test('Win loss preserves the sentence after an incumbent mention or extracted alternative',async()=>{
  const a=cases.find(x=>x.tool==='win_loss_analyzer').args;
  const t=await call('win_loss_analyzer',a);

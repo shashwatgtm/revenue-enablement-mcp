@@ -58,6 +58,28 @@ function constrainedPlan(deal, target, notes, requirement, blockers) {
         const end = days === null ? null : business ? (0, dealtext_ts_1.isoDate)((0, dealtext_ts_1.addWorkdays)((0, dealtext_ts_1.onOrAfterWorkday)(start), days)) : (0, dealtext_ts_1.isoDate)(new Date(start.getTime() + days * 86400000));
         constraints.push({ step, date: match[2], days, business, end, note: clause });
     }
+    const unresolvedTiming = clauses.filter(clause => /\b(?:starts?|begins?|available|availability|cannot start|can't start|can not start)\b.{0,35}\b(?:after|before|from|on|until)\s+(?:(?:\d{1,4}[-/ ]|(?:next |this )?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|month|january|february|march|april|may|june|july|august|september|october|november|december)))/i.test(clause)
+        && !constraints.some(c => c.note === clause));
+    if (unresolvedTiming.length)
+        return `# Mutual Action Plan: ${deal}
+
+## Schedule held for the buyer's constraints
+Requested close: ${target}. The buyer supplied timing that this tool cannot safely turn into a complete date. Confirm the year, earliest start and duration with the review owner before assigning milestones. No close feasibility or review completion date is established.
+
+Timing supplied, preserved in your words:
+${unresolvedTiming.map(c => `- ${(0, rw1_common_ts_1.quoted)(c)}.`).join('\n')}
+${constraints.length ? `\nOther dated constraints supplied:\n${constraints.map(c => `- ${c.step}: no earlier than ${c.date}; ${c.end ? `earliest completion ${c.end}` : 'completion not established without a duration'}.`).join('\n')}\n` : ''}
+## Buyer process and evidence
+${notes ? `Process supplied: ${(0, rw1_common_ts_1.quoted)(notes)}.` : 'No process supplied.'}
+${requirement ? `Requirements supplied: ${(0, rw1_common_ts_1.quoted)(requirement)}.` : 'No requirements supplied.'}
+${blockers ? `Blockers supplied: ${(0, rw1_common_ts_1.quoted)(blockers)}.` : 'No additional blockers supplied.'}
+
+## Next actions
+1. The account executive asks the buyer's review owner to confirm each timing phrase as a full date and duration, including holidays and capacity.
+2. The buyer confirms the order of acceptance, security, legal, procurement and signature. Keep signature after the approvals it requires.
+3. The economic buyer confirms budget authority and the revised close after those dependencies are dated. Keep resources and the close uncommitted until then.
+
+No step is instructed to start now when the buyer has supplied a later or unresolved availability date. This is a constraint review, not an approved schedule.`;
     if (!constraints.length)
         return null;
     const impossible = constraints.some(c => (c.end || c.date) > target);
@@ -253,6 +275,8 @@ function buildMutualActionPlan(args, d) {
     const processSteps = d.splitItems(commaSteps ? stepsIn.replace(/,\s*(?:and\s+)?/g, ';') : stepsIn).map(rw1_common_ts_1.stripEnd);
     const placeStep = (s) => {
         const t = s.toLowerCase();
+        if (/\b(?:signature|signing|sign(?:ed)? contract|contract sign(?:ed|ing)|execute (?:the )?contract)\b/.test(t))
+            return { stage: 'close', who: 'eb' };
         if (/security|questionnaire|vendor (?:risk )?assessment|risk assessment|due diligence|penetration|infosec/.test(t))
             return { stage: 'evaluation', who: 'security' };
         if (/legal|contract|redline|data processing|dpa|terms|nda|msa/.test(t))
@@ -265,7 +289,8 @@ function buildMutualActionPlan(args, d) {
             return { stage: 'negotiation', who: 'eb' };
         return { stage: 'evaluation', who: 'eval' };
     };
-    const firstStageAtOrAfter = (stage) => { const i = STAGE_ORDER.indexOf(stage); const j = Math.max(i, from); return STAGE_ORDER[j] || STAGE_ORDER[from]; };
+    const firstStageAtOrAfter = (stage) => { if (stage === 'close')
+        return 'close'; const i = STAGE_ORDER.indexOf(stage); const j = Math.max(i, from); return STAGE_ORDER[j] || STAGE_ORDER[from]; };
     const processBy = {};
     for (const s of processSteps) {
         const p = placeStep(s);
@@ -402,10 +427,11 @@ function buildMutualActionPlan(args, d) {
         ],
         close: ownerLed ? [
             { m: 'Order placed and first payment made', who: 'eb' },
+            ...(processBy.close || []),
             { m: `Set-up starts: ${mw.setup}`, who: 'both' },
             { m: 'Training for the people who will use it, and a check after the first week', who: 'se' },
         ] : [
-            { m: 'Contract signed', who: 'eb' },
+            ...(processBy.close || [{ m: 'Contract signed', who: 'eb' }]),
             { m: hasStage('negotiation') ? 'Kickoff scheduled, with the owners and the dates confirmed in the commercial phase' : `Kickoff scheduled: ${mw.setup}`, who: 'both' },
             { m: criteria.length ? 'Success criteria written down from the criteria above, with the pass mark for each' : 'Success criteria written down', who: 'seller' },
         ],

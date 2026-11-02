@@ -527,12 +527,12 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // in a regulated industry, the part of the product that is about safe use, control or audit is named once
     const regulated = /\b(?:financ\w*|bank\w*|insur\w*|health\w*|government|public sector)\b/i.test(industry);
     const controlPart = regulated ? parts.find((x) => /protect|secur|govern|complian|privacy|safe|audit|control/i.test(x) && !nearParts.includes(x)) : '';
-    const subjPain = (a, fallback) => (a && clauseLike(a) && a.length <= 60 ? (0, rw_common_ts_1.sentenceCase)(a) : fallback);
+    const subjPain = (a, fallback) => (a && clauseLike(a) && a.length <= 60 && painSubject() ? `Question: ${(0, rw_common_ts_1.sentenceCase)(a)}` : fallback);
     const openPain = () => {
         const a = nextPain();
         if (!a)
             return `I am writing${inInd ? ` to people${inInd}` : ''} about ${topic}.${nextQ() ? ` ${nextQ()}` : ''}`;
-        return tone === 'provocative' ? `A direct question: ${painRef(a)} Is that true on your side?` : painStatement(a);
+        return tone === 'provocative' ? `A direct question: ${painRef(a)} Is that true on your side?` : `Does this describe your team: “${(fragment(a) ? painStatement(a) : a).replace(/(?:\\[.!?]|[.!?])+$/, '')}”?`;
     };
     // the second and third part of the problem: a clause with its own verb is added to the first in a sentence of its own; a fragment is introduced
     const alsoPain = (p2, p3) => {

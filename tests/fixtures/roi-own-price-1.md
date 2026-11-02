@@ -153,3 +153,6 @@ CMO: check "the unverified baseline" before publishing a return claim for Helix 
 CRO: agree a buyer measurement of the unconfirmed improvement against the unstated amount baseline before revising the proposal; require the same scope and period.
 
 Demand generation head: keep this Helix Platform case out of positive return campaigns until the buyer confirms realized benefit and the 1 price period; retain any negative economics alongside it.
+
+
+Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.

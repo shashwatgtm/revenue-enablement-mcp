@@ -312,7 +312,7 @@ function buildDemoScript(args, d) {
         // no flow and no named part: one step for each pain, in the user's words
         pains.slice(0, maxSteps).forEach((p, i) => { const st = newStep(`Problem ${i + 1}${p.split(/\s+/).length <= 10 ? `: ${low(p)}` : ''}`, null, null, p); st.fromPain = true; steps.push(st); });
         if (!steps.length)
-            ((d.stock(v, modelKey).show || []).length ? d.stock(v, modelKey).show : d.stock(null, 'generic').show).slice(0, 3).forEach((t) => steps.push(newStep(t, null, null, t)));
+            ['Choose one buyer task', 'Confirm a safe demonstration', 'Agree the evidence and decision'].forEach((t) => steps.push(newStep(t, null, null, t)));
         assign();
         steps.forEach((s, i) => { if (s.fromPain) {
             s.pains = [i];
@@ -323,6 +323,7 @@ function buildDemoScript(args, d) {
     const minPain = (x) => (x.pains.length ? Math.min(...x.pains) : 99);
     steps.sort((a, b) => (a.flow ? 0 : 1) - (b.flow ? 0 : 1) || (a.flow && b.flow ? ms.flows.indexOf(a.flow) - ms.flows.indexOf(b.flow) : minPain(a) - minPain(b) || (a.secondary ? 1 : 0) - (b.secondary ? 1 : 0)));
     const shown = steps.slice(0, maxSteps);
+    const planningOnly = shown.every(s => !s.flow && !s.cap && !s.fromPain);
     const notShownFlows = steps.slice(maxSteps).map((s) => (s.flow ? s.flow.text : s.title));
     const notShownCaps0 = capPool.map((x) => x.name);
     const perStep = Math.max(1, Math.floor(demo / Math.max(1, shown.length)));
@@ -387,6 +388,13 @@ function buildDemoScript(args, d) {
     const atClose = [], atDiscussion = [];
     for (const o of objections) {
         const a = (0, rw_kit_ts_1.answerObjection)(o, actx);
+        if (/\balerts?\b/i.test(o) && /\bclos(?:e|es|ed|ing|ure)\b/i.test(o) && /\b(?:cannot|can't|must not|not allowed|no automatic)\b/i.test(o)) {
+            a.kind = 'control';
+            a.say = 'Before showing this, I will confirm whether closure can require an authorized person. If that control exists, we can use an isolated test alert: attempt closure without approval, then with approval, and inspect the record. If it cannot be shown, I will record the gap and stop the test.';
+            a.ask = 'Who may approve closure, and what record would let you verify that no alert closed without that approval?';
+            a.check = 'whether human approval is enforceable, which roles can approve, and the observed result of each authorized and unauthorized test';
+            a.sector = '';
+        }
         answers.set(o, a);
         if (CLOSE_KINDS.has(a.kind)) {
             atClose.push(o);
@@ -492,7 +500,7 @@ function buildDemoScript(args, d) {
         proof_of_concept: pains.length ? `What result on ${say(pRef(0))} would you need to see in a trial to call it a success?` : 'What result would you need to see in a trial to call it a success?',
     };
     const confirm = [
-        keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so before I show anything: what is the one thing you most want solved?"`,
+        keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so I will confirm it before showing a capability."`,
         untied.length ? `Ask: "Which part of ${P} would you most want to see for ${(0, dealtext_ts_1.joinList)(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
         ...people.map((_p, qi) => (qi === riskQi && riskClaims.length ? `Say: "For ${personRef(qi)}, here is the evidence the page claims: ${say(claimSay(riskClaims))} Which of these match what you ask for, and what else would you need?" *(${claimLabels(riskClaims)}; have the source ready)*\n\n${askFor(qi)}` : askFor(qi))),
         lens ? `Ask: "${lens.checks[0]}"` : '',
@@ -510,7 +518,7 @@ function buildDemoScript(args, d) {
         const V = {
             tech: [`What would ${ref(s)} have to connect to in what you run today, and who would look after it?`, `Which of your current systems or data would ${ref(s)} need access to, and who approves that?`],
             measure: [`How is ${ref(s)} done today, and what does it cost your team each month in time or money?`, `Which number tells you ${ref(s)} is working, and who looks at that number?`],
-            people: [`How does ${who} work with ${ref(s)} today, and what would change for ${s.people.length ? 'them' : 'them'} in the first week?`, `Which team would feel ${ref(s)} most, and what are they worried about?`],
+            people: [`How is ${ref(s)} handled today by ${who}, and what would change for them in the first week?`, `Which team would feel ${ref(s)} most, and what are they worried about?`],
             other: [`What would you need to see in ${ref(s)} to trust it with a real case?`, pains.length ? `Which of the problems you named would ${ref(s)} change first, and who would notice?` : `Who would own ${ref(s)} after today, and what would they check first?`, `What would make ${ref(s)} worth keeping after a month?`],
         };
         return V[k][(n + i) % V[k].length];
@@ -527,6 +535,11 @@ function buildDemoScript(args, d) {
     const typeUse = {};
     const usedLines = new Set();
     const stepBlocks = shown.map((s, i) => {
+        if (planningOnly) {
+            const questions = ['Which task should we test, using one recent example you choose, and what result would count as a pass?', 'Which confirmed capability can run that task in an isolated test, who will operate it, and which approvals are required?', 'Who will observe the test and approve the result, where will we record failures, and what evidence would justify the next step?'];
+            const checks = ['Record the task, chosen example and expected observation before selecting a feature.', 'Record the confirmed capability, operator, test environment and required approvals before a demonstration.', 'Record the approver, pass condition and evidence location before agreeing the next step.'];
+            return `**Step ${i + 1}: ${s.title}** (about ${s.minutes} ${s.minutes === 1 ? 'minute' : 'minutes'})\nAsk: "${questions[i]}"\nCheck: ${checks[i]}`;
+        }
         const main = s.pains.length ? s.pains[0] : -1;
         const ptype = main >= 0 ? (0, rw_kit_ts_1.painType)(pains[main]) : 'general';
         const vi = typeUse[ptype] = (typeUse[ptype] ?? -1) + 1;
@@ -577,10 +590,10 @@ function buildDemoScript(args, d) {
         return lines.join('\n');
     });
     const compareLine = competitorContext ? `Say: "You are weighing this against ${say(competitorContext)}. Which part of that comparison matters most to you? Let me show that part next."` : '';
-    const flow = [`Say: "Let me share my screen. I will keep to what you asked to see, one step at a time."`, ...stepBlocks, compareLine].filter(Boolean).join('\n\n');
+    const flow = [planningOnly ? 'Say: "We have not agreed what to demonstrate yet. Let us choose the task and test before opening a live system."' : `Say: "Let me share my screen. I will keep to what you asked to see, one step at a time."`, ...stepBlocks, compareLine].filter(Boolean).join('\n\n');
     const notShownAll = [...notShownFlows, ...notShownCaps];
     const discussionBlock = [
-        `Say: "I will stop sharing here. What did that raise for you?"`,
+        planningOnly ? 'Say: "Which condition is still unresolved before we prepare the test?"' : `Say: "I will stop sharing here. What did that raise for you?"`,
         ...atDiscussion.map(objectionBlock),
         notShownCaps.length ? `Say: "There is more behind this than I showed today: ${say((0, dealtext_ts_1.joinList)(notShownCaps))}. Tell me which of your problems they would help with and I will cover them next time."` : '',
     ].filter(Boolean).join('\n\n');
@@ -591,7 +604,7 @@ function buildDemoScript(args, d) {
         const k = st.pains[0];
         byPain.set(k, [...(byPain.get(k) || []), st.fromPain && shown.some((x) => !x.fromPain) ? 'a live case run through ' + P : ref(st)]);
     }
-    const recap = shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...[...byPain.entries()].map(([k, refs]) => `For ${say(pRef(k))} you saw ${(0, dealtext_ts_1.joinList)(refs)}.`), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
+    const recap = planningOnly ? 'We discussed the task, safe test and approval evidence. No capability has been demonstrated in this planning conversation.' : shown.length && shown.every((s) => s.fromPain) ? `You saw ${P} on ${say((0, dealtext_ts_1.joinList)(shown.map((s) => pRef(s.pains[0]))))}.` : shown.length ? [...[...byPain.entries()].map(([k, refs]) => `For ${say(pRef(k))} you saw ${(0, dealtext_ts_1.joinList)(refs)}.`), withoutPain.length ? `You also saw ${withoutPain.length <= 3 ? (0, dealtext_ts_1.joinList)(withoutPain.map(ref)) : `${withoutPain.length} more parts of ${P}`}.` : ''].filter(Boolean).join(' ') : `You saw ${P}.`;
     const rest = unattached.slice(3);
     const nextOpt = v ? low(d.stock(v, modelKey).next) : '';
     const closeBlock = [
@@ -624,7 +637,7 @@ function buildDemoScript(args, d) {
     if (!durationGiven)
         sharpen.push('demo duration (30 minutes used; it would change the number of steps)');
     if (!mustShowFeatures)
-        sharpen.push(`must show features (it would fix the flows that are always shown; now the steps come from ${product.caps.length ? 'the parts named in your solution' : pains.length ? 'your pain points' : 'the usual demo list of this kind of seller'})`);
+        sharpen.push(`must show features (it would fix the flows that are always shown; now the steps come from ${product.caps.length ? 'the parts named in your solution' : pains.length ? 'your pain points' : 'suggested planning questions, not confirmed capabilities'})`);
     if (!knownObjections)
         sharpen.push(fromSector ? 'known objections (it would replace the usual objections of the sector with the ones you expect)' : 'known objections (it would add a spoken answer to each; none is answered now)');
     if (!outcomeText)
@@ -662,7 +675,9 @@ function buildDemoScript(args, d) {
     })() : '';
     const kindWords = (0, rw_kit_ts_1.wordsOf)(product.kind, false);
     const kindSentence = product.kind && kindWords.some((w) => !skipP.some((x) => x === w || w.startsWith(x) || x.startsWith(w))) ? (/^(?:a|an|the)\s/i.test(product.kind) ? `${P} is ${product.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(product.kind) ? `${P} is ${/^[aeiou]/i.test(product.kind) ? 'an' : 'a'} ${product.kind}.` : `${P} is described as ${product.kind}.`) : '';
-    const intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : 'a problem you named'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
+    let intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : pains.length ? 'a problem you named' : 'a suggested planning question, not a confirmed capability'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
+    if (planningOnly)
+        intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}. No demo flow or capability was supplied. Each step is a suggested planning question, not a confirmed capability. ${kindSentence}`;
     return `# Demo Script: ${typeLabel}
 
 ## Acceptance conditions to agree before the script
@@ -690,7 +705,7 @@ ${[notShownLine, inAnswerLine, untiedLine, notesLine].filter(Boolean).join('\n\n
 
 | Person | Role | What they came for | Shown in |
 |---|---|---|---|
-${whoRows.length ? whoRows.join('\n') : '| The room | Roles not supplied | The problems you named | Every step |'}
+${whoRows.length ? whoRows.join('\n') : '| The room | Roles not supplied | Confirm the task and required evidence | Every step |'}
 
 ---
 

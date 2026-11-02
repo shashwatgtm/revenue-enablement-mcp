@@ -63,11 +63,11 @@ const EXTRA_SEEDS = [
     ['india', 'IN', 'Bengaluru', 'city'], ['india', 'IN', 'Bangalore', 'city'], ['india', 'IN', 'Mumbai', 'city'], ['india', 'IN', 'New Delhi', 'city'], ['india', 'IN', 'INR', 'currency'], ['india', 'IN', 'Indian rupee', 'currency'], ['india', 'IN', 'Reserve Bank of India', 'regulator'], ['india', 'IN', 'RBI', 'regulator'],
     ['southeast-asia', 'SG', 'SGD', 'currency'], ['southeast-asia', 'SG', 'Singapore dollar', 'currency'], ['southeast-asia', 'SG', 'Monetary Authority of Singapore', 'regulator'], ['southeast-asia', 'SG', 'MAS', 'regulator'], ['southeast-asia', 'ID', 'Jakarta', 'city'], ['southeast-asia', 'TH', 'Bangkok', 'city'],
     ['middle-east', 'AE', 'Dubai', 'city'], ['middle-east', 'AE', 'Abu Dhabi', 'city'], ['middle-east', 'AE', 'AED', 'currency'], ['middle-east', 'SA', 'Riyadh', 'city'], ['middle-east', 'SA', 'SAR', 'currency'], ['middle-east', 'SA', 'Saudi Central Bank', 'regulator'],
-    ['uk', 'GB', 'GBP', 'currency'], ['uk', 'GB', 'pound sterling', 'currency'], ['uk', 'GB', 'Financial Conduct Authority', 'regulator'], ['uk', 'GB', 'FCA', 'regulator'],
+    ['uk', 'GB', 'London', 'city'], ['uk', 'GB', 'GBP', 'currency'], ['uk', 'GB', 'pound sterling', 'currency'], ['uk', 'GB', 'Financial Conduct Authority', 'regulator'], ['uk', 'GB', 'FCA', 'regulator'],
     ['western-europe', 'DE', 'Berlin', 'city'], ['western-europe', 'DE', 'Munich', 'city'], ['western-europe', 'DE', 'BaFin', 'regulator'], ['western-europe', 'NL', 'Amsterdam', 'city'],
     ['north-america', 'CA', 'CAD', 'currency'], ['north-america', 'CA', 'Canadian dollar', 'currency'], ['north-america', 'CA', 'Toronto', 'city'], ['north-america', 'US', 'New York', 'city'], ['north-america', 'US', 'San Francisco', 'city']
 ];
-const AMBIGUOUS = /\b(?:USD|EUR|euro|euros|dollars?|London|Paris|Birmingham|Cambridge|Manchester|Georgia|SEC|APAC|EMEA|Europe|European Union)\b|[$€]/i;
+const AMBIGUOUS = /\b(?:USD|EUR|euro|euros|dollars?|Paris|Birmingham|Cambridge|Manchester|Georgia|SEC|APAC|EMEA|Europe|European Union)\b|[$€]/i;
 function clues() {
     const all = regions_ts_1.REGION_CHOICES.map(r => ({ region: r.id, value: r.name, kind: 'region' }));
     for (const [region, country, names] of COUNTRY_SEEDS)
@@ -150,11 +150,19 @@ function scan(texts, all) {
         }
     return { found, unresolved };
 }
+/** Explicit selling destinations outrank a seller's headquarters or incidental location. */
+function marketText(text) {
+    const m = normalize(text).match(/\b(?:sell(?:ing|s)?|sold|expand(?:ing)?|enter(?:ing)?|target(?:ing)?|serv(?:e|ing))\s+(?:(?:products?|software|services?)\s+)?(?:in(?:to)?|to|across)\s+(.+)/i);
+    const qualifier = m ? normalize(text).slice(0, m.index).match(/\b(?:not|never|no longer|formerly|previously|historically|may|might|could|perhaps|maybe|considering|should we|would we|can we)[^,;.!?]*$/i)?.[0] || '' : '';
+    return m ? qualifier + m[0] : text.replace(/\b(?:based|headquartered|located|founded)\s+in\s+[^,;.]+/gi, '');
+}
+const US_STATES = { Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA', Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA', Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO', Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY' };
 function readRegionContext(args) {
     const f = fragments(args), all = clues();
-    const seller = scan([...f.market, ...f.seller], all), buyer = scan(f.buyer, all);
-    // An explicitly named or unresolved seller market must not be replaced by buyer context.
-    const chosen = seller.found.length || seller.unresolved.length ? seller : buyer;
+    const explicit = scan(f.market, all), seller = scan(f.seller.map(marketText), all);
+    // Customer location alone is not evidence that the seller is selling there.
+    // A dedicated market field wins over incidental locations in the description.
+    const chosen = explicit.found.length || explicit.unresolved.length ? explicit : seller;
     const sector = (0, verticals_ts_1.explainSector)({ seller: f.seller, buyer: f.buyer });
     const v = sector.source === 'seller' ? sector.vertical : null;
     const subtype = v?.subtype ? regions_ts_1.REGION_TAXONOMY.subtypes.find(s => s.id === v.subtype || s.name === v.subtype)?.id || null : null;
@@ -166,15 +174,26 @@ function readRegionContext(args) {
         const affirmative = mentions.filter(m => m.state === 'yes' && !mentions.some(n => n.clue.country === m.clue.country && n.state !== 'yes'));
         if (!affirmative.length)
             continue;
-        regions.push({ region_id: r.id, countries: [...new Set(affirmative.map(m => m.clue.country).filter((x) => Boolean(x)))], evidence: [...new Set(affirmative.map(m => m.evidence))], vertical_id: v?.id || null, subtype_id: subtype });
+        const countries = [...new Set(affirmative.map(m => m.clue.country).filter((x) => Boolean(x)))];
+        // One entry per country keeps two countries in the same region from sharing notes.
+        for (const country of countries.length ? countries : [null]) {
+            const evidence = [...new Set(affirmative.filter(m => !country || m.clue.country === country).map(m => m.evidence))];
+            const jurisdictions = country ? [country] : [];
+            if (country === 'US')
+                for (const [name, code] of Object.entries(US_STATES)) {
+                    if (evidence.some(e => new RegExp('\\b' + escaped(name) + '\\b', 'i').test(e)) && name !== 'Georgia')
+                        jurisdictions.push('US-' + code);
+                }
+            regions.push({ region_id: r.id, countries: country ? [country] : [], jurisdictions, evidence, vertical_id: v?.id || null, subtype_id: subtype });
+        }
     }
     return { regions, unresolved_hints: [...new Set(chosen.unresolved)] };
 }
 const LABELS = { decision_approvers: 'Who decides and approves', sector_regulator: 'Sector rules to check', procurement_payment: 'Procurement and payment', data_privacy: 'Data and privacy', buyer_language: 'Buyer language', proof: 'Proof to prepare', objections: 'Objections to test', sales_motion: 'Sales motion' };
 const EU_COUNTRIES = new Set(['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE']);
-function applies(n, countries) { return !n.jurisdictions.length || !countries.length || n.jurisdictions.some(j => countries.includes(j) || (j === 'EU' && countries.some(c => EU_COUNTRIES.has(c)))); }
+function applies(n, match) { return !n.jurisdictions.length || n.jurisdictions.some(j => match.jurisdictions.includes(j) || (j === 'EU' && match.countries.some(c => EU_COUNTRIES.has(c)))); }
 function renderNote(n, countries) {
-    const countryScope = n.jurisdictions.length && !countries.length ? 'Conditional scope ' + n.jurisdictions.join(', ') + ': ' : '';
+    const countryScope = '';
     const condition = n.applies_when ? ' Check scope: ' + n.applies_when : '';
     const sources = n.source_ids.map(id => regions_ts_1.REGION_SOURCES[id]).filter(Boolean).map(s => `${s.title}: <${s.url}> (source checked ${s.accessed_date})`).join('; ');
     return countryScope + n.text + condition + (sources ? ' Source: ' + sources + '.' : '');
@@ -186,20 +205,28 @@ function regionNotes(args) {
     const out = ['', '', '## Region and industry context', '', 'Draft for owner review. These checks use the market context in your description. They do not change the scores or market arithmetic above.'];
     for (const match of reading.regions) {
         const choice = regions_ts_1.REGION_CHOICES.find(x => x.id === match.region_id);
-        out.push('', `### ${choice.name}`);
         const data = regions_ts_1.REGION_DATA.find(x => x.region_id === match.region_id);
+        const country = match.countries[0];
+        const countryName = data?.reader_hints.countries.find(c => c.code === country)?.name || COUNTRY_SEEDS.find(c => c[1] === country)?.[2][0];
+        out.push('', `### ${choice.name}${countryName && countryName !== choice.name ? ' · ' + countryName : ''}`);
+        if (!country)
+            out.push('Which buyer country applies? Country specific rules are omitted until you name it.');
         if (!data) {
             out.push('Regional industry notes are awaiting source review. Confirm the buyer country and approval requirements before using regional advice.');
             continue;
         }
         const vertical = data.verticals.find(x => x.vertical_id === match.vertical_id), subtype = match.subtype_id ? data.subtypes.find(x => x.subtype_id === match.subtype_id) : undefined;
+        let shown = 0;
         const levels = [data.defaults, ...(vertical ? [vertical.context] : []), ...(subtype ? [subtype.context] : [])];
         for (const field of Object.keys(LABELS)) {
-            const seen = new Set(), notes = levels.flatMap(c => c[field]).filter(n => { const key = JSON.stringify(n); if (seen.has(key) || !applies(n, match.countries))
+            const seen = new Set(), notes = levels.flatMap(c => c[field]).filter(n => { const key = JSON.stringify(n); if (seen.has(key) || !applies(n, match))
                 return false; seen.add(key); return true; });
+            shown += notes.length;
             if (notes.length)
                 out.push('', LABELS[field] + ':', ...notes.map(n => renderNote(n, match.countries)));
         }
+        if (!shown)
+            out.push('No sourced note is available for this market and industry combination. No other country has been substituted.');
         if (!match.vertical_id)
             out.push('Describe what you sell to add the matching industry and subtype checks.');
         const pending = [...(vertical?.pending_topics || []), ...(subtype?.pending_topics || [])];

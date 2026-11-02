@@ -3,6 +3,7 @@ export declare const NO_REGION_SUFFIX = "\n\nRegion context: Which region applie
 export interface RegionMatch {
     region_id: RegionId;
     countries: string[];
+    jurisdictions: string[];
     evidence: string[];
     vertical_id: string | null;
     subtype_id: string | null;

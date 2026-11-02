@@ -121,7 +121,12 @@ Record the contact preference and pause outreach. Work from existing authorized 
     ];
     const metricGaps = knownMetrics.split(/[;\n]/).map(x => x.trim()).filter(x => /\b(?:unknown|unconfirmed|not (?:yet )?(?:known|confirmed|measured|available))\b/i.test(x) && !/\b(?:not|no longer)\s+(?:unknown|unconfirmed)\b/i.test(x));
     const unanswered = [...metricGaps.map(g => ({ gap: g, question: /\b(?:duration|how long)\b/i.test(g) ? 'For the last outage, when did customer impact start and end, and what record supports that duration?' : `What is the missing measure in "${g}", for which period and cohort?`, evidence: 'A dated source, the measurement window, affected customers and the person who owns the measure.' })), ...d.splitItems(gapsToFill).map(g => ({ gap: g, question: GAP_QUESTIONS.find(([re]) => re.test(g))?.[1] || `What evidence would resolve "${g}"?`, evidence: 'The buyer answer, its source and date, and the named person who can confirm it.' }))].slice(0, 5);
-    const firstQuestions = `## Unanswered questions first\n${unanswered.length ? unanswered.map((x, i) => `${i + 1}. ${x.question}\n   Evidence to establish: ${x.evidence}\n   Gap supplied: ${x.gap}`).join('\n\n') : 'No explicit unanswered metric or information gap was supplied. Confirm the next missing decision with the buyer before selecting questions from the optional bank.'}\n\n`;
+    const startingQuestions = [
+        pains.length ? `Can you show one recent instance of ${pains.length > 1 ? 'the first problem listed in the context' : XL}, and one occasion when the current process worked?` : 'Which recent task was difficult, and can you show what happened?',
+        knownMetrics ? `For the metric you supplied, confirm the scope, period and source${/\bhours?\b/i.test(knownMetrics) ? ': is the effort for the whole team or per person' : ': what was counted, and who can verify it'}?` : 'How often did this happen in the same period, what did it cost, and who can verify that record?',
+        `What observable result would justify changing the process, and who must approve that result and the spending for ${critA}?`,
+    ];
+    const firstQuestions = `## Unanswered questions first\n${unanswered.length ? unanswered.map((x, i) => `${i + 1}. ${x.question}\n   Evidence to establish: ${x.evidence}\n   Gap supplied: ${x.gap}`).join('\n\n') : 'No explicit gap was named. Start with these three checks; the reported problem and metric still need buyer confirmation.\n\n' + startingQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')}\n\n`;
     const gaps = d.splitItems(gapsToFill);
     const gapRows = gaps.map((g) => { const m = GAP_QUESTIONS.find(([re]) => re.test(g)); return `- **${d.cap(g)}:** ${m ? m[1] : `Can you walk me through ${low(g)} for ${critA}?`}`; });
     const gapSection = gaps.length ? `## Gaps to fill first\n\nYou said these are still open, so ask about them before anything else:\n${gapRows.join('\n')}\n\n---\n\n` : '';
@@ -305,7 +310,7 @@ Record the contact preference and pause outreach. Work from existing authorized 
         executive: `What would you need from us to take ${P} to a decision on ${critA}?`,
     };
     const closeSection = `## Closing the call\n\n${qs([
-        `Here is what I heard: ${pains.length > 1 ? `${pains.length} problems you want fixed with ${critA}` : pains.length ? `one problem you want fixed with ${critA}` : `the problem you want fixed with ${critA}`}${knownMetrics && !noMetrics ? `, measured today as "${low((0, dealtext_ts_1.clip)(knownMetrics, 100)).replace(/"/g, "'")}"` : ''}${roleTxt ? (isSigner ? ', and the decision is yours' : `, and the decision sits with ${signerThe}`) : ''}. Have I got that right?`,
+        `Here is what I heard: ${pains.length > 1 ? `${pains.length} problems you want fixed with ${critA}` : pains.length ? `one problem you want fixed with ${critA}` : `the problem you want fixed with ${critA}`}${knownMetrics && !noMetrics ? `, measured today as "${low((0, dealtext_ts_1.clip)(knownMetrics, 100)).replace(/"/g, "'")}"` : ''}${roleTxt ? (isSigner ? ', with your approval authority still to confirm' : ', with the approval owner still to confirm') : ''}. Have I got that right?`,
         gaps.length ? `The open points are ${(0, dealtext_ts_1.joinList)(gaps.map((g) => low(g)))}. Who can I speak to about each one?` : `What should I have asked about ${critA} and did not?`,
         CLOSE[dealStage] || CLOSE.discovery
     ])}\n\n---\n\n`;

@@ -88,3 +88,26 @@ test('Overnight distinct case evidence checks: roi_business_case_builder',async(
  const a={...cases.find(x=>x.tool==='roi_business_case_builder').args}; delete a.expected_improvement_percent;
  const text=await call('roi_business_case_builder',a),r=roles(text); assert.match(r.join('\n'),/unconfirmed improvement/);assert.doesNotMatch(r.join('\n'),/unstated%|undefined|NaN/);
  });
+
+test('Second pass: cold email asks whether the reported pain applies before asserting it',async()=>{
+ const a=cases.find(x=>x.tool==='email_sequence_generator').args;const t=await call('email_sequence_generator',a);
+ const opening=t.split('### Email 1:')[1].split('### Email 2:')[0];
+ assert.match(opening,/Subject:\*\* A question on/);
+ assert.match(opening,/Does this describe your team: “Two receptionists can book the same appointment slot”\?/);
+ assert.doesNotMatch(opening,/\n\nTwo receptionists can book/);
+});
+
+test('Second pass: sparse demo plans a test and addresses the manual closure constraint',async()=>{
+ const a=cases.find(x=>x.tool==='demo_script_builder').args,t=await call('demo_script_builder',a);
+ assert.match(t,/suggested planning question, not a confirmed capability/);assert.match(t,/No capability has been demonstrated/);
+ assert.match(t,/attempt closure without approval, then with approval/);assert.match(t,/If it cannot be shown, I will record the gap and stop the test/);
+ assert.doesNotMatch(t,/How does the people|You also saw|This one is for the problems you named/);
+});
+
+test('Second pass: discovery starts with three checks and does not infer signing authority',async()=>{
+ const a=cases.find(x=>x.tool==='discovery_question_bank').args,t=await call('discovery_question_bank',a);
+ const first=t.split('## Unanswered questions first')[1].split('## Context')[0];
+ assert.match(first,/1\. Can you show one recent instance/);assert.match(first,/whole team or per person/);assert.match(first,/3\. What observable result/);
+ const close=t.split('## Closing the call')[1].split('## If you hear')[0];
+ assert.match(close,/approval owner still to confirm/);assert.doesNotMatch(close,/decision sits with/);
+});

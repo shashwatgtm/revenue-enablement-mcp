@@ -3494,7 +3494,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>) + (decisionLimit(name, args as Record<string, unknown>).stop ? '' : regionNotes(regionalInputs(typed))),
+            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>) + (decisionLimit(name, args as Record<string, unknown>).stop ? '' : regionNotes(regionalInputs(typed, 'buyer'))),
           },
         ],
       };

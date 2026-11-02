@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.regionalInputs = regionalInputs;
 /** Internal aliases for existing reviewed tool fields. No MCP inputs are added. */
-function regionalInputs(args) {
+function regionalInputs(args, industryRole = 'seller') {
     if (!args || typeof args !== 'object' || Array.isArray(args))
         return {};
     const input = args;
@@ -23,6 +23,11 @@ function regionalInputs(args) {
     }
     const ownSector = typeof input.your_sector === 'string' && input.your_sector !== 'other'
         ? input.your_sector.replace(/_/g, ' ') : undefined;
-    return { ...input, ...(seller.length ? { product_description: seller } : {}), ...(ownSector ? { sector: ownSector } : {}) };
+    const result = { ...input, ...(seller.length ? { product_description: seller } : {}), ...(ownSector ? { sector: ownSector } : {}) };
+    // Revenue's industry means the account or buyer industry. It cannot establish
+    // the seller's market or override the seller's own product category.
+    if (industryRole === 'buyer')
+        delete result.industry;
+    return result;
 }
 //# sourceMappingURL=region-adapter.js.map

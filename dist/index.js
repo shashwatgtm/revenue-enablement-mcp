@@ -3424,7 +3424,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: (0, reader_actions_ts_1.withReadingGuide)(name, (0, dealtext_ts_1.capitaliseSolutionPhrase)(result.replace(/\n{3,}/g, '\n\n')), args) + ((0, decision_limits_ts_1.decisionLimit)(name, args).stop ? '' : (0, region_reader_ts_1.regionNotes)((0, region_adapter_ts_1.regionalInputs)(typed))),
+                        text: (0, reader_actions_ts_1.withReadingGuide)(name, (0, dealtext_ts_1.capitaliseSolutionPhrase)(result.replace(/\n{3,}/g, '\n\n')), args) + ((0, decision_limits_ts_1.decisionLimit)(name, args).stop ? '' : (0, region_reader_ts_1.regionNotes)((0, region_adapter_ts_1.regionalInputs)(typed, 'buyer'))),
                     },
                 ],
             };

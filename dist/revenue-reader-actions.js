@@ -58,6 +58,16 @@ function revenueReading(name, a, result) {
                 `Demand generation head: ask the account owner to verify the recorded status "${champion}" before copying this contact profile into outreach; distinguish a contact from confirmed advocacy.`,
             ] };
     }
+    if (name === 'account_plan_builder') {
+        const account = label(a.account_name, 'this account'), expansion = label(a.expansion_opportunities, 'unconfirmed expansion'), contacts = label(a.known_contacts, 'the supplied contact list'), current = label(a.current_products, 'the current delivery scope');
+        return { meaning: `The plan supports an account review for ${account}. Current revenue and a proposed expansion do not establish new demand or access. Confirm the new buyer's problem and approval process before assigning expansion revenue.`, evidence: `the proposed expansion lacks buyer demand, the contact cannot arrange access, or current delivery economics do not support more work`, roles: [
+                `Founder: test the proposed expansion "${expansion}" with the new problem owner before endorsing growth in ${account}; record whether the need is confirmed or denied.`,
+                `CEO: have finance separate current annual revenue of ${num(a.current_arr, 'unstated amount')} from unapproved expansion at ${account}; check delivery cost before reserving staff.`,
+                `CMO: verify outcomes from "${current}" before using them in an expansion story for ${account}; do not extend one location's evidence to another.`,
+                `CRO: review "${contacts}" with the account owner and arrange an introduction to the expansion approver; record access, authority and the next approval step before forecasting it.`,
+                `Demand generation head: compare the confirmed need in ${account} with a fresh account sample before copying its profile into campaigns; exclude expansion assumptions from selection criteria.`,
+            ] };
+    }
     return undefined;
 }
 //# sourceMappingURL=revenue-reader-actions.js.map

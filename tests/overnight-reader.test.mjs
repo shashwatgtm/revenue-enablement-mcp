@@ -41,3 +41,9 @@ test('Overnight distinct case evidence checks: deal_strategy_coach',async()=>{
  const checks=["proposal.*buyer action", "reserved.*Alert triage|reserved.*Cybersecurity", "proof.*Alert triage", "CISO has not attended.*direct confirmation", "confirmed champion.*advocacy"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: account_plan_builder',async()=>{
+ const a=cases.find(x=>x.tool==='account_plan_builder').args; const text=await call('account_plan_builder',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["Second depot.*confirmed or denied", "24,000.*unapproved expansion", "Dispatch exception queue at one depot.*another", "Operations director.*introduction", "fresh account.*exclude expansion assumptions"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

@@ -46,3 +46,36 @@ test('Conflicting quotes and missing comparison bases do not produce a money gap
   const t=await call(text);assert.doesNotMatch(t,/a gap of|\$18,000 a year|\$7,200 a year/,text);
  }
 });
+
+test('Other vendors and historical quotes do not establish the current competitor comparison',async()=>{
+ for(const text of ['Competitor is 25% cheaper than the incumbent','Competitor price is 25% lower than last year','Competitor price is 25% lower than our old quote','Competitor price is 25% lower than their previous price']) {
+  const t=await call(text);assert.match(t,/Price direction is not clear/,text);assert.doesNotMatch(t,/a gap of/,text);
+ }
+});
+test('A conditional, alleged or zero comparison does not assert a lower quote',async()=>{
+ for(const text of ['Competitor is allegedly 25% cheaper','If competitor price is 25% lower than ours','Competitor price is 0% lower than ours']) {
+  const t=await call(text);assert.match(t,/Price direction is not clear/,text);assert.doesNotMatch(t,/a gap of/,text);
+ }
+});
+test('Discount size and latency are separate from the actual quote price',async()=>{
+ for(const text of ['Competitor discount rate is 25% higher than ours','Competitor boasts 25% lower latency']) {
+  const t=await call(text);assert.match(t,/Price direction is not clear/,text);assert.doesNotMatch(t,/a gap of/,text);
+ }
+});
+test('Reordered percentage wording preserves an explicitly matched annual price base',async()=>{
+ const t=await call('Their annual price is lower by 25% than our annual price of $72,000 for the same scope');
+ assert.match(t,/Competitor has lower price/);assert.match(t,/a gap of 25%/);assert.match(t,/\$18,000 a year/);
+});
+test('An annual amount that differs from deal value cannot become its denominator',async()=>{
+ const t=await call('Competitor annual price is 25% lower than our annual price of $36,000 for the same scope');
+ assert.match(t,/Competitor has lower price/);assert.doesNotMatch(t,/\$18,000 a year|\$9,000 a year/);assert.match(t,/no annual money gap calculated/);
+});
+test('A stated exclusion blocks annual money inference despite a same scope label',async()=>{
+ const t=await call('Competitor annual price is 25% lower than our annual price of $72,000 for the same scope, but the total excludes support');
+ assert.doesNotMatch(t,/\$18,000 a year/);assert.match(t,/no annual money gap calculated/);
+});
+test('A qualitative current price relation can be retained without inventing a percentage',async()=>{
+ for(const [text,pattern] of [['Competitor is cheaper',/Competitor has lower price/],['Their quote is higher than ours',/Competitor quote is higher/]]) {
+  const t=await call(text);assert.match(t,pattern);assert.doesNotMatch(t,/a gap of/);
+ }
+});

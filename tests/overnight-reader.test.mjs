@@ -59,3 +59,9 @@ test('Overnight distinct case evidence checks: win_loss_analyzer',async()=>{
  const checks=["Incumbent renewal.*comparable win and loss", "120.*48,000.*one deal", "attributed buyer notes", "NOC manager and procurement analyst.*decision maker", "separate, comparable.*stop rule"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: pricing_negotiation_guide',async()=>{
+ const a=cases.find(x=>x.tool==='pricing_negotiation_guide').args; const text=await call('pricing_negotiation_guide',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["unmeasured benefit", "80,000.*minimum approved margin", "not been measured.*unsupported", "68000 a year.*80,000", "approved scope and period"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

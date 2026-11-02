@@ -88,6 +88,16 @@ function revenueReading(name, a, result) {
                 `Demand generation head: test the proposed ${solution} selection change on a separate, comparable account cohort; agree the measure and stop rule before comparing outcomes with the current criteria.`,
             ] };
     }
+    if (name === 'pricing_negotiation_guide') {
+        const price = num(a.deal_value, 'unstated amount'), rival = label(a.competitor_price, 'the unverified alternative quote'), value = label(a.value_delivered, 'the claimed value');
+        return { meaning: `This is preparation for negotiating ${solution}. The supplied deal amount ${price} and alternative quote "${rival}" are not a like for like comparison until scope, period and exclusions match. Suggested terms require approval.`, evidence: `matched quote scope or period changes the comparison, delivery cost removes the margin, or the buyer cannot substantiate the claimed value`, roles: [
+                `Founder: ask the buyer which requirement makes "${value}" valuable before defending the ${price} amount; retain any unmeasured benefit as a hypothesis.`,
+                `CEO: have finance reconcile the ${price} amount with its period, delivery cost and minimum approved margin before authorizing a concession; name the person who can approve it.`,
+                `CMO: verify the source and scope of "${value}" before using it to justify price; remove unsupported savings or response time claims.`,
+                `CRO: obtain the scope, term and exclusions behind "${rival}" and the ${price} offer before discussing a discount; record unresolved differences.`,
+                `Demand generation head: check that any ${solution} pricing message uses the approved scope and period before reuse; do not turn this negotiated quote into a public price promise.`,
+            ] };
+    }
     return undefined;
 }
 //# sourceMappingURL=revenue-reader-actions.js.map

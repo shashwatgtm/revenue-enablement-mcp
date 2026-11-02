@@ -16,6 +16,18 @@ function revenueReading(name, a, result) {
                 `Demand generation head: check contact permission, exclusions and a working reply route for ${persona} before sending; stop follow ups after a refusal and record relevance objections.`,
             ] };
     }
+    if (name === 'demo_script_builder') {
+        const objection = label(a.known_objections, 'the unresolved buyer objection');
+        const closure = /\balerts?\b/i.test(String(a.known_objections)) && /\bclos/i.test(String(a.known_objections));
+        const check = closure ? 'whether an alert remains open until an authorized person approves closure' : 'whether the buyer chosen record reaches the agreed result';
+        return { meaning: `The script supports an acceptance discussion for ${solution}. Start with one buyer chosen example: agree the expected result, demonstrate only a confirmed capability, then ask the buyer to accept or reject what happened. Check ${check}; if this cannot be shown, record a gap rather than implying the capability exists.`, evidence: `the buyer rejects the observed result, the required capability is unavailable, or the objection remains unresolved`, roles: [
+                `Founder: ask the buyer whether the test addresses "${objection}" before endorsing the demonstration; record the observation that would disprove fit.`,
+                `CEO: have the delivery lead confirm a safe test environment and a named operator for ${solution} before committing staff; hold any live change that has no approval.`,
+                `CMO: compare the claims in the ${solution} demo with the recorded screen or service evidence before reusing them; do not infer a performance improvement from a walkthrough.`,
+                `CRO: agree with the buyer how to check ${check} before the demonstration; record pass, failure or not demonstrated against the same condition.`,
+                `Demand generation head: use the unresolved objection "${objection}" to review the next invitation list; check that invitees face this problem before scaling demo outreach.`,
+            ] };
+    }
     return undefined;
 }
 //# sourceMappingURL=revenue-reader-actions.js.map

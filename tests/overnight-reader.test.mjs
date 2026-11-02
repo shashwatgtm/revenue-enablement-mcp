@@ -17,3 +17,9 @@ test('Email checks separate relevance, delivery, evidence, buyer action and cont
  for(let i=0;i<5;i++)assert.notEqual(r[i],changed[i]);
  assert.doesNotMatch(changed.join('\n'),/clinic|receptionists/i);
 });
+
+test('Overnight distinct case evidence checks: demo_script_builder',async()=>{
+ const a=cases.find(x=>x.tool==='demo_script_builder').args; const text=await call('demo_script_builder',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["close alerts automatically.*disprove", "safe test environment", "recorded screen or service evidence", "alert remains open.*authorized person", "invitation list"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

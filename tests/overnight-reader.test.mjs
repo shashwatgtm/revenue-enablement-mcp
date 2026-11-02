@@ -96,3 +96,10 @@ test('Second pass: cold email asks whether the reported pain applies before asse
  assert.match(opening,/Does this describe your team: “Two receptionists can book the same appointment slot”\?/);
  assert.doesNotMatch(opening,/\n\nTwo receptionists can book/);
 });
+
+test('Second pass: sparse demo plans a test and addresses the manual closure constraint',async()=>{
+ const a=cases.find(x=>x.tool==='demo_script_builder').args,t=await call('demo_script_builder',a);
+ assert.match(t,/suggested planning question, not a confirmed capability/);assert.match(t,/No capability has been demonstrated/);
+ assert.match(t,/attempt closure without approval, then with approval/);assert.match(t,/If it cannot be shown, I will record the gap and stop the test/);
+ assert.doesNotMatch(t,/How does the people|You also saw|This one is for the problems you named/);
+});

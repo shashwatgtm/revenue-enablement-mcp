@@ -2,6 +2,7 @@
 import { withReadingGuide } from './reader-actions.ts';
 import { regionNotes } from './region-reader.ts';
 import { regionalInputs } from './region-adapter.ts';
+import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
@@ -2146,9 +2147,9 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const modelKey = ctx.model === 'investment' ? 'investment' : v ? v.id : '';
   const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' as Who }];
   const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
-  const gapMatch = competitorPrice.match(/(\d+(?:\.\d+)?)\s*%/);
-  const priceDirection = hasSignal(competitorPrice, /\b(above|higher|more expensive|more than)\b/i) ? 'higher' : hasSignal(competitorPrice, /\b(below|lower|cheaper|less than)\b/i) ? 'lower' : 'unclear';
-  const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : gapMatch ? `"Your competitor is ${gapMatch[1]}% cheaper"` : competitorPrice ? `"Your competitor is cheaper" (you supplied: ${competitorPrice})` : `"Your competitor is cheaper"`;
+  const comparison = readPriceComparison(competitorPrice, dealValue);
+  const priceDirection = comparison.direction;
+  const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : comparison.percent !== null ? `"Your competitor is ${comparison.percent}% cheaper"` : `"Your competitor is cheaper" (you supplied: ${competitorPrice})`;
   const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
   const haveValue = hasValue(args.deal_value) && dealValue > 0;
   const options = restructureOptions(ctx.model, dealValue, haveValue, lowerFirstIfCommon(pilot));
@@ -2272,7 +2273,7 @@ ${valueReframe}
 - "What specifically is the concern with the price?"
 - "What would need to happen for our current pricing to work?"
 
-### ${competitorLine}${gapMatch ? '' : ''}
+### ${competitorLine}
 
 **Don't Say:** "We can match that."
 
@@ -2371,7 +2372,9 @@ If budget genuinely isn't available:
 
 ## Situation: ${priceDirection === 'higher' ? 'Competitor quote is higher' : priceDirection === 'lower' ? 'Competitor has lower price' : 'Price direction is not clear'}
 
-${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a gap of ${gapMatch[1]}%${haveValue ? `: on your ${dealValueText} deal that is ${money(dealValue * Number(gapMatch[1]) / 100)} a year` : ''})` : ''}` : 'No competitor price was given (competitor price).'}
+${competitorPrice ? `**Competitor Price:** ${competitorPrice}${comparison.percent !== null ? ` (a gap of ${comparison.percent}% in the stated price comparison${comparison.annualGap !== null ? `: on your explicitly stated annual ${dealValueText} quote that is ${money(comparison.annualGap)} a year` : '; no annual money gap calculated'})` : ''}` : 'No competitor price was given (competitor price).'}
+
+Confirm the same scope, units, period and exclusions in both written quotes. Operational percentages, component fees and an unspecified deal period do not establish an annual price gap.
 
 ---
 

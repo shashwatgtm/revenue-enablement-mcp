@@ -38,6 +38,16 @@ function revenueReading(name, a, result) {
                 `Demand generation head: test whether a fresh account with the same role reports "${pain}" before widening the audience; record accounts that deny it.`,
             ] };
     }
+    if (name === 'proposal_section_writer') {
+        const problem = label(a.customer_challenges, 'the supplied customer challenge'), difference = label(a.key_differentiators, 'the proposed difference'), section = label(a.section_type, 'requested');
+        return { meaning: `The ${section.replace(/_/g, ' ')} section supports a scope conversation for ${solution}. The buyer must approve deliverables, excluded work and acceptance evidence before this becomes a commitment. An unmeasured improvement stays a hypothesis.`, evidence: `the buyer disputes the problem, rejects the scope or acceptance check, or measured results contradict the proposed difference`, roles: [
+                `Founder: confirm with the buyer that "${problem}" is the problem this proposal must resolve before endorsing ${solution}; record any competing priority.`,
+                `CEO: have the delivery lead list included work, exclusions and staff effort for ${solution} before approving the section; do not accept a delivery obligation without agreed boundaries.`,
+                `CMO: verify "${difference}" against source records before approving the proposal wording; retain any unmeasured outcome as a hypothesis.`,
+                `CRO: ask the buyer to approve an observable acceptance condition for "${problem}" and identify the signatory before sending the proposal for approval.`,
+                `Demand generation head: compare the ${solution} proposal audience with the account brief before reuse; remove this case's claims unless the new account has matching evidence.`,
+            ] };
+    }
     return undefined;
 }
 //# sourceMappingURL=revenue-reader-actions.js.map

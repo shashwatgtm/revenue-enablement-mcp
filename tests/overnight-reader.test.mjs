@@ -29,3 +29,9 @@ test('Overnight distinct case evidence checks: discovery_question_bank',async()=
  const checks=["Missed deliveries.*counterexample", "Four hours.*scope|scope.*Four hours", "attributed notes", "recent example, frequency and approval", "fresh account.*deny"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: proposal_section_writer',async()=>{
+ const a=cases.find(x=>x.tool==='proposal_section_writer').args; const text=await call('proposal_section_writer',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["Exceptions wait four days", "included work, exclusions", "improvement is unmeasured", "observable acceptance condition.*signatory", "new account.*matching evidence"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

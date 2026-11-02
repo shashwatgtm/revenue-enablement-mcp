@@ -350,7 +350,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
             else if (devLed)
                 missing = ' A developer led deal usually also involves an engineering lead and whoever approves the spend; you did not list them. Were they part of the deal, and what did they think?';
         }
-        para.push(`**The people.** ${contacts.length === 1 ? 'One stakeholder was' : `${contacts.length} stakeholders were`} involved: ${(0, dealtext_ts_1.joinList)(contacts.map((c) => c.raw))}. ${groups.join(' ')}${missing}`);
+        para.push(`**The people.** Stakeholders recorded: ${(0, dealtext_ts_1.joinList)(contacts.map((c) => c.raw))}. ${groups.join(' ')}${missing}`);
     }
     // ---- the questions for the review call, each built from an input ----
     const qs = [];

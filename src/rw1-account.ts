@@ -86,8 +86,8 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
     const r = readRole(c, null, rctx, investment);
     const base = roleFor(c.title, investment);
     let step = r.step;
-    if (k === 'champion') step = `${r.step}; then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
-    else if (k === 'buyer' || k === 'economic') step = `${r.step}. Ask whether ${base.worry} is a concern in this account; record their answer`;
+    if (k === 'champion') step = `${r.step.replace(/[.;]$/, '')}. Then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
+    else if (k === 'buyer' || k === 'economic') step = `${r.step.replace(/[.;]$/, '')}. Ask whether ${base.worry} is a concern in this account; record their answer`;
     else if (k === 'blocker') step = `Find out what they fear (${base.worry}) and answer it in writing before the proposal`;
     const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : upperFirst(r.cares);
     if (!usedCares.has(r.cares)) usedCares.set(r.cares, c.title);

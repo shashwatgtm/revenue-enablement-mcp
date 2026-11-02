@@ -99,9 +99,9 @@ function buildAccountPlan(args, d) {
         const base = (0, answers_ts_1.roleFor)(c.title, investment);
         let step = r.step;
         if (k === 'champion')
-            step = `${r.step}; then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
+            step = `${r.step.replace(/[.;]$/, '')}. Then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
         else if (k === 'buyer' || k === 'economic')
-            step = `${r.step}. Ask whether ${base.worry} is a concern in this account; record their answer`;
+            step = `${r.step.replace(/[.;]$/, '')}. Ask whether ${base.worry} is a concern in this account; record their answer`;
         else if (k === 'blocker')
             step = `Find out what they fear (${base.worry}) and answer it in writing before the proposal`;
         const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : (0, dealtext_ts_1.upperFirst)(r.cares);

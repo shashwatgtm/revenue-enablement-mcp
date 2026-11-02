@@ -288,7 +288,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
       if (notNamed.length) missing = ` This sector usually also involves ${joinList(notNamed.slice(0, 3).map(lowerRole))}; you did not list them. Were they part of the deal, and what did they think?`;
       else if (devLed) missing = ' A developer led deal usually also involves an engineering lead and whoever approves the spend; you did not list them. Were they part of the deal, and what did they think?';
     }
-    para.push(`**The people.** ${contacts.length === 1 ? 'One stakeholder was' : `${contacts.length} stakeholders were`} involved: ${joinList(contacts.map((c) => c.raw))}. ${groups.join(' ')}${missing}`);
+    para.push(`**The people.** Stakeholders recorded: ${joinList(contacts.map((c) => c.raw))}. ${groups.join(' ')}${missing}`);
   }
 
   // ---- the questions for the review call, each built from an input ----

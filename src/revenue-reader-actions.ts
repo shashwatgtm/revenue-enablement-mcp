@@ -83,5 +83,16 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
    `Demand generation head: confirm attendance and the handoff owner for ${deal} before issuing meeting invitations; check buyer availability against ${date} rather than treating a sent invite as agreement.`,
   ]};
  }
+
+ if(name==='win_loss_analyzer'){
+  const outcome=label(a.deal_outcome,'recorded'),reason=label(a.loss_reason||a.win_reason,'the reported decision reason'),stakeholders=label(a.stakeholders_involved,'the recorded contacts');
+  return {meaning:`The analysis supports investigating the ${outcome} decision for ${solution}. This sample cannot establish a general cause or justify changing the entire sales motion. Compare deals with the same segment, scope and period and retain contrary cases.`,evidence:`the buyer gives a different reason or comparable wins, losses and deferred decisions do not show the proposed pattern`,roles:[
+   `Founder: compare the reported reason "${reason}" with a comparable win and loss for ${solution} before changing the motion; retain cases that contradict it.`,
+   `CEO: have finance compare the pursuit cost and ${num(a.sales_cycle_days,'unstated')} day cycle for the ${num(a.deal_value,'unstated')} value opportunity before funding a process change; do not generalize one deal's economics.`,
+   `CMO: verify "${reason}" with attributed buyer notes before changing a claim or campaign; separate buyer evidence from seller inference.`,
+   `CRO: ask ${stakeholders} for access to the actual decision maker and confirm the reason independently; record whether authority and the approval path were covered.`,
+   `Demand generation head: test the proposed ${solution} selection change on a separate, comparable account cohort; agree the measure and stop rule before comparing outcomes with the current criteria.`,
+  ]};
+ }
  return undefined;
 }

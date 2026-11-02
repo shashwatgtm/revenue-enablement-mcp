@@ -79,3 +79,22 @@ test('A qualitative current price relation can be retained without inventing a p
   const t=await call(text);assert.match(t,pattern);assert.doesNotMatch(t,/a gap of/);
  }
 });
+
+test('Approval notes remain notes rather than a person name in generated sentences',async()=>{
+ const approval='No one can approve this yet; Finance must confirm the named approver and the concession limit.';
+ for(const scenario of ['competitor_pricing','budget_objection','procurement_pressure','enterprise_agreement']) {
+  const t=await call('Competitor is 25% cheaper',{scenario,approval_authority:approval});
+  assert.match(t,/No one can approve this yet/);
+  assert.ok(!t.includes('case for '+approval));assert.ok(!t.includes('include '+approval));assert.ok(!t.includes('within what '+approval));assert.ok(!t.includes('named '+approval+' as the approver'));
+ }
+});
+test('Budget and multi year scenarios do not make an unspecified deal value an annual fee',async()=>{
+ const budget=await call('Competitor quote period is unspecified',{scenario:'budget_objection'});
+ assert.match(budget,/same quoted period/);assert.doesNotMatch(budget,/higher than that every year/);
+ const multi=await call('Competitor quote period is unspecified',{scenario:'multi_year_negotiation'});
+ assert.match(multi,/quoted period must be confirmed/);assert.doesNotMatch(multi,/base for every term|1 year \| The base deal at \$72,000/);
+});
+test('Total cost comparison first establishes the period of the supplied deal amount',async()=>{
+ const t=await call('Competitor quote period is unspecified');
+ assert.match(t,/Confirm the period covered by your \$72,000/);assert.doesNotMatch(t,/total cost comparison over three years/);
+});

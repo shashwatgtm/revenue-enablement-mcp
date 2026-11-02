@@ -2141,7 +2141,7 @@ ${hasValue(args.discount_requested) ? `| **Discount requested** | ${discountRequ
 | **Who approves** | ${approvalAuthority || 'Not specified'} |
 ${competitorPrice ? `| **Competitor price** | ${competitorPrice} |\n` : ''}
 ${leverageLine}
-${theirLine ? `\n${theirLine}\n` : ''}${approvalAuthority ? `\nWrite the one-page case for ${approvalAuthority} first: the value, the price and what you ask in return.\n` : ''}${decisionTimeline ? `\nThe buyer's timeline is ${decisionTimeline}. Land any concession before it, not after.\n` : ''}
+${theirLine ? `\n${theirLine}\n` : ''}${approvalAuthority ? `\nPrepare the one-page case for the commercial owner: the value, the price and what you ask in return. Confirm the approver and their limits from the approval notes above before offering terms.\n` : ''}${decisionTimeline ? `\nThe buyer's timeline is ${decisionTimeline}. Land any concession before it, not after.\n` : ''}
 ---
 `;
     const scenarioGuides = {
@@ -2287,13 +2287,13 @@ ${ctx.line}
 
 ### Strategy 1: Find Hidden Budget
 
-"Is there a discretionary fund for high-impact initiatives? Who would have authority over it?"${approvalAuthority ? ` You named ${approvalAuthority} as the approver: ask whether they hold such a fund.` : ''}
+"Is there a discretionary fund for high-impact initiatives? Who would have authority over it?"${approvalAuthority ? ` Use the approval notes above to identify who can confirm that fund and authorize the spend.` : ''}
 
 ### Strategy 2: Build Business Case for Budget
 
 "Let's build a business case that makes the return so clear that budget gets reallocated. What would leadership need to see?"
 
-${valueQuoted ? `Build the case on the value you supplied: ${valueListText ? `\n${valueListText}` : `${valueQuoted}.`}` : `${v ? `Build the case on ${v.metrics[0]} and ${v.metrics[1]}: ask the buyer what each costs them today.` : 'Ask the buyer what the problem costs them today.'}`}${haveValue ? ` At ${dealValueText}, the value the buyer sees has to be higher than that every year.` : ''}
+${valueQuoted ? `Build the case on the value you supplied: ${valueListText ? `\n${valueListText}` : `${valueQuoted}.`}` : `${v ? `Build the case on ${v.metrics[0]} and ${v.metrics[1]}: ask the buyer what each costs them today.` : 'Ask the buyer what the problem costs them today.'}`}${haveValue ? ` Compare the ${dealValueText} deal amount with supported value over the same quoted period. Confirm that period before treating either amount as annual.` : ''}
 
 ### Strategy 3: Restructure the Deal
 
@@ -2351,7 +2351,7 @@ Confirm the same scope, units, period and exclusions in both written quotes. Ope
 
 ### Option 2: Total Cost of Ownership
 
-"Let me show you a total cost comparison over three years, with everything outside the quoted price: implementation, support and the time your own team spends."${haveValue ? ` Start from your ${dealValueText} and add the same items for the other option.` : ''}
+"Let's prepare a total cost comparison over the same agreed period, with implementation, support and the time your own team spends shown separately."${haveValue ? ` Confirm the period covered by your ${dealValueText}, then compare the other option on that basis.` : ''}
 
 ### Option 3: Risk Framing
 
@@ -2395,7 +2395,7 @@ Procurement's job is to reduce costs. Don't take it personally, but don't cave u
 ### Tactic 1: Go High Before They Go Low
 
 Before procurement engagement:
-- Get executive sponsorship${approvalAuthority ? ` (${approvalAuthority})` : ''}
+- Confirm the business sponsor and the commercial approver${approvalAuthority ? ' using the approval notes above' : ''}
 - Align on value with business stakeholders
 - Get your champion to advocate internally
 
@@ -2410,7 +2410,7 @@ Before procurement engagement:
 
 | Commitment | What the buyer gives | What you may give in return (your decision) |
 |------------|----------------------|----------------------------------------------|
-${trades.map((t) => `| ${cap(t)} | A firm commitment in writing | A concession you set in advance, within what ${approvalAuthority || 'your approver'} allows |`).join('\n')}
+${trades.map((t) => `| ${cap(t)} | A firm commitment in writing | A concession confirmed in advance by the authorized commercial approver |`).join('\n')}
 
 ### Tactic 4: Use Time
 
@@ -2499,7 +2499,7 @@ The renewal conversation is a good time to expand:
 
 ## Value Exchange Framework
 
-Multi-year deals benefit both parties. Structure them to reflect that.${haveValue ? ` Your deal value of ${dealValueText} is the base for every term below.` : ''}
+Compare the commitment and cost for each proposed term. A longer term is useful only if both parties accept its scope and obligations.${haveValue ? ` Your deal amount is ${dealValueText}; its quoted period must be confirmed before using it as an annual base.` : ''}
 
 ---
 
@@ -2521,7 +2521,7 @@ Multi-year deals benefit both parties. Structure them to reflect that.${haveValu
 ${EXAMPLES}
 | Term | What the buyer commits | What you can offer (your decision) |
 |------|------------------------|------------------------------------|
-| 1 year | The base deal${haveValue ? ` at ${dealValueText}` : ''} | Standard terms |
+| 1 year | A separately confirmed annual quote and scope | Terms approved for that quote |
 | 2 years | A second year committed | A concession you set in advance |
 | 3 years | Three years committed | A larger concession, or a price lock (if you offer one) |
 
@@ -2589,7 +2589,7 @@ ${v ? `In ${v.name}: ${v.committee}` : `- Business sponsor (wants outcomes)
 ### Tactic 1: Don't Get Isolated
 
 Procurement will try to separate you from business sponsors. Resist:
-- "I'd like to include ${approvalAuthority || 'the business sponsor'} in this discussion to ensure alignment"
+- "Who can approve the terms, and can we include them with the business sponsor in this discussion?"
 - "Can we set up a joint meeting to discuss terms and value together?"
 
 ### Tactic 2: Package the Deal

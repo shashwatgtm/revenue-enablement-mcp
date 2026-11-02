@@ -331,7 +331,7 @@ function parseContacts(text, investmentBuyer = false) {
         const title = (m ? m[1] : raw).trim();
         let tag = m ? m[2].trim().toLowerCase() : null;
         if (!tag) {
-            const asM = raw.match(/^(.*?)\s*[-\u2013:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|user|influencer|evaluator)\s*$/i);
+            const asM = raw.match(/^(.*?)\s*[-\u2013:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|(?:daily |end )?user|influencer|evaluator)\s*$/i);
             if (asM)
                 return { raw, title: asM[1].trim(), tag: asM[2].toLowerCase(), family: familyOf(asM[1], investmentBuyer), level: levelOf(asM[1]) };
         }

@@ -8,6 +8,22 @@ async function call(name,args){
  const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 }
 const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('Account expansion keeps absent demand as a constraint and daily user as a stated role',async()=>{
+ const base=cases.find(x=>x.tool==='account_plan_builder').args;
+ for(const caveat of ['needs have not been confirmed','Demand is unconfirmed','No confirmed expansion opportunities']){
+  const t=await call('account_plan_builder',{...base,expansion_opportunities:'Second depot opens in January; '+caveat});
+  const core=t.split('## Reading the answer')[0];
+  assert.match(core,/\*\*Second depot opens in January\*\*/);
+  assert.match(core,/Evidence still to confirm, as you noted:/);
+  assert.ok(core.includes(caveat[0].toUpperCase()+caveat.slice(1)));
+  assert.ok(!core.includes('Take "'+caveat+'"'));
+  assert.match(core,/depot manager: daily user \| User, as you said/);
+  assert.doesNotMatch(core,/Meet depot manager: daily user/);
+ }
+ const confirmed=await call('account_plan_builder',{...base,expansion_opportunities:'Buyer confirmed demand for the second depot'});
+ assert.match(confirmed,/\*\*Buyer confirmed demand for the second depot\*\*/);
+ assert.doesNotMatch(confirmed,/Evidence still to confirm, as you noted:/);
+});
 test('Email checks separate relevance, delivery, evidence, buyer action and contact permission',async()=>{
  const a=cases.find(x=>x.tool==='email_sequence_generator').args;const text=await call('email_sequence_generator',a),r=roles(text);
  assert.equal(r.length,5);assert.match(r[0],/Two receptionists.*denial/);assert.match(r[1],/reply owner.*Clinic scheduling software/);

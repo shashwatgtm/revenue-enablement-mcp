@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.revenueReading = revenueReading;
+const rw_kit_ts_1 = require("./rw-kit.js");
 // Inputs have already crossed the shared escaping boundary. Do not cut an escape.
 const label = (v, fallback) => typeof v === 'string' && v.trim() && v.trim().length <= 150 && !/[\r\n]/.test(v) && !/^\(?\s*(?:not (?:given|supplied|stated|known)|unknown|n\/?a|none|unspecified)\s*\)?$/i.test(v) ? v.trim() : fallback;
 const num = (v, fallback) => typeof v === 'number' && Number.isFinite(v) ? v.toLocaleString('en-US', { maximumFractionDigits: 6 }) : fallback;
@@ -96,6 +97,16 @@ function revenueReading(name, a, result) {
                 `CMO: verify the source and scope of "${value}" before using it to justify price; remove unsupported savings or response time claims.`,
                 `CRO: obtain the scope, term and exclusions behind "${rival}" and the ${price} offer before discussing a discount; record unresolved differences.`,
                 `Demand generation head: check that any ${solution} pricing message uses the approved scope and period before reuse; do not turn this negotiated quote into a public price promise.`,
+            ] };
+    }
+    if (name === 'champion_enablement_kit') {
+        const approver = label((0, rw_kit_ts_1.splitNotes)(String(a.target_stakeholder || '')).text, 'the approval owner to identify'), value = label(a.key_value_points, 'the supplied value claim');
+        return { meaning: `The kit supports a conversation with ${approver} about ${solution}. A contact's reported effort or enthusiasm does not establish savings, advocacy, budget or approval authority.`, evidence: `the contact cannot arrange approver access, the measured result contradicts the value claim, or the buyer declines the scope or funding request`, roles: [
+                `Founder: ask the contact to explain "${value}" in their own words before endorsing the internal case; distinguish reported effort from measured savings.`,
+                `CEO: confirm who can authorize spending and delivery for ${solution} before supporting a purchase recommendation; ask ${approver} to confirm budget authority.`,
+                `CMO: check the source, period and measurement behind "${value}" before approving the internal brief; keep any unmeasured benefit explicit.`,
+                `CRO: ask the contact to arrange a conversation with ${approver} and confirm willingness to advocate for ${solution}; record the introduction rather than inferring influence from title.`,
+                `Demand generation head: check that the brief for ${solution} reaches only the agreed buying group and has an owner for questions; do not classify the contact as a champion until advocacy is confirmed.`,
             ] };
     }
     return undefined;

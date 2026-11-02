@@ -65,3 +65,9 @@ test('Overnight distinct case evidence checks: pricing_negotiation_guide',async(
  const checks=["unmeasured benefit", "80,000.*minimum approved margin", "not been measured.*unsupported", "68000 a year.*80,000", "approved scope and period"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: champion_enablement_kit',async()=>{
+ const a=cases.find(x=>x.tool==='champion_enablement_kit').args; const text=await call('champion_enablement_kit',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["40 hours a month.*measured savings", "CFO.*budget authority", "No pilot saving or budget approval yet.*unmeasured", "conversation with CFO.*introduction", "advocacy is confirmed"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

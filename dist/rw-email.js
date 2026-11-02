@@ -477,8 +477,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // ---- tone, sender, ask ----
     const hello = tone === 'casual' ? 'Hi,' : 'Hello,';
     const closing = { professional: 'Regards,', casual: 'Thanks,', urgent: 'Regards,', consultative: 'Best regards,', provocative: 'Regards,' }[tone] || 'Regards,';
-    const senderLine = senderIn || '(Add your name and role before sending.)';
-    const sig = `${closing}\n${senderLine}`;
+    const sig = senderIn ? `${closing}\n${senderIn}` : '';
     const ctaRaw = (ctaIn || 'short call').replace(/[.?!]+$/, '');
     const ctaVerb = /^(confirm|name|identify|agree|choose|select|share|send|introduce|approve|book|see|join|register|reply|try|get|schedule|watch|read|download|start|meet|talk|chat|review|attend|visit|sign|take)\b/i.test(ctaRaw);
     const ctaText = ctaVerb ? D.lower(ctaRaw) : (/^(a|an|the|one|our|my)\b/i.test(ctaRaw) ? D.lower(ctaRaw) : anOf(D.lower(ctaRaw)));

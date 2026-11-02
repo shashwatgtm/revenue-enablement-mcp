@@ -22,3 +22,11 @@ test('Round 5: a high rule score does not establish buyer engagement',async()=>{
  assert.doesNotMatch(text,/\(Healthy\)|\*\*Advance the deal\*\*/);
  assert.match(text,/Confirm the decision maker, participation and acceptance conditions/);
 });
+
+test('Missing email sender is disclosed outside the draft instead of a fill in signature',async()=>{
+ const c=cases.find(x=>x.tool==='email_sequence_generator');const args={...c.args};delete args.sender_context;
+ const response=await handler(new Request('https://example.com/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:c.tool,arguments:args}})}));
+ const result=(await response.json()).result;assert.ok(result&&!result.isError);const text=result.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
+ assert.doesNotMatch(text,/\(Add your name and role before sending\.\)/);
+ assert.match(text.split('To sharpen this, give:')[1],/sender context/);
+});

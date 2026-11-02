@@ -213,7 +213,7 @@ ${canRecommend ? 'The named owner must still confirm the value evidence and scop
   const plural = /s$/i.test(target.trim().split(/\s+/).pop() || '') && !/(?:ss|us|is|ics)$/i.test(target.trim());
   const readerNotes = [
     `### About the reader`,
-    targetGiven ? `${d.cap(target)} ${plural ? `are ${targetRole.label}s` : `is ${aAn(targetRole.label)}`}: they care about ${targetRole.cares}, and worry about ${targetRole.worry}. They will want to see ${targetRole.needs}.` : '',
+    targetGiven ? `Owner: the champion with ${d.cap(target)}. Before forwarding this case for ${P}, ask which acceptance condition ${target} will check and obtain the source record. Check: the forwarded brief names that condition, its evidence and the person who can approve it.` : '',
     v ? `In ${v.name} the case is usually judged on ${joinList(v.metrics.slice(0, 4))}.` : '',
     v ? d.sectorNotes(v, 'committee') : '',
   ].filter(Boolean).join('\n\n');

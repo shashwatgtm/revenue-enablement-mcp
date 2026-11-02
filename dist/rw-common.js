@@ -34,7 +34,7 @@ const FIXED_LINK = /\b(?:per site|per link|leased lines?|mpls|sd-?wan|site surve
 const SOFTWARE_CUES2 = /\b(?:software|saas|platforms?|apps?|apis?|tools?|dashboards?|subscriptions?|cloud|portal|systems?|crm|erp|engine|sdk)\b/i;
 const SERVICE_WORDS2 = /\b(?:outsourc\w*|bpo\b|managed (?:services?|operations|network|it)|consult\w*|staffing|fte\b|retainer|time and materials|statement of work|(?:contact|call) cent(?:re|er)s?|service desk|professional services|dedicated teams?|engineering services|business services)\b/i;
 const MODEL_LINE2 = /Business model: [^]*?\.\*$/;
-const NEUTRAL_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); say how you are paid in your solution to change them.*';
+const NEUTRAL_LINE = 'Business model: not stated. Tell us how you charge and the plan will adjust.*';
 /** The shared reader leaves a kind of telecom company unnamed when the seller's words name two of its sub-types ("voice and SMS APIs ... SIP trunking" names messaging and business voice). The kind the seller names
  *  first is the one it sells first (the same rule the reader applies between verticals), so the sub-type whose words open the seller's text is used here; no tie is broken when both open it together. */
 function firstSubtype(v, sellerText) {
@@ -50,10 +50,12 @@ function readSector(explicitModel, input) {
     const m0 = (0, verticals_ts_1.detectModel)(explicitModel, input);
     const sellerOnly = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
     const v = (0, sub_industry_ts_1.gateSubIndustry)(firstSubtype((0, sector_read_ts_1.profileForSeller)(read.vertical, m0.model, input), sellerOnly), input.seller);
-    const m = (0, sector_read_ts_1.modelUnderSetSector)(m0, v, input); // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
+    let m = (0, sector_read_ts_1.modelUnderSetSector)(m0, v, input);
+    if (m.how === 'sector')
+        m = { model: null, how: 'unknown' }; // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; describe how you charge for advice that fits it';
+    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
     const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
     const allText = [sellerText, ...(input.context || []).filter((x) => typeof x === 'string')].join(' . ');
     let line = `*Sector: ${sector}. Business model: ${model}.*`;
@@ -72,7 +74,7 @@ function readSector(explicitModel, input) {
             line = line.replace(MODEL_LINE2, NEUTRAL_LINE);
         }
     }
-    return { v, model: outModel, line, fixedLink: FIXED_LINK.test(allText) };
+    return { v, model: outModel, line: line + (!outModel ? "\n\nBilling dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps." : ""), fixedLink: FIXED_LINK.test(allText) };
 }
 /** Round 4: the notes of a plain telecom entry are written for operators who sell links to sites. For a seller that is not one (no sites, links or term contracts in the inputs) the lines that
  *  name sites, links, repair time or a rollout wave are left out, so an API deal is not read through a network operator's frame. A sub-type entry is left as it is. */

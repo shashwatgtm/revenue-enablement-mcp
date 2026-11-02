@@ -87,7 +87,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
     const base = roleFor(c.title, investment);
     let step = r.step;
     if (k === 'champion') step = `${r.step}; then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
-    else if (k === 'buyer' || k === 'economic') step = `${r.step}. Their worry is ${base.worry}`;
+    else if (k === 'buyer' || k === 'economic') step = `${r.step}. Ask whether ${base.worry} is a concern in this account; record their answer`;
     else if (k === 'blocker') step = `Find out what they fear (${base.worry}) and answer it in writing before the proposal`;
     const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : upperFirst(r.cares);
     if (!usedCares.has(r.cares)) usedCares.set(r.cares, c.title);
@@ -142,7 +142,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
   // ---- who decides ----
   const people: string[] = ['## Who decides and who influences'];
   if (contacts.length) {
-    people.push(`Each contact you gave is one row, with the part you stated for them; where you stated none, the part is read from the title and says so.\n\n| Contact you gave | Part in the decision | What they care about | Next step |\n|---|---|---|---|\n${rows.join('\n')}`);
+    people.push(`Each contact you gave is one row, with the part you stated for them; where you stated none, the part is read from the title and says so.\n\n| Contact you gave | Part in the decision | Question to verify | Owner, action and check |\n|---|---|---|---|\n${rows.join('\n')}`);
   }
   const gaps: string[] = [];
   if (!hasChampion) gaps.push(`Find a champion first: the person who feels the problem and is measured on it${v ? ` (in ${v.name}: ${(v.committee.split(';').find((x) => /champion/i.test(x)) || v.committee.split(';')[1] || v.committee).trim().replace(/[.]+$/, '')})` : ''}.`);

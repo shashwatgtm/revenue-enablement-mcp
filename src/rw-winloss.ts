@@ -123,7 +123,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
     weighed.push({ ...a, winner, group, k: a.kind === 'vendor' ? null : kindOf(a) });
   };
   const m = details.match(ALT_TAIL);
-  if (m) splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
+  if (m && !/^[.!?]/.test(m[1].trim())) splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
   if (named) splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome, 1));
   const handles = weighed.map((w) => w.handle);
 
@@ -233,7 +233,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
         && !/\b(?:not|no longer)\s+(?:missing|unassigned|absent)|\b(?:no|without)\s+(?:ownership|sponsorship)\s+gap/i.test(clause));
       if (ownershipGap) readings.push('Ownership gap: the reported reason says no accountable owner or sponsor was assigned. This is a reported reason, not a proven root cause. Ask who could have owned the decision and what prevented someone from being assigned.');
       // the alternatives the reason names
-      for (const a of weighed) if (shares(reason, a.text) >= 1 || r.includes(a.handle.toLowerCase())) readings.push(`The reason names ${a.handle} itself, so the buyer judged ${name} against ${a.kind === 'vendor' ? 'that vendor' : 'it'} and not against a better product. ${a.k ? `The usual case for ${a.k.label} is that ${a.k.why}.` : ''} Ask what ${name} would have had to show to beat it.`.replace(/\s+/g, ' '));
+      for (const a of weighed) if (shares(reason, a.text) >= 1 || r.includes(a.handle.toLowerCase())) readings.push(`The reason names ${a.handle} itself, so the buyer judged ${name} against ${a.kind === 'vendor' ? 'that vendor' : 'it'} and that comparison does not establish which product was better. ${a.k ? `The usual case for ${a.k.label} is that ${a.k.why}.` : ''} Ask what ${name} would have had to show to beat it.`.replace(/\s+/g, ' '));
       // the people the reason points at
       const POINT: [RegExp, RegExp][] = [[/\bengineering|technical|developer|in-?house|build\b/, /engineer|technolog|cto|developer|architect|platform/i], [/\bfinance|budget|audit|cfo|price|cost\b/, /financ|cfo|controller|account/i], [/\bsecurity|compliance|privacy\b/, /secur|ciso|compliance|risk/i], [/\bit\b|integration|infrastructure|network\b/, /\bIT\b|information|infrastructure|cio|network/i], [/\bprocurement|legal|contract\b/, /procure|legal|counsel|vendor/i], [/\boperations|ops|site|stores?\b/, /operat|coo|supply|logistic/i]];
       // each part of the reason is read against the people it points at
@@ -254,10 +254,10 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
         }
       }
       if (/bundle|one vendor|single vendor|suite|together|all-in-one/.test(r)) readings.push(`A bundle loss: the buyer preferred one vendor for more than ${name} covers. Ask whether ${name} could have partnered for the missing part, or qualified out earlier.`);
-      if (/price|cost|budget|expensive|cheaper|discount/.test(r)) readings.push(`Price or budget: ${hasV ? `at ${D.money(dealValue)} the buyer had to justify the spend` : 'the buyer had to justify the spend'}${weighed.length ? ` against ${andList(handles.slice(0, 2), 'or')}` : ''}. Check whether the value case was agreed in the buyer's own numbers before price came up${deciders.length ? `, and whether ${refs(deciders)} saw it` : ''}.`);
+      if (/price|cost|budget|expensive|cheaper|discount/.test(r)) readings.push(`Price or budget: ${hasV ? `at ${D.money(dealValue)} the account owner needs the buyer’s approved cost case` : 'the account owner needs the buyer’s approved cost case'}${weighed.length ? ` against ${andList(handles.slice(0, 2), 'or')}` : ''}. Check whether the value case was agreed in the buyer's own numbers before price came up${deciders.length ? `, and whether ${refs(deciders)} saw it` : ''}.`);
       if (/feature|product|capabilit|integrat/.test(r) || (!ownershipGap && /missing|gap/.test(r))) readings.push('A product or fit gap: decide whether the gap was real or a demonstration problem, and whether the requirement could have been shaped earlier.');
       if (/timing|priority|later|next year|freeze|no decision|season|quarter|migration/.test(r)) readings.push(`Timing or priority: the reason carries a timing element${/season|quarter|freeze/.test(r) ? ' (the calendar of the buyer)' : ''}. Look for the event that would have made this urgent, and whether the status quo was acceptable to them${cycle ? `; the deal ran ${days(cycle)}, so ask what changed in that time` : ''}.`);
-      if (/relationship|incumbent|existing|renew|stayed|homegrown|home-grown|in-?house/.test(r) && !weighed.some((a) => shares(reason, a.text) >= 1)) readings.push('Incumbent advantage: the buyer stayed with what they know. Ask what the incumbent fixed or promised during your evaluation.');
+      if (/relationship|incumbent|existing|renew|stayed|homegrown|home-grown|in-?house/.test(r) && !weighed.some((a) => shares(reason, a.text) >= 1)) readings.push('Incumbent decision to check: ask the buyer whether staying with the current supplier drove the loss, and record the reason in their words. The account owner should obtain that account before the loss review.');
       const seen = new Set<string>();
       const uniq = readings.filter((x) => { const k = x.slice(0, 40); if (seen.has(k)) return false; seen.add(k); return true; });
       let text = `**The stated reason.** The reason the buyer gave, in the words you recorded: ${q(reason)}.`;
@@ -277,7 +277,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
     if (backing.length) groups.push(`Backing ${name}: ${refs(backing).replace(/^the /, 'the ')}.`.replace(/\bthe the\b/g, 'the'));
     if (against.length) groups.push(`Against: ${refs(against)}.`);
     if (deciders.length) groups.push(`Recorded as the buyer: ${refs(deciders)}.`);
-    if (!contacts.some((c) => c.tag)) groups.push('No position was recorded for any of them.');
+    if (!contacts.some((c) => c.tag)) groups.push('No decision role or view was recorded. The account owner should confirm each person’s part before the review.');
     else if (!backing.length) groups.push('No champion is recorded.');
     let missing = '';
     if (v) {

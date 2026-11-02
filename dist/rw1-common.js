@@ -350,9 +350,10 @@ function readRole(c, kind, ctx, investment) {
     const hit = qa && (ctx.callContext || /\b(?:compliance|calls?|agents?|coach\w*|contact cent\w+)\b/i.test(c.title)) ? CALL_QUALITY : ROLE_PATTERNS.find((p) => p.re.test(c.title) && (!p.when || p.when(ctx)));
     const base = (0, answers_ts_1.roleFor)(c.title, investment);
     const part = hit ? hit.part : c.level === 'group' ? 'A group of users or evaluators' : c.level === 'exec' ? 'Senior leader' : (0, dealtext_ts_1.upperFirst)(base.label);
-    const cares = hit ? hit.cares : base.cares;
+    const cares = `Check with ${c.title}: ${hit ? hit.ask || ('which part of ' + ctx.P + ' they will assess') : 'which part of ' + ctx.P + ' they will assess'}`;
     const step = hit ? hit.step(ctx) : base.nextStep;
-    return { part, cares, step, kind: kind ?? (hit ? hit.kind : null), ask: hit?.ask };
+    const ownedStep = `Owner: account owner with ${c.title}. Before the next buyer meeting: ${step}. Check: record ${c.title}'s acceptance condition for ${ctx.P}, the evidence they will inspect and who signs it off.`;
+    return { part, cares, step: ownedStep, kind: kind ?? (hit ? hit.kind : null), ask: hit?.ask };
 }
 const THREAT_KINDS = [
     { id: 'scratch', re: /\bfrom scratch\b|\bbuild(?:ing)? (?:every|each|all|our own|their own|it|them)\b/i, tells: 'the buyer builds and keeps each piece itself, so the cost is people and time, not a purchase', asks: ['Which pieces has the team built by hand, who keeps each one running, and what has it not had time to build?', 'How long does it take to add one more, and what waits while it is built?'], prove: 'Count what one more piece takes to build and run, then show the same piece done with the product' },
@@ -721,7 +722,7 @@ const SEAT_WORDS = /\bper[- ](?:seat|user|agent|member|employee|licen[cs]e|month
  *  in a software sector or a software seller in a services sector; the wording of the plan still follows it, and the line says so. The line also no longer tells the user to
  *  set business_model, which these three tools do not take. */
 const MODEL_LINE = /Business model: [^]*?\.\*$/;
-const ASSUMED_LINE = 'Business model: not stated in your inputs, so the notes below follow the usual shape for this sector (assumed); confirm how you charge.*';
+const ASSUMED_LINE = 'Business model: not stated. Tell us how you charge and the plan will adjust.*';
 const MIXED_LINE = 'Business model: your words point to both a subscription and usage pricing, so the notes below follow the usual shape for this sector (assumed); confirm how you charge.*';
 function plainModelLine(line) {
     if (!MODEL_LINE.test(line))
@@ -730,7 +731,7 @@ function plainModelLine(line) {
     if (/assumed/.test(m) && !/read from the product description|read from your wording/.test(m))
         return line.replace(MODEL_LINE, ASSUMED_LINE);
     if (/^Business model: not clear from your inputs/.test(m))
-        return line.replace(MODEL_LINE, 'Business model: not clear from your inputs; describe how you charge for advice that fits it.*');
+        return line.replace(MODEL_LINE, 'Business model: not stated. Tell us how you charge and the plan will adjust.*');
     return line.replace(/; set business_model to change it\)/, ')');
 }
 /** The business model, read from the seller's own words as well as from the sector reader. `sellerText` is what the seller wrote about its own product (your_solution) and `others`

@@ -661,7 +661,7 @@ ${yourSolution ? (0, dealtext_ts_1.upperFirst)(name) : 'The product'} is in ${(0
 
 ${ctx.line}
 
-${persona && persona.label !== 'stakeholder' ? `**Who is evaluating:** ${(0, dealtext_ts_1.aAn)(persona.label)}${personaName && personaName.toLowerCase() !== persona.label.toLowerCase() ? ` (${personaName})` : ''}. They care about ${persona.cares}, and worry about ${persona.worry}. Ask in those terms.\n` : (personaName ? `**Who is evaluating:** ${(0, dealtext_ts_1.upperFirst)(personaName)}.\n` : '')}
+${personaName ? `**Who is evaluating:** ${(0, dealtext_ts_1.upperFirst)(personaName)}. Owner: the account owner with ${personaName}. Before the next comparison meeting, ask which of the supplied buyer priorities decides between the named alternatives. Check: record the buyer’s criterion, the evidence for each option and who approves it.\n` : ''}
 ${v ? `${sectorBlock(v)}\n` : ''}${allStrengths.length || weaknesses.length ? `\n### Your notes (not for the buyer)\n\n${allStrengths.length ? `**Your strengths**\n${allStrengths.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${weaknesses.length ? `**Weak points of ${compLabel}**\n${weaknessLabels.map((x) => `- ${x}`).join('\n')}\n` : ''}` : ''}
 ---
 

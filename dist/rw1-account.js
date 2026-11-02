@@ -101,7 +101,7 @@ function buildAccountPlan(args, d) {
         if (k === 'champion')
             step = `${r.step}; then give them a one page case to forward to ${buyer ? buyer.title : 'the person who signs'}`;
         else if (k === 'buyer' || k === 'economic')
-            step = `${r.step}. Their worry is ${base.worry}`;
+            step = `${r.step}. Ask whether ${base.worry} is a concern in this account; record their answer`;
         else if (k === 'blocker')
             step = `Find out what they fear (${base.worry}) and answer it in writing before the proposal`;
         const caresCell = usedCares.has(r.cares) ? `Like ${usedCares.get(r.cares)}: ${r.cares}` : (0, dealtext_ts_1.upperFirst)(r.cares);
@@ -162,7 +162,7 @@ function buildAccountPlan(args, d) {
     // ---- who decides ----
     const people = ['## Who decides and who influences'];
     if (contacts.length) {
-        people.push(`Each contact you gave is one row, with the part you stated for them; where you stated none, the part is read from the title and says so.\n\n| Contact you gave | Part in the decision | What they care about | Next step |\n|---|---|---|---|\n${rows.join('\n')}`);
+        people.push(`Each contact you gave is one row, with the part you stated for them; where you stated none, the part is read from the title and says so.\n\n| Contact you gave | Part in the decision | Question to verify | Owner, action and check |\n|---|---|---|---|\n${rows.join('\n')}`);
     }
     const gaps = [];
     if (!hasChampion)

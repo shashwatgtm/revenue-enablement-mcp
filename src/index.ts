@@ -1016,9 +1016,10 @@ function readContext(explicitModel: unknown, input: { seller: unknown[]; context
   const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
   // A seller that manages money gets the investment notes (and an AI native seller of support automation the support notes): src/verticals.ts profileFor.
   v = profileForSeller(v, m.model, input);
-  m = modelUnderSetSector(m, v, input);   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
+  m = modelUnderSetSector(m, v, input);
+  if (m.how === 'sector') m = { model: null, how: 'unknown' };   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
   const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-  const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not clear from your inputs; describe how you charge for advice that fits it';
+  const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
   return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
 }
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).

@@ -2,6 +2,8 @@
 export declare function typedLength(t: string): number;
 /** Splits at commas that are outside brackets and quotes. */
 export declare function splitTopLevel(text: string, sep?: RegExp): string[];
+/** A standalone evidence-status note is not a product benefit or competitor weakness. */
+export declare function isEvidenceStatus(text: string): boolean;
 /** Sentences, split only at a real sentence end: not inside a number (3.5), an abbreviation (Rs. 15, e.g.) or after a single capital. */
 export declare function sentences(text: string): string[];
 /** Cuts a text at a word boundary, never inside a word; adds nothing when it already fits. */

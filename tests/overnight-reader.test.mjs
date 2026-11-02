@@ -8,6 +8,73 @@ async function call(name,args){
  const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 }
 const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('Competitive questions never turn evidence status into a weakness or capability',async()=>{
+ const a=cases.find(x=>x.tool==='competitive_trap_setter').args;
+ const t=await call('competitive_trap_setter',a);
+ assert.match(t,/Evidence status supplied/);assert.match(t,/not independently verified/);
+ assert.doesNotMatch(t,/handle not independently verified|Weak point 2|Scenario 2/);
+ const only=await call('competitive_trap_setter',{...a,competitor_weaknesses:'Not independently verified',your_strengths:'Improvement is unmeasured'});
+ assert.match(only,/No weak points were given/);assert.match(only,/No demonstrable strengths were given/);
+ const positive=await call('competitive_trap_setter',{...a,your_strengths:'Shows unverified invoices in a separate review queue'});
+ assert.match(positive,/Criterion 1: Shows unverified invoices in a separate review queue/);
+});
+test('Proposal evidence caveats are preserved but never counted as differentiators',async()=>{
+ const a=cases.find(x=>x.tool==='proposal_section_writer').args;
+ for(const section_type of ['executive_summary','solution_overview','company_overview']){
+  const t=await call('proposal_section_writer',{...a,section_type});
+  assert.match(t,/Evidence still to establish/);
+  assert.match(t,/improvement is unmeasured/);
+  assert.doesNotMatch(t,/2 points above|\*\*2\. improvement is unmeasured/);
+ }
+ const t=await call('proposal_section_writer',{...a,key_differentiators:'Named exception owner; Not independently verified.'});
+ const recommendation=t.split('### Our Recommendation')[1].split('### Expected Outcomes')[0];
+ assert.match(recommendation,/Named exception owner/);assert.doesNotMatch(recommendation,/Not independently verified/);
+ const positive=await call('proposal_section_writer',{...a,key_differentiators:'Shows unverified invoices in a separate review queue'});
+ assert.match(positive,/first reason is this: Shows unverified invoices in a separate review queue/);
+});
+test('MAP respects unresolved buyer availability instead of assigning earlier review dates',async()=>{
+ const a=cases.find(x=>x.tool==='mutual_action_plan_generator').args;
+ for(const timing of ['security review starts after 20 November','security review begins on November 20','security review cannot start before next Monday','security review starts after 2026-11-20']){
+  const t=await call('mutual_action_plan_generator',{...a,blockers:timing});
+  assert.match(t,/Schedule held for the buyer's constraints/);
+  assert.ok(t.includes(timing));
+  assert.doesNotMatch(t,/### Phase \d|Start "Pilot acceptance" now/);
+  assert.match(t,/Confirm the year, earliest start and duration/);
+ }
+ const t=await call('mutual_action_plan_generator',{...a,blockers:'Budget review pending'});
+ assert.match(t,/### Phase \d/);
+ const timeline=t.split('## Mutual Action Plan Timeline')[1].split('## Risks')[0];
+ assert.ok(timeline.indexOf("Buyer's process step, in your words: procurement")<timeline.indexOf("Buyer's process step, in your words: signature"));
+ const close=timeline.split('Close & Launch')[1];assert.match(close,/process step, in your words: signature/);
+});
+test('Win loss preserves the sentence after an incumbent mention or extracted alternative',async()=>{
+ const a=cases.find(x=>x.tool==='win_loss_analyzer').args;
+ const t=await call('win_loss_analyzer',a);
+ assert.match(t,/procurement renewed the incumbent/);
+ assert.match(t,/We never met the economic buyer/);
+ assert.match(t,/This is one deal, not a trend/);
+ const named=await call('win_loss_analyzer',{...a,deal_details:'The incumbent is Example Supplier. We never met the economic buyer. This is one deal, not a trend.'});
+ assert.match(named,/Example Supplier/);
+ assert.match(named,/We never met the economic buyer/);
+ assert.match(named,/This is one deal, not a trend/);
+ assert.doesNotMatch(named,/"e never|"his is/);
+});
+test('Account expansion keeps absent demand as a constraint and daily user as a stated role',async()=>{
+ const base=cases.find(x=>x.tool==='account_plan_builder').args;
+ for(const caveat of ['needs have not been confirmed','Demand is unconfirmed','No confirmed expansion opportunities']){
+  const t=await call('account_plan_builder',{...base,expansion_opportunities:'Second depot opens in January; '+caveat});
+  const core=t.split('## Reading the answer')[0];
+  assert.match(core,/\*\*Second depot opens in January\*\*/);
+  assert.match(core,/Evidence still to confirm, as you noted:/);
+  assert.ok(core.includes(caveat[0].toUpperCase()+caveat.slice(1)));
+  assert.ok(!core.includes('Take "'+caveat+'"'));
+  assert.match(core,/depot manager: daily user \| User, as you said/);
+  assert.doesNotMatch(core,/Meet depot manager: daily user/);
+ }
+ const confirmed=await call('account_plan_builder',{...base,expansion_opportunities:'Buyer confirmed demand for the second depot'});
+ assert.match(confirmed,/\*\*Buyer confirmed demand for the second depot\*\*/);
+ assert.doesNotMatch(confirmed,/Evidence still to confirm, as you noted:/);
+});
 test('Email checks separate relevance, delivery, evidence, buyer action and contact permission',async()=>{
  const a=cases.find(x=>x.tool==='email_sequence_generator').args;const text=await call('email_sequence_generator',a),r=roles(text);
  assert.equal(r.length,5);assert.match(r[0],/Two receptionists.*denial/);assert.match(r[1],/reply owner.*Clinic scheduling software/);

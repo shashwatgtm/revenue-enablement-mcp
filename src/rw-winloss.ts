@@ -36,7 +36,7 @@ function splitList(s: string): string[] {
   return parts;
 }
 const ALT_INTRO = /(?:the\s+)?(?:alternatives?(?:\s+(?:buyers|they|customers|the buyers?)\s+use)?\s+(?:are|is|include)(?:\s+described\s+as)?|competing\s+(?:with|against)|competitors?\s*(?:are|is|include[sd]?|:)|\bversus\b|\bvs\.?|incumbents?\s*(?:is|are|:)?|compared\s+(?:with|to))\s*:?\s*/i;
-const ALT_TAIL = new RegExp(`${ALT_INTRO.source}(.+?)(?:\\.\\s+[A-Z]|\\.$|$)`, 'i');
+const ALT_TAIL = new RegExp(`${ALT_INTRO.source}(.+?)(?=\\.\\s+[A-Z]|\\.$|$)`, 'i');
 
 function wlContacts(text: string, investment: boolean): Contact[] {
   if (typeof text !== 'string' || !text.trim()) return [];
@@ -123,7 +123,8 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
     weighed.push({ ...a, winner, group, k: a.kind === 'vendor' ? null : kindOf(a) });
   };
   const m = details.match(ALT_TAIL);
-  if (m && !/^[.!?]/.test(m[1].trim())) splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
+  const namedAlternative = m && !/^[.!?]/.test(m[1].trim());
+  if (namedAlternative) splitList(m[1].replace(/\.$/, '')).forEach((a) => addAlt(a, false, false));
   if (named) splitList(wonBy).forEach((a) => addAlt(a, true, outcome === 'lost' || !outcome, 1));
   const handles = weighed.map((w) => w.handle);
 
@@ -134,7 +135,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
   const sizeSentence = hasV && hasD ? `The deal was worth ${D.money(dealValue)} and ran ${days(cycle)}.` : hasV ? `The deal was worth ${D.money(dealValue)}.` : hasD ? `The deal ran ${days(cycle)}.` : '';
   const residual = (() => {
     let r = details;
-    if (m) r = r.replace(ALT_TAIL, '');
+    if (namedAlternative) r = r.replace(ALT_TAIL, '');
     r = r.replace(/\broles involved:[^;.]*/i, '');
     const keep = sentences(r.replace(/(?:\s*;\s*)+/g, '. ')).filter((s) => !/hypothetical/i.test(s) && !/^\W*$/.test(s) && !(P.name && s.toLowerCase().startsWith(P.name.toLowerCase()) && s.length < 260));
     return keep.map((s) => s.replace(/[;.\s]+$/, '')).filter((s) => typedLength(s) > 3 && !/\bdeals?\s+with\b/i.test(s) && !/^\W*(?:the )?(?:alternatives?|roles)\b/i.test(s));

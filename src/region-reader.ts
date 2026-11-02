@@ -58,7 +58,7 @@ function clues():Clue[]{
  const seen=new Set<string>();return all.filter(c=>{const key=[c.region,c.country,c.value.toLowerCase(),c.kind].join('|');if(seen.has(key))return false;seen.add(key);return true;}).sort((a,b)=>b.value.length-a.value.length);
 }
 function normalize(text:string):string{
- return text.normalize('NFKC').replace(/[’]/g,"'").replace(/\bU\.S\.(?:A\.)?/g,'United States').replace(/\bU\.K\./gi,'United Kingdom').replace(/\bUS\b/g,'United States').replace(/\b(don't|doesn't|didn't|isn't|aren't|wasn't|weren't|won't|can't|haven't|hasn't)\b/gi,m=>({"don't":'do not',"doesn't":'does not',"didn't":'did not',"isn't":'is not',"aren't":'are not',"wasn't":'was not',"weren't":'were not',"won't":'will not',"can't":'cannot',"haven't":'have not',"hasn't":'has not'}[m.toLowerCase()]||m));
+ return text.normalize('NFKC').replace(/[‘’]/g,"'").replace(/\bU\.S\.(?:A\.)?/g,'United States').replace(/\bU\.K\./gi,'United Kingdom').replace(/\bUS\b/g,'United States').replace(/\b(don't|doesn't|didn't|isn't|aren't|wasn't|weren't|won't|can't|haven't|hasn't)\b/gi,m=>({"don't":'do not',"doesn't":'does not',"didn't":'did not',"isn't":'is not',"aren't":'are not',"wasn't":'was not',"weren't":'were not',"won't":'will not',"can't":'cannot',"haven't":'have not',"hasn't":'has not'}[m.toLowerCase()]||m));
 }
 const escaped=(s:string)=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function pattern(c:Clue):RegExp {
@@ -68,12 +68,22 @@ function pattern(c:Clue):RegExp {
 type Polarity='yes'|'no'|'unclear';
 function polarity(clause:string,start:number,end:number,all:Clue[]):Polarity{
  const prefix=clause.slice(0,start).replace(/\bnot only\b/gi,''),suffix=clause.slice(end);
- const before=prefix.split(/[,;]|\b(?:but|however|whereas|while)\b/i).at(-1)||'';
+ // Commas inside product or country lists retain polarity. A new seller clause resets it.
+ const before=prefix.split(/;|\b(?:but|however|whereas|while)\b|(?:,\s*|\band\s+)(?=(?:we|our company|our business)\s+(?:do|sell|serve|target|are|may|might|could)\b)/i).at(-1)||'';
  const after=suffix.split(/[,;]|\b(?:and|but|however|whereas|while)\b/i)[0];
- if(/\b(?:not|never|no|neither|nor|without|except|excluding|exclude|outside|avoid|left|exited|formerly|previously|historically|used to|no longer|stopped|ceased|cannot)\b/i.test(before))return'no';
+ // A product feature such as no license fees does not negate the market.
+ let placePrefix=before;for(const c of all)placePrefix=placePrefix.replace(pattern(c),'PLACE');
+ const directExclusion=/\b(?:not|never|no|neither|nor|without|except|excluding|exclude|outside|avoid|left|exited|formerly|previously|historically|used to|no longer|stopped|ceased|cannot)\b\s*(?:(?:in|into|to|for|within|the|market|markets|country|countries|of)\s+)*(?:PLACE\s*(?:(?:,|and|or|nor)\s*)?)*$/i;
+ const negatedSelling=/\b(?:not|never|no longer|stopped|ceased|cannot)\s+(?:(?:currently|actively|yet|now|ever|presently|really)\s+)*(?:sell(?:ing|s)?|sold|serv(?:es?|ing)|target(?:s|ing)?|operat(?:e|es|ing)|expand(?:s|ing)?|enter(?:s|ing)?|market(?:s|ing)?|offer(?:s|ing)?|do(?:ing)? business|trade|trading)\b/i;
+ const absentSales=/\b(?:(?:no|without)\s+(?:sales?|selling|customers?|buyers?|business|presence|operations?|offices?)|(?:sell(?:ing|s)?|sold|serv(?:es?|ing)|target(?:s|ing)?)\s+no\b|(?:formerly|previously|historically|used to)\b[^;]*\b(?:sell|sold|serve|served|operate|operated))\b/i;
+ if(directExclusion.test(placePrefix)||negatedSelling.test(before)||absentSales.test(before))return'no';
  if(/^\s*(?:(?:is|are|was|were|has been|have been)\s+)?(?:not|no longer|excluded|out of scope|off limits)\b/i.test(after))return'no';
  let tail=suffix;for(const c of all)tail=tail.replace(pattern(c),'PLACE');
- if(/^\s*(?:(?:,|and|or)\s*PLACE\s*)+(?:are|were)\s+(?:not|excluded|out of scope)\b/i.test(tail))return'no';
+ const listTail=tail.replace(/^\s*(?:(?:,\s*(?:and\s+|or\s+)?|and\s+|or\s+)PLACE\s*)+/i,'');
+ if(listTail!==tail){
+  if(/^\s*(?:(?:is|are|was|were|have been|has been)\s+)?(?:not|excluded|out of scope|off limits|(?:our|a|the|their)\s+(?:previous|former|historical|competitor|rival)|previous|former|historical|competitor|rival)\b/i.test(listTail))return'no';
+  if(/^\s*(?:could|might|may|would|is being considered|are being considered|is not confirmed|are not confirmed)\b/i.test(listTail))return'unclear';
+ }
  if(/\?|\b(?:may|might|could|perhaps|maybe|whether|consider(?:ing)?|uncertain|unsure|if|hypothetical|example|competitors?|rivals?)\b/i.test(before)||/\?|\b(?:uncertain|unconfirmed|not confirmed)\b/i.test(after))return'unclear';
  if(/^\s*(?:(?:is|are|was|were|has been|have been)\s+)?(?:(?:our|a|the|their)\s+)?(?:previous|former|historical|competitor|rival)\b/i.test(after))return'no';
  if(/^\s*(?:could|might|may|would|is being considered|is not confirmed)\b/i.test(after))return'unclear';
@@ -105,16 +115,28 @@ function scan(texts:string[],all:Clue[]):Scan {
  return{found,unresolved};
 }
 /** Explicit selling destinations outrank a seller's headquarters or incidental location. */
-function marketText(text:string):string {
- const clean=normalize(text).replace(/"[^"\n]*"|“[^”\n]*”/g,'');
+function marketText(text:string,all:Clue[]):string {
+ const clean=normalize(text).replace(/"[^"\n]*"|“[^”\n]*”|(?<![\p{L}\p{N}])'[^\n]*?'(?![\p{L}\p{N}])/gu,'');
  return (clean.match(/[^.!?\n]+[.!?]?/g)||[]).map(sentence=>{
   // A buyer buying from a vendor names the destination before the vendor's office.
   const purchase=sentence.match(/\bbuy(?:ing|s)?\b[^.;!?]*?\bfrom\b/i);
   if(purchase)return sentence.slice(0,purchase.index!+purchase[0].lastIndexOf('from'));
-  const m=sentence.match(/\b(?:sell(?:ing|s)?|sold|expand(?:ing)?|enter(?:ing)?|target(?:ing)?|serv(?:e|ing))\b(?:\s+[\w'-]+){0,8}?\s+(?:in(?:to)?|to|across)\s+/i);
+  const m=sentence.match(/\b(?:sell(?:ing|s)?|sold|expand(?:s|ing)?|enter(?:s|ing)?|target(?:s|ing)?|serv(?:es?|ing))\b/i);
   if(m){
    const qualifier=sentence.slice(0,m.index).match(/\b(?:not|never|no longer|formerly|previously|historically|may|might|could|perhaps|maybe|considering|should we|would we|can we|competitor|rival)[^,;.!?]*$/i)?.[0]||'';
-   return qualifier+sentence.slice(m.index);
+   // A source office following from is not a selling destination, in either order.
+   const places=all.filter(c=>['region','country','city','state'].includes(c.kind)&&(!/^[A-Z]{2,4}$/.test(c.value)||['UK','UAE','USA'].includes(c.value))).map(c=>escaped(c.value)).join('|');
+   const place='(?:'+places+')';
+   const origin=new RegExp('\\bfrom\\s+(?:(?:our|the|a|an|vendor\'s|seller\'s|company\'s)\\s+)?(?:(?:office|offices|headquarters|base|team|company|vendor|seller)\\s+(?:in|at)\\s+)?'+place+'(?![\\p{L}\\p{N}_])(?:\\s*(?:,|and|or)\\s*'+place+'(?![\\p{L}\\p{N}_]))*(?:\\s+(?:offices?|headquarters|base|team|company|vendor|seller|suppliers?))?','giu');
+   const selling=sentence.slice(m.index);
+   const namedDestination=new RegExp('\\b(?:in|into|to|serves?|serving|targets?|targeting)\\s+(?:the\\s+)?'+place+'(?![\\p{L}\\p{N}_])','iu');
+   const destination=selling.replace(/\bfrom\s+[^.;!?]*?(?=\s+(?:to|into)\s+|[.;!?]|$)/gi,(span:string,offset:number,whole:string)=>{
+    origin.lastIndex=0;if(!origin.test(span))return span;
+    // Preserve an entire source postal address when stripping it, not only its first city.
+    if(/^\s+(?:to|into)\s+/i.test(whole.slice(offset+span.length))||namedDestination.test(whole.slice(0,offset)))return '';
+    origin.lastIndex=0;return span.replace(origin,'');
+   });
+   return qualifier+destination;
   }
   return sentence.replace(/\b(?:our|the)\s+(?:company|business|product|brand)(?:'s)?\s+name\s+(?:is|:)\s+[^,;.]+/gi,'').replace(/\b(?:based|headquartered|located|founded)\s+in\s+[^,;.]+/gi,'');
  }).join(' ');
@@ -122,12 +144,17 @@ function marketText(text:string):string {
 const US_STATES:Record<string,string>={Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',California:'CA',Colorado:'CO',Connecticut:'CT',Delaware:'DE',Florida:'FL',Georgia:'GA',Hawaii:'HI',Idaho:'ID',Illinois:'IL',Indiana:'IN',Iowa:'IA',Kansas:'KS',Kentucky:'KY',Louisiana:'LA',Maine:'ME',Maryland:'MD',Massachusetts:'MA',Michigan:'MI',Minnesota:'MN',Mississippi:'MS',Missouri:'MO',Montana:'MT',Nebraska:'NE',Nevada:'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',Ohio:'OH',Oklahoma:'OK',Oregon:'OR',Pennsylvania:'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',Tennessee:'TN',Texas:'TX',Utah:'UT',Vermont:'VT',Virginia:'VA',Washington:'WA','West Virginia':'WV',Wisconsin:'WI',Wyoming:'WY'};
 export function readRegionContext(args:unknown):RegionReading {
  const f=fragments(args),all=clues();
- const explicit=scan(f.market,all),seller=scan(f.seller.map(marketText),all);
+ const explicit=scan(f.market,all),seller=scan(f.seller.map(text=>marketText(text,all)),all);
  // Customer location alone is not evidence that the seller is selling there.
  // A dedicated market field wins over incidental locations in the description.
  const chosen=explicit.found.length||explicit.unresolved.length?explicit:seller;
  const sector=explainSector({seller:f.seller,buyer:f.buyer});
- const v=sector.source==='seller'?sector.vertical:null;
+ const inferred=sector.source==='seller'?sector.vertical:null;
+ // The existing reviewed selector fixes the vertical, never an inferred sub industry.
+ const selected=args&&typeof args==='object'&&!Array.isArray(args)?(args as Record<string,unknown>).your_sector:undefined;
+ const selectedId=typeof selected==='string'?selected.replace(/_/g,'-'):null;
+ const validSelection=selected==='other'||REGION_TAXONOMY.verticals.some(v=>v.id===selectedId);
+ const v=validSelection?(selected==='other'?null:inferred?.id===selectedId?inferred:{id:selectedId!,subtype:undefined}):inferred;
  const subtype=v?.subtype?REGION_TAXONOMY.subtypes.find(s=>s.id===v.subtype||s.name===v.subtype)?.id||null:null;
  const regions:RegionMatch[]=[];
  for(const r of REGION_CHOICES){

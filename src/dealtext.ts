@@ -51,6 +51,11 @@ export function splitTopLevel(text: string, sep: RegExp = /,/): string[] {
 }
 
 const ABBREV = /(?:\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Rs|Inc|Ltd|Co|St|No|approx|incl|Fig|Eq)|\b[A-Z])\.$/;
+/** A standalone evidence-status note is not a product benefit or competitor weakness. */
+export function isEvidenceStatus(text: string): boolean {
+  const t = text.trim().replace(/[.!?]+$/, '');
+  return /^(?:(?:not (?:yet |independently )?(?:measured|verified|validated|confirmed|proven))|(?:(?:the )?(?:improvements?|benefits?|savings?|outcomes?|results?|claims?|evidence|proof)(?: (?:is|are|has|have))? (?:(?:not (?:(?:yet|been|independently) )*(?:measured|verified|validated|confirmed|proven))|unmeasured|unverified|unconfirmed|unproven|unknown))|(?:no (?:measured|verified|validated|confirmed|independent) (?:improvements?|benefits?|savings?|outcomes?|results?|evidence|proof)))$/i.test(t);
+}
 /** Sentences, split only at a real sentence end: not inside a number (3.5), an abbreviation (Rs. 15, e.g.) or after a single capital. */
 export function sentences(text: string): string[] {
   const t = text.replace(/\s+/g, ' ').trim();
@@ -298,7 +303,7 @@ export function parseContacts(text: string, investmentBuyer = false): Contact[] 
     const title = (m ? m[1] : raw).trim();
     let tag = m ? m[2].trim().toLowerCase() : null;
     if (!tag) {
-      const asM = raw.match(/^(.*?)\s*[-\u2013:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|user|influencer|evaluator)\s*$/i);
+      const asM = raw.match(/^(.*?)\s*[-\u2013:]\s*(champion|economic buyer|buyer|decision maker|sponsor|blocker|(?:daily |end )?user|influencer|evaluator)\s*$/i);
       if (asM) return { raw, title: asM[1].trim(), tag: asM[2].toLowerCase(), family: familyOf(asM[1], investmentBuyer), level: levelOf(asM[1]) } as Contact;
     }
     return { raw, title, tag, family: familyOf(title, investmentBuyer), level: levelOf(title) } as Contact;

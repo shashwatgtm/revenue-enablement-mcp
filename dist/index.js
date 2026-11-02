@@ -2693,7 +2693,9 @@ function executeProposalSectionWriter(args) {
     const v = propCtx.v;
     const modelKey = propCtx.model === 'investment' ? 'investment' : v ? v.id : '';
     const challenges = splitItems(customerChallenges);
-    const diffs = splitItems(keyDifferentiators);
+    const differenceItems = splitItems(keyDifferentiators);
+    const evidenceStatus = differenceItems.filter(dealtext_ts_1.isEvidenceStatus);
+    const diffs = differenceItems.filter(item => !(0, dealtext_ts_1.isEvidenceStatus)(item));
     const outcomes = splitItems(successMetrics);
     const claims = claimsIn(keyDifferentiators, yourSolution.length < 200 ? yourSolution : '');
     const rollout = implementationApproach
@@ -3135,7 +3137,7 @@ ${SUGGESTIONS_FOOTER}`,
     // Generate the requested section
     const generator = sections[sectionType];
     if (generator) {
-        return `${generator()}${v ? `\n\n---\n\n${sectorNotes(v, 'committee')}` : ''}`;
+        return `${generator()}${evidenceStatus.length ? `\n\n### Evidence still to establish\n\n${evidenceStatus.map(item => `- ${item}`).join('\n')}\n\nThese are limits on the supplied claims, not reasons to choose the offer. Confirm the baseline, result and source with the buyer before making an outcome claim.` : ''}${v ? `\n\n---\n\n${sectorNotes(v, 'committee')}` : ''}`;
     }
     return `Section type '${sectionType}' not recognized. Available sections: ${Object.keys(sections).join(', ')}`;
 }

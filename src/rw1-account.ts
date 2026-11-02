@@ -100,7 +100,11 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
 
   // ---- the alternatives and the objections ----
   const threats = readThreats(d.splitItems(threatsIn));
-  const expansion = d.splitItems(expansionIn);
+  const expansionItems = d.splitItems(expansionIn);
+  // Standalone evidence caveats are constraints on the plan, not areas to sell into.
+  const evidenceCaveat = (text: string): boolean => /^(?:(?:the |these |those )?(?:needs?|demand|budget|approval|sponsor|buyer|requirements?|expansion|opportunities?)\b.{0,45}\b(?:not (?:(?:yet|been) )*(?:confirmed|approved|verified|known|established)|unconfirmed|unknown|unverified)|no (?:confirmed|approved|verified|known) (?:need|demand|budget|approval|sponsor|buyer|requirement|expansion|opportunit))/i.test(text.trim());
+  const expansionCaveats = expansionItems.filter(evidenceCaveat);
+  const expansion = expansionItems.filter((text) => !evidenceCaveat(text));
   const qa: QACtx = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
   const answers = dedupeAnswers(objections.map((o) => ({ text: o, a: answerQuestion(o, qa) })));
 
@@ -173,6 +177,7 @@ export function buildAccountPlan(args: Record<string, unknown>, d: Deps): string
       return `- **${upperFirst(stripEnd(e))}**: ${s ? `the likely sponsor is ${s.title}` : 'ask the champion who would sponsor it'}${part && !e.toLowerCase().includes(part.toLowerCase()) ? `; it draws on ${part}` : ''}.`;
     }).join('\n')}`);
   }
+  if (expansionCaveats.length) grow.push(`Evidence still to confirm, as you noted:\n\n${expansionCaveats.map((e) => `- ${upperFirst(stripEnd(e))}.`).join('\n')}\n\nAsk the buyer to confirm or deny the need before assigning a sponsor, expansion revenue or delivery capacity.`);
   grow.push(v ? `Prove the first step before you ask for the next. In ${v.name}, buyers trust this form of proof: ${proofText}.` : `Prove the first step before you ask for the next: a before and after on one team, measured on a number the account already tracks.`);
   out.push(grow.join('\n\n'));
 

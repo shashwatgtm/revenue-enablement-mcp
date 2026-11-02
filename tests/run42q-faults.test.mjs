@@ -22,7 +22,7 @@ const SERVICES = "Corvane, Business services and advanced technology for large e
 
 test("your_sector ites: a services firm that names products and technology is sold as services", async () => {
   const t = await call("demo_script_builder", { demo_type: "first_look", customer_industry: "banks", your_solution: SERVICES, key_pain_points: "month end close takes too long", demo_duration: 30, your_sector: "ites" });
-  assert.match(modelLine(t), /^Business model: services/);
+  assert.match(modelLine(t), /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
   // its own charge words still decide: a subscription stated by the seller is a subscription
   const s = await call("demo_script_builder", { demo_type: "first_look", customer_industry: "banks", your_solution: `${SERVICES}, sold as a subscription per user`, key_pain_points: "month end close takes too long", demo_duration: 30, your_sector: "ites" });
   assert.match(modelLine(s), /^Business model: software subscription/);

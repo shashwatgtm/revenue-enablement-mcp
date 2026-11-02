@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
 import {reserveTools,isReserveTool,callReserveTool} from './reserve-tools.ts';
@@ -1020,7 +1021,7 @@ function readContext(explicitModel: unknown, input: { seller: unknown[]; context
   if (m.how === 'sector') m = { model: null, how: 'unknown' };   // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
   const sector = read.set ? sectorSetPhrase(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
   const model = m.model ? `${MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
-  return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
+  return { v, model: m.model, line: billingLine(explicitModel, input, `*Sector: ${sector}. Business model: ${model}.*`) };
 }
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).
 function proofOf(v: Vertical): string { return lowerFirstIfCommon(v.proofShape).replace(/[.]+$/, ''); }

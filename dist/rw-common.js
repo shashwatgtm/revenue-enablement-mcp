@@ -15,6 +15,7 @@ exports.listItems = listItems;
 exports.andList = andList;
 exports.dropRepeats = dropRepeats;
 exports.doesLine = doesLine;
+const verticals_ts_1 = require("./verticals.js");
 // Run 22 (writer rev-w3): helpers shared by the rewritten email_sequence_generator, win_loss_analyzer and competitive_trap_setter.
 // Text only: no figure, no statistic, no named company (B82), no network, file or environment access. The functions that live in
 // src/index.ts (lowerFirstIfCommon, cap, isCommonWord, money) are handed in as Deps so that this file never imports index.ts.
@@ -26,7 +27,7 @@ Object.defineProperty(exports, "splitTopLevel", { enumerable: true, get: functio
 const rw1_common_ts_1 = require("./rw1-common.js");
 const sub_industry_ts_1 = require("./sub-industry.js");
 const sector_read_ts_1 = require("./sector-read.js");
-const verticals_ts_1 = require("./verticals.js");
+const verticals_ts_2 = require("./verticals.js");
 // Round 4: a business model is named only as far as the seller's own words show it (rule E8). The shared reader gives "connectivity (per site, per link ...)" to any seller
 // of voice or messaging APIs and "services (per FTE ...)" to a platform that moves freight; neither is stated by the inputs, so the line says the notes follow the usual shape
 // of the sector (assumed) and the wording stays neutral. Usage priced sellers and SIM sellers are read by the model read of src/rw1-common.ts.
@@ -40,14 +41,14 @@ const NEUTRAL_LINE = 'Business model: not stated. Tell us how you charge and the
 function firstSubtype(v, sellerText) {
     if (!v || v.id !== 'telecom' || v.subtype || /, investment management$/.test(v.name) || !sellerText)
         return v;
-    const hits = verticals_ts_1.SUBTYPES.filter((st) => st.vertical === v.id).map((st) => ({ st, at: sellerText.search(new RegExp(st.match.source, st.match.flags.replace('g', ''))) })).filter((h) => h.at >= 0).sort((a, b) => a.at - b.at);
+    const hits = verticals_ts_2.SUBTYPES.filter((st) => st.vertical === v.id).map((st) => ({ st, at: sellerText.search(new RegExp(st.match.source, st.match.flags.replace('g', ''))) })).filter((h) => h.at >= 0).sort((a, b) => a.at - b.at);
     if (hits.length < 2 || hits[0].at === hits[1].at)
         return v;
     return { ...v, ...hits[0].st.notes, name: `${v.name}, ${hits[0].st.name}`, subtype: hits[0].st.id };
 }
 function readSector(explicitModel, input) {
     const read = (0, sector_read_ts_1.readSellerSector)(input);
-    const m0 = (0, verticals_ts_1.detectModel)(explicitModel, input);
+    const m0 = (0, verticals_ts_2.detectModel)(explicitModel, input);
     const sellerOnly = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
     const v = (0, sub_industry_ts_1.gateSubIndustry)(firstSubtype((0, sector_read_ts_1.profileForSeller)(read.vertical, m0.model, input), sellerOnly), input.seller);
     let m = (0, sector_read_ts_1.modelUnderSetSector)(m0, v, input);
@@ -55,7 +56,7 @@ function readSector(explicitModel, input) {
         m = { model: null, how: 'unknown' }; // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const via = read.source === 'context' ? ' (from the deal details: your own description names no sector)' : read.source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : read.source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
+    const model = m.model ? `${verticals_ts_2.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
     const sellerText = (input.seller || []).filter((x) => typeof x === 'string').join(' . ');
     const allText = [sellerText, ...(input.context || []).filter((x) => typeof x === 'string')].join(' . ');
     let line = `*Sector: ${sector}. Business model: ${model}.*`;
@@ -74,7 +75,7 @@ function readSector(explicitModel, input) {
             line = line.replace(MODEL_LINE2, NEUTRAL_LINE);
         }
     }
-    return { v, model: outModel, line: line + (!outModel ? "\n\nBilling dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps." : ""), fixedLink: FIXED_LINK.test(allText) };
+    return { v, model: outModel, line: (0, verticals_ts_1.billingLine)(explicitModel, input, line) + (!outModel ? "\n\nAny priced offer below requires a written quote and buyer agreement." : ""), fixedLink: FIXED_LINK.test(allText) };
 }
 /** Round 4: the notes of a plain telecom entry are written for operators who sell links to sites. For a seller that is not one (no sites, links or term contracts in the inputs) the lines that
  *  name sites, links, repair time or a rollout wave are left out, so an API deal is not read through a network operator's frame. A sub-type entry is left as it is. */
@@ -98,7 +99,7 @@ function fitSector(v, fixedLink, model, productText = '') {
     };
 }
 const NOT_NAME = /^(?:the|a|an|our|your|my|this|that|we|it|ai|api|apis|sms|iot|b2b|b2c|saas|cloud|managed|digital|enterprise|voice|data|security|software|platform|tool|tools|service|services|solution|solutions|product|system|systems|network|mobile|global|smart|modern|open|unified|single|new|free|full|end|real|one|all|any|each|every|no|not|ignore|identity|freight|route|routing|developer|developers|messaging|payments?|billing|workflow|supply|fleet|delivery|testing|monitoring|analytics|learning|video|customer|sales|marketing|automation|intelligence|visibility|compliance|risk|fraud|access|document|documents|knowledge|search|code|devops|infrastructure|connectivity|logistics|warehouse|inventory|retail|banking|insurance|lending|expense|expenses|spend|invoice|invoicing|procurement|hr|payroll|recruiting|support|helpdesk|ticketing|crm|erp|cpaas|bpo|ites)$/i;
-const sectorWord = (w) => verticals_ts_1.VERTICALS.some((v) => v.match.test(w) || v.weak.test(w));
+const sectorWord = (w) => verticals_ts_2.VERTICALS.some((v) => v.match.test(w) || v.weak.test(w));
 function kindFrom(rest) {
     let k = rest.replace(/^[,:\s-]+/, '').replace(/^(?:is|are)\s+/i, '');
     const cut = k.search(/\s+\(|:\s|;\s|\s[-\u2013\u2014]\s|\s+(?:that|which|where|who|with)\s+|,\s+(?:a|an|the)\s+[A-Z]|,\s+(?:plus|with|built|designed|made|powered|delivered|backed|covering|including|spanning|for)\b/);

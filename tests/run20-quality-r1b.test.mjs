@@ -443,7 +443,7 @@ test("champion_enablement_kit internal_business_case: no placeholder, objections
   // run 22: what to confirm before forwarding is one list at the end, one line for each objection
   const checkList = r.text.split("## Before you forward this")[1].split("\n\n###")[0];
   assert.equal((checkList.match(/^- "/gm) || []).length, 3);
-  assert.match(r.text, /operations leader/);
+  assert.match(r.text, /Owner: the champion with Chief Operating Officer/);
   assert.match(r.text, /pilot hub|pilot at one hub/i);
 });
 test("champion_enablement_kit: the same role as champion and target is noticed", async () => {
@@ -542,12 +542,12 @@ test("a TMS is software (not a people-delivered service) in the tools that state
   const tms = "Lanehop, an agentic transportation management system (TMS) and last mile delivery platform: dispatch planning, route planning, control tower and analytics, for captive, contracted, outsourced and hybrid fleets";
   for (const [name, args] of [["discovery_question_bank", { framework: "meddpicc", your_solution: tms }], ["competitive_trap_setter", { competitor: "Routeline", your_solution: tms }], ["pricing_negotiation_guide", { scenario: "budget_objection", your_solution: tms }]]) {
     const r = await call(name, args);
-    assert.match(r.text, /Business model: software subscription/, name);
+    assert.match(r.text, /Business model: not stated\. Tell us how you charge and the plan will adjust\./, name);
     assert.doesNotMatch(r.text, /per FTE|per ticket|people-delivered/, name);
   }
 });
 test("a services firm whose name holds the word software is a services firm", async () => {
   const sonata = "Northgate Software Services, modernization engineering services: cloud, data, business automation and managed services, delivered through its own playbook";
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_role: "CIO", your_solution: sonata });
-  assert.match(r.text, /Business model: services/);
+  assert.match(r.text, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
 });

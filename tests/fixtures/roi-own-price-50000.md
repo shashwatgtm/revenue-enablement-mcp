@@ -54,7 +54,7 @@ Example figures: replace with your own.
 | **3-Year Net Value** | $150,000 | - |
 | **Value/Cost Ratio** | 2.0x | >3x considered excellent |
 
-ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
+ROI and three-year net value use the recurring annual price and leave out one-time implementation costs. The payback ratio is shown only when annual value exceeds that recurring price; otherwise no payback is claimed. It is a simple annual price divided by annual value ratio, not a cash-flow forecast.
 
 ---
 
@@ -82,7 +82,7 @@ Example figures: replace with your own.
 ### Conservative Scenario (50% of projected value)
 - Annual Value: $50,000
 - ROI: 0%
-- Payback: 12.0 months
+- Payback: No payback: annual value does not exceed the recurring annual price
 ### Aggressive Scenario (150% of projected value)
 - Annual Value: $150,000
 - ROI: 200%

@@ -173,7 +173,7 @@ ${canRecommend ? 'The named owner must still confirm the value evidence and scop
     const stepsAll = d.steps(v, modelKey).slice(0, 4).map(own);
     // a case whose value points are about modernising starts with the first application to modernise, not with the design of the service levels
     const modernising = /\bmoderni[sz]\w*|\bmigrat\w*|\blegacy\b|technical debt/i.test(outs.map((o) => o.text).join(' '));
-    const steps = modernising && ctx.model === 'services' && /service levels?|sla\b/i.test(stepsAll[0] || '') ? [`agree the first application or workload to modernise, the measure that shows it worked, and the scope of the service`, ...stepsAll.slice(1)] : stepsAll;
+    const steps = modernising && (ctx.model === 'services' || /\bengineering services firm\b/i.test(yourSolution)) && /service levels?|sla\b/i.test(stepsAll[0] || '') ? [`agree the first application or workload to modernise, the measure that shows it worked, and the scope of the service`, ...stepsAll.slice(1)] : stepsAll;
     const stepFirst = low(steps[0] || 'agree the scope, the owners and the measure');
     const stepLast = low(steps[steps.length - 1] || 'review the result and decide the wider rollout');
     const askLine = `${canRecommend ? `approve ${P} at ${bud}` : `validate the business case for ${P}`} and the first step: ${stepFirst}`;

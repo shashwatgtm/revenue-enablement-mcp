@@ -321,7 +321,7 @@ export function readRole(c: Contact, kind: Part | null, ctx: RoleCtx, investment
   const part = hit ? hit.part : c.level === 'group' ? 'A group of users or evaluators' : c.level === 'exec' ? 'Senior leader' : upperFirst(base.label);
   const cares = `Check with ${c.title}: ${hit ? hit.ask || ('which part of '+ctx.P+' they will assess') : 'which part of '+ctx.P+' they will assess'}`;
   const step = hit ? hit.step(ctx) : base.nextStep;
-  const ownedStep = `Owner: account owner with ${c.title}. Before the next buyer meeting: ${step}. Check: record ${c.title}'s acceptance condition for ${ctx.P}, the evidence they will inspect and who signs it off.`;
+  const ownedStep = `Owner: account owner with ${c.title}. Before the next buyer meeting: ${step}. Check: record the acceptance condition from ${c.title} for ${ctx.P}, the evidence they will inspect and who signs it off.`;
   return { part, cares, step: ownedStep, kind: kind ?? (hit ? hit.kind : null), ask: hit?.ask };
 }
 

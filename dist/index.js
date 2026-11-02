@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
+const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const reserve_tools_ts_1 = require("./reserve-tools.js");
@@ -44,7 +45,7 @@ const rw_demo_ts_1 = require("./rw-demo.js");
 const rw_champion_ts_1 = require("./rw-champion.js");
 const rw_discovery_ts_1 = require("./rw-discovery.js");
 const sector_read_ts_1 = require("./sector-read.js");
-const verticals_ts_1 = require("./verticals.js");
+const verticals_ts_2 = require("./verticals.js");
 // Text only (run 9): common words that may open an input phrase. Mid-sentence, only these are lowered
 // ("Fewer failed deliveries" becomes "fewer failed deliveries"). Any other capitalised word is kept as typed, because it may be a
 // name or an acronym ("Salesforce data you can trust", "Microsoft Teams approvals", "AI deal scoring", "CRM hygiene").
@@ -1000,7 +1001,7 @@ function readContext(explicitModel, input) {
     const read = (0, sector_read_ts_1.readSellerSector)(input);
     let v = read.vertical;
     const source = read.source;
-    let m = (0, verticals_ts_1.detectModel)(explicitModel, input);
+    let m = (0, verticals_ts_2.detectModel)(explicitModel, input);
     const via = source === 'context' ? ' (from the deal details: your own description names no sector)' : source === 'role' ? ' (from the buyer job titles: your own description names no sector)' : source === 'buyer' ? ' (from the buyer\'s industry: your own description names no sector, so describe what you sell for notes that fit it)' : '';
     // A seller that manages money gets the investment notes (and an AI native seller of support automation the support notes): src/verticals.ts profileFor.
     v = (0, sector_read_ts_1.profileForSeller)(v, m.model, input);
@@ -1008,8 +1009,8 @@ function readContext(explicitModel, input) {
     if (m.how === 'sector')
         m = { model: null, how: 'unknown' }; // run 42Q: with your_sector set, the model is business_model, the seller's charge words or that sector's usual model
     const sector = read.set ? (0, sector_read_ts_1.sectorSetPhrase)(v) : v ? `read from your inputs as ${v.name}${via}` : 'not clear from your inputs (name the industry for sector notes)';
-    const model = m.model ? `${verticals_ts_1.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
-    return { v, model: m.model, line: `*Sector: ${sector}. Business model: ${model}.*` };
+    const model = m.model ? `${verticals_ts_2.MODEL_NAME[m.model]} (${m.how === 'input' ? 'from your answer' : m.how === 'sector' ? 'the usual model in this sector, assumed; confirm how you charge' : 'read from your inputs; confirm how you charge'})` : 'not stated. Tell us how you charge and the plan will adjust';
+    return { v, model: m.model, line: (0, verticals_ts_1.billingLine)(explicitModel, input, `*Sector: ${sector}. Business model: ${model}.*`) };
 }
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).
 function proofOf(v) { return lowerFirstIfCommon(v.proofShape).replace(/[.]+$/, ''); }
@@ -1025,7 +1026,7 @@ function sectorNotes(v, what = 'all') {
     if (what === 'objections' || what === 'all')
         out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => o.objection.toLowerCase()).join('; ')}.`);
     if (what !== 'objections')
-        out.push(`- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !verticals_ts_1.SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.`);
+        out.push(`- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !verticals_ts_2.SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.`);
     out.push(`- **A proof point that lands:** ${v.proofShape}`);
     return out.join('\n');
 }
@@ -2018,7 +2019,7 @@ function executeTool(name, args) {
         const limit = (0, decision_limits_ts_1.decisionLimit)(name, args);
         if (limit.stop)
             return limit.text;
-        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_1.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
+        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_2.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
     }
     finally {
         (0, sector_read_ts_1.setYourSector)(undefined);
@@ -2090,7 +2091,7 @@ function executePricingNegotiationGuide(args) {
     const brief = (0, dealtext_ts_1.solutionBrief)(args.your_solution ? yourSolution : '');
     const P = brief.short || 'our solution';
     const v = ctx.v;
-    const trades = verticals_ts_1.MODEL_TRADES[ctx.model || 'unknown'];
+    const trades = verticals_ts_2.MODEL_TRADES[ctx.model || 'unknown'];
     const modelKey = ctx.model === 'investment' ? 'investment' : v ? v.id : '';
     const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' }];
     const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
@@ -2615,7 +2616,7 @@ Enterprise deals often have multiple vendors. Position on value, not price:
 - Right to case study/reference`,
     };
     const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
-    const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !verticals_ts_1.SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.` : '';
+    const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !verticals_ts_2.SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.` : '';
     const text = generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${P}`);
     // every scenario but the discount request (which has its own situation table) opens with the deal, the leverage and the approver
     const withDeal = scenario === 'discount_request' || !scenarioGuides[scenario]

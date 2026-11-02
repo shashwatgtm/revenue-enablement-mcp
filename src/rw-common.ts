@@ -1,3 +1,4 @@
+import { billingLine } from './verticals.ts';
 // Run 22 (writer rev-w3): helpers shared by the rewritten email_sequence_generator, win_loss_analyzer and competitive_trap_setter.
 // Text only: no figure, no statistic, no named company (B82), no network, file or environment access. The functions that live in
 // src/index.ts (lowerFirstIfCommon, cap, isCommonWord, money) are handed in as Deps so that this file never imports index.ts.
@@ -57,7 +58,7 @@ export function readSector(explicitModel: unknown, input: { seller: unknown[]; c
     if (outModel === 'connectivity' && !fixed && rm.model !== 'sim') { outModel = null; line = line.replace(MODEL_LINE2, NEUTRAL_LINE); }
     else if (outModel === 'services' && SOFTWARE_CUES2.test(sellerText) && !SERVICE_WORDS2.test(sellerText)) { outModel = null; line = line.replace(MODEL_LINE2, NEUTRAL_LINE); }
   }
-  return { v, model: outModel, line: line + (!outModel ? "\n\nBilling dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps." : ""), fixedLink: FIXED_LINK.test(allText) };
+  return { v, model: outModel, line: billingLine(explicitModel, input, line) + (!outModel ? "\n\nAny priced offer below requires a written quote and buyer agreement." : ""), fixedLink: FIXED_LINK.test(allText) };
 }
 /** Round 4: the notes of a plain telecom entry are written for operators who sell links to sites. For a seller that is not one (no sites, links or term contracts in the inputs) the lines that
  *  name sites, links, repair time or a rollout wave are left out, so an API deal is not read through a network operator's frame. A sub-type entry is left as it is. */

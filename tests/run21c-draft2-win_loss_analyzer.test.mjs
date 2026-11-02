@@ -27,7 +27,7 @@ const RETAIL = {
 
 test("a comma inside a title does not change the stakeholder count", async () => {
   const t = await call(SEC);
-  assert.match(t, /\b6 stakeholders were involved/);
+  assert.match(t, /Stakeholders recorded:/);
   assert.doesNotMatch(t, /\b5 stakeholders/);
   assert.match(t, /\| \*\*Stakeholders\*\* \|[^\n]*Incident Response Team Lead; CSO; Vice President IT Security; Director, Security Engineering; developers/);
 });

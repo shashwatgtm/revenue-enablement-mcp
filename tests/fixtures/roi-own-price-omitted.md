@@ -54,7 +54,7 @@ Example figures: replace with your own.
 | **3-Year Net Value** | $270,000 | - |
 | **Value/Cost Ratio** | 10.0x | >3x considered excellent |
 
-ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
+ROI and three-year net value use the recurring annual price and leave out one-time implementation costs. The payback ratio is shown only when annual value exceeds that recurring price; otherwise no payback is claimed. It is a simple annual price divided by annual value ratio, not a cash-flow forecast.
 
 ---
 

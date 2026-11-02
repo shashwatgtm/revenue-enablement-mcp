@@ -135,3 +135,21 @@ Example figures: replace with your own.
 *Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.*
 
 Suggested timings, lengths and counts: adjust them to your own.
+
+## Reading the answer
+
+The arithmetic applies the supplied assumptions. Capacity value is not cash unless a cost is released. The conclusion needs review if new evidence changes buyer confirmed benefit, recurring price, implementation cost and the same measurement period.
+
+## Decisions by role
+
+Proposed owners. Confirm the named person before acting.
+
+Founder: identify which missing fact could reverse the investment case before accepting the recommendation.
+
+CEO: set the resource limit and stop condition for the investment case before committing budget.
+
+CMO: check whether the audience and claim in the investment case are supported by the supplied customer evidence before briefing the team.
+
+CRO: validate buyer confirmed benefit, recurring price, implementation cost and the same measurement period with the relevant buyer or account owner before changing sales priorities.
+
+Demand generation head: compare the next account sample with the investment case before expanding outreach.

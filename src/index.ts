@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { withReadingGuide } from './reader-actions.ts';
 import { billingLine } from './verticals.ts';
 import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
@@ -1185,7 +1186,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : evidenceLine('Blocker text', blockerRead));
   healthScore = Math.max(0, Math.min(100, healthScore));
 
-  let healthStatus = 'Healthy';
+  let healthStatus = buyerEngaged ? 'Healthy' : 'Buyer engagement unconfirmed';
   if (healthScore < 50) {
     healthStatus = 'At Risk';
   } else if (healthScore < 70) {
@@ -1495,8 +1496,8 @@ ${specificRecs}
 
 ### Next 24-48 Hours
 ${championStatus === 'no_champion' ? '1. **Identify champion** (high priority): Cannot win without one' : championStatus === 'potential_champion' ? '1. **Confirm your potential champion** (medium priority): test them before you rely on them' : '1. Done: champion identified. Keep them engaged'}
-${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : '2. Done: economic buyer known. Get them involved'}
-3. **Advance the deal**: ${nextSteps || (blockerPresent ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
+${!economicBuyer ? '2. **Find economic buyer** (high priority): Who controls budget?' : buyerEngaged ? '2. Economic buyer engagement supplied. Confirm the acceptance conditions.' : '2. **Confirm economic buyer engagement**: A named title does not establish participation or approval authority.'}
+3. **${buyerEngaged ? 'Advance the deal' : 'Confirm the buyer before committing'}**: ${!buyerEngaged ? 'Confirm the decision maker, participation and acceptance conditions before a commercial commitment. ' : ''}${nextSteps || (blockerPresent ? `Answer ${splitItems(blockers).length === 1 ? 'the blocker' : `the ${splitItems(blockers).length} blockers`} in writing and agree a date to review the answers with the buyer` : 'Schedule the next meeting with a clear agenda')}
 4. **Update CRM**: Document all new information
 
 ### This Week
@@ -2395,7 +2396,7 @@ ${competitorPrice ? `**Competitor Price:** ${competitorPrice}${gapMatch ? ` (a g
 
 ### Option 1: Win on Value, Not Price
 
-"We could probably be cheaper if we cut capabilities. Which of the capabilities you asked for would you be happy to give up?" Only say more if your own customer data supports it.
+"Which required capability would be removed to reach that price? Our pricing owner needs to confirm whether we can offer that scope." Do not promise a concession before that approval.
 
 ### Option 2: Total Cost of Ownership
 
@@ -3491,7 +3492,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')),
+            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>),
           },
         ],
       };

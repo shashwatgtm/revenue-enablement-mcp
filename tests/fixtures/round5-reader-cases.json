@@ -1,0 +1,133 @@
+[
+  {
+    "tool": "account_plan_builder",
+    "args": {
+      "account_name": "Regional fleet account",
+      "industry": "logistics",
+      "current_arr": 24000,
+      "known_contacts": "Operations director: champion; CFO: economic buyer; depot manager: daily user",
+      "current_products": "Dispatch exception queue at one depot",
+      "expansion_opportunities": "Second depot opens in January; needs have not been confirmed",
+      "competitive_threats": "Existing TMS adds routing features",
+      "your_solution": "Dispatch planning software",
+      "account_notes": "Current customer. Champion has not introduced the second depot manager."
+    }
+  },
+  {
+    "tool": "deal_strategy_coach",
+    "args": {
+      "deal_name": "Cybersecurity alert triage evaluation",
+      "deal_stage": "proposal",
+      "champion_status": "confirmed_champion",
+      "economic_buyer": "CISO has not attended a meeting",
+      "your_solution": "Alert triage software for a midmarket SaaS provider"
+    }
+  },
+  {
+    "tool": "discovery_question_bank",
+    "args": {
+      "framework": "meddpicc",
+      "your_solution": "Dispatch planning software",
+      "prospect_role": "Operations director at a regional logistics fleet",
+      "known_pain_points": "Missed deliveries require depot phone calls",
+      "known_metrics": "Four hours each day spent on route adjustments across ten dispatchers"
+    }
+  },
+  {
+    "tool": "roi_business_case_builder",
+    "args": {
+      "your_solution": "Invoice processing service",
+      "primary_value_driver": "cost_reduction",
+      "solution_price": 60000,
+      "current_annual_cost": 240000,
+      "expected_improvement_percent": 20,
+      "known_metrics": "CFO supplied annual processing cost includes labour only. No headcount reduction is approved.",
+      "current_process": "Manual invoice exception handling",
+      "implementation_timeline": "Eight weeks"
+    }
+  },
+  {
+    "tool": "mutual_action_plan_generator",
+    "args": {
+      "deal_name": "Regional bank reconciliation pilot",
+      "target_close_date": "2026-12-18",
+      "current_stage": "proposal",
+      "buyer_champion": "Finance controller",
+      "economic_buyer": "CFO",
+      "technical_evaluators": "Head of IT",
+      "procurement_contact": "Procurement manager",
+      "known_requirements": "Reconcile a redacted batch with no unexplained differences",
+      "known_process_steps": "Pilot acceptance, security review, procurement, signature",
+      "blockers": "CFO has not approved a budget; security review starts after 20 November",
+      "your_solution": "Reconciliation software"
+    }
+  },
+  {
+    "tool": "win_loss_analyzer",
+    "args": {
+      "analysis_type": "single_deal",
+      "deal_outcome": "lost",
+      "deal_details": "A $48000 telecom opportunity was lost after a 120 day cycle. NOC manager liked the demo, but procurement renewed the incumbent. We never met the economic buyer. This is one deal, not a trend.",
+      "loss_reason": "Incumbent renewal and no budget owner access",
+      "deal_value": 48000,
+      "sales_cycle_days": 120,
+      "stakeholders_involved": "NOC manager and procurement analyst",
+      "your_solution": "Network incident automation"
+    }
+  },
+  {
+    "tool": "proposal_section_writer",
+    "args": {
+      "section_type": "executive_summary",
+      "your_solution": "Invoice processing service for regional insurers",
+      "customer_challenges": "Exceptions wait four days and the AP head cannot see who owns the next approval",
+      "key_differentiators": "Named exception owner and a visible review trail; improvement is unmeasured"
+    }
+  },
+  {
+    "tool": "email_sequence_generator",
+    "args": {
+      "sequence_type": "cold_outreach",
+      "target_persona": "Practice manager at a regional clinic group",
+      "your_solution": "Clinic scheduling software",
+      "specific_pain_point": "Two receptionists can book the same appointment slot",
+      "social_proof": "One clinic used a shared calendar for a month; no measured reduction in double bookings."
+    }
+  },
+  {
+    "tool": "demo_script_builder",
+    "args": {
+      "demo_type": "first_look",
+      "your_solution": "Alert triage software for SOC managers at midmarket SaaS companies",
+      "known_objections": "We already have SIEM rules and cannot let a new system close alerts automatically."
+    }
+  },
+  {
+    "tool": "pricing_negotiation_guide",
+    "args": {
+      "scenario": "competitor_pricing",
+      "deal_value": 80000,
+      "your_solution": "Managed cybersecurity alert triage service",
+      "competitor_price": "Incumbent renewal quote is $68000 a year",
+      "value_delivered": "Buyer values weekend coverage, but response time improvement has not been measured."
+    }
+  },
+  {
+    "tool": "champion_enablement_kit",
+    "args": {
+      "asset_type": "executive_brief",
+      "your_solution": "Reconciliation software for a regional bank",
+      "key_value_points": "Finance controller reports 40 hours a month spent investigating exceptions. No pilot saving or budget approval yet.",
+      "target_stakeholder": "CFO"
+    }
+  },
+  {
+    "tool": "competitive_trap_setter",
+    "args": {
+      "competitor": "Existing TMS",
+      "your_solution": "Dispatch exception management software",
+      "your_strengths": "Shows the next owner and affected depot for each failed delivery",
+      "competitor_weaknesses": "One prospect says route changes still require phone calls; not independently verified."
+    }
+  }
+]

@@ -612,7 +612,7 @@ ${[notShownLine, inAnswerLine, untiedLine, notesLine].filter(Boolean).join('\n\n
 
 | Person | Role | What they came for | Shown in |
 |---|---|---|---|
-${whoRows.length ? whoRows.join('\n') : '| The room | | The problems you named | Every step |'}
+${whoRows.length ? whoRows.join('\n') : '| The room | Roles not supplied | The problems you named | Every step |'}
 
 ---
 

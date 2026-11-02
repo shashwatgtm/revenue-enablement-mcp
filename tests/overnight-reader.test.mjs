@@ -103,3 +103,11 @@ test('Second pass: sparse demo plans a test and addresses the manual closure con
  assert.match(t,/attempt closure without approval, then with approval/);assert.match(t,/If it cannot be shown, I will record the gap and stop the test/);
  assert.doesNotMatch(t,/How does the people|You also saw|This one is for the problems you named/);
 });
+
+test('Second pass: discovery starts with three checks and does not infer signing authority',async()=>{
+ const a=cases.find(x=>x.tool==='discovery_question_bank').args,t=await call('discovery_question_bank',a);
+ const first=t.split('## Unanswered questions first')[1].split('## Context')[0];
+ assert.match(first,/1\. Can you show one recent instance/);assert.match(first,/whole team or per person/);assert.match(first,/3\. What observable result/);
+ const close=t.split('## Closing the call')[1].split('## If you hear')[0];
+ assert.match(close,/approval owner still to confirm/);assert.doesNotMatch(close,/decision sits with/);
+});

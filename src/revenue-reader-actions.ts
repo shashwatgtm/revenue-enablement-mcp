@@ -33,7 +33,7 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
  }
 
  if(name==='discovery_question_bank'){
-  const role=label(a.prospect_role,'the proposed buyer').replace(/\s*\((?:title of|source:)[^)]*\)/gi,''),pain=label(readPains(String(a.known_pain_points||'')).pains[0],'the reported problem'),metrics=label(a.known_metrics,'the unverified metric baseline');
+  const role=label(a.prospect_role,'the proposed buyer').replace(/\s*\((?:title of|source:)[^)]*\)/gi,''),pain=readPains(String(a.known_pain_points||'')).pains.length>1 ? 'the first problem in the numbered context' : label(readPains(String(a.known_pain_points||'')).pains[0],'the reported problem'),metrics=label(a.known_metrics,'the unverified metric baseline');
   return {meaning:`Use the question bank to test ${solution}, beginning with three observations: ask ${role} for the most recent instance of "${pain}"; ask how often it happened and how the cost was counted; then ask what result and whose approval would justify changing the process. The remaining questions are optional probes, not a required script.`,evidence:`the buyer cannot confirm a recent instance, the metric counts a different scope or period, or the approval condition does not support a change`,roles:[
    `Founder: ask ${role} for a recent example of "${pain}" before accepting it as a buying problem; record a counterexample where the current process worked.`,
    `CEO: have finance verify the scope and period behind "${metrics}" before valuing the problem; distinguish total team effort from effort per person.`,

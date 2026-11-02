@@ -1763,9 +1763,9 @@ ${EXAMPLES}
     // ROI and the value/cost ratio divide by the investment: a price of 0 (D34), or an example price (a share of the value) that is 0.
     const byInvestment = (text) => (priceIsZero ? NEEDS_PRICE : valueIsZeroFromInput && !priceGiven ? NEEDS_VALUE : text);
     // Payback divides by the value: a price of 0 is reported first (D34), then a value of 0.
-    const byValue = (text) => (priceIsZero ? NEEDS_PRICE : valueIsZeroFromInput ? NEEDS_VALUE : text);
+    const byValue = (text, scenarioValue = totalValue) => (priceIsZero ? NEEDS_PRICE : valueIsZeroFromInput ? NEEDS_VALUE : scenarioValue <= investment ? 'No payback: annual value does not exceed the recurring annual price' : text);
     const roiSummary = priceIsZero || (valueIsZeroFromInput && !priceGiven) ? `- **ROI:** ${byInvestment('')}` : `- **${roi.toFixed(0)}%** ROI`;
-    const paybackSummary = priceIsZero || valueIsZeroFromInput ? `- **Payback:** ${byValue('')}` : `- **${paybackMonths.toFixed(1)} months** payback`;
+    const paybackSummary = priceIsZero || valueIsZeroFromInput || totalValue <= investment ? `- **Payback:** ${byValue('')}` : `- **${paybackMonths.toFixed(1)} months** payback`;
     const sizeText = companySize === 'smb' ? 'SMB' : companySize.replace(/_/g, ' ');
     const benchmarkText = !args.industry
         ? 'Technology (no industry supplied)'
@@ -1842,7 +1842,7 @@ ${EXAMPLES}
 | **3-Year Net Value** | ${valueComputed ? usd(threeYearNet) : nc} | - |
 | **Value/Cost Ratio** | ${valueComputed ? byInvestment(`${(totalValue / investment).toFixed(1)}x`) : nc} | >3x considered excellent |
 
-ROI, payback and three-year value use the annual price and leave out the one-time implementation cost.
+ROI and three-year net value use the recurring annual price and leave out one-time implementation costs. The payback ratio is shown only when annual value exceeds that recurring price; otherwise no payback is claimed. It is a simple annual price divided by annual value ratio, not a cash-flow forecast.
 
 ---
 
@@ -1869,11 +1869,11 @@ ${EXAMPLES}
 ### Conservative Scenario (50% of projected value)
 - Annual Value: ${valueComputed ? `${money(wholeDollars(totalValue * 0.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 0.5 - investment) / investment) * 100)}%`) : nc}
-- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`) : nc}
+- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 0.5)) * 12).toFixed(1)} months`, totalValue * 0.5) : nc}
 ### Aggressive Scenario (150% of projected value)
 - Annual Value: ${valueComputed ? `${money(wholeDollars(totalValue * 1.5))}` : nc}
 - ROI: ${valueComputed ? byInvestment(`${Math.round(((totalValue * 1.5 - investment) / investment) * 100)}%`) : nc}
-- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`) : nc}
+- Payback: ${valueComputed ? byValue(`${((investment / (totalValue * 1.5)) * 12).toFixed(1)} months`, totalValue * 1.5) : nc}
 
 ---
 
@@ -2791,7 +2791,7 @@ ${pricing ? `Investment: ${pricing}` : 'No pricing was given. Add pricing here, 
 
 ### Why ${P}
 
-${xDiffs.length ? `${P} stands out for ${customerName} on the ${xDiffs.length === 1 ? 'point' : `${xDiffs.length} points`} above. We propose to prove ${xDiffs.length === 1 ? 'it' : 'them'} the way a buyer of this kind of product checks: ${v ? `${proofOf(v)}.` : `on ${customerName}'s own case before any commitment.`}` : `No differentiators were given, so the reasons to choose ${P} are not stated here: add key differentiators.`}
+${xDiffs.length ? `${P} has supplied differences to verify with ${customerName} on the ${xDiffs.length === 1 ? 'point' : `${xDiffs.length} points`} above. We propose to prove ${xDiffs.length === 1 ? 'it' : 'them'} the way a buyer of this kind of product checks: ${v ? `${proofOf(v)}.` : `on ${customerName}'s own case before any commitment.`}` : `No differentiators were given, so the reasons to choose ${P} are not stated here: add key differentiators.`}
 
 ### Next Steps
 

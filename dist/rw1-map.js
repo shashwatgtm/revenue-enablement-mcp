@@ -39,6 +39,52 @@ function clauses(text, split) {
     const spread = out.flatMap((c) => { const m = c.match(/^(.+? for [^,]+?) and ([a-z][^,]*? for .+)$/i); return m ? [m[1], m[2]] : [c]; });
     return lead && spread.length ? [lead, ...spread] : spread.length ? spread : [text];
 }
+// Explicit availability and review durations outrank illustrative phase spacing.
+function constrainedPlan(deal, target, notes, requirement, blockers) {
+    const clauses = `${notes}; ${requirement}; ${blockers}`.replace(/\\([.!?])/g, '$1').split(/[;\n]|(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+    const constraints = [];
+    for (const clause of clauses) {
+        const match = clause.match(/^(.*?)\b(?:(?:cannot|can not|can't|must not|will not|won't)\s+(?:start|begin)\s+before|(?:starts?|begins?)\s+(?:no earlier than|on or after)|(?:earliest\s+(?:start(?:\s+date)?|availability)(?:\s+is)?\s*[:=]?)|not\s+before|available\s+from)\s*(\d{4}-\d{2}-\d{2})\b/i);
+        if (!match)
+            continue;
+        const start = new Date(match[2] + 'T00:00:00Z');
+        if (!Number.isFinite(start.getTime()) || (0, dealtext_ts_1.isoDate)(start) !== match[2])
+            continue;
+        const step = match[1].trim().replace(/[:,]$/, '') || 'Buyer step';
+        const key = step.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !['review', 'process', 'step', 'buyer'].includes(w))[0];
+        const duration = clauses.find(c => (!key || c.toLowerCase().includes(key)) && /\b\d+\s+(?:(?:business|working|calendar)\s+)?days?\b/i.test(c));
+        const dm = duration?.match(/\b(\d+)\s+(?:(business|working|calendar)\s+)?days?\b/i);
+        const days = dm ? Number(dm[1]) : null, business = !!dm && /business|working/i.test(dm[2] || '');
+        const end = days === null ? null : business ? (0, dealtext_ts_1.isoDate)((0, dealtext_ts_1.addWorkdays)((0, dealtext_ts_1.onOrAfterWorkday)(start), days)) : (0, dealtext_ts_1.isoDate)(new Date(start.getTime() + days * 86400000));
+        constraints.push({ step, date: match[2], days, business, end, note: clause });
+    }
+    if (!constraints.length)
+        return null;
+    const impossible = constraints.some(c => (c.end || c.date) > target);
+    return `# Mutual Action Plan: ${deal}
+
+## Schedule held for the buyer's constraints
+Requested close: ${target}. ${impossible ? 'This close date is not feasible under the stated earliest start and minimum duration. Move the close or agree a real change to the constraint with its owner.' : 'The dated constraints are recorded below. The close remains unconfirmed until the buyer agrees the remaining durations and dependencies.'}
+
+| Buyer step | Earliest start supplied | Duration supplied | Earliest completion, not a committed due date |
+|---|---|---|---|
+${constraints.map(c => `| ${c.step} | ${c.date} | ${c.days === null ? 'Not supplied' : `${c.days} ${c.business ? 'business' : 'calendar'} days`} | ${c.end || 'Not established without a duration'} |`).join('\n')}
+
+Business days mean Monday to Friday and exclude the start day. Holidays were not supplied and can move completion later. A supplied earliest start is a lower bound, not an appointment.
+
+## Buyer process and evidence
+${notes ? `Process supplied: ${(0, rw1_common_ts_1.quoted)(notes)}.` : 'No process supplied.'}
+${requirement ? `Requirements supplied: ${(0, rw1_common_ts_1.quoted)(requirement)}.` : 'No requirements supplied.'}
+${blockers ? `Blockers supplied: ${(0, rw1_common_ts_1.quoted)(blockers)}.` : 'No additional blockers supplied.'}
+
+## Next actions
+1. The account executive confirms the dates, durations and named owner of each constrained step with the buyer before circulating a committed plan.
+2. The buyer's review owner starts no earlier than the supplied availability date and confirms the finish date after checking holidays and capacity.
+3. The account executive and buyer sequence legal, procurement and signature after their stated prerequisites. No downstream completion date is invented while a duration or approval is missing.
+4. The economic buyer agrees a revised close if the minimum completion is later than the requested close. Record that decision before making a promise.
+
+No step is instructed to start now when the buyer has stated a later earliest start. This is a constraint review, not an approved schedule.`;
+}
 function buildMutualActionPlan(args, d) {
     const str = (k) => (typeof args[k] === 'string' ? args[k].trim() : '');
     const dealName = str('deal_name') || 'Deal';
@@ -55,6 +101,9 @@ function buildMutualActionPlan(args, d) {
     const closeInput = targetCloseDate ? new Date(targetCloseDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
     if (isNaN(closeInput.getTime()))
         return `target close date "${targetCloseDate}" is not a date this tool can read. Use the format YYYY-MM-DD, for example 2026-12-15.`;
+    const constraintReview = constrainedPlan(dealName, targetCloseDate, stepsIn, reqIn, blockersIn);
+    if (constraintReview)
+        return constraintReview;
     const today = new Date();
     // whole calendar days between the two dates (the time of day is ignored: 2026-10-09 to 2026-12-15 is 67 days at any hour)
     const daysUntilClose = Math.round((Date.UTC(closeInput.getUTCFullYear(), closeInput.getUTCMonth(), closeInput.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / (24 * 60 * 60 * 1000));

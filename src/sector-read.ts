@@ -1,3 +1,4 @@
+import { nonRecurringBilling } from './verticals.ts';
 // Run 42B: the seller's own sector. One optional input, your_sector, on every tool. When it is given it decides the sector
 // (nothing read from the text overrides it); when it is not, the sector is read from the seller's own words only, and the
 // tool stays neutral when only the deal text, the job titles or the customer's industry point to one.
@@ -56,9 +57,10 @@ const CHARGE_SAAS = /\b(?:saas|(?:a|an annual|a monthly|a yearly)\s+subscription
 export function modelUnderSetSector(m: { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' }, v: Vertical | null, input: Record<string, unknown>): { model: BusinessModel | null; how: 'input' | 'read' | 'sector' | 'unknown' } {
   if (!forced || forced === 'other' || !v || m.how === 'input') return m;
   const seller = (Array.isArray(input.seller) ? input.seller : []).filter((x): x is string => typeof x === 'string').join(' . ');
+  if (nonRecurringBilling(seller)) return { model: null, how: 'unknown' };
   const st = v.subtype ? SUBTYPES.find((x) => x.id === v.subtype) : undefined;
   const usual = st?.model ?? SECTOR_MODEL[v.id];
   if (m.how === 'sector' || m.how === 'unknown') return { model: usual, how: 'sector' };
-  if (m.how === 'read' && m.model === 'saas' && !CHARGE_SAAS.test(seller) && usual !== 'saas') return { model: usual, how: 'sector' };
+  
   return m;
 }

@@ -98,3 +98,43 @@ test('Total cost comparison first establishes the period of the supplied deal am
  const t=await call('Competitor quote period is unspecified');
  assert.match(t,/Confirm the period covered by your \$72,000/);assert.doesNotMatch(t,/total cost comparison over three years/);
 });
+
+test('A hypothetical value statement is not described as already delivered',async()=>{
+ const value='Hypothetical cost comparison: $168,000 annual human baseline; 20% handoff retains $33,600 human cost, so avoided external labor is $134,400 before the $72,000 agent fee. This is an estimate, not a measured customer result.';
+ const t=await call('Price basis unknown',{scenario:'discount_request',value_delivered:value});
+ assert.doesNotMatch(t,/what this has already delivered/);assert.match(t,/value case is not established/i);assert.match(t,/estimate|hypothetical/);
+ assert.match(t,/\$134,400/);
+});
+test('Explicitly measured value retains its source wording',async()=>{
+ const t=await call('Competitor is 10% cheaper',{scenario:'discount_request',value_delivered:'Measured pilot: processing cost fell from $40,000 to $30,000 over the same quarter.'});
+ assert.match(t,/processing cost fell from \$40,000 to \$30,000/);assert.doesNotMatch(t,/value case is not established/i);
+});
+test('Excluded exclusivity and reference obligations cannot reappear as trade rows',async()=>{
+ const approval='CFO permits a two year term; no exclusivity or reference obligation.';
+ for(const scenario of ['discount_request','procurement_pressure']) {
+  const t=await call('Competitor is 10% cheaper',{scenario,approval_authority:approval});
+  const rows=t.split('\n').filter(x=>/^\|/.test(x)&&!/Approval Authority|Who approves/.test(x)).join('\n');
+  assert.doesNotMatch(rows,/exclusivity|case study|reference/i);assert.match(rows,/Committed monthly volume/);assert.match(t,/held.*approval notes/i);
+ }
+});
+test('Reference restrictions apply to renewal and enterprise recommendations too',async()=>{
+ const approval='Reference obligation is not allowed.';
+ const renewal=await call('Price basis unknown',{scenario:'renewal_negotiation',approval_authority:approval});
+ assert.doesNotMatch(renewal,/- Ask for a case study or reference/);assert.match(renewal,/Do not request a case study or reference/);
+ const enterprise=await call('Price basis unknown',{scenario:'enterprise_agreement',approval_authority:approval});
+ assert.doesNotMatch(enterprise,/- Right to case study\/reference/);assert.match(enterprise,/Keep case study and reference obligations out/);
+});
+test('Permitted terms and explicit absence of a prohibition are not read as exclusions',async()=>{
+ for(const approval of ['Exclusivity is permitted; a case study is approved after buyer review.','No prohibition on exclusivity; reference obligations are not prohibited.']) {
+  const t=await call('Competitor is 10% cheaper',{scenario:'discount_request',approval_authority:approval});
+  const rows=t.split('\n').filter(x=>/^\|/.test(x)&&!/Approval Authority/.test(x)).join('\n');
+  assert.match(rows,/Exclusivity for a product line/);assert.match(rows,/A case study after go-live/);
+ }
+});
+test('Unclear or expressly prohibited terms remain held',async()=>{
+ for(const approval of ['Exclusivity is prohibited; reference obligation is forbidden.','Exclusivity is not confirmed; reference rights are unclear.']) {
+  const t=await call('Price basis unknown',{scenario:'discount_request',approval_authority:approval});
+  const rows=t.split('\n').filter(x=>/^\|/.test(x)&&!/Approval Authority/.test(x)).join('\n');
+  assert.doesNotMatch(rows,/exclusivity|case study|reference/i);
+ }
+});

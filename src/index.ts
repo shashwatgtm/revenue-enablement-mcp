@@ -2121,6 +2121,18 @@ function restructureOptions(model: BusinessModel | null, dealValue: number, have
   };
   return byModel[model || ''] || [`Start smaller: ${pilot}`, two, 'Sign now and start at the next budget cycle (only if you can hold the terms until then)'];
 }
+// Approval notes are free text. Hold a disputed term instead of treating it as permission.
+function pricingApprovalTermHeld(notes: string, term: RegExp): boolean {
+  const normalizedNotes = notes
+    .replace(/\bno\s+(?:prohibition|restriction|ban)\s+on\b/gi, 'permitted')
+    .replace(/\bnot\s+(?:prohibited|forbidden|excluded|disallowed)\b/gi, 'permitted')
+    .replace(/\b(?:prohibited|forbidden|excluded|disallowed)\b/gi, 'not allowed');
+  const relevant = clauses(normalizedNotes).filter(clause => term.test(clause));
+  if (relevant.some(clause => /\b(?:unknown|unclear|not confirmed)\b/i.test(clause))) return true;
+  const state = readSignal(normalizedNotes, term).state;
+  return state === 'negated' || state === 'unclear';
+}
+
 
 // Tool 10: Pricing Negotiation Guide
 function executePricingNegotiationGuide(args: Record<string, unknown>): string {
@@ -2141,7 +2153,11 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const brief = solutionBrief(args.your_solution ? yourSolution : '');
   const P = brief.short || 'our solution';
   const v = ctx.v;
-  const trades = MODEL_TRADES[ctx.model || 'unknown'];
+  const holdExclusivity = pricingApprovalTermHeld(approvalAuthority, /\bexclusiv(?:ity|e)(?:\s+(?:rights?|obligations?))?\b/i);
+  const holdReference = pricingApprovalTermHeld(approvalAuthority, /\b(?:references?|case stud(?:y|ies)|testimonials?)(?:\s+(?:rights?|obligations?))?\b/i);
+  const trades = MODEL_TRADES[ctx.model || 'unknown'].filter(t => !(holdExclusivity && /exclusiv/i.test(t)) && !(holdReference && /reference|case study|testimonial/i.test(t)));
+  const heldTerms = [holdExclusivity ? 'exclusivity' : '', holdReference ? 'case study and reference obligations' : ''].filter(Boolean);
+  const heldTradesNote = heldTerms.length ? `**Trades held by approval notes:** ${heldTerms.join('; ')}. These are not proposed as concessions or conditions. Confirm any change with the authorized commercial owner and buyer.` : '';
   const modelKey = ctx.model === 'investment' ? 'investment' : v ? v.id : '';
   const evalSteps = MAP_EVAL[stockKey(v, modelKey)] || [{ m: 'a pilot with one team', who: 'both' as Who }];
   const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
@@ -2165,7 +2181,8 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   const valueQuoted = vFirst ? proofPhrase(vFirst).replace(/[.]$/, '') : valueDelivered.trim().replace(/[.]$/, '');
   const valueListText = vItems.length > 1 ? `${vItems.map((x) => `- ${proofPhrase(x)}${x.label ? ` (${proofSource(x)})` : ''}`).join('\n')}\nThese are claims you gave; check each is current before you quote it.` : '';
   const valueRisk = claimRisk(valueDelivered);
-  const valueReframe = valueRisk.hold ? `The value case is not established: ${valueRisk.reason}. Hold the value-based price defense until the buyer confirms a supported result. Statement read: ${valueDelivered}` : !valueDelivered
+  const valueProjection = /\b(?:hypothetical|illustrative|estimat(?:e|es|ed)|forecast|projection|modelled|modeled|unmeasured|not (?:a )?measured)\b/i.test(valueDelivered);
+  const valueReframe = valueRisk.hold || valueProjection ? `The value case is not established: ${valueRisk.hold ? valueRisk.reason : 'the supplied value is an estimate or hypothetical scenario, not an established customer result'}. Hold the value-based price defense until the buyer confirms a supported result. Statement read: ${valueDelivered}` : !valueDelivered
     ? `
 "Before we discuss price, let's revisit the value we identified together.${v ? ` What does ${v.metrics[0]} cost you today, and what would it be worth to move it?` : ' What does this problem cost you today, and what would it be worth to fix it?'}${hasValue(args.deal_value) ? ` At ${dealValueText}, how does that compare?` : ''}"
 
@@ -2190,7 +2207,7 @@ ${hasValue(args.discount_requested) ? `| **Discount requested** | ${discountRequ
 | **Who approves** | ${approvalAuthority || 'Not specified'} |
 ${competitorPrice ? `| **Competitor price** | ${competitorPrice} |\n` : ''}
 ${leverageLine}
-${theirLine ? `\n${theirLine}\n` : ''}${approvalAuthority ? `\nPrepare the one-page case for the commercial owner: the value, the price and what you ask in return. Confirm the approver and their limits from the approval notes above before offering terms.\n` : ''}${decisionTimeline ? `\nThe buyer's timeline is ${decisionTimeline}. Land any concession before it, not after.\n` : ''}
+${heldTradesNote ? `\n${heldTradesNote}\n` : ''}${theirLine ? `\n${theirLine}\n` : ''}${approvalAuthority ? `\nPrepare the one-page case for the commercial owner: the value, the price and what you ask in return. Confirm the approver and their limits from the approval notes above before offering terms.\n` : ''}${decisionTimeline ? `\nThe buyer's timeline is ${decisionTimeline}. Land any concession before it, not after.\n` : ''}
 ---
 `;
 
@@ -2210,6 +2227,8 @@ ${ctx.line}
 | **Post-Discount Value** | ${bothPricingInputs ? money(printedSum([dealValue, -revenueAtRisk])) : pricingNotComputed} |
 | **Decision Timeline** | ${decisionTimeline || 'Not specified'} |
 | **Approval Authority** | ${approvalAuthority || 'Not specified'} |
+
+${heldTradesNote}
 
 ---
 
@@ -2239,7 +2258,7 @@ Common leverage points: tick the ones that apply.
 
 ### Rule #1: Never Discount Without Getting Something
 
-**Acceptable Trades:**
+**Trade options to confirm:**
 ${EXAMPLES}
 | What They Want | What You Ask For In Return |
 |----------------|--------------|
@@ -2519,7 +2538,7 @@ Renewals are different from new business. You have leverage (they're using ${P})
 ### Scenario A: Happy Customer
 - Lead with expansion opportunity
 - Lock in a multi-year term at the current rate, only if you can offer that
-- Ask for a case study or reference
+${holdReference ? '- Do not request a case study or reference under these approval notes.' : '- Ask whether the buyer freely agrees to a case study or reference.'}
 
 ### Scenario B: Dissatisfied Customer
 - Address issues before discussing renewal
@@ -2675,7 +2694,7 @@ Enterprise deals often have multiple vendors. Position on value, not price:
 - Price integrity
 - Intellectual property
 - Liability limits
-- Right to case study/reference`,
+${holdReference ? '- Keep case study and reference obligations out until their scope and approval are clarified.' : '- Case study or reference rights only with separate buyer consent'}`,
   };
 
   const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];

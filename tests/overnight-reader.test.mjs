@@ -23,3 +23,9 @@ test('Overnight distinct case evidence checks: demo_script_builder',async()=>{
  const checks=["close alerts automatically.*disprove", "safe test environment", "recorded screen or service evidence", "alert remains open.*authorized person", "invitation list"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: discovery_question_bank',async()=>{
+ const a=cases.find(x=>x.tool==='discovery_question_bank').args; const text=await call('discovery_question_bank',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["Missed deliveries.*counterexample", "Four hours.*scope|scope.*Four hours", "attributed notes", "recent example, frequency and approval", "fresh account.*deny"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

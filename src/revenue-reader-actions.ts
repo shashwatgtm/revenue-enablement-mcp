@@ -1,7 +1,7 @@
 type Input = Record<string, unknown>;
 type Reading = {meaning: string; evidence: string; roles: string[]};
 // Inputs have already crossed the shared escaping boundary. Do not cut an escape.
-const label = (v: unknown, fallback: string): string => typeof v === 'string' && v.trim() && v.trim().length <= 150 && !/[\r\n]/.test(v) ? v.trim() : fallback;
+const label = (v: unknown, fallback: string): string => typeof v === 'string' && v.trim() && v.trim().length <= 150 && !/[\r\n]/.test(v) && !/^\(?\s*(?:not (?:given|supplied|stated|known)|unknown|n\/?a|none|unspecified)\s*\)?$/i.test(v) ? v.trim() : fallback;
 const num = (v: unknown, fallback: string): string => typeof v === 'number' && Number.isFinite(v) ? v.toLocaleString('en-US', {maximumFractionDigits: 6}) : fallback;
 export function revenueReading(name: string, a: Input, result: string): Reading | undefined {
  const solution=label(a.your_solution,'the supplied offer');
@@ -26,6 +26,17 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
    `CMO: compare the claims in the ${solution} demo with the recorded screen or service evidence before reusing them; do not infer a performance improvement from a walkthrough.`,
    `CRO: agree with the buyer how to check ${check} before the demonstration; record pass, failure or not demonstrated against the same condition.`,
    `Demand generation head: use the unresolved objection "${objection}" to review the next invitation list; check that invitees face this problem before scaling demo outreach.`,
+  ]};
+ }
+
+ if(name==='discovery_question_bank'){
+  const role=label(a.prospect_role,'the proposed buyer').replace(/\s*\((?:title of|source:)[^)]*\)/gi,''),pain=label(a.known_pain_points,'the reported problem'),metrics=label(a.known_metrics,'the unverified metric baseline');
+  return {meaning:`Use the question bank to test ${solution}, beginning with three observations: ask ${role} for the most recent instance of "${pain}"; ask how often it happened and how the cost was counted; then ask what result and whose approval would justify changing the process. The remaining questions are optional probes, not a required script.`,evidence:`the buyer cannot confirm a recent instance, the metric counts a different scope or period, or the approval condition does not support a change`,roles:[
+   `Founder: ask ${role} for a recent example of "${pain}" before accepting it as a buying problem; record a counterexample where the current process worked.`,
+   `CEO: have finance verify the scope and period behind "${metrics}" before valuing the problem; distinguish total team effort from effort per person.`,
+   `CMO: check the attributed notes from ${role} before using "${pain}" in messaging; keep a seller hypothesis separate from the buyer's words.`,
+   `CRO: use the recent example, frequency and approval questions with ${role} first; advance only when the buyer confirms a problem and an observable acceptance condition.`,
+   `Demand generation head: test whether a fresh account with the same role reports "${pain}" before widening the audience; record accounts that deny it.`,
   ]};
  }
  return undefined;

@@ -480,7 +480,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
     if(planningOnly){
       const questions=['Which task should we test, using one recent example you choose, and what result would count as a pass?', 'Which confirmed capability can run that task in an isolated test, who will operate it, and which approvals are required?', 'Who will observe the test and approve the result, where will we record failures, and what evidence would justify the next step?'];
       const checks=['Record the task, chosen example and expected observation before selecting a feature.', 'Record the confirmed capability, operator, test environment and required approvals before a demonstration.', 'Record the approver, pass condition and evidence location before agreeing the next step.'];
-      return `**Step ${i+1}: ${s.title}** (about ${s.minutes} minutes)\nAsk: "${questions[i]}"\nCheck: ${checks[i]}`;
+      return `**Step ${i+1}: ${s.title}** (about ${s.minutes} ${s.minutes===1?'minute':'minutes'})\nAsk: "${questions[i]}"\nCheck: ${checks[i]}`;
     }
     const main = s.pains.length ? s.pains[0] : -1;
     const ptype = main >= 0 ? painType(pains[main]) : 'general';

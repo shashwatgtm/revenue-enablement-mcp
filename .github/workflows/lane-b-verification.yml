@@ -3,6 +3,7 @@ on:
   push:
     branches: [codex/round4-20261102]
     paths:
+      - 'netlify/**'
       - 'src/**'
       - 'dist/**'
       - 'tests/**'
@@ -24,8 +25,28 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lane-b-test-runtime
+          name: lane-b-verification-workspace
           path: |
             node_modules/
+            src/
             dist/
+            tests/
+            netlify/
+            scripts/
+            public/
+            package.json
+            package-lock.json
+            tsconfig.json
+            *.html
+            *.json
+            *.md
+            *.txt
+            *.toml
+            assets/*.css
+            assets/js/
+            assistant/
+            bin/
+            _headers
+            _redirects
+            sample-report/
           retention-days: 1

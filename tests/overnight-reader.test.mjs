@@ -1,0 +1,19 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import handler from '../netlify/functions/mcp.mjs';
+const cases=JSON.parse(readFileSync(new URL('./fixtures/round5-reader-cases.json',import.meta.url),'utf8'));
+async function call(name,args){
+ const response=await handler(new Request('https://example.com/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})}));
+ const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
+}
+const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('Email checks separate relevance, delivery, evidence, buyer action and contact permission',async()=>{
+ const a=cases.find(x=>x.tool==='email_sequence_generator').args;const text=await call('email_sequence_generator',a),r=roles(text);
+ assert.equal(r.length,5);assert.match(r[0],/Two receptionists.*denial/);assert.match(r[1],/reply owner.*Clinic scheduling software/);
+ assert.match(r[2],/no measured reduction.*source and permission/);assert.match(r[3],/Practice manager.*next observation/);assert.match(r[4],/contact permission.*stop follow ups after a refusal/);
+ assert.doesNotMatch(text,/An example on Two receptionists|Who looks after Two receptionists|One question on Two receptionists|Questions on Two receptionists/);assert.match(text,/An example to check/);
+ const changed=roles(await call('email_sequence_generator',{...a,target_persona:'Dispatch manager',your_solution:'Dispatch exception service',specific_pain_point:'Drivers cannot find the next exception owner',social_proof:'A pilot is proposed; no customer outcome is measured.'}));
+ for(let i=0;i<5;i++)assert.notEqual(r[i],changed[i]);
+ assert.doesNotMatch(changed.join('\n'),/clinic|receptionists/i);
+});

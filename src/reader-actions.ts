@@ -58,7 +58,7 @@ export function readingGuide(name: string, result: string, args: Record<string,u
   if(!caseLabel){const match=/\*Sector: (?:read from your inputs as|from your choice:)\s*([^.\n*]+)/.exec(result);if(match)caseLabel=match[1].trim()+' case';}
   const g = GUIDES[name];
   if (!g || !result || /^(?:Error|Invalid|Missing required|No contact|Contact declined)/i.test(result)) return '';
-  const [kind, meaning, evidence, decision] = g;
+  let [kind, meaning, evidence, decision] = g;
   const held = /^# .*\bheld\b|^Use not approved|^Publication is not approved|^## Overall Score:[^\n]*\(NOT PROVED YET\)/im.test(result);
   const status = held ? ' Keep the stated hold in place; this guidance does not override it.' : '';
   let roles = kind === 'publish' ? [
@@ -104,10 +104,12 @@ export function readingGuide(name: string, result: string, args: Record<string,u
     'CRO: keep account decisions under manual review; record the evidence for each exception before outreach.',
     'Demand generation head: use a fresh held back sample for a revised model; do not tune on the failed test set.',
   ];
-  const contextual=roles.map(line=>caseLabel?line.replace(': ', ': For '+caseLabel+', '):line);
+  const specific=revenueReading(name,args,result);
+  if(specific&&!unsupportedClaim&&!failedScore){meaning=specific.meaning;evidence=specific.evidence;roles=specific.roles;}
+  const contextual=roles.map(line=>caseLabel&&!specific?line.replace(': ', ': For '+caseLabel+', '):line);
   if(name==='launch_commander')return '\n\n## Reading the answer\n\nThis sequence is proposed. Change scope if the date, capacity or buyer acceptance check changes.\n\n## Decisions by role\n\nFounder: confirm the buyer before choosing launch scope.\nCEO: match owners to capacity before approving the date.\nCMO: verify the launch claim before briefing channels.\nCRO: agree the buyer acceptance check before offering a meeting.\nDemand generation head: check contact volume against channel capacity before outreach.\n';
 
-  return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} The conclusion needs review if new evidence changes ${evidence}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
+  return `\n\n## Reading the answer\n\n${caseLabel ? `For ${caseLabel}: ` : ''}${meaning}${status} The conclusion needs review if ${specific ? evidence : `new evidence changes ${evidence}`}.\n\n## Decisions by role\n\nProposed owners. Confirm the named person before acting.\n\n${contextual.join('\n\n')}\n`;
 }
 
 export function withReadingGuide(name:string,result:string,args:Record<string,unknown>={}):string {
@@ -117,3 +119,4 @@ export function withReadingGuide(name:string,result:string,args:Record<string,un
   if(at>=0){const start=result.lastIndexOf('\n',at)+1;return result.slice(0,start).trimEnd()+guide+'\n'+result.slice(start);}
   return result+guide;
 }
+import { revenueReading } from './revenue-reader-actions.ts';

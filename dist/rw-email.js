@@ -248,7 +248,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         const cuts = [m && m.index ? m.index : a.length, a.search(/\s+for\s+/), a.search(/\s+across\s+/), a.search(/\s*\(/)].filter((i) => i > 0);
         const head = a.slice(0, Math.min(...cuts)).trim().split(/\s+/).slice(0, 8).join(' ').replace(/[,;:]+$/, '');
         const generic = /^(?:processes|things|people|teams|companies|costs|businesses|organi[sz]ations|enterprises|customers|users|it|they|this|that|work|data|tools|systems)$/i.test(head);
-        return head.length >= 5 && (head.split(/\s+/).length >= 2 || head.length >= 7) && !generic && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
+        return head.length >= 5 && (head.split(/\s+/).length >= 2 || head.length >= 7) && !generic && !/\b(?:receptionists?|dispatchers?|drivers?|agents?|nurses?|operators?|staff|employees?|managers?|analysts?|engineers?)$/i.test(head) && !/\d/.test(head) && !/\b(?:and|or|of|the|a|an|to|for|with)$/i.test(head) ? head : '';
     };
     const topic = vocabHit(atom0) || painSubject() || vocabHit(painText) || vocabHit(valueText) || nearParts.find((x) => cleanPart(x)) || kindTopic || measuresRanked[0] || 'this problem';
     const kindSentence = (0, rw_common_ts_1.isKind)(P, D) ? (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.isKind)(P, D)) : '';
@@ -556,7 +556,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
             const r3 = take(['quote', 'story'], 2);
             const p2 = nextPain();
             const p3 = nextPain();
-            mail('Day 7', r3.some((x) => x.kind === 'quote') ? 'In a customer\'s words' : r3.length ? 'An example' : 'Another angle', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${topic}` : r3.length ? `An example on ${topic}` : `${(0, dealtext_ts_1.upperFirst)(topic)} on the ground`, [
+            mail('Day 7', r3.some((x) => x.kind === 'quote') ? 'In a customer\'s words' : r3.length ? 'An example' : 'Another angle', r3.some((x) => x.kind === 'quote') ? `What a customer said about ${topic}` : r3.length ? 'An example to check' : `${(0, dealtext_ts_1.upperFirst)(topic)} on the ground`, [
                 r3.length ? facts(r3) : measuresLine,
                 p2 ? alsoPain(p2, p3) : (r3.length ? '' : (0, rw_common_ts_1.endSentence)(`A question from the same place: ${nextQ()}`)),
                 !r3.length && p2 ? qLead(nextQ()) : '',

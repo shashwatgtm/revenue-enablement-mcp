@@ -1,6 +1,6 @@
 # Revenue Enablement
 
-> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
+> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in.
 
 - Web app (no sign-in): https://revenue-enablement.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement.gtmhelix.com/mcp
@@ -33,11 +33,11 @@
 
 ### What is Revenue Enablement?
 
-Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude or ChatGPT, no sign-in.
+Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in.
 
 ### Is Revenue Enablement free, and do I need an account?
 
-It is free, and there is no account or sign-in. Use the tools in your browser here, or add them to Claude or ChatGPT as a connector.
+It is free, and there is no account or sign-in. Use the tools in your browser here, or add them to Claude, ChatGPT, Cursor, VS Code and Windsurf as a connector.
 
 ### Does it use AI to write the answers?
 
@@ -49,7 +49,7 @@ It is sent to this site's server, used once to build the answer, and dropped whe
 
 ### How do I use Revenue Enablement in Claude?
 
-In Claude, open Customize, then Connectors, select + and then Add custom connector. Name it Revenue Enablement, paste https://revenue-enablement.gtmhelix.com/mcp and leave the sign-in fields empty. The page Use it in Claude or ChatGPT covers Claude Code, ChatGPT, Cursor, VS Code and Windsurf too.
+In Claude, open Customize, then Connectors, select + and then Add custom connector. Name it Revenue Enablement, paste https://revenue-enablement.gtmhelix.com/mcp and leave the sign-in fields empty. The page Connect your app covers Claude Code, ChatGPT, Cursor, VS Code and Windsurf too.
 
 ### Who built it?
 
@@ -82,3 +82,9 @@ Email shashwat@gtmhelix.com or open an issue at https://github.com/shashwatgtm/r
 - CRAFT Content: https://craft-content.gtmhelix.com/
 - IMPACT: https://impact.gtmhelix.com/
 - ICP Intelligence: https://icp-intelligence.gtmhelix.com/
+
+## Supported apps and skills package
+
+Connectors work in Claude, ChatGPT, Cursor, VS Code and Windsurf. The Helix GTM Suite skills package supports Claude Code, ChatGPT, Gemini CLI, Antigravity, Cursor and VS Code, and is available through skills.sh.
+Setup: https://github.com/shashwatgtm/helix-gtm-suite
+Individual plugin install instructions remain specific to the plugin.

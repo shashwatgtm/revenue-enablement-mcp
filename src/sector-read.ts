@@ -61,6 +61,6 @@ export function modelUnderSetSector(m: { model: BusinessModel | null; how: 'inpu
   const st = v.subtype ? SUBTYPES.find((x) => x.id === v.subtype) : undefined;
   const usual = st?.model ?? SECTOR_MODEL[v.id];
   if (m.how === 'sector' || m.how === 'unknown') return { model: usual, how: 'sector' };
-  
+
   return m;
 }

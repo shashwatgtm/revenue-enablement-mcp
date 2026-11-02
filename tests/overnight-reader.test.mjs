@@ -47,3 +47,9 @@ test('Overnight distinct case evidence checks: account_plan_builder',async()=>{
  const checks=["Second depot.*confirmed or denied", "24,000.*unapproved expansion", "Dispatch exception queue at one depot.*another", "Operations director.*introduction", "fresh account.*exclude expansion assumptions"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
+
+test('Overnight distinct case evidence checks: mutual_action_plan_generator',async()=>{
+ const a=cases.find(x=>x.tool==='mutual_action_plan_generator').args; const text=await call('mutual_action_plan_generator',a), r=roles(text); assert.equal(r.length,5);
+ const checks=["no unexplained differences.*fail acceptance", "CFO has not approved a budget", "Head of IT.*evidence", "Procurement manager.*CFO.*2026-12-18", "buyer availability.*2026-12-18"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
+ assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+});

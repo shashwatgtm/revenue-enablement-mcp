@@ -72,5 +72,16 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
    `Demand generation head: compare the confirmed need in ${account} with a fresh account sample before copying its profile into campaigns; exclude expansion assumptions from selection criteria.`,
   ]};
  }
+
+ if(name==='mutual_action_plan_generator'){
+  const deal=label(a.deal_name,'this deal'),date=label(a.target_close_date,'the proposed close date'),buyer=label(a.economic_buyer,'the unconfirmed approver'),procurement=label(a.procurement_contact,'the procurement owner to identify'),technical=label(a.technical_evaluators,'the technical owner to identify'),requirements=typeof a.known_requirements==='string' && /;|\n/.test(a.known_requirements) ? 'each supplied requirement, tested separately' : label(a.known_requirements,'the supplied acceptance requirement'),blockers=label(a.blockers,'the unresolved dependencies');
+  return {meaning:`This is a proposed dependency sequence for ${deal}, not a commitment to close on ${date}. Agree the acceptance, review and signature owners before accepting the dates.`,evidence:`a dependency finishes later, the buyer cannot attend, the acceptance test fails, or the budget and signature authority remain unresolved`,roles:[
+   `Founder: have the buyer confirm "${requirements}" before accepting the first milestone for ${deal}; record what would fail acceptance.`,
+   `CEO: resolve "${blockers}" with ${buyer} before approving resources against ${date}; keep the close date proposed while budget or capacity is unconfirmed.`,
+   `CMO: have ${technical} confirm the evidence needed for the ${deal} technical review before circulating claims; retain the approval record and any unresolved condition.`,
+   `CRO: confirm lead times and signature dependencies with ${procurement} and ${buyer} before accepting ${date}; move dependent dates when an upstream review slips.`,
+   `Demand generation head: confirm attendance and the handoff owner for ${deal} before issuing meeting invitations; check buyer availability against ${date} rather than treating a sent invite as agreement.`,
+  ]};
+ }
  return undefined;
 }

@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
+const software_policy_ts_1 = require("./software-policy.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const reserve_tools_ts_1 = require("./reserve-tools.js");
 const widget_layer_ts_1 = require("./widget-layer.js");
@@ -3409,6 +3410,8 @@ function createServer() {
         }
         const { name } = request.params;
         const args = safeArgs;
+        if ((0, software_policy_ts_1.asksForSoftware)(typed))
+            return { content: [{ type: 'text', text: software_policy_ts_1.SOFTWARE_REFERRAL }] };
         try {
             const result = executeTool(name, args);
             return {

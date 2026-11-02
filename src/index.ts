@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
 import {reserveTools,isReserveTool,callReserveTool} from './reserve-tools.ts';
 import { attachWidgets } from './widget-layer.ts';
@@ -3479,6 +3480,8 @@ export function createServer(): Server {
     }
     const { name } = request.params;
     const args = safeArgs;
+
+    if (asksForSoftware(typed)) return { content: [{ type: 'text', text: SOFTWARE_REFERRAL }] };
 
     try {
       const result = executeTool(name, args as Record<string, unknown>);

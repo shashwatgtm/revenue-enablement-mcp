@@ -8,6 +8,16 @@ async function call(name,args){
  const r=(await response.json()).result;assert.ok(r&&!r.isError);return r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
 }
 const roles=t=>t.split('\n').filter(x=>/^(Founder|CEO|CMO|CRO|Demand generation head):/.test(x));
+test('Competitive questions never turn evidence status into a weakness or capability',async()=>{
+ const a=cases.find(x=>x.tool==='competitive_trap_setter').args;
+ const t=await call('competitive_trap_setter',a);
+ assert.match(t,/Evidence status supplied/);assert.match(t,/not independently verified/);
+ assert.doesNotMatch(t,/handle not independently verified|Weak point 2|Scenario 2/);
+ const only=await call('competitive_trap_setter',{...a,competitor_weaknesses:'Not independently verified',your_strengths:'Improvement is unmeasured'});
+ assert.match(only,/No weak points were given/);assert.match(only,/No demonstrable strengths were given/);
+ const positive=await call('competitive_trap_setter',{...a,your_strengths:'Shows unverified invoices in a separate review queue'});
+ assert.match(positive,/Criterion 1: Shows unverified invoices in a separate review queue/);
+});
 test('Proposal evidence caveats are preserved but never counted as differentiators',async()=>{
  const a=cases.find(x=>x.tool==='proposal_section_writer').args;
  for(const section_type of ['executive_summary','solution_overview','company_overview']){

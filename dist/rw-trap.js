@@ -382,9 +382,12 @@ function buildTrapSetter(args, D, footer, sectorBlock) {
     const toPeers = (t0) => { const oi = exports.OPEN_QS.indexOf(t0); const t = oi >= 0 ? OPEN_PEER[oi] : t0; return toPeers0(t); };
     const toPeers0 = (t) => t.replace(/,?\s+and can (?:the )?(?:vendor|supplier) show[^?]*\?/i, '?').replace(/\s+in each option/g, kind === 'provider' ? ` with ${here}` : ` in ${here}`).replace(/\beach option\b/g, here).replace(/\s*Ask (?:the vendor|for it)[^.?]*[.]/g, '').replace(/\s+/g, ' ').trim();
     const nonVendor = (t) => t.replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]\s*$/i, '').replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]/gi, '').replace(/the vendor/g, isVendor ? 'the vendor' : 'the supplier').trim();
-    const weaknesses = splitItems(competitorWeaknesses).map((w) => w.replace(/\s*\((?:reviewers' words|a seller's words|page words|customer quote|customer words)[^)]*\)\s*$/i, '').trim());
-    const weaknessLabels = splitItems(competitorWeaknesses);
-    const allStrengths = splitItems(yourStrengths);
+    const weaknessItems = splitItems(competitorWeaknesses);
+    const strengthItems = splitItems(yourStrengths);
+    const evidenceStatus = [...weaknessItems, ...strengthItems].filter(dealtext_ts_1.isEvidenceStatus);
+    const weaknessLabels = weaknessItems.filter(item => !(0, dealtext_ts_1.isEvidenceStatus)(item));
+    const weaknesses = weaknessLabels.map((w) => w.replace(/\s*\((?:reviewers' words|a seller's words|page words|customer quote|customer words)[^)]*\)\s*$/i, '').trim());
+    const allStrengths = strengthItems.filter(item => !(0, dealtext_ts_1.isEvidenceStatus)(item));
     const isCred = (x) => { const m = x.match(exports.CRED_RE); return !!m && (m.index || 0) <= 40; };
     const nameEsc = (P.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Round 4: a strength is written for the buyer as something every option can be asked to show. What the seller says about itself ("the site says no platform can
@@ -661,6 +664,7 @@ ${yourSolution ? (0, dealtext_ts_1.upperFirst)(name) : 'The product'} is in ${(0
 
 ${ctx.line}
 
+${evidenceStatus.length ? `### Evidence status supplied\n\n${evidenceStatus.map(item => `- ${item}`).join('\n')}\n\nThese notes qualify the claims below. They are not competitor weaknesses, product capabilities or evaluation scenarios. Confirm the source and test both options before using a claim externally.\n` : ''}
 ${personaName ? `**Who is evaluating:** ${(0, dealtext_ts_1.upperFirst)(personaName)}. Owner: the account owner with ${personaName}. Before the next comparison meeting, ask which of the supplied buyer priorities decides between the named alternatives. Check: record the buyer’s criterion, the evidence for each option and who approves it.\n` : ''}
 ${v ? `${sectorBlock(v)}\n` : ''}${allStrengths.length || weaknesses.length ? `\n### Your notes (not for the buyer)\n\n${allStrengths.length ? `**Your strengths**\n${allStrengths.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${weaknesses.length ? `**Weak points of ${compLabel}**\n${weaknessLabels.map((x) => `- ${x}`).join('\n')}\n` : ''}` : ''}
 ---

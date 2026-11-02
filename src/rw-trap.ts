@@ -4,7 +4,7 @@
 // becomes a landmine question on its own topic, credentials are mentioned and never made a live test, the priority text is used where it matters
 // and not repeated, figures keep their source label, and what is not given is named once at the end with what it would change. Nothing is
 // invented about the competitor (B82). Text only: no network, file or environment access.
-import { joinList, clip, upperFirst, aAn, splitTopLevel, parseProof, typedLength } from './dealtext.ts';
+import { isEvidenceStatus, joinList, clip, upperFirst, aAn, splitTopLevel, parseProof, typedLength } from './dealtext.ts';
 import { roleFor } from './answers.ts';
 import type { Vertical } from './verticals.ts';
 import { readSector, fitSector, productOf, isKind, partsIn, readAlt, endSentence, andList, PROVIDER, type Deps } from './rw-common.ts';
@@ -298,9 +298,12 @@ export function buildTrapSetter(args: Record<string, unknown>, D: Deps, footer: 
   const toPeers0 = (t: string): string => t.replace(/,?\s+and can (?:the )?(?:vendor|supplier) show[^?]*\?/i, '?').replace(/\s+in each option/g, kind === 'provider' ? ` with ${here}` : ` in ${here}`).replace(/\beach option\b/g, here).replace(/\s*Ask (?:the vendor|for it)[^.?]*[.]/g, '').replace(/\s+/g, ' ').trim();
   const nonVendor = (t: string): string => t.replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]\s*$/i, '').replace(/\s*Ask (?:the vendor|for it|to see)[^.?]*[.]/gi, '').replace(/the vendor/g, isVendor ? 'the vendor' : 'the supplier').trim();
 
-  const weaknesses = splitItems(competitorWeaknesses).map((w) => w.replace(/\s*\((?:reviewers' words|a seller's words|page words|customer quote|customer words)[^)]*\)\s*$/i, '').trim());
-  const weaknessLabels = splitItems(competitorWeaknesses);
-  const allStrengths = splitItems(yourStrengths);
+  const weaknessItems = splitItems(competitorWeaknesses);
+  const strengthItems = splitItems(yourStrengths);
+  const evidenceStatus = [...weaknessItems, ...strengthItems].filter(isEvidenceStatus);
+  const weaknessLabels = weaknessItems.filter(item => !isEvidenceStatus(item));
+  const weaknesses = weaknessLabels.map((w) => w.replace(/\s*\((?:reviewers' words|a seller's words|page words|customer quote|customer words)[^)]*\)\s*$/i, '').trim());
+  const allStrengths = strengthItems.filter(item => !isEvidenceStatus(item));
   const isCred = (x: string) => { const m = x.match(CRED_RE); return !!m && (m.index || 0) <= 40; };
   const nameEsc = (P.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // Round 4: a strength is written for the buyer as something every option can be asked to show. What the seller says about itself ("the site says no platform can
@@ -527,6 +530,7 @@ ${yourSolution ? upperFirst(name) : 'The product'} is in ${aAn(`${stage} stage`)
 
 ${ctx.line}
 
+${evidenceStatus.length ? `### Evidence status supplied\n\n${evidenceStatus.map(item => `- ${item}`).join('\n')}\n\nThese notes qualify the claims below. They are not competitor weaknesses, product capabilities or evaluation scenarios. Confirm the source and test both options before using a claim externally.\n` : ''}
 ${personaName ? `**Who is evaluating:** ${upperFirst(personaName)}. Owner: the account owner with ${personaName}. Before the next comparison meeting, ask which of the supplied buyer priorities decides between the named alternatives. Check: record the buyer’s criterion, the evidence for each option and who approves it.\n` : ''}
 ${v ? `${sectorBlock(v)}\n` : ''}${allStrengths.length || weaknesses.length ? `\n### Your notes (not for the buyer)\n\n${allStrengths.length ? `**Your strengths**\n${allStrengths.map((x) => `- ${x}`).join('\n')}\n\n` : ''}${weaknesses.length ? `**Weak points of ${compLabel}**\n${weaknessLabels.map((x) => `- ${x}`).join('\n')}\n` : ''}` : ''}
 ---

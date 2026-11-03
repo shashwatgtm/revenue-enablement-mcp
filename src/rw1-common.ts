@@ -573,7 +573,10 @@ export { sentences };
 /** When the product has no clear name in the user's text, the first sentence of what the user wrote, quoted whole (cut only at a comma); '' when a name was found. */
 export function sellerWords(brief: SolutionBrief): string {
   if (brief.short || !brief.full) return '';
-  const first = sentences(brief.full)[0] || brief.full;
+  const first = brief.full.trim();
+  // Multiple clauses may contain a denial and the actual offering. Never quote
+  // only the denial as what the seller offers. Preserve the whole short input.
+  if (sentences(first).length > 1) return quoted(first);
   if (first.length <= 240) return quoted(first);
   const pieces = splitTopLevel(first);
   let acc = '';

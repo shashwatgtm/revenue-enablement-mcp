@@ -1,7 +1,11 @@
+import {readFileSync as readTestPackage} from 'node:fs';
+const testRepositoryName=home=>JSON.parse(readTestPackage(home+'/package.json','utf8')).name.split('/').pop();
+import {pathToFileURL as localTestFileURL} from 'node:url';
+const importLocalTestFile=specifier=>import(localTestFileURL(specifier).href);
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
-const home=process.env.WAVE4_TEST_HOME||process.cwd(),repo=path.basename(home);const rows=[];
-const mod=await import(home+'/dist/'+({'craft-gtm-mcp':'competitive-intel','craft-content-mcp':'rw-content','revenue-enablement-mcp':'rw-kit'}[repo])+'.js');
-const caseStudy=repo==='craft-content-mcp'?(await import(home+'/dist/case-study-generator.js')).generateCaseStudy:null;
+const home=process.env.WAVE4_TEST_HOME||process.cwd(),repo=testRepositoryName(home);const rows=[];
+const mod=await importLocalTestFile(home+'/dist/'+({'craft-gtm-mcp':'competitive-intel','craft-content-mcp':'rw-content','revenue-enablement-mcp':'rw-kit'}[repo])+'.js');
+const caseStudy=repo==='craft-content-mcp'?(await importLocalTestFile(home+'/dist/case-study-generator.js')).generateCaseStudy:null;
 const vs=['Logistics tech','Fintech','SaaS','Vertical SaaS','AI native','ITeS','Telecom','Software','Cybersecurity'];
 for(const v of vs)for(const[form,phrase,want]of [['exact','Setup is difficult.',true],['same','Setup leaves users stuck.',true],['opposite','Setup is not difficult.',false],['resolved','Setup issues are resolved.',false]])test(`FIX4 shared ${repo} ${v} ${form}`,()=>{
  let raw,checks;

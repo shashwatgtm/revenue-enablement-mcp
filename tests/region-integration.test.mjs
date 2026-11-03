@@ -22,8 +22,13 @@ test('Canonical taxonomy includes all nine verticals and 57 observed subtypes',(
  for(const s of SUBTYPES)assert.ok(VERTICALS.some(v=>v.id===s.vertical));
 });
 for(const c of baseline.cases){
- test(c.tool+': removing only the exact region question restores baseline bytes',async()=>{
-  const result=await rpc('tools/call',{name:c.tool,arguments:c.args});
+ test(c.tool+': removing only the exact region question restores historical baseline bytes at capture date',async()=>{
+  // Account planning uses the execution date. Compare its historical fixture at
+  // its original date, rather than silently regenerating expected output today.
+  const RealDate=globalThis.Date;
+  globalThis.Date=class extends RealDate {constructor(...args){super(...(args.length?args:['2026-11-02T12:00:00Z']));}static now(){return RealDate.parse('2026-11-02T12:00:00Z');}};
+  let result;
+  try {result=await rpc('tools/call',{name:c.tool,arguments:c.args});}finally {globalThis.Date=RealDate;}
   assert.ok(!result.isError);
   const text=result.content[0].text;
   assert.ok(text.endsWith(NO_REGION_SUFFIX));

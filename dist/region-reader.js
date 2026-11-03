@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NO_REGION_SUFFIX = void 0;
+exports.sellerProductForMarket = sellerProductForMarket;
 exports.readRegionContext = readRegionContext;
 exports.regionNotes = regionNotes;
 const regions_ts_1 = require("./regions.js");
@@ -142,12 +143,31 @@ function polarity(clause, start, end, all) {
         return 'unclear';
     return 'yes';
 }
+// A denial of one known product does not deny a different active product in
+// the same country. Unqualified market exclusions still apply to all offers.
+function offeringType(prefix) {
+    const before = prefix.split(/;|\b(?:but|however|whereas|while)\b|(?:,\s*|\band\s+)(?=(?:we|our company|our business)\s+(?:do|sell|serve|target|are|may|might|could)\b)/i).at(-1) || '';
+    const product = before.match(/\b(?:sell(?:ing|s)?|sold|offer(?:s|ing)?|provide(?:s|ing)?)\s+(.+?)\s+(?:in|into|to|within)\s+(?:the\s+)?$/i)?.[1];
+    if (!product || /\b(?:and|or|nor)\b/i.test(product))
+        return;
+    const sector = (0, verticals_ts_1.explainSector)({ seller: [product] });
+    if (sector.source === 'seller' && sector.vertical)
+        return { vertical: sector.vertical.id, subtype: sector.vertical.subtype };
+}
+function distinctOfferings(first, second) {
+    const a = offeringType(first), b = offeringType(second);
+    return Boolean(a && b && (a.vertical !== b.vertical || (a.subtype && b.subtype && a.subtype !== b.subtype)));
+}
 function scan(texts, all) {
     const found = [], unresolved = [];
-    for (const text of texts)
-        for (const clause of normalize(text).match(/[^.!?\n]+[.!?]?/g) || []) {
+    for (const text of texts) {
+        const normalized = normalize(text);
+        // A clue absent from the complete text cannot occur in any of its clauses.
+        // Filter once, preserving order, before the per-clause polarity checks.
+        const present = all.filter(clue => pattern(clue).test(normalized));
+        for (const clause of normalized.match(/[^.!?\n]+[.!?]?/g) || []) {
             const hits = [];
-            for (const clue of all)
+            for (const clue of present)
                 for (const m of clause.matchAll(pattern(clue)))
                     hits.push({ clue, start: m.index, end: m.index + m[0].length });
             const detailed = hits.filter(h => h.clue.kind !== 'region');
@@ -165,17 +185,18 @@ function scan(texts, all) {
                     unresolved.push(hit.clue.value);
                     continue;
                 }
-                const state = polarity(clause, hit.start, hit.end, all);
+                const state = polarity(clause, hit.start, hit.end, present);
                 const competing = hits.filter(h => h.start === hit.start && h.end === hit.end && h.clue.region !== hit.clue.region);
                 if (competing.length) {
                     unresolved.push(hit.clue.value);
                     continue;
                 }
-                found.push({ clue: hit.clue, state, evidence: clause.trim() });
+                found.push({ clue: hit.clue, state, evidence: clause.trim(), offeringPrefix: clause.slice(0, hit.start) });
             }
             if (!hits.length && AMBIGUOUS.test(clause))
                 unresolved.push(clause.match(AMBIGUOUS)[0]);
         }
+    }
     return { found, unresolved };
 }
 /** Explicit selling destinations outrank a seller's headquarters or incidental location. */
@@ -183,7 +204,8 @@ function marketText(text, all) {
     const currencies = all.filter(c => c.kind === 'currency').map(c => escaped(c.value)).join('|');
     // Billing units describe a transaction, not the market where it happens.
     const billing = new RegExp('\\b(?:invoice|invoices|invoicing|bill|bills|billing)\\s+in\\s+(?:' + currencies + ')(?![\\p{L}\\p{N}_])', 'giu');
-    const clean = normalize(text).replace(/"[^"\n]*"|“[^”\n]*”|(?<![\p{L}\p{N}])'[^\n]*?'(?![\p{L}\p{N}])/gu, '').replace(billing, '');
+    const denomination = new RegExp('\\b(?:under\\s+)?contracts?\\s+(?:denominated|priced)\\s+in\\s+(?:' + currencies + ')(?![\\p{L}\\p{N}_])', 'giu');
+    const clean = normalize(text).replace(denomination, '').replace(/\b(?:receiv(?:e|ing)\s+(?:our\s+)?payments?\s+into|paid\s+into)\s+[^.;!?]*?\bbank\s+account\b|\b(?:our|the)\s+(?:[a-z]+\s+){0,4}bank\s+account\b/gi, '').replace(/"[^"\n]*"|“[^”\n]*”|(?<![\p{L}\p{N}])'[^\n]*?'(?![\p{L}\p{N}])/gu, '').replace(billing, '');
     return (clean.match(/[^.!?\n]+[.!?]?/g) || []).map(sentence => {
         // A buyer buying from a vendor names the destination before the vendor's office.
         const purchase = sentence.match(/\bbuy(?:ing|s)?\b[^.;!?]*?\bfrom\b/i);
@@ -191,7 +213,7 @@ function marketText(text, all) {
             return sentence.slice(0, purchase.index + purchase[0].lastIndexOf('from'));
         const m = sentence.match(/\b(?:sell(?:ing|s)?|sold|expand(?:s|ing)?|enter(?:s|ing)?|target(?:s|ing)?|serv(?:es?|ing))\b/i);
         if (m) {
-            const qualifier = sentence.slice(0, m.index).match(/\b(?:not|never|no longer|stopped|ceased|used to|formerly|previously|historically|if|may|might|could|perhaps|maybe|considering|should we|would we|can we|competitor|rival)[^,;.!?]*$/i)?.[0] || '';
+            const qualifier = sentence.slice(0, m.index).match(/\b(?:not|never|no longer|stopped|ceased|used to|formerly|previously|historically|if|may|might|could|cannot|perhaps|maybe|considering|should we|would we|can we|competitor|rival)[^,;.!?]*$/i)?.[0] || '';
             // A source office following from is not a selling destination, in either order.
             const places = all.filter(c => ['region', 'country', 'city', 'state'].includes(c.kind) && (!/^[A-Z]{2,4}$/.test(c.value) || ['UK', 'UAE', 'USA'].includes(c.value))).map(c => escaped(c.value)).join('|');
             const place = '(?:' + places + ')';
@@ -210,6 +232,8 @@ function marketText(text, all) {
             });
             return qualifier + destination;
         }
+        if (/\b(?:not\s+(?:an?\s+)?(?:EU|European Union)\s+member|(?:EU|European Union)\s+membership)\b/i.test(sentence))
+            return '';
         // Identity and reference evidence alone cannot establish a selling destination.
         if (/\b(?:(?:company|business|product|brand)\s+(?:is\s+)?(?:called|named)|(?:is|was)\s+(?:our|the)\s+(?:company|business|product|brand)\s+name|(?:our|the)\s+(?:reference\s+(?:customer|client)|cloud\s+(?:vendor|provider)|suppliers?)\b)/i.test(sentence))
             return '';
@@ -217,26 +241,64 @@ function marketText(text, all) {
     }).join(' ');
 }
 const US_STATES = { Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA', Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA', Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO', Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY' };
+/** Split distinct offers joined without a repeated seller subject, preserving place lists. */
+function offeringClauses(text, all) {
+    const out = [];
+    for (const clause of normalize(text).split(/[.!?\n;]+|(?:,\s*|\b(?:but|however|whereas|while|and)\s+)(?=(?:we\s+|(?:now\s+)?sell\b|our\s+(?:company|business)\s+))/i)) {
+        const markets = new Set(scan([marketText(clause, all)], all).found.filter(x => x.state === 'yes' && x.clue.country).map(x => x.clue.country));
+        if (markets.size < 2) {
+            out.push(clause);
+            continue;
+        }
+        let start = 0;
+        for (const m of clause.matchAll(/\band\s+/gi)) {
+            const left = clause.slice(start, m.index), right = clause.slice(m.index + m[0].length);
+            const a = scan([marketText(left, all)], all).found.filter(x => x.state === 'yes' && x.clue.country);
+            if (!a.length || !/^.+?\b(?:in|into|to)\s+/i.test(right))
+                continue;
+            const b = scan([marketText(right, all)], all).found.filter(x => x.state === 'yes' && x.clue.country);
+            const sector = (0, verticals_ts_1.explainSector)({ seller: [right] });
+            if (b.some(x => !a.some(y => x.clue.country === y.clue.country)) && sector.source === 'seller' && sector.vertical) {
+                out.push(left);
+                start = m.index + m[0].length;
+            }
+        }
+        out.push(clause.slice(start));
+    }
+    return out;
+}
+/** Bind product evidence to its affirmative selling clause, before subtype selection. */
+function sellerProductForMarket(args, market) {
+    const all = clues(), f = fragments(args), local = [], general = [];
+    for (const text of f.seller)
+        for (const clause of offeringClauses(text, all)) {
+            if (!clause.trim())
+                continue;
+            if (/\b(?:not|never|cannot|no longer|stopped|ceased|used to|formerly|previously|historically|may|might|could)\s+(?:(?:currently|actively|now|yet|only)\s+)*(?:sell(?:ing|s)?|sold|serve|offer|provide|target|operate)\b|\b(?:competitor|rival)\b|\bif\s+we\b/i.test(clause))
+                continue;
+            const clean = marketText(clause, all), reading = scan([clean], all);
+            const yes = reading.found.filter(m => m.state === 'yes');
+            if (yes.some(m => market === m.clue.country || market === m.clue.region))
+                local.push(clause);
+            else if (!reading.found.length && !reading.unresolved.length)
+                general.push(clause);
+        }
+    // General product descriptions can accompany a dedicated market field. Never use
+    // an offering assigned only to another country as the fallback for this market.
+    return local.length ? local : general;
+}
 function readRegionContext(args) {
     const f = fragments(args), all = clues();
     const explicit = scan(f.market, all), seller = scan(f.seller.map(text => marketText(text, all)), all);
     // Customer location alone is not evidence that the seller is selling there.
     // A dedicated market field wins over incidental locations in the description.
     const chosen = explicit.found.length || explicit.unresolved.length ? explicit : seller;
-    const sector = (0, verticals_ts_1.explainSector)({ seller: f.seller, buyer: f.buyer });
-    const inferred = sector.source === 'seller' ? sector.vertical : null;
-    // The existing reviewed selector fixes the vertical, never an inferred sub industry.
-    const selected = args && typeof args === 'object' && !Array.isArray(args) ? args.your_sector : undefined;
-    const selectedId = typeof selected === 'string' ? selected.replace(/_/g, '-') : null;
-    const validSelection = selected === 'other' || regions_ts_1.REGION_TAXONOMY.verticals.some(v => v.id === selectedId);
-    const v = validSelection ? (selected === 'other' ? null : inferred?.id === selectedId ? inferred : { id: selectedId, subtype: undefined }) : inferred;
-    const subtype = v?.subtype ? regions_ts_1.REGION_TAXONOMY.subtypes.find(s => s.id === v.subtype || s.name === v.subtype)?.id || null : null;
     const regions = [];
     for (const r of regions_ts_1.REGION_CHOICES) {
         const mentions = chosen.found.filter(m => m.clue.region === r.id);
         if (mentions.some(m => m.clue.kind === 'region' && m.state !== 'yes'))
             continue;
-        const affirmative = mentions.filter(m => m.state === 'yes' && !mentions.some(n => n.clue.kind === 'country' && n.clue.country === m.clue.country && n.state !== 'yes'));
+        const affirmative = mentions.filter(m => m.state === 'yes' && !mentions.some(n => n.clue.kind === 'country' && n.clue.country === m.clue.country && n.state !== 'yes' && !distinctOfferings(m.offeringPrefix, n.offeringPrefix)));
         if (!affirmative.length)
             continue;
         const countries = [...new Set(affirmative.map(m => m.clue.country).filter((x) => Boolean(x)))];
@@ -246,6 +308,15 @@ function readRegionContext(args) {
             const states = [...new Set(affirmative.filter(m => m.clue.country === country && m.clue.kind === 'state').map(m => m.clue.jurisdiction))];
             for (const state of states.length ? states : [null]) {
                 const jurisdictions = country ? [country, ...(state ? [state] : [])] : [];
+                const product = sellerProductForMarket(args, country || r.id);
+                const sector = (0, verticals_ts_1.explainSector)({ seller: product, buyer: f.buyer });
+                const inferred = sector.source === 'seller' ? sector.vertical : null;
+                const input = args && typeof args === 'object' && !Array.isArray(args) ? args : {};
+                const selected = input.your_sector ?? input.industry;
+                const selectedId = typeof selected === 'string' ? selected.replace(/_/g, '-') : null;
+                const validSelection = selected === 'other' || regions_ts_1.REGION_TAXONOMY.verticals.some(v => v.id === selectedId);
+                const v = validSelection ? (selected === 'other' ? null : inferred?.id === selectedId ? inferred : { id: selectedId, subtype: undefined }) : inferred;
+                const subtype = v?.subtype ? regions_ts_1.REGION_TAXONOMY.subtypes.find(s => s.id === v.subtype || s.name === v.subtype)?.id || null : null;
                 regions.push({ region_id: r.id, countries: country ? [country] : [], jurisdictions, evidence, vertical_id: v?.id || null, subtype_id: subtype });
             }
         }

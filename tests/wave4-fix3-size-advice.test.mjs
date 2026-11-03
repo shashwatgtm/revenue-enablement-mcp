@@ -1,5 +1,7 @@
+import {readFileSync as readTestPackage} from 'node:fs';
+const testRepositoryName=home=>JSON.parse(readTestPackage(home+'/package.json','utf8')).name.split('/').pop();
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {spawn} from 'node:child_process';import path from 'node:path';
-const home=process.env.WAVE4_TEST_HOME||process.cwd(),repo=path.basename(home),child=spawn(process.execPath,[home+'/dist/index.js'],{cwd:home,stdio:['pipe','pipe','pipe']});let id=0,buf='';const pending=new Map(),rows=[];child.stderr.resume();child.stdout.on('data',d=>{buf+=d;let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i);buf=buf.slice(i+1);try{const m=JSON.parse(line);pending.get(m.id)?.(m)}catch{}}});
+const home=process.env.WAVE4_TEST_HOME||process.cwd(),repo=testRepositoryName(home),child=spawn(process.execPath,[home+'/dist/index.js'],{cwd:home,stdio:['pipe','pipe','pipe']});let id=0,buf='';const pending=new Map(),rows=[];child.stderr.resume();child.stdout.on('data',d=>{buf+=d;let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i);buf=buf.slice(i+1);try{const m=JSON.parse(line);pending.get(m.id)?.(m)}catch{}}});
 const req=(method,params)=>new Promise((resolve,reject)=>{const n=++id,t=setTimeout(()=>reject(Error('Timeout '+method)),10000);pending.set(n,m=>{clearTimeout(t);pending.delete(n);resolve(m)});child.stdin.write(JSON.stringify({jsonrpc:'2.0',id:n,method,params})+'\n')});
 await req('initialize',{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'wave4-fix-round',version:'test'}});child.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n');const schemas=new Map((await req('tools/list',{})).result.tools.map(t=>[t.name,t.inputSchema]));
 

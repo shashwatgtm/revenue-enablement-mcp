@@ -1,0 +1,1183 @@
+{
+  "production_commit": "868982fac6c8ccbf03b0576ebabc7fce8709086c",
+  "tools_list": {
+    "tools": [
+      {
+        "name": "account_plan_builder",
+        "description": "Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "account_name": {
+              "type": "string",
+              "description": "Company/account name"
+            },
+            "industry": {
+              "type": "string",
+              "description": "Industry vertical"
+            },
+            "current_arr": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Current ARR with this account (0 for prospects)"
+            },
+            "known_contacts": {
+              "type": "string",
+              "description": "Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account notes"
+            },
+            "current_products": {
+              "type": "string",
+              "description": "Products/services they currently use from you"
+            },
+            "expansion_opportunities": {
+              "type": "string",
+              "description": "Potential expansion areas or whitespace"
+            },
+            "competitive_threats": {
+              "type": "string",
+              "description": "Known competitors in the account"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/service offering"
+            },
+            "account_notes": {
+              "type": "string",
+              "description": "Any additional context about the account"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "account_name"
+          ]
+        },
+        "title": "Account Plan Builder",
+        "annotations": {
+          "title": "Account Plan Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "deal_strategy_coach",
+        "description": "Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "blocker_status": {
+              "type": "string",
+              "enum": [
+                "none",
+                "present",
+                "unknown"
+              ],
+              "description": "Ask whether any blocker is present. A confirmed typed fact overrides word reading."
+            },
+            "economic_buyer_engagement": {
+              "type": "string",
+              "enum": [
+                "engaged",
+                "not_engaged",
+                "unknown"
+              ],
+              "description": "Ask whether the budget holder actively participates in this decision. Overrides word reading."
+            },
+            "incumbent_status": {
+              "type": "string",
+              "enum": [
+                "present",
+                "none",
+                "unknown"
+              ],
+              "description": "Ask whether the buyer already uses a competing supplier. Overrides word reading."
+            },
+            "project_status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "cancelled",
+                "unknown"
+              ],
+              "description": "Ask whether the project is still active. A cancelled project is held, without a close plan."
+            },
+            "deal_name": {
+              "type": "string",
+              "description": "Deal/opportunity name"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Deal value in dollars"
+            },
+            "deal_stage": {
+              "type": "string",
+              "enum": [
+                "prospecting",
+                "discovery",
+                "demo",
+                "proposal",
+                "negotiation",
+                "closing",
+                "stuck"
+              ],
+              "description": "Current deal stage"
+            },
+            "days_in_stage": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Days the deal has been in current stage"
+            },
+            "champion_status": {
+              "type": "string",
+              "enum": [
+                "no_champion",
+                "potential_champion",
+                "confirmed_champion",
+                "multi_threaded"
+              ],
+              "description": "Champion identification status"
+            },
+            "economic_buyer": {
+              "type": "string",
+              "description": "Economic buyer name and engagement level"
+            },
+            "competitors": {
+              "type": "string",
+              "description": "Competitors in the deal and their position"
+            },
+            "blockers": {
+              "type": "string",
+              "description": "Known blockers or objections"
+            },
+            "next_steps": {
+              "type": "string",
+              "description": "Currently planned next steps"
+            },
+            "close_date": {
+              "type": "string",
+              "description": "Target close date"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you are selling"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "deal_name",
+            "deal_stage"
+          ]
+        },
+        "title": "Deal Strategy Coach",
+        "annotations": {
+          "title": "Deal Strategy Coach",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "discovery_question_bank",
+        "description": "Writes a discovery question list from the framework you choose (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. Returns an opening for the conversation, questions in the language of the prospect's sector and on what your solution covers, the questions for each part of the framework, a closing for the call and what to say to an objection. It uses only the inputs you give and says which it did not get.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "contact_permission": {
+              "type": "string",
+              "enum": [
+                "allowed",
+                "declined",
+                "unknown"
+              ],
+              "description": "Optional confirmed fact. Ask whether this person permits further contact; this answer overrides contact-refusal wording in the notes."
+            },
+            "framework": {
+              "type": "string",
+              "enum": [
+                "meddpicc",
+                "bant",
+                "spiced",
+                "challenger",
+                "gap_selling",
+                "all"
+              ],
+              "description": "Discovery framework to use"
+            },
+            "prospect_industry": {
+              "type": "string",
+              "description": "Prospect industry for context"
+            },
+            "prospect_role": {
+              "type": "string",
+              "description": "Role of person you are meeting with"
+            },
+            "known_pain_points": {
+              "type": "string",
+              "description": "Pain points already identified"
+            },
+            "known_metrics": {
+              "type": "string",
+              "description": "Metrics/KPIs already discussed"
+            },
+            "deal_stage": {
+              "type": "string",
+              "enum": [
+                "first_call",
+                "discovery",
+                "deep_dive",
+                "technical",
+                "executive"
+              ],
+              "description": "Stage of conversation"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution for relevant questions"
+            },
+            "gaps_to_fill": {
+              "type": "string",
+              "description": "Specific information gaps to address"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "framework"
+          ]
+        },
+        "title": "Discovery Question Bank",
+        "annotations": {
+          "title": "Discovery Question Bank",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "roi_business_case_builder",
+        "description": "Build an ROI business case from the buyer's own figures: annual value estimate, or current annual cost with expected improvement percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). Ask finance for the cash-only annual benefit when an investment decision depends on cash.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "customer_name": {
+              "type": "string",
+              "description": "Customer/prospect name"
+            },
+            "industry": {
+              "type": "string",
+              "description": "The customer's industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer's own figures (annual value estimate, or current annual cost with expected improvement percent)"
+            },
+            "company_size": {
+              "type": "string",
+              "enum": [
+                "startup",
+                "smb",
+                "mid_market",
+                "enterprise"
+              ],
+              "description": "Company size tier"
+            },
+            "annual_revenue": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Customer annual revenue. Shown as your input; it is not turned into a value"
+            },
+            "employee_count": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Number of employees. Shown as your input; it is not turned into a value"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "solution_price": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Annual cost of your solution"
+            },
+            "primary_value_driver": {
+              "type": "string",
+              "enum": [
+                "revenue_increase",
+                "cost_reduction",
+                "productivity",
+                "risk_mitigation",
+                "multiple"
+              ],
+              "description": "Primary value category"
+            },
+            "known_metrics": {
+              "type": "string",
+              "description": "Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer's figures; to turn the buyer's figures into the value, give current annual cost and expected improvement percent, or annual value estimate"
+            },
+            "current_annual_cost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)"
+            },
+            "expected_improvement_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Optional: the share of that annual cost the buyer expects to save, in percent (their figure)"
+            },
+            "annual_value_estimate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional: the buyer's own estimate of the annual value in dollars; used as the value when given"
+            },
+            "current_process": {
+              "type": "string",
+              "description": "How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation"
+            },
+            "implementation_timeline": {
+              "type": "string",
+              "description": "Expected implementation time. Shown in the output; not used in the calculation"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            },
+            "annual_cash_benefit": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional buyer-confirmed annual cash benefit in US dollars, excluding staff time without a cash release. Ask finance to separate cash from non-cash value. Compared with the annual solution price; a cash deficit holds the investment decision."
+            }
+          },
+          "required": [
+            "your_solution",
+            "primary_value_driver"
+          ]
+        },
+        "title": "ROI Business Case Builder",
+        "annotations": {
+          "title": "ROI Business Case Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "mutual_action_plan_generator",
+        "description": "Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "deal_name": {
+              "type": "string",
+              "description": "Deal/opportunity name"
+            },
+            "target_close_date": {
+              "type": "string",
+              "description": "Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so"
+            },
+            "current_stage": {
+              "type": "string",
+              "enum": [
+                "discovery",
+                "evaluation",
+                "proposal",
+                "negotiation",
+                "procurement"
+              ],
+              "description": "Current deal stage"
+            },
+            "buyer_champion": {
+              "type": "string",
+              "description": "Champion name and title"
+            },
+            "economic_buyer": {
+              "type": "string",
+              "description": "Economic buyer name and title"
+            },
+            "technical_evaluators": {
+              "type": "string",
+              "description": "Technical evaluators involved"
+            },
+            "procurement_contact": {
+              "type": "string",
+              "description": "Procurement contact if known"
+            },
+            "known_requirements": {
+              "type": "string",
+              "description": "Known requirements or evaluation criteria"
+            },
+            "known_process_steps": {
+              "type": "string",
+              "description": "Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone"
+            },
+            "blockers": {
+              "type": "string",
+              "description": "Known blockers or concerns"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you are selling"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "deal_name",
+            "target_close_date"
+          ]
+        },
+        "title": "Mutual Action Plan Generator",
+        "annotations": {
+          "title": "Mutual Action Plan Generator",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "win_loss_analyzer",
+        "description": "Writes a short win/loss review of one deal, a competitor pattern or a set of deals from the details you give. Returns a write-up in plain sentences that names the outcome, the stated reason in the buyer's words, what the reason points to and what the buyer weighed, then the questions for the review call and sector notes. It adds no figure or reason you did not give, and says plainly what the outcome or reason would add when it is missing.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "analysis_type": {
+              "type": "string",
+              "enum": [
+                "single_deal",
+                "deal_portfolio",
+                "competitor_analysis",
+                "loss_pattern"
+              ],
+              "description": "Type of analysis"
+            },
+            "deal_outcome": {
+              "type": "string",
+              "enum": [
+                "won",
+                "lost",
+                "no_decision",
+                "mixed"
+              ],
+              "description": "Deal outcome for single deal analysis"
+            },
+            "deal_details": {
+              "type": "string",
+              "description": "Deal details, can be rough notes, CRM export, or structured data"
+            },
+            "loss_reason": {
+              "type": "string",
+              "description": "Stated loss reason (for lost deals)"
+            },
+            "competitor_won": {
+              "type": "string",
+              "description": "Competitor who won (if applicable)"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Deal value"
+            },
+            "sales_cycle_days": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Length of sales cycle"
+            },
+            "stakeholders_involved": {
+              "type": "string",
+              "description": "Key stakeholders and their positions"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "What you were selling"
+            },
+            "multiple_deals": {
+              "type": "string",
+              "description": "For portfolio analysis: summary of multiple deals"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "analysis_type"
+          ]
+        },
+        "title": "Win/Loss Analyzer",
+        "annotations": {
+          "title": "Win/Loss Analyzer",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "proposal_section_writer",
+        "description": "Writes the proposal section you choose, such as an executive summary, solution overview or pricing justification, for a named buyer. Returns the section as sentences built from your solution, the buyer's challenges, your differentiators, pricing and success measures, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "section_type": {
+              "type": "string",
+              "enum": [
+                "executive_summary",
+                "problem_statement",
+                "solution_overview",
+                "implementation_plan",
+                "pricing_justification",
+                "risk_mitigation",
+                "success_metrics",
+                "company_overview",
+                "case_studies",
+                "next_steps"
+              ],
+              "description": "Proposal section to generate"
+            },
+            "customer_name": {
+              "type": "string",
+              "description": "Customer name"
+            },
+            "customer_industry": {
+              "type": "string",
+              "description": "Customer industry"
+            },
+            "primary_audience": {
+              "type": "string",
+              "enum": [
+                "c_suite",
+                "vp_level",
+                "director",
+                "manager",
+                "technical",
+                "procurement"
+              ],
+              "description": "Adds a one-line note at the top of the executive summary on what this audience looks for"
+            },
+            "customer_challenges": {
+              "type": "string",
+              "description": "Key challenges identified"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_differentiators": {
+              "type": "string",
+              "description": "Why you vs alternatives"
+            },
+            "pricing": {
+              "type": "string",
+              "description": "Pricing details if relevant"
+            },
+            "implementation_approach": {
+              "type": "string",
+              "description": "How you will implement"
+            },
+            "success_metrics": {
+              "type": "string",
+              "description": "Expected outcomes/metrics"
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "formal",
+                "consultative",
+                "bold",
+                "conservative"
+              ],
+              "description": "Tone for the proposal (changes only the opening of the executive summary)"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "section_type",
+            "your_solution"
+          ]
+        },
+        "title": "Proposal Section Writer",
+        "annotations": {
+          "title": "Proposal Section Writer",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "email_sequence_generator",
+        "description": "Writes a multi-email sequence by persona, stage and objective, such as prospecting, nurture, follow-up or re-engagement. Returns each email with its subject, send day and body, built from your solution, the pain point, the value proposition, your proof and the ask, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sequence_type": {
+              "type": "string",
+              "enum": [
+                "cold_outreach",
+                "warm_follow_up",
+                "post_demo",
+                "proposal_follow_up",
+                "re_engagement",
+                "nurture",
+                "event_follow_up",
+                "referral_request"
+              ],
+              "description": "Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline"
+            },
+            "target_persona": {
+              "type": "string",
+              "description": "Target persona (e.g., VP Sales, CTO, CFO)"
+            },
+            "target_industry": {
+              "type": "string",
+              "description": "Target industry for context"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_value_prop": {
+              "type": "string",
+              "description": "Primary value proposition"
+            },
+            "specific_pain_point": {
+              "type": "string",
+              "description": "Specific pain point to address"
+            },
+            "social_proof": {
+              "type": "string",
+              "description": "Customer names, stats, or proof points"
+            },
+            "call_to_action": {
+              "type": "string",
+              "description": "Desired action (meeting, demo, reply)"
+            },
+            "num_emails": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Accepted but not used yet: each sequence type has a fixed number of emails"
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "professional",
+                "casual",
+                "urgent",
+                "consultative",
+                "provocative"
+              ],
+              "description": "Email tone"
+            },
+            "sender_context": {
+              "type": "string",
+              "description": "Context about sender (role, shared connections, etc.)"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "sequence_type",
+            "target_persona",
+            "your_solution"
+          ]
+        },
+        "title": "Email Sequence Generator",
+        "annotations": {
+          "title": "Email Sequence Generator",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "demo_script_builder",
+        "description": "Writes a demo script for the demo type, persona and use case you choose. Returns a timed run from opening to close, with spoken lines and a step for each feature you must show, tied to the pains you name, then discussion, close and follow-up lines and sector notes. The steps come from the parts of your solution and your pains, and the answer says where they came from and what it did not get.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "demo_type": {
+              "type": "string",
+              "enum": [
+                "first_look",
+                "technical_deep_dive",
+                "executive_overview",
+                "competitive_displacement",
+                "expansion_upsell",
+                "proof_of_concept"
+              ],
+              "description": "Type of demo"
+            },
+            "primary_audience": {
+              "type": "string",
+              "description": "Primary demo audience (role/persona)"
+            },
+            "attendees": {
+              "type": "string",
+              "description": "Other attendees and their roles"
+            },
+            "customer_industry": {
+              "type": "string",
+              "description": "Customer industry"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_pain_points": {
+              "type": "string",
+              "description": "Pain points to address in demo"
+            },
+            "competitor_context": {
+              "type": "string",
+              "description": "Competitor being displaced or compared"
+            },
+            "demo_duration": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Demo duration in minutes"
+            },
+            "must_show_features": {
+              "type": "string",
+              "description": "Features that must be demonstrated"
+            },
+            "known_objections": {
+              "type": "string",
+              "description": "Known objections to address"
+            },
+            "desired_outcome": {
+              "type": "string",
+              "description": "What you want to achieve from this demo"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "demo_type",
+            "your_solution"
+          ]
+        },
+        "title": "Demo Script Builder",
+        "annotations": {
+          "title": "Demo Script Builder",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "pricing_negotiation_guide",
+        "description": "Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests. Ask whether the user has authority to approve the proposed terms.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "scenario": {
+              "type": "string",
+              "enum": [
+                "discount_request",
+                "budget_objection",
+                "competitor_pricing",
+                "procurement_pressure",
+                "multi_year_negotiation",
+                "enterprise_agreement",
+                "renewal_negotiation"
+              ],
+              "description": "Negotiation scenario"
+            },
+            "deal_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Current deal value"
+            },
+            "discount_requested": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Discount percentage requested"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge"
+            },
+            "competitor_price": {
+              "type": "string",
+              "description": "Competitor pricing if known"
+            },
+            "value_delivered": {
+              "type": "string",
+              "description": "Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own"
+            },
+            "buyer_leverage": {
+              "type": "string",
+              "description": "Buyer leverage points (size, reference potential, etc.)"
+            },
+            "your_leverage": {
+              "type": "string",
+              "description": "Your leverage points (unique features, timeline, etc.)"
+            },
+            "decision_timeline": {
+              "type": "string",
+              "description": "When decision needs to be made"
+            },
+            "approval_authority": {
+              "type": "string",
+              "description": "Who has final approval on pricing"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            },
+            "pricing_authority_status": {
+              "type": "string",
+              "enum": [
+                "authorized",
+                "not_authorized",
+                "unknown"
+              ],
+              "description": "Optional confirmed fact. Ask whether the user can approve this price or discount. Free-text role titles do not establish authority; unconfirmed authority holds commitment to terms."
+            }
+          },
+          "required": [
+            "scenario"
+          ]
+        },
+        "title": "Pricing Negotiation Guide",
+        "annotations": {
+          "title": "Pricing Negotiation Guide",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "champion_enablement_kit",
+        "description": "Writes an internal selling asset for your champion, such as an executive brief, an internal business case, objection responses or presentation talking points, built from your solution, the customer's situation and the objections you expect. Returns the asset in the champion's voice with the recommendation, the answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "asset_type": {
+              "type": "string",
+              "enum": [
+                "executive_brief",
+                "internal_business_case",
+                "objection_responses",
+                "presentation_talking_points",
+                "email_to_stakeholder",
+                "roi_one_pager",
+                "competitive_comparison",
+                "risk_assessment"
+              ],
+              "description": "Type of enablement asset"
+            },
+            "champion_name": {
+              "type": "string",
+              "description": "Champion name"
+            },
+            "champion_role": {
+              "type": "string",
+              "description": "Champion role/title"
+            },
+            "target_stakeholder": {
+              "type": "string",
+              "description": "Who the champion needs to convince"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "key_value_points": {
+              "type": "string",
+              "description": "Key value points to emphasize"
+            },
+            "known_objections": {
+              "type": "string",
+              "description": "Expected objections from stakeholders"
+            },
+            "competitive_context": {
+              "type": "string",
+              "description": "Competitive alternatives being considered"
+            },
+            "budget_context": {
+              "type": "string",
+              "description": "Budget situation and pricing"
+            },
+            "urgency_drivers": {
+              "type": "string",
+              "description": "Why act now"
+            },
+            "champion_wins": {
+              "type": "string",
+              "description": "How this makes the champion look good"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "asset_type",
+            "your_solution"
+          ]
+        },
+        "title": "Champion Enablement Kit",
+        "annotations": {
+          "title": "Champion Enablement Kit",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "competitive_trap_setter",
+        "description": "Writes landmine questions and positioning tactics against a named competitor, so the buyer's own criteria expose its weak points without negative selling. Returns the set-up, your strengths and the competitor's weak points as you gave them, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and stage-specific tactics, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "competitor": {
+              "type": "string",
+              "description": "Primary competitor to position against"
+            },
+            "competitor_weaknesses": {
+              "type": "string",
+              "description": "Known competitor weaknesses"
+            },
+            "your_solution": {
+              "type": "string",
+              "description": "Your product/solution"
+            },
+            "your_strengths": {
+              "type": "string",
+              "description": "Your key differentiators"
+            },
+            "evaluation_stage": {
+              "type": "string",
+              "enum": [
+                "early",
+                "mid",
+                "late",
+                "finalist"
+              ],
+              "description": "Stage of competitive evaluation"
+            },
+            "buyer_priorities": {
+              "type": "string",
+              "description": "What the buyer cares most about"
+            },
+            "buyer_persona": {
+              "type": "string",
+              "description": "Role of key evaluator"
+            },
+            "trap_type": {
+              "type": "string",
+              "enum": [
+                "discovery_questions",
+                "evaluation_criteria",
+                "reference_questions",
+                "technical_requirements",
+                "commercial_terms",
+                "all"
+              ],
+              "description": "Type of competitive positioning"
+            },
+            "business_model": {
+              "type": "string",
+              "enum": [
+                "saas",
+                "services",
+                "connectivity",
+                "transactions",
+                "marketplace",
+                "hardware_software",
+                "investment"
+              ],
+              "description": "Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out"
+            },
+            "your_sector": {
+              "type": "string",
+              "enum": [
+                "logistics_tech",
+                "fintech",
+                "saas",
+                "vertical_saas",
+                "ai_native",
+                "ites",
+                "telecom",
+                "software",
+                "cybersecurity",
+                "other"
+              ],
+              "description": "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear."
+            }
+          },
+          "required": [
+            "competitor",
+            "your_solution"
+          ]
+        },
+        "title": "Competitive Trap Setter",
+        "annotations": {
+          "title": "Competitive Trap Setter",
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      }
+    ]
+  }
+}

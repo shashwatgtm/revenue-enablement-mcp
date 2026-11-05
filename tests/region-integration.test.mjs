@@ -33,6 +33,7 @@ for(const c of baseline.cases){
   const text=result.content[0].text;
   assert.ok(text.endsWith(NO_REGION_SUFFIX));
   result.content[0].text=text.slice(0,-NO_REGION_SUFFIX.length);
+  for(const k of ['structuredContent','_meta'])if(result[k]){const strip=v=>typeof v==='string'?(v.endsWith(NO_REGION_SUFFIX)?v.slice(0,-NO_REGION_SUFFIX.length):v):Array.isArray(v)?v.map(strip):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,strip(x)])):v;result[k]=strip(result[k]);}
   assert.deepEqual(result,c.result);
  });
  if(alpha&&c.tool==='generate_roadmap')continue; // All reviewed inputs are enums. Do not invent a hidden market field.

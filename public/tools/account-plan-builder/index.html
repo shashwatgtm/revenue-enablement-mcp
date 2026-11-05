@@ -29,6 +29,7 @@
 <link rel="preload" href="/assets/fonts/VT323-latin-400.woff2?v=8ddbebcc10" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/fonts.css?v=a7f7495a4f">
 <link rel="stylesheet" href="/assets/helix.css?v=4c6d14d19e">
+<link rel="stylesheet" href="/assets/jtbd.css?v=c58d595f2b">
 <link rel="stylesheet" href="/assets/helix-report.css?v=f78ed582b4">
 <script type="application/ld+json">
 {
@@ -171,7 +172,7 @@
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-11-02",
+   "dateModified": "2026-11-05",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -268,15 +269,27 @@
   <div class="wrap">
     <p class="eyebrow"><span class="tag">Account Plan Builder</span></p>
     <div class="crop"><span class="cm tl" aria-hidden="true"></span><span class="cm tr" aria-hidden="true"></span><span class="cm bl" aria-hidden="true"></span><span class="cm br" aria-hidden="true"></span><h1 id="h1">Build a strategic account plan</h1></div>
+    <p class="hx-for"><b>For</b> account executives and account managers. <b>The decision:</b> how do we grow this account in the next 90 days?</p>
     <div class="hero-grid"><div class="hx10-split-text">
       <p class="sub">Give it the account name, plus contacts, products and notes if you have them. Get an account overview, a power map, whitespace analysis, a 90-day plan and a research checklist.</p>
       <p class="hx10-actions hx11-tool-acts"><a class="hx-btn" href="?example=1#run">Try it with an example</a><a class="slink" href="#run">Use your own details</a></p>
-      <p class="hx-byline">Last updated <time datetime="2026-11-02">2 November 2026</time></p>
+      <p class="hx-byline">Last updated <time datetime="2026-11-05">5 November 2026</time></p>
     </div><figure class="hx8-vis hx10-split-vis "><svg viewBox="0 0 360 164" width="360" height="164" role="img" aria-labelledby="v1t v1d" class="hx8-svg"><title id="v1t">90-Day Account Plan</title><desc id="v1d">90-Day Account Plan: from Today to Day 90 through Days 1 to 30: Foundation, Days 31 to 60: Engagement, Days 61 to 90: Close or Expand.</desc><text x="0" y="16" class="v-k" text-anchor="start">90-Day Account Plan</text><line x1="8" y1="58" x2="352" y2="58" class="v-line v-draw"/><rect x="0" y="50" width="16" height="16" class="v-ox"/><rect x="344" y="50" width="16" height="16" class="v-sig v-fade d9"/><text x="0" y="86" class="v-tm" text-anchor="start">Today</text><text x="360" y="86" class="v-tm" text-anchor="end">Day 90</text><rect x="20" y="100" width="101" height="44" class="v-clay v-slide d1"/><text x="26" y="118" class="v-ts" text-anchor="start">Days 1 to 30:</text><text x="26" y="131" class="v-ts" text-anchor="start">Foundation</text><rect x="127" y="100" width="101" height="44" class="v-clay v-slide d2"/><text x="133" y="118" class="v-ts" text-anchor="start">Days 31 to 60:</text><text x="133" y="131" class="v-ts" text-anchor="start">Engagement</text><rect x="233" y="100" width="101" height="44" class="v-clay v-slide d3"/><text x="239" y="118" class="v-ts" text-anchor="start">Days 61 to 90:</text><text x="239" y="131" class="v-ts" text-anchor="start">Close or</text><text x="239" y="144" class="v-ts" text-anchor="start">Expand</text></svg></figure></div>
   </div>
 </section>
 
 <div class="hx-body">
+<section class="hx-section hx-sample" aria-labelledby="sample-h">
+  <h2 id="sample-h">What you get</h2>
+  <p class="hx-sample-note">Sample output, labelled: a made up example from the inputs behind <em>Fill in an example</em>. Part of one section of the answer.</p>
+  <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">The account in brief</h3>
+<p>The logistics customer is an existing account in third-party logistics with annual recurring revenue of $36,000. This plan is about growing it with our product. By this tool&#39;s example rule on ARR alone the account sits in the Growth contract band. Expansion potential is unknown until a new need and its buyer are supplied and confirmed; ARR does not establish either.</p>
+<div class="hx-table"><table><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td><strong>Account</strong></td><td>the logistics customer</td></tr><tr><td><strong>Industry</strong></td><td>third-party logistics</td></tr><tr><td><strong>Account Tier</strong></td><td>Growth (set by this tool&#39;s rule from Current ARR)</td></tr><tr><td><strong>Current ARR</strong></td><td>$36,000</td></tr></tbody></table></div>
+<h3 class="hxr-h3">Who decides and who influences</h3>
+<p>Find a champion first: the person who feels the problem and is measured on it. Find out who signs this off and who controls the budget.</p></div>
+  <p class="hx-sample-more"><a href="#ex-h">See the full example answer</a> or <a href="#run">run it with your own details</a>.</p>
+</section>
+
 <section class="hx-section hx-run-sec" id="run" aria-label="Run Account Plan Builder">
   <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Account Plan Builder</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/account_plan_builder" data-tool="account_plan_builder" data-title="Account Plan Builder"><p class="hx-help">You need: Account name. You can add: Industry, Current ARR, Known contacts, Current products, Expansion opportunities, Competitive threats, Your solution, Account notes, Your sector.</p>
 <div class="hx-field"><label for="f-account_name">Account name <span class="hx-req" aria-hidden="true">*</span></label><input id="f-account_name" name="account_name" type="text" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-account_name-help"><p class="hx-help" id="f-account_name-help">Company/account name</p></div>
@@ -313,6 +326,7 @@
     <div class="hxr-body hx-result-body" data-result></div>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/</span><span data-hxr-date></span></footer>
   </article>
+  <p class="hx-notenough"><strong>When a tool is not enough:</strong> if the decision needs more than one answer, talk it through with Shashwat. <a href="https://calendly.com/shashwat-gtmhelix/45min">Book 45 minutes</a>.</p>
   <p class="hx9-next"><strong>What next?</strong> <a href="https://gtmhelix.com/lets-get-started/">Work with Shashwat on this</a> <a href="https://gtmhelix.com/#start">Try another tool</a> <a href="https://tools.gtmhelix.com/tools/">See all 48 tools</a></p>
 </section>
 
@@ -378,6 +392,7 @@
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/account-plan-builder/</span></footer>
   </article>
   <p class="figcap">How the answer is laid out, using the sections the tool prints. Example figure: replace with your own.</p>
+  <p class="hx-notenough"><strong>When a tool is not enough:</strong> if the decision needs more than one answer, talk it through with Shashwat. <a href="https://calendly.com/shashwat-gtmhelix/45min">Book 45 minutes</a>.</p>
 </section>
 <aside class="hx7-strip" aria-label="Built by Shashwat Ghosh"><div class="hx-wrap hx7-strip-row"><picture class="hx7-strip-photo"><source srcset="/assets/shashwat-ghosh-160.webp?v=c5d0d41b0c" type="image/webp"><img src="/assets/shashwat-ghosh-160.jpg?v=b453d25fa4" width="160" height="160" alt="Shashwat Ghosh" decoding="async"></picture><p><b>Built by Shashwat Ghosh</b>, Co-Founder and Fractional CMO, Helix GTM Consulting, with 24+ years in B2B and 10+ years fractional.</p><a href="https://gtmhelix.com/about/">About Shashwat</a></div></aside>
 <section class="hx-section" aria-labelledby="not-t-h">

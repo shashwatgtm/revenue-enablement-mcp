@@ -17,7 +17,18 @@ function regionalInputs(args, industryRole = 'seller') {
         if (typeof input[key] !== 'string')
             continue;
         for (const sentence of input[key].split(/(?<=[.!?])\s+|\n+/)) {
-            if (/^\s*(?:we\s+(?:(?:do\s+not|never|currently|only|also)\s+)*(?:sell|serve|target|operate|offer|provide|are\s+(?:selling|not\s+selling))\b|our\s+(?:company|business|product|service|market)\s+(?:sells|serves|targets|operates|is|offers|provides)\b)/i.test(sentence))
+            // First person seller statements: the sentence itself, or a later clause of it, or one led by its own market phrase.
+            // The shared reader decides polarity, so modal, inability and denial forms are passed through and read there.
+            const sellerVerb = '(?:(?:do(?:es)?\\s+not|don\'t|never|cannot|can\'t|can|could|may|might|will|plan\\s+to|are\\s+(?:currently\\s+)?(?:unable|not\\s+able|able|not\\s+allowed|not\\s+permitted|allowed|permitted)\\s+to|currently|now|only|also|actively|stopped|ceased|used\\s+to|formerly|previously)\\s+)*(?:sell(?:ing)?|sold|serve|target|operate|offer|provide|expand\\s+into|enter)\\b';
+            const quoted = /["“”]/.test(sentence) || /\b(?:said|says|told|asked|wrote|claimed|quoted|stated|replied|argued|according\s+to)\b/i.test(sentence);
+            if (new RegExp('^\\s*(?:(?:in|into|within|across|for)\\s+[^,.;!?\\n]{1,70}?,?\\s+)?(?:(?:and|but|however|also|now|currently|today)\\s+)*we\\s+' + sellerVerb + '|^\\s*(?:in|into|within|across|for)\\s+[^,.;!?\\n]{1,70}?,?\\s+we\\s+' + sellerVerb, 'i').test(sentence)
+                || /^\s*(?:we\s+are\s+(?:selling|not\s+selling)\b|our\s+(?:company|business|product|service|market)\s+(?:sells|serves|targets|operates|is|offers|provides)\b)/i.test(sentence)
+                || (!quoted && new RegExp('(?:[,;:]|\\b(?:and|but))\\s+(?:and\\s+|but\\s+|also\\s+)?we\\s+' + sellerVerb + '|[;:]\\s*(?:in|into|within|across|for)\\s+[^,.;!?\\n]{1,70}?,?\\s+we\\s+' + sellerVerb, 'i').test(sentence)))
+                seller.push(sentence);
+            if (/^\s*we\s+are\s+(?:a|an|the)\s+[^.!?\n]{1,70}\b(?:vendor|seller|provider)\s+selling\b/i.test(sentence) && !/[\"“”]/.test(sentence))
+                seller.push(sentence);
+            // An account receipt clause can precede the same seller's active sale.
+            if (/^\s*we\s+receiv(?:e|ing)\s+(?:our\s+)?payments?\s+(?:in|into|to)\s+[^.;!?\n"“”]*?\bbank\s+account\s+(?:and|but)\s+(?:we\s+)?(?:sell(?:ing)?|serve|offer|provide)\b/i.test(sentence) && !/["“”]/.test(sentence))
                 seller.push(sentence);
         }
     }

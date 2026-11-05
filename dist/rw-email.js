@@ -185,7 +185,7 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     // (a clause that opens with such a word but has a verb of its own, "outdated tools leave apps exposed", is a sentence)
     const fragment = (a) => (/^(?:\d|[a-z]+ing\b)/i.test(a) && !/^(?:when|if|while|as)\b/i.test(a)) || (/^(?:no|not|lack|lacking|too|poor|slow|manual|high|low|limited|missing|weak|siloed|disconnected|fragmented|rising|growing|long|late|costly|expensive|inefficient|outdated|legacy|dependence|reliance)\b/i.test(a) && !VERB.test(a.split(/\s+/).slice(1, 9).join(' ')));
     const painStatement = (a) => (fragment(a) ? (0, rw_common_ts_1.endSentence)(`The problem in short${inInd ? ` for people${inInd}` : ''}: ${a}`) : (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.sentenceCase)(a)));
-    const painRef = (a) => `“${(0, dealtext_ts_1.clip)(a, 110)}”`;
+    const painRef = (a) => { const t = (0, dealtext_ts_1.clip)(a, 110); const balance = (t.match(/\(/g) || []).length - (t.match(/\)/g) || []).length; return `“${t}${')'.repeat(Math.max(0, balance))}”`; };
     // ---- the product ----
     const parts = (0, rw_common_ts_1.partsIn)(P);
     const painAndValue = `${painText} ${valueText}`;
@@ -446,7 +446,9 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         return cut > 0 ? t.slice(0, cut) : t;
     };
     const painQs = atomsP.slice(0, 3).map((a) => {
-        const t = askPart(a.replace(/[.:;,]+$/, '').replace(/:.*$/, ''));
+        const raw = askPart(a.replace(/[.:;,]+$/, '').replace(/:.*$/, ''));
+        const balance = (raw.match(/\(/g) || []).length - (raw.match(/\)/g) || []).length;
+        const t = raw + ')'.repeat(Math.max(0, balance));
         const low = /^[A-Z][a-z]/.test(t) && !/^[A-Z][a-z]+[A-Z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
         const nounPhrase = /^(?:the|a|an|too|no|slow|manual|long|lost|missed|late)\b|^\w+ing\b/i.test(low) && !/\b(?:is|are|was|were|takes?|costs?|leaves?|means?)\b/i.test(low);
         return nounPhrase ? `How much of the week goes on ${low} today, and who picks it up?` : `When ${low}, what does it cost the team in a week, and who picks it up?`;

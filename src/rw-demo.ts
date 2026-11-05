@@ -598,7 +598,7 @@ export function buildDemoScript(args: Record<string, unknown>, d: DemoDeps): str
   const kindSentence = product.kind && kindWords.some((w) => !skipP.some((x) => x === w || w.startsWith(x) || x.startsWith(w))) ? (/^(?:a|an|the)\s/i.test(product.kind) ? `${P} is ${product.kind.replace(/^(?:a|an|the)\s+/i, (m) => m.toLowerCase())}.` : /^[a-z]/.test(product.kind) ? `${P} is ${/^[aeiou]/i.test(product.kind) ? 'an' : 'a'} ${product.kind}.` : `${P} is described as ${product.kind}.`) : '';
   let intro1 = `${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${who ? `, for ${who}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. ${shown.length} step${shown.length === 1 ? '' : 's'}, each built on ${product.caps.length >= 2 || ms.flows.length ? 'one of the parts or flows you named' : pains.length ? 'a problem you named' : 'a suggested planning question, not a confirmed capability'} and tied to the people it matters to. ${kindSentence}`.replace(/\s+/g, ' ').trim();
 
-  if(planningOnly) intro1=`${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}. No demo flow or capability was supplied. Each step is a suggested planning question, not a confirmed capability. ${kindSentence}`;
+  if(planningOnly) intro1=`${nameTyped}, ${typeLabel.toLowerCase()}, ${demoDuration} ${minutesWord}${durationGiven ? '' : ' (default)'}${primaryAudience ? `, for ${primaryAudience}` : ''}${customerIndustry ? ` (${customerIndustry})` : ''}. No demo flow or capability was supplied. Each step is a suggested planning question, not a confirmed capability. ${kindSentence}`;
 
   return `# Demo Script: ${typeLabel}
 

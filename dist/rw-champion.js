@@ -30,6 +30,10 @@ function buildChampionKit(args, d) {
 
 **Hold the purchase recommendation.** The supplied value points include ${valueRisk.reason}. They do not support recommending that the buyer proceed.
 
+**From:** ${championRole || 'Champion role to confirm'}
+
+**To:** ${targetGiven || 'Approver to confirm'}
+
 **Statement read:** ${keyValuePoints}
 
 ## Decision needed

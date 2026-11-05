@@ -83,7 +83,7 @@ Record the contact preference and pause outreach. Work from existing authorized 
   // after a pain has been quoted, it is called "that problem" (one pain) or "the second problem" (the numbered list in the context)
   const pShort = (i: number): string => (pains.length <= 1 ? 'that problem' : `the ${ORD[i] || `number ${i + 1}`} problem`);
   const X = pains.length ? pShort(0) : 'the problem you came to fix';
-  const XL = pRef(0);
+  const XL = pains.length === 1 && knownPainPoints.split(/\s+/).length > 14 ? 'the problem recorded in the context below' : pRef(0);
   const noMetrics = /^(none|no|not yet|unknown|n\/a|na|tbd|none shared yet|not shared|nothing yet)\b/i.test(knownMetrics);
   const M1 = sectorMetrics[0] || 'the number this problem moves';
   const Mlist = sectorMetrics.length >= 2 ? joinList(sectorMetrics.slice(0, 3), 'or') : M1;

@@ -2,7 +2,7 @@
 import { withReadingGuide } from './reader-actions.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
-import { asksForSoftware, SOFTWARE_REFERRAL } from './software-policy.ts';
+import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
 import {reserveTools,isReserveTool,callReserveTool} from './reserve-tools.ts';
 import { attachWidgets } from './widget-layer.ts';
@@ -3508,7 +3508,8 @@ export function createServer(): Server {
     const { name } = request.params;
     const args = safeArgs;
 
-    if (asksForSoftware(typed)) return { content: [{ type: 'text', text: SOFTWARE_REFERRAL }] };
+    const advice = softwareAdvice(typed);
+    if (advice) return { content: [{ type: 'text', text: advice }] };
 
     try {
       const result = executeTool(name, args as Record<string, unknown>);

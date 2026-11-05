@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildWinLoss = buildWinLoss;
+const input_evidence_ts_1 = require("./input-evidence.js");
 const text_signals_ts_1 = require("./text-signals.js");
 // Run 22 (writer rev-w3): win_loss_analyzer, rewritten. The product the user named is kept in the title, the write-up and the inputs table;
 // each alternative the buyer weighed is named once by a short handle (a long phrase is never said again); the stated reason is read against
@@ -83,7 +84,10 @@ function buildWinLoss(args, D) {
 
 Confirm the buyer's actual decision and correct the selected outcome or notes before analyzing why it happened.`;
     const reason = (args.loss_reason || '').trim();
-    const wonBy = (args.competitor_won || '').trim();
+    const suppliedWinner = (args.competitor_won || '').trim();
+    if ((0, input_evidence_ts_1.isPlaceholder)(suppliedWinner) && args.competitor_won !== undefined)
+        return 'Missing input: competitor won. Supply the confirmed competitor or the buyer decision before assigning the loss.';
+    const wonBy = suppliedWinner;
     const dealValue = args.deal_value || 0;
     const cycle = args.sales_cycle_days || 0;
     const stakeText = args.stakeholders_involved || '';

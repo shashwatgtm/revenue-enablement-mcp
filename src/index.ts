@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
@@ -3499,11 +3500,13 @@ export function createServer(): Server {
     if (BUILD_PROFILE.profile === "wave" && isWaveTool(request.params.name)) return callWaveTool(request.params.name, request.params.arguments);
     // Run 20 round 1d (D086), the one choke point: every tools/call (stdio, hosted /mcp and /api/tools all come through here)
     // reaches a tool here. Run 40S (D6, safe by design): the input checks read the text as typed (hidden characters removed); then every text is escaped once, so nothing the caller typed can form markup in any answer. The words stay (src/escape-inputs.ts).
-    const typed = joinAbbreviations(cleanDeep(request.params.arguments)) as Record<string, unknown> | undefined;
+    let typed = joinAbbreviations(cleanDeep(request.params.arguments)) as Record<string, unknown> | undefined;
+    const inputEvidence = guardInputs(typed, tools[request.params.name as keyof typeof tools]?.inputSchema);
+    typed = inputEvidence.args as typeof typed;
     const problem = checkRequiredInputs(request.params.name, typed);
     const safeArgs = escapeDeep(typed);
-    if (problem) {
-      return { content: [{ type: 'text', text: problem }], isError: true };
+    if (problem || inputEvidence.stop) {
+      return { content: [{ type: 'text', text: (problem || 'Missing required input. Supply the missing evidence before continuing.') + (inputEvidence.notice ? '\n\n' + inputEvidence.notice : '') }], isError: true };
     }
     const { name } = request.params;
     const args = safeArgs;
@@ -3511,13 +3514,14 @@ export function createServer(): Server {
     const advice = softwareAdvice(typed);
     if (advice) return { content: [{ type: 'text', text: advice }] };
 
+
     try {
       const result = executeTool(name, args as Record<string, unknown>);
       return {
         content: [
           {
             type: 'text',
-            text: withReadingGuide(name, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n')), args as Record<string,unknown>),
+            text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + withReadingGuide(name, holdBuyerCopy(name, args, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n'))), args as Record<string,unknown>),
           },
         ],
       };

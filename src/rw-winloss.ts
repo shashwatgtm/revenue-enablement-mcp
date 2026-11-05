@@ -1,3 +1,4 @@
+import { isPlaceholder } from './input-evidence.ts';
 import { outcomeReading } from './text-signals.ts';
 // Run 22 (writer rev-w3): win_loss_analyzer, rewritten. The product the user named is kept in the title, the write-up and the inputs table;
 // each alternative the buyer weighed is named once by a short handle (a long phrase is never said again); the stated reason is read against
@@ -77,7 +78,9 @@ export function buildWinLoss(args: Record<string, unknown>, D: Deps): string {
 
 Confirm the buyer's actual decision and correct the selected outcome or notes before analyzing why it happened.`;
   const reason = ((args.loss_reason as string) || '').trim();
-  const wonBy = ((args.competitor_won as string) || '').trim();
+  const suppliedWinner = ((args.competitor_won as string) || '').trim();
+  if (isPlaceholder(suppliedWinner) && args.competitor_won !== undefined) return 'Missing input: competitor won. Supply the confirmed competitor or the buyer decision before assigning the loss.';
+  const wonBy = suppliedWinner;
   const dealValue = (args.deal_value as number) || 0;
   const cycle = (args.sales_cycle_days as number) || 0;
   const stakeText = (args.stakeholders_involved as string) || '';

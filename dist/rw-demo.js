@@ -116,7 +116,7 @@ function buildDemoScript(args, d) {
     const minutesWord = demoDuration === 1 ? 'minute' : 'minutes';
     const mustShowFeatures = given('must_show_features');
     const acceptanceFeatures = mustShowFeatures.split(/[;\n]/).map(x => x.trim().replace(/[.]+$/, '')).filter(Boolean);
-    const acceptanceRows = acceptanceFeatures.map(feature => `| ${feature} | Demonstrate "${feature}" on the buyer's sample; record the observed result | Unknown; name the buyer approver | Unagreed; ask the buyer what must be true and how they will check it |`).join('\n');
+    const acceptanceRows = acceptanceFeatures.map(feature => `| ${feature} | Demonstrate this item on the buyer's sample; record the observed result | Unknown; name the buyer approver | Unagreed; ask the buyer what must be true and how they will check it |`).join('\n');
     const knownObjections = given('known_objections');
     const outcomeText = given('desired_outcome').replace(/[.]+$/, '');
     const ctx = d.readContext(undefined, { seller: [yourSolution], context: [keyPainPoints, mustShowFeatures, attendees], role: [primaryAudience], buyer: [customerIndustry] });
@@ -502,7 +502,7 @@ function buildDemoScript(args, d) {
     const confirm = [
         keyPainPoints && pains.length ? `Say: "Before I show anything: did I get ${pains.length === 1 ? 'that problem' : `those ${pains.length} problems`} right, and what would you add so the demo stays on your problem and not mine?"` : `Say: "I have not been told your main problem, so I will confirm it before showing a capability."`,
         untied.length ? `Ask: "Which part of ${P} would you most want to see for ${(0, dealtext_ts_1.joinList)(untied.map((i) => say(pRef(i)).replace(/"/g, "'")))}?"\n*(Note for you, not for the room: no part of your solution is tied to ${untied.length === 1 ? 'that problem' : 'those problems'}, so this question lets the room choose what to see.)*` : '',
-        ...people.map((_p, qi) => (qi === riskQi && riskClaims.length ? `Say: "For ${personRef(qi)}, here is the evidence the page claims: ${say(claimSay(riskClaims))} Which of these match what you ask for, and what else would you need?" *(${claimLabels(riskClaims)}; have the source ready)*\n\n${askFor(qi)}` : askFor(qi))),
+        ...people.map((_p, qi) => (qi === riskQi && riskClaims.length ? `Say: "For ${personRef(qi)}, inspect the supplied evidence in the preparation notes; its source and scope need confirmation. Which of those observations match your acceptance criteria, and what else would you need?" *(${claimLabels(riskClaims)}; have the source ready)*\n\n${askFor(qi)}` : askFor(qi))),
         lens ? `Ask: "${lens.checks[0]}"` : '',
         `Ask: "${typeQuestion[demoType] || typeQuestion.first_look}"`,
     ].filter(Boolean).join('\n\n');

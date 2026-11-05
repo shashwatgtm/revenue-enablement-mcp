@@ -70,7 +70,7 @@ Record the contact preference and pause outreach. Work from existing authorized 
     // ---- the pains, separate and named by their own words ----
     const painSet = (0, rw_kit_ts_1.readPains)(knownPainPoints);
     const pains = painSet.pains.length ? painSet.pains : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
-    const pRef = (i) => (pains[i] ? (0, rw_kit_ts_1.painRef)(low(pains[i]), i, true) : 'the problem you came to fix');
+    const pRef = (i) => knownPainPoints.split(/\s+/).length > 14 ? (pains.length > 1 ? `the ${ORD[i] || `number ${i + 1}`} problem listed in the context` : 'the problem listed in the context') : (pains[i] ? (0, rw_kit_ts_1.painRef)(low(pains[i]), i, true) : 'the problem you came to fix');
     const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
     // after a pain has been quoted, it is called "that problem" (one pain) or "the second problem" (the numbered list in the context)
     const pShort = (i) => (pains.length <= 1 ? 'that problem' : `the ${ORD[i] || `number ${i + 1}`} problem`);

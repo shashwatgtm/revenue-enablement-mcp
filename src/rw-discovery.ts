@@ -78,7 +78,7 @@ Record the contact preference and pause outreach. Work from existing authorized 
   // ---- the pains, separate and named by their own words ----
   const painSet = readPains(knownPainPoints);
   const pains = painSet.pains.length ? painSet.pains : knownPainPoints ? [knownPainPoints.replace(/[.]+$/, '')] : [];
-  const pRef = (i: number): string => knownPainPoints.split(/\s+/).length > 14 ? (pains.length > 1 ? `the ${ORD[i] || `number ${i + 1}`} problem listed in the context` : 'the problem listed in the context') : (pains[i] ? painRef(low(pains[i]), i, true) : 'the problem you came to fix');
+  const pRef = (i: number): string => pains[i] ? painRef(low(pains.length === 1 && knownPainPoints.split(/\s+/).length > 14 ? pains[i].split(/\s+/).slice(0,12).join(' ') : pains[i]), i, true) + (pains.length === 1 && knownPainPoints.split(/\s+/).length > 14 ? ' (opening words; see the complete statement in Context)' : '') : 'the problem you came to fix';
   const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
   // after a pain has been quoted, it is called "that problem" (one pain) or "the second problem" (the numbered list in the context)
   const pShort = (i: number): string => (pains.length <= 1 ? 'that problem' : `the ${ORD[i] || `number ${i + 1}`} problem`);

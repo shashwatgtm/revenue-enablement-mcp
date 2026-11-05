@@ -97,7 +97,12 @@ test("an alternative is tied to the part of the product that answers it, by the 
 test("a quoted objection is never cut in the middle", async () => {
   const q = "What's the hidden cost of stitching together best-of-breed point tools vs. a consolidated platform?";
   const t = await call("account_plan_builder", { account_name: "Orchard Bank", your_solution: "Vigilwall, a cloud attack surface platform", account_notes: `Objections: What is the real cost of a security tool beyond the licence: integration, tuning, headcount?; ${q}` });
-  assert.equal(t, "Which software fits your case is a judgement call. Ask Shashwat: book 45 minutes at https://calendly.com/shashwat-gtmhelix/45min");
+  // Revised owner scope: a buyer's recorded objection is evidence about the
+  // seller's product, so answer it normally and retain the complete quotation.
+  const rendered = t.replace(/\\([!"#$%&'()*+,\-./:;<=>?@[\]\\^_`{|}~])/g, "$1");
+  assert.ok(rendered.includes(q), "the recorded buyer objection must remain complete");
+  assert.match(t, /## Reading the answer/);
+  assert.notEqual(t, "This tool and Helix do not advise on software in that category. Please ask a specialist in that field.");
 });
 
 // every Revenue tool: a description with no name never gives its first word as the name (E11 "name cut to one word")

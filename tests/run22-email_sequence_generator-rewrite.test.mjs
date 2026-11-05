@@ -19,6 +19,7 @@ const ROUTELARK = {
   your_solution: "Routelark, a route planning platform for third-party logistics providers: dispatch planning, driver app, proof of delivery and exception alerts",
   key_value_prop: "re-plan routes during the day without phoning the driver; the vendor page cites 14% fewer failed deliveries (page claim from a 2025 customer survey)",
   specific_pain_point: "failed deliveries pile up because routes are planned the night before and never re-planned; dispatchers chase drivers by phone",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Kestrel Freight cut failed deliveries from 9% to 6% in eight weeks (case study title); Customer quote from the dispatch lead at Harbourline Couriers: \"We stopped phoning drivers.\" (customer quote); Named a Leader in the 2025 Last Mile Software Grid (analyst recognition listed on the home page)",
   call_to_action: "30-minute walkthrough", tone: "consultative", sender_context: "Mia Thorne, account executive at Routelark",
 };
@@ -27,6 +28,7 @@ const NORTHGATE = {
   your_solution: "Northgate Managed Services, a managed network and service desk for bank branches: site monitoring, repair within contract times, one service desk and a wave plan for each rollout",
   key_value_prop: "one contract and one service desk for every branch, with repair times written into the contract",
   specific_pain_point: "branch outages take hours to fix because three suppliers each own part of the network; the bank carries the cost of the gap",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Customer quote from the head of infrastructure at Fenwick Savings: \"One number to call, and it was answered.\" (customer quote); Certified to ISO 27001 (certification listed on the home page)",
   call_to_action: "reply with a good time", tone: "professional", sender_context: "Dev Rao, Northgate Managed Services",
 };
@@ -35,6 +37,7 @@ const PINGLINE = {
   your_solution: "Pingline, a messaging API for transactional text messages: one-time passcodes, order updates, sender ID registration and delivery reports by route",
   key_value_prop: "get one-time passcodes to shoppers in seconds and see which route delayed a message; priced per message sent",
   specific_pain_point: "one-time passcodes arrive late and shoppers abandon checkout; fraud filters block messages that are real",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Marlowe Shop raised first attempt code delivery from 81% to 96% (customer story headline); Customer quote from the product lead at Quill Market: \"The reports told us which route was failing.\" (customer quote); Named a Visionary in the 2025 Messaging Platform Grid (analyst recognition)",
   call_to_action: "30-minute technical walkthrough", tone: "casual", sender_context: "Solutions engineering at Pingline",
 };
@@ -43,6 +46,7 @@ const BRANCHWIRE = {
   your_solution: "Branchwire, managed SD-WAN connectivity for retail chains: site installation, monitoring, repair time service levels and a wave plan for each rollout",
   key_value_prop: "bring every store onto one managed network with repair times in the contract",
   specific_pain_point: "store links drop at peak trading hours and nobody can say which of the two carriers is at fault",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Customer quote from the network manager at Oakmere Stores: \"We finally see every site in one view.\" (customer quote)",
   call_to_action: "30-minute call", tone: "consultative", sender_context: "Branchwire sales team",
 };

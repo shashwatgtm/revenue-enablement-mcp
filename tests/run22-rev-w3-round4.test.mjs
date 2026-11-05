@@ -92,6 +92,7 @@ const BINARY = {
   your_solution: "Binscan mobile application security platform (vulnerability assessment, penetration testing and store monitoring), an enterprise mobile application security testing platform that scans compiled APK and IPA binaries rather than source code, delivering automated DAST on real physical devices, binary SAST, API testing and per-build compliance evidence",
   key_value_prop: "unified, automated vulnerability testing that accelerates secure development, from first scan to store submission without switching tools (page claims)",
   specific_pain_point: "outdated security tools leave mobile apps exposed: source code scanners miss issues in binaries and third party components, separate SAST, DAST and API tools slow workflows and cause errors, simulated environments do not reflect real device behavior, and excessive false positives waste security teams' time; fake apps and unauthorized versions in app stores go unnoticed",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Binscan helped a global airline save $50K a year (page claim); A senior security researcher at an airline says assessing the whole mobile app ecosystem takes as little as 45 minutes (page quote)",
   call_to_action: "20-minute call", tone: "consultative", sender_context: "Binscan sales team",
 };
@@ -113,7 +114,8 @@ const D2C = {
   your_solution: "Payfern, payments and banking platform: accept online and in-store payments (100+ payment methods), make payouts, business banking through partner banks, payroll, credit and loans",
   key_value_prop: "a fast, affordable and secure way to accept and disburse payments online and own a current account",
   specific_pain_point: "high cart abandonment and return to origin (RTO) rates for ecommerce and D2C brands; hard vendor payouts, payment splitting and manual reconciliation",
-  social_proof: "Knitwell increases order conversion rate by 100% with Payfern Magic Checkout (case study headline); Goodmart increases revenue by 22% with Payfern Payment Links (case study headline); Quillbook: set up payroll in a few hours, saved 500+ hours and achieved 40% cost reduction (customer quote)",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
+  social_proof: "Knitwell increases order conversion rate by 80% with Payfern Magic Checkout (case study headline); Goodmart increases revenue by 22% with Payfern Payment Links (case study headline); Quillbook: set up payroll in a few hours, saved 500+ hours and achieved 40% cost reduction (customer quote)",
   call_to_action: "20-minute call", tone: "consultative", sender_context: "Payfern sales team",
 };
 test("a D2C founder: subjects follow email 1, payroll proof is not used for a checkout pain, headlines are one sentence", async () => {
@@ -144,6 +146,7 @@ const KNOW = {
   your_solution: "Findwell, an enterprise search and assistant platform: search, assistant and agents",
   key_value_prop: "better answers built on what the business knows",
   specific_pain_point: "company knowledge spreads across tools, teams and documents, so people cannot find what they need to do their jobs",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Northbank: 80% adoption across 7,000 employees (page claim); Eastcorp: 1.5+ hours of search time saved per employee weekly (page claim); Westfirm scales across 14,000 employees (page claim); Southco created 3,400+ agents (page claim); Named a Market Shaper in an analyst quadrant",
   call_to_action: "20-minute call", tone: "consultative", sender_context: "Findwell sales team",
 };

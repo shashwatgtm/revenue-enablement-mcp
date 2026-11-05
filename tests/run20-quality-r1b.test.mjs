@@ -319,6 +319,7 @@ test("email_sequence_generator cold_outreach: one proof item per email, emails 4
   const proof = "Hollybrook Foods cut dispatch planning time by 66% with Lanehop (case study title); Customer quote: expanded from 500 to 4,000 trucks while improving fleet efficiency by 24% in under six months; Named a Leader in the 2026 Analyst Quadrant for Last Mile Delivery (home page)";
   const r = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "Chief Operating Officer", target_industry: "Retail", your_solution: LANEHOP,
     key_value_prop: "plan routes faster and keep every delivery promise; the page claims 99.5% on time deliveries (page claim)", specific_pain_point: "last mile is the costliest phase of the supply chain, with fragmented routes and manual route planning",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
     social_proof: proof, call_to_action: "20-minute call", sender_context: "Account Executive at Lanehop" });
   assert.equal(r.isError, false);
   assert.doesNotMatch(r.text.replace(FIRST_NAME_OK, ""), BRACKET);

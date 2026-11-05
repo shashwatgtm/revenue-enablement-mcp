@@ -19,6 +19,7 @@ const A = {
   your_solution: "Sitegrid, a construction management platform for general contractors: project scheduling, cost control, change order tracking and subcontractor payments",
   key_value_prop: "see job cost while the project is still running; the vendor page cites 12% fewer change order disputes (page claim from a 2024 customer survey)",
   specific_pain_point: "change orders sit in email for weeks, and job cost reports arrive after the money is spent",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Hollowell Builders cut pay application time from 9 days to 3 (case study title); Customer quote from the controller at Ridgeway Civil: \"We stopped chasing paper.\" (customer quote); Named a Leader in the 2025 Builders Software Grid (analyst page)",
   call_to_action: "20-minute call", tone: "consultative", sender_context: "Sitegrid sales team",
 };
@@ -27,6 +28,7 @@ const B = {
   your_solution: "Pingwise, a business messaging platform: text messages, voice calls, verified sender messages and delivery reports",
   key_value_prop: "get login codes to customers in seconds; delivery reports by route (page words)",
   specific_pain_point: "login codes arrive late and shoppers abandon checkout, and fraud filters block messages that are real",
+    publication_permission: "We have written permission to publish all supplied customer endorsements in email.",
   social_proof: "Marlowe Shop raised first attempt code delivery from 81% to 96% (customer story headline); Customer quote from the product lead at Quill Market: \"The reports told us which route was failing.\" (customer quote)",
   call_to_action: "30-minute technical walkthrough", tone: "casual", sender_context: "Solutions engineering at Pingwise",
 };

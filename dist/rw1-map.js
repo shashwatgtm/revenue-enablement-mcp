@@ -9,6 +9,7 @@ const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
 const rw1_common_ts_1 = require("./rw1-common.js");
+const concern_types_ts_1 = require("./concern-types.js");
 const STAGE_ORDER = ['discovery', 'evaluation', 'proposal', 'negotiation', 'procurement'];
 const STAGE_NAME = { discovery: 'Discovery', evaluation: 'Evaluation', proposal: 'Business Case & Alignment', negotiation: 'Commercial & Legal', procurement: 'Procurement' };
 const STAGE_AIM = {
@@ -436,6 +437,66 @@ function buildMutualActionPlan(args, d) {
             { m: criteria.length ? 'Success criteria written down from the criteria above, with the pass mark for each' : 'Success criteria written down', who: 'seller' },
         ],
     };
+    // ---- each blocker adds the step, the owner and the risk its type implies (src/concern-types.ts, a fixed ordered list) ----
+    // Fix 6 Nov 2026: before this, a blocker only got an answer row, and the milestones, owners and risks were the same whatever it said.
+    // A blocker that matches no type gets "Add a step to resolve" in the current phase, with an owner question, never a guess.
+    const firstStage = bounds[0]?.stage || 'close';
+    const BLOCKER_RULES = {
+        'data-residency': { stage: 'evaluation', owner: 'Buyer legal or data protection reviewer', m: (q) => `Data residency review for ${q}: the seller shows, from its own documentation, where this data is stored, processed and accessed and by which subprocessors, and the buyer's legal reviewer confirms in writing that it meets the rule before any live data is used`, risk: (q) => `Data residency (${q}): until the buyer's legal reviewer accepts where the data is stored and processed, the evaluation cannot use live data, so every later date waits on that answer.` },
+        privacy: { stage: 'evaluation', owner: 'Buyer data protection or privacy reviewer', m: (q) => `Privacy review for ${q}: agree which personal data would be processed, why and for how long, and how it is redacted or removed, and record the reviewer's decision`, risk: (q) => `Privacy (${q}): if the reviewer does not approve the use of personal data, the test runs on redacted or synthetic data, which changes what the evaluation proves.` },
+        security: { stage: 'evaluation', owner: secName, m: (q) => `Security review for ${q}: answer the buyer's questions with the evidence the seller already holds, list any gap in writing and agree what closes it`, risk: (q) => `Security (${q}): an open security finding stops live use; start the review in the first week, beside the evaluation.` },
+        compliance: { stage: 'evaluation', owner: riskName, m: (q) => `Compliance check for ${q}: go through the rule or control list it names with the compliance reviewer present, and keep the evidence for each point`, risk: (q) => `Compliance (${q}): a control the seller cannot show evidence for stops the approval; find it early.` },
+        legal: { stage: 'negotiation', owner: procName, m: (q) => `Legal review for ${q}: send the buyer's legal team the clause or document it concerns and agree the position in writing`, risk: (q) => `Legal (${q}): the review runs on the buyer's lawyers' calendar; send the paper early so the redlines do not land in the last week.` },
+        budget: { stage: 'proposal', owner: ebName, m: (q) => `Budget for ${q}: confirm with ${ebRef} which budget pays, who approves it and when it is released`, risk: (q) => `Budget (${q}): without an approved budget there is no order, whatever the evaluation shows; confirm the budget source before the business case phase ends.` },
+        'bill-forecast': { stage: 'proposal', owner: finName, m: (q) => `Bill forecast for ${q}: build it with the finance contact from the buyer's own volumes and the price terms as written, as a low, an expected and a high month, and agree what limits the bill only if the seller offers a limit`, risk: (q) => `The bill forecast (${q}): until finance accepts a forecast built on the buyer's own volumes, the budget approval can stall; agree the volume assumptions before the business case is presented.` },
+        price: { stage: 'proposal', owner: finName, m: (q) => `Price check for ${q}: compare the price with the buyer's current cost for the same scope, line by line, with the finance contact`, risk: (q) => `Price (${q}): a comparison on a different scope makes the price look higher or lower than it is; agree the scope of the comparison first.` },
+        procurement: { stage: 'procurement', owner: procName, m: (q) => `Purchasing route for ${q}: confirm the vendor approval steps, the documents and the lead time with procurement`, risk: (q) => `Procurement (${q}): purchasing steps have their own lead times; ask for them now so the close date allows for them.` },
+        'service-level': { stage: 'negotiation', owner: 'Both teams', m: (q) => `Service level for ${q}: agree the measure, how it is reported and what happens if it is missed, and write it into the terms`, risk: (q) => `Service level (${q}): a service level not agreed in writing becomes a dispute after signature; settle it before the contract.` },
+        quality: { stage: 'evaluation', owner: 'Both teams', m: (q) => `Quality test for ${q}: agree the sample or evaluation set, the pass mark and when a person reviews the output, before any live use`, risk: (q) => `Quality (${q}): if the pass mark is not agreed before the test, a weak result restarts the evaluation.` },
+        integration: { stage: 'evaluation', owner: itName, m: (q) => `Technical check for ${q}: show it working with the named system on a real record, with the system owner present, and agree the work each side does`, risk: (q) => `Technical fit (${q}): integration work needs the buyer's IT time; book it at the start of the evaluation.` },
+        capacity: { stage: firstStage, owner: champName, m: (q) => `Time and people for ${q}: agree with the champion who on the buyer's side works on the evaluation and when, and fit the dates around it`, risk: (q) => `Capacity (${q}): if the buyer's people have no time, every step slips; confirm their time before the dates are shared.` },
+        switching: { stage: 'evaluation', owner: champName, m: (q) => `Exit from the current way for ${q}: confirm the end date and the notice terms of what is in place now, and plan a parallel run`, risk: (q) => `Switching (${q}): the notice period on what is in place now can set the earliest start; find it out now.` },
+        adoption: { stage: 'evaluation', owner: champName, m: (q) => `Adoption plan for ${q}: name the first users, the training they get and how their use is checked each week`, risk: (q) => `Adoption (${q}): low use in the trial weakens the business case; check use every week.` },
+        approval: { stage: 'proposal', owner: ebName, m: (q) => `Decision on ${q}: name the person who can clear it and book that meeting before the business case phase ends`, risk: (q) => `Approval (${q}): a decision maker who has not seen the plan can stop it late; bring them in at the next phase gate.` },
+        timing: { stage: firstStage, owner: champName, m: (q) => `Timing for ${q}: confirm with the champion what fixes the date and what happens if it slips`, risk: (q) => `Timing (${q}): a date the buyer does not own will slip; tie the close to the buyer's own event.` },
+    };
+    const ORDER = [...STAGE_ORDER, 'close'];
+    const phaseFor = (stage) => (bounds.find((b) => ORDER.indexOf(b.stage) >= ORDER.indexOf(stage)) || bounds[bounds.length - 1]).stage;
+    // blockers of the same type share one milestone and one risk line, in the order the first of them was typed; blockers that
+    // match no type share one "Add a step to resolve" milestone that names each of them
+    const groups = [];
+    for (const b of [...new Set(blockerItems.map((x) => (0, rw1_common_ts_1.stripEnd)(x)).filter(Boolean))]) {
+        const type = (0, concern_types_ts_1.concernOf)(b);
+        const g = groups.find((x) => (x.type ? x.type.id : '') === (type ? type.id : ''));
+        if (g)
+            g.items.push(b);
+        else
+            groups.push({ type, items: [b] });
+    }
+    const blockerPlan = groups.map(({ type, items }) => {
+        const q = (0, dealtext_ts_1.joinList)(items.map((b) => (0, rw1_common_ts_1.quoted)(b).replace(/\|/g, '/')));
+        const rule = type ? BLOCKER_RULES[type.id] : null;
+        const stage = phaseFor(rule ? rule.stage : firstStage);
+        const step = rule
+            ? { m: rule.m(q), who: 'both', owner: rule.owner }
+            : { m: items.length === 1 ? `Add a step to resolve: ${items[0].replace(/\|/g, '/')}` : `Add a step to resolve each of these: ${q}`, who: 'both', owner: `Owner to confirm: ask ${champRef} who on the buyer's side can clear ${items.length === 1 ? 'this' : 'each'}` };
+        return { items, q, type, stage, step, risk: rule ? rule.risk(q) : `Unowned ${items.length === 1 ? 'blocker' : 'blockers'} (${q}): no blocker type in the fixed list matches, so the plan adds only a step to resolve ${items.length === 1 ? 'it' : 'them'}; until someone on the buyer's side owns ${items.length === 1 ? 'it' : 'each'}, ${items.length === 1 ? 'it' : 'they'} can stop the plan at any phase.` };
+    });
+    // where a blocker step goes in its phase: in the business case phase and the close phase it comes first (the forecast or the
+    // budget before the business case is presented, anything still open before the signature); in the evaluation it goes before the
+    // closing step (reference calls, the owner's decision); in the other phases it comes last. Blockers keep the order they were typed in.
+    const front = {};
+    for (const x of blockerPlan) {
+        const list = (stepsFor[x.stage] ||= []);
+        if (x.stage === 'proposal' || x.stage === 'close') {
+            front[x.stage] = (front[x.stage] || 0) + 1;
+            list.splice(front[x.stage] - 1, 0, x.step);
+        }
+        else if (x.stage === 'evaluation' && list.length)
+            list.splice(list.length - 1, 0, x.step);
+        else
+            list.push(x.step);
+    }
     const OWNER_AIM = { evaluation: 'Show on the buyer\'s own items and prices, with the people who will use it, that the criteria are met.', proposal: 'Agree the offer, the price and how it is bought, and answer every open question in writing.', close: 'Order, pay and set up, then check after the first week.' };
     const aimOf = (stage) => (ownerLed && OWNER_AIM[stage]) || STAGE_AIM[stage];
     const phaseBlock = (ph, n) => {
@@ -494,11 +555,17 @@ function buildMutualActionPlan(args, d) {
     else if (v) {
         risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${(v.subtype === 'core-banking' && /\b(?:neo-?banks?|challenger banks?|digital[- ]only banks?|greenfield|new banks?|fintechs?|start-?ups?)\b/i.test(`${dealName} ${reqIn} ${blockersIn}`) ? v.objections.filter((o) => !/replacing a core|legacy core/i.test(o.objection)) : v.objections).slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);
     }
+    if (blockerPlan.length) {
+        const phaseName = (stage) => { const i = bounds.findIndex((b) => b.stage === stage); return i >= 0 ? `Phase ${i + 1}: ${bounds[i].name}` : 'the first phase'; };
+        risks.push(`### What each blocker adds to the plan\n\nEach blocker is read against a fixed list of blocker types. The type decides the milestone added to the timeline, its owner and the risk under What can move the close date. Blockers of one type share a milestone. A blocker that fits no type gets a step to resolve it and a question about who owns it.\n\n| Read as | Blocker | Why this type | Milestone added in |\n|---------|---------|---------------|--------------------|\n${blockerPlan.map((x) => `| ${x.type ? (0, dealtext_ts_1.upperFirst)(x.type.label) : 'No type matched'} | ${x.items.map((b) => b.replace(/\|/g, '/')).join('; ')} | ${x.type ? (0, dealtext_ts_1.upperFirst)(x.type.reason) : 'No type in the fixed list matches it'} | ${phaseName(x.stage)} |`).join('\n')}`);
+    }
     const riskList = [];
     const longest = (processBy.evaluation || [])[0] || (processBy.negotiation || [])[0];
     riskList.push(`The calendar: ${N} working days for ${bounds.length - 1} stage${bounds.length === 2 ? '' : 's'}${longest ? `, and the buyer's own step "${longest.m.replace("Buyer's process step, in your words: ", '')}" is not under your control: start it in the first week` : ', with the reviews running beside the evaluation, not after it'}.`);
     riskList.push(`Losing the champion: if the champion leaves or is moved, ${evaluators[0] ? evaluators[0].title : economic ? ebName : 'the next person on the buyer\'s side'} must already know the plan; keep them in the weekly loop.`);
     riskList.push(`The evaluation shows a gap: agree the pass mark for each criterion before the test starts${criteria.length ? ` (the ${criteria.length} above)` : ''}, so a gap is a finding and not a surprise.`);
+    for (const x of blockerPlan)
+        riskList.push(x.risk);
     risks.push(`### What can move the close date\n\n${riskList.map((x) => `- ${x}`).join('\n')}`);
     out.push(risks.join('\n\n'));
     const comm = [

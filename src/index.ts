@@ -47,6 +47,7 @@ import { isEvidenceStatus, splitFeatureList, type ListItem, aAn, describeWith, p
 import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
 import { buildAccountPlan } from './rw1-account.ts';
 import { buildMutualActionPlan } from './rw1-map.ts';
+import { concernOf, type ConcernId } from './concern-types.ts';
 import { buildRoiStructure } from './rw1-roi.ts';
 import type { Deps as Rw1Deps } from './rw1-common.ts';
 import { buildDemoScript } from './rw-demo.ts';
@@ -2758,6 +2759,60 @@ const AUDIENCE_NOTE: Record<string, string> = {
   technical: 'technical reviewers: lead with how it connects to their systems, how data is handled, and how it was validated',
   procurement: 'procurement: lead with scope, terms, price and the documents their process needs',
 };
+// Fix 6 Nov 2026 (specific outputs). A supplied success metric becomes its own KPI row. A baseline, a target or a timeline is
+// read only from the user's own words ("from 40% to 25%", "baseline 40%", "target 25%", "by Q3", "in the first 90 days");
+// anything not written stays a cell for the user. "Within 7 days" is part of a metric's definition, not a timeline, so it stays.
+function kpiRow(metric: string, customer: string): string[] {
+  let t = metric.trim().replace(/[.]+$/, '');
+  let baseline = '', target = '', timeline = '';
+  const take = (re: RegExp, set: (m: RegExpMatchArray) => void) => { const m = t.match(re); if (m) { set(m); t = (t.slice(0, m.index) + t.slice((m.index || 0) + m[0].length)).replace(/\s{2,}/g, ' ').replace(/[\s,;:]+$/, '').trim(); } };
+  take(/\bfrom\s+([^,;]*?\d[^,;]*?)\s+to\s+([^,;]*?\d[^,;]*?)(?=\s+by\b|\s+in the first\b|[,;]|$)/i, (m) => { baseline = m[1].trim(); target = m[2].trim(); });
+  if (!baseline) take(/[,(]?\s*\bbaseline\s*(?:of|is|:|=)?\s*([^,;()]*\d[^,;()]*)\)?/i, (m) => { baseline = m[1].trim(); });
+  if (!target) take(/[,(]?\s*\b(?:target|goal)\s*(?:of|is|:|=)?\s*([^,;()]*\d[^,;()]*)\)?/i, (m) => { target = m[1].trim(); });
+  take(/[,(]?\s*\bby\s+((?:the\s+)?(?:end of\s+)?(?:Q[1-4](?:\s+\d{4})?|(?:january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+\d{4})?|\d{4}-\d{2}-\d{2}|(?:month|week|day)\s+\d+|the end of the pilot|go[- ]live))\b\)?/i, (m) => { timeline = `By ${m[1].trim()}`; });
+  if (!timeline) take(/[,(]?\s*\b(?:in|within|over) the first\s+(\d+\s+(?:days|weeks|months))\b\)?/i, (m) => { timeline = `The first ${m[1].trim()}`; });
+  const cell = (x: string) => escapePiece(x).replace(/\|/g, '/');
+  return [cap(t || metric).replace(/\|/g, '/'), baseline ? cell(baseline) : `Not given: measure first, with ${customer}`, target ? cell(target) : `Not given: agree with ${customer}`, timeline ? cell(timeline) : `Not given: agree with ${customer}`];
+}
+const sharesWord = (a: string, b: string): boolean => { const w = (x: string) => new Set((x.toLowerCase().match(/[a-z]{4,}/g) || []).map((y) => y.slice(0, 5))); const A = w(a); return [...w(b)].some((x) => A.has(x)); };
+// Probability and impact are filled in only from the challenge's own words: a rating it states, or that it describes something
+// already happening (which is a status, not a rating). Otherwise both stay "Not assessed".
+function statedRatings(text: string): { probability: string; impact: string } {
+  const p = text.match(/\b(high|medium|low)\s+(?:likelihood|probability|chance)\b|\b(?:likelihood|probability|chance)\s*(?:is|:)?\s*(high|medium|low)\b/i);
+  const i = text.match(/\b(high|medium|low|critical|severe|major|minor)\s+impact\b|\bimpact\s*(?:is|:)?\s*(high|medium|low|critical|severe|major|minor)\b/i);
+  const now = /\b(?:has|have)\s+(?:fallen|dropped|risen|grown|failed|slipped|declined|increased)\b|\b(?:is|are)\s+not\b|\bno agreed\b|\balready\b|\bcurrently\b|\btoday\b|\brises\b|\bgrows\b|\bmiss(?:es|ed)\b/i.test(text);
+  const word = (m: RegExpMatchArray | null) => (m ? `${cap((m[1] || m[2]).toLowerCase())} (as supplied)` : '');
+  return { probability: word(p) || (now ? 'Happening now, as stated; not rated' : 'Not assessed'), impact: word(i) || 'Not assessed' };
+}
+// The mitigation, the control owner role and the acceptance evidence for each risk type (src/concern-types.ts). Each is a
+// proposal to agree with the customer; none says a control exists or has passed.
+function riskControl(type: ConcernId | null, c: string, approach: string): { mitigation: string; owner: string; evidence: string } {
+  const transition = (): string => {
+    if (!approach) return 'Move the work in stages with a parallel run, exit criteria for each stage and a rule for rolling back';
+    const add = [!/exit criteria/i.test(approach) ? 'exit criteria for each stage' : '', !/roll ?back|pull (?:the )?work back|fall ?back/i.test(approach) ? 'a rule for rolling back' : ''].filter(Boolean);
+    return `The approach you supplied: ${approach.trim().replace(/[.]+$/, '')}${add.length ? `. Add ${joinList(add)}` : ''}`;
+  };
+  const R: Record<ConcernId, { mitigation: string; owner: string; evidence: string }> = {
+    'data-residency': { mitigation: `Map where the data is handled, stored and accessed, and by which subprocessors, from your own documentation, and agree the permitted locations with ${c} before any live data moves`, owner: `${c}'s data protection or legal reviewer, with your security lead`, evidence: `A data location map that ${c}'s reviewer has signed off` },
+    privacy: { mitigation: 'Agree which personal data is processed, why, how long it is kept and how it is redacted or removed', owner: `${c}'s data protection or privacy reviewer, with your security lead`, evidence: `The reviewer's written decision on the personal data use` },
+    security: { mitigation: `Answer ${c}'s security questions with the evidence you already hold, and agree in writing how each gap is closed`, owner: `${c}'s security reviewer, with your security lead`, evidence: 'The completed security review, with each open item closed or accepted' },
+    compliance: { mitigation: `Check it against the rule or control list it names, with ${c}'s compliance reviewer present`, owner: `${c}'s compliance or risk reviewer, with your delivery lead`, evidence: 'Evidence for each control, kept and accepted by the reviewer' },
+    legal: { mitigation: `Send the clause or document it concerns to ${c}'s legal team and agree the position in writing`, owner: `${c}'s legal team, with your account executive`, evidence: 'The agreed wording in the contract' },
+    budget: { mitigation: 'Confirm which budget pays, who approves it and when it is released', owner: `${c}'s budget owner`, evidence: 'Written budget approval' },
+    'bill-forecast': { mitigation: `Model the bill on ${c}'s own volumes, including the peaks, under the pricing in this proposal, and agree when it is reviewed`, owner: `${c}'s finance contact, with your account executive`, evidence: `A bill forecast built on ${c}'s volumes that finance accepts` },
+    price: { mitigation: `Compare the cost with ${c}'s current cost for the same scope, line by line`, owner: `${c}'s finance contact, with your account executive`, evidence: 'A like for like cost comparison that finance accepts' },
+    procurement: { mitigation: 'Confirm the purchasing steps, the documents and the lead time with procurement', owner: `${c}'s procurement contact`, evidence: 'Vendor approval completed' },
+    'service-level': { mitigation: 'Agree the service level, how it is measured and reported, and what happens when it is missed, before the work moves', owner: `Your delivery lead, with ${c}'s service owner`, evidence: 'The service level and its reporting written into the contract and shown in the first report' },
+    quality: { mitigation: 'Agree the quality measure and a calibration on a sample before the work moves, with a quality gate at each stage and the right to pause', owner: `${c}'s quality lead, with your delivery lead`, evidence: `Calibration results on the sample and each stage's quality gate, signed off by ${c}'s quality lead` },
+    integration: { mitigation: 'Test the connection with the system owner on a real record before go live, and agree the work each side does', owner: `${c}'s system owner, with your solutions engineer`, evidence: 'A real record passed end to end, checked by the system owner' },
+    capacity: { mitigation: 'Agree the volume forecast, including the peaks, and a staffing plan with a trigger to add people before each peak', owner: `Your delivery lead, with ${c}'s operations or planning owner`, evidence: 'The staffing plan against the forecast, and the staffing reached at the first peak' },
+    switching: { mitigation: transition(), owner: `Your transition lead, with ${c}'s operations owner`, evidence: `Exit criteria met at each stage, signed off by ${c} before the next stage starts` },
+    adoption: { mitigation: 'Name a lead in each team who owns adoption, train people before go live and check use every week', owner: `${c}'s team leads, with your customer success lead`, evidence: 'Weekly use against the level agreed' },
+    approval: { mitigation: 'Name the person who decides on it and agree when they see the evidence', owner: `${c}'s executive sponsor`, evidence: "The sponsor's recorded decision" },
+    timing: { mitigation: 'Agree what fixes the date and what happens if it slips, and plan back from it', owner: `${c}'s project owner, with your delivery lead`, evidence: 'A dated plan both sides have agreed' },
+  };
+  return type ? R[type] : { mitigation: `No type in the fixed list matches this challenge, so no mitigation is suggested: agree one with ${c}`, owner: `Owner to confirm: ask ${c} who owns this`, evidence: `Agree the test and the evidence with ${c}` };
+}
 function executeProposalSectionWriter(args: Record<string, unknown>): string {
   const sectionType = (args.section_type as string) || 'executive_summary';
   const customerName = (args.customer_name as string) || 'the customer';
@@ -2847,6 +2902,111 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   ].filter(Boolean);
   const beforeSend = beforeLines.length ? `### Before you send (for you, not for the client)\n\n${beforeLines.join('\n')}` : '';
   const bullets = (items: string[], fallback: string) => (items.length ? items.map((c) => `- ${c.trim()}`).join('\n') : fallback);
+
+  // Fix 6 Nov 2026: the pricing justification is written for its reader. A senior executive reads the outcome and the payback first,
+  // procurement reads the terms, the total cost and a like for like comparison, and a technical reviewer reads the implementation
+  // effort and the integration. The other audiences, and no audience, keep the section as it was. No amount, payback period or term is
+  // written for the user: each is the user's or the customer's own figure.
+  const C = customerName;
+  const noPrice = 'No pricing was given. Add pricing (the components and the amounts) and this section shows it.';
+  const protection = `### Investment Protection\n\n*Include only the protections you actually offer, in your contract's words:*\n- Satisfaction commitment, if you offer one\n- Payment terms and options\n- Price for the term, and for how long\n${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}`;
+  const pricingFooter = `---\n\n*Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`;
+  const PRICING_BY_AUDIENCE: Record<string, () => string> = {
+    c_suite: () => `# Investment & Value
+
+## Pricing for ${C}
+
+${audienceLine}### The Outcome This Investment Buys
+
+${outcomes.length ? `The result ${C} would hold ${P} to: ${cleanClaim(outcomes[0])}.${outcomes.length > 1 ? ` Also measured: ${outcomes.slice(1).map((o) => cleanClaim(o)).join('; ')}.` : ''}` : `No success metrics were given. Add the one result ${C}'s leadership will judge this by, and this section leads with it.`}${xChallenges.length ? `\n\nThe problem it pays for, in ${C}'s words: ${tidy(xChallenges[0])}.` : ''}
+
+### Payback
+
+Payback is how long ${C} takes to earn back the investment from the value it gains. Neither the value nor the payback period is made up here: run the ROI Business Case Builder tool with ${C}'s own cost or value figures, and put the payback period here.
+
+| Value category | What leadership will ask of ${C}'s figures |
+|----------------|---------------------------------------------|
+| Cost reduction | Spend that stops${v ? ` (${v.metrics[0]})` : ''}, and from when |
+| Revenue | Revenue gained or kept, and from when |
+| Risk | The cost of one incident, and how often one happens |
+| Efficiency | Hours saved each week on the work ${P} changes |
+
+### Investment Summary
+
+${pricing || noPrice}
+
+${protection}
+${pricingFooter}`,
+    procurement: () => `# Investment & Value
+
+## Pricing for ${C}
+
+${audienceLine}### Commercial Terms
+
+${pricing ? `The price, as supplied: ${pricing}` : 'No pricing was given. Add the price and the unit it is charged per, and this section shows it.'}
+
+State each term below in your contract's words; none is filled in for you.
+
+| Term | What to state |
+|------|---------------|
+| Price and unit | ${pricing ? 'As supplied above; add the unit of charge if it is not stated' : 'Not given'} |
+| Payment terms | When invoices are raised and when they are due |
+| Price for the term | How long the price holds, and how it changes at renewal |
+| Exit and notice | The notice period, and what happens to ${C}'s data at exit |
+
+### Total Cost
+
+The total cost over the term is more than the price. Fill in each line with ${C}'s procurement team; no amount is written for you.
+
+| Cost line | What to fill in |
+|-----------|-----------------|
+| Fees under the price above | The amount on ${C}'s own volumes for the term |
+| Implementation and set up | ${implementationApproach ? `What the supplied approach costs, if you charge for it: ${tidy(implementationApproach).replace(/\|/g, '/')}` : 'Not given: add it if you charge for it'} |
+| ${upperFirst(`${C}'s own staff time`)} | An estimate agreed with ${C} |
+| Renewal | The price at renewal, from the terms above |
+
+### Comparison on the Same Scope
+
+Compare ${P} with ${C}'s current way or the other offers on the same scope: the same volumes, the same service level and the same term. Convert each offer to the same unit before comparing, so that a price per hour or per seat is not set against a price per result.
+
+### Value Justification
+
+The value is ${C}'s own figure. Use the ROI Business Case Builder tool with their cost or value figures; none is made up here.
+
+${protection}
+${pricingFooter}`,
+    technical: () => `# Investment & Value
+
+## Pricing for ${C}
+
+${audienceLine}### Implementation Effort
+
+${implementationApproach ? `The approach you supplied: ${tidy(implementationApproach)}.` : 'No implementation approach was given. Add the steps, who does each and how long each takes, and this section shows them.'}
+
+Agree with ${C}'s technical reviewers what their team gives and for how long: access to the systems, a test environment and the people's time. List only what the approach needs.
+
+### Integration and Data
+
+| Item | What to confirm with ${C}'s technical reviewers |
+|------|---------------------------------------------------|
+| Systems to connect | Each system ${P} connects to, with an owner on ${C}'s side |
+| Data handled | What data passes, where it is stored and who can access it |
+| Security review | The documents their review asks for, only those you hold |
+| Effort on their side | The days of their team's time, agreed before the price is final |
+
+### What the Price Covers
+
+${pricing ? `The price, as supplied: ${pricing}` : noPrice}
+
+Say which implementation steps the price includes and which are charged separately, only as your contract says.
+
+### Value Justification
+
+The value is ${C}'s own figure. Use the ROI Business Case Builder tool with their cost or value figures; none is made up here.
+
+${protection}
+${pricingFooter}`,
+  };
 
   // Section generators
   const sections: Record<string, () => string> = {
@@ -3037,7 +3197,7 @@ ${outcomes.length ? outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n') : `No s
 
 *Timeline is indicative and will be finalized during contracting.*`,
 
-    pricing_justification: () => `# Investment & Value
+    pricing_justification: () => (PRICING_BY_AUDIENCE[primaryAudience] ? PRICING_BY_AUDIENCE[primaryAudience]() : `# Investment & Value
 
 ## Pricing for ${customerName}
 
@@ -3063,9 +3223,28 @@ The value is ${customerName}'s own figure. Use the ROI Business Case Builder too
 ${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}
 ---
 
-*Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`,
+*Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`),
 
-    risk_mitigation: () => `# Risk Assessment & Mitigation
+    // Fix 6 Nov 2026: each supplied challenge is read against the fixed list of risk types (src/concern-types.ts), and the type sets
+    // the mitigation to agree, the control owner role and the acceptance evidence. Ratings come only from the challenge's own words.
+    // With no challenges the section is as it was.
+    risk_mitigation: () => (challenges.length ? `# Risk Assessment & Mitigation
+
+## Supplied risks and controls for ${customerName}
+
+The risk statements below concern ${P} for ${customerName} and come from the supplied customer challenges. Each is read against a fixed list of risk types, and the type sets the mitigation to agree, the control owner role and the acceptance evidence. Probability and impact are filled in only where a challenge states them; otherwise they have not been assessed. A mitigation here is a proposal to agree with ${customerName}, not evidence that a control has passed.
+
+| Supplied risk or requirement | Risk type | Probability | Impact | Mitigation to agree | Control owner (role) | Acceptance evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+${challenges.map((ch) => { const type = concernOf(ch); const r = statedRatings(ch); const k = riskControl(type ? type.id : null, customerName, implementationApproach); return [ch.trim(), type ? cap(type.label) : 'No type matched', r.probability, r.impact, upperFirst(k.mitigation), upperFirst(k.owner), upperFirst(k.evidence)].map((x) => x.replace(/\|/g, '/')).join(' | '); }).map((row) => `| ${row} |`).join('\n')}
+
+## Next decision
+
+Confirm the owner of each control and the evidence the buyer will accept. For access and retained evidence requirements, review the permissions and retained audit record from the supplied pilot before granting live access. Assess probability and impact with the customer before adding a risk rating.
+
+${implementationApproach ? `The approach you supplied: ${implementationApproach}` : 'No implementation control was supplied.'}
+
+No probability, impact rating, service level or acceptance result is invented.` : `# Risk Assessment & Mitigation
 
 ## Supplied risks and controls for ${customerName}
 
@@ -3081,7 +3260,7 @@ Confirm the owner of each control and the evidence the buyer will accept. For ac
 
 ${implementationApproach ? `The approach you supplied: ${implementationApproach}` : 'No implementation control was supplied.'}
 
-No probability, impact rating, service level or acceptance result is invented.`,
+No probability, impact rating, service level or acceptance result is invented.`),
 
     success_metrics: () => `# Success Metrics & Measurement
 
@@ -3095,7 +3274,9 @@ ${outcomes.length ? `### Agreed Success Metrics\n\n${outcomes.map((o) => `- ${cl
 
 | KPI | Baseline | Target | Timeline |
 |-----|----------|--------|----------|
-${(v ? v.metrics.slice(0, 4) : ['The measure the customer names']).map((m) => `| ${cap(m)} | Measure first, with ${customerName} | Agree with ${customerName} | Agree with ${customerName} |`).join('\n')}
+${outcomes.length ? `${outcomes.map((o) => `| ${kpiRow(o, customerName).join(' | ')} |`).join('\n')}
+
+Each row is one of the success metrics you gave. A baseline, target or timeline is filled in only where your metric states it, with the words from and to, baseline, target or by; every other cell is left for you to agree with ${customerName}.${v && v.metrics.some((m) => !outcomes.some((o) => sharesWord(o, m))) ? ` Measures buyers in ${v.name} often track that are not in your list: ${joinList(v.metrics.filter((m) => !outcomes.some((o) => sharesWord(o, m))).slice(0, 3))}. Add one as a row only if ${customerName} agrees to it.` : ''}` : (v ? v.metrics.slice(0, 4) : ['The measure the customer names']).map((m) => `| ${cap(m)} | Measure first, with ${customerName} | Agree with ${customerName} | Agree with ${customerName} |`).join('\n')}
 
 ### Measurement Framework
 

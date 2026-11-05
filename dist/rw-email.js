@@ -177,7 +177,9 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const inIndSubj = indLow && !indInPersona && indLow.length <= 24 ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
     const inInd = indLow && !indInPersona ? (/(?:ers|ors|ists|ants)$/i.test(indLow) ? ` at ${indLow}` : ` in ${indLow}`) : '';
     const anOf = (w) => `${/^(?:[aeiou]|8\b|8\d|11|18)/i.test(w.trim()) ? 'an' : 'a'} ${w.trim()}`;
-    const name = P.name || solution || P.ref;
+    // Fix 6 Nov 2026: a product given only as a possessive or an article ("our", "my", "the") is not a name: the subject read
+    // "Thank you for the demo of our". It falls back to "the product", as an empty product does.
+    const name = P.name || (/^(?:our|my|your|their|its|his|her|this|that|these|those|the|a|an)$/i.test((solution || '').trim()) ? 'the product' : solution) || P.ref;
     // ---- the pain, in clauses used once each ----
     const atomsP = painAtoms(painText);
     let pi = 0;
@@ -201,7 +203,14 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     const nearClean = nearStrong.filter((x) => cleanPart(x) && !/\band\b/i.test(x));
     const nearParts = nearClean.length ? nearClean : nearStrong.filter((x) => cleanPart(x) || x.length <= 40);
     const kindShort = P.kind ? (0, dealtext_ts_1.clip)(P.kind.replace(/^(?:a|an|the)\s+/i, '').split(/\s+(?:for|that|which|with|of|covering|including|made)\s+/i)[0], 40) : '';
-    const kindTopicRaw = kindShort.replace(/\s+(?:platform|service|services|software|tool|tools|solution|solutions|system|product|products|suite|application|app)$/i, '').trim();
+    const kindTopicCut = kindShort.replace(/\s+(?:platform|service|services|software|tool|tools|solution|solutions|system|product|products|suite|application|app)$/i, '').trim();
+    // Fix 6 Nov 2026: a generic or possessive product name ("our product", "my platform", "the product", "this tool") is never a topic:
+    // cutting its last word left "our" or "product", and the subject read "A question on our". The words after the possessive are kept
+    // only when they name something ("our scheduling software" gives "scheduling"); otherwise the topic falls back to the next source.
+    const GENERIC_WORD = /^(?:platforms?|services?|software|tools?|solutions?|systems?|products?|suites?|applications?|apps?|offerings?|offer|thing|stuff)?$/i;
+    const OWNER_START = /^(?:our|my|your|their|its|his|her|this|that|these|those|the|a|an)\b\s*/i;
+    const kindTopicOwn = OWNER_START.test(kindTopicCut) ? kindTopicCut.replace(OWNER_START, '').replace(/\s*\b(?:platforms?|services?|software|tools?|solutions?|systems?|products?|suites?|applications?|apps?|offerings?)$/i, '').trim() : kindTopicCut;
+    const kindTopicRaw = GENERIC_WORD.test(kindTopicOwn) || OWNER_START.test(kindTopicOwn) ? '' : kindTopicOwn;
     // the kind is a topic only when it is a short noun phrase of plain words ("CI/CD", "IoT connectivity"), not a run of adjectives ("single API led intelligent")
     const kindTopic = kindTopicRaw.split(/\s+/).length <= 3 && !/\b(?:single|intelligent|led|first|leading|unified|modern|next|new|smart|powerful|complete|connected|global|integrated|end|based|native)\b/i.test(kindTopicRaw) ? kindTopicRaw : '';
     const measuresRanked = vv ? vv.metrics.map((m, i) => ({ m, i, n: overlap(m, `${painText} ${valueText}`) })).sort((a, b) => b.n - a.n || a.i - b.i).map((o) => o.m) : [];

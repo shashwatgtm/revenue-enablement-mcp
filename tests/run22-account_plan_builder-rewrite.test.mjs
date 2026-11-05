@@ -105,8 +105,8 @@ test("the three phases are built from this account, days 61 to 90 included", asy
   assert.match(p3, /control tower/);
   assert.match(p3, /Chief Operating Officer/);
   for (const stock of ["Finalize commercial terms", "Complete procurement process", "Document wins and learnings", "Contract signed", "Kick off implementation planning"]) assert.ok(!has(t, stock), `stock line: ${stock}`);
-  assert.match(t, /Days 1 to 30[^\n]*\(by \d{4}-\d\d-\d\d\)/);
-  assert.match(t, /Days 61 to 90[^\n]*\(by \d{4}-\d\d-\d\d\)/);
+  assert.match(t, /Days 1 to 30[^\n]*\(by day 30 after the agreed plan start\)/);
+  assert.match(t, /Days 61 to 90[^\n]*\(by day 90 after the agreed plan start\)/);
 });
 
 test("a prospect gets a first-deal plan and a connectivity seller gets connectivity words, never seats or licences", async () => {
@@ -123,7 +123,7 @@ test("two kinds of company in one vertical get answers that differ where the kin
   const a = await call({ ...A, account_notes: "" });
   const f = await call(FREIGHT);
   const la = new Set(a.split("\n").filter((l) => l.length > 60));
-  const structural = /^(?:Each contact you gave|\| Contact you gave|- What it tells you|- Prove:|Put the account's own problem first|\*Sector:|- Ask:|\d+\. Build the business case|- `)/;
+  const structural = /^(?:#{1,6} |Each contact you gave|\| Contact you gave|- What it tells you|- Prove:|Put the account's own problem first|\*Sector:|- Ask:|\d+\. Build the business case|- `)/;
   const shared = f.split("\n").filter((l) => l.length > 60 && la.has(l) && !structural.test(l));
   assert.ok(shared.length <= 3, `too many identical long lines (${shared.length}): ${shared.slice(0, 3).join(" || ")}`);
   const committee = (t) => t.split("\n").find((l) => l.startsWith("Usual buying committee"));

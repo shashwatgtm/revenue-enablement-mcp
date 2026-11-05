@@ -583,7 +583,11 @@ function industryFromTitle(s) {
 function sellerWords(brief) {
     if (brief.short || !brief.full)
         return '';
-    const first = (0, dealtext_ts_1.sentences)(brief.full)[0] || brief.full;
+    const first = brief.full.trim();
+    // Multiple clauses may contain a denial and the actual offering. Never quote
+    // only the denial as what the seller offers. Preserve the whole short input.
+    if ((0, dealtext_ts_1.sentences)(first).length > 1)
+        return (0, exports.quoted)(first);
     if (first.length <= 240)
         return (0, exports.quoted)(first);
     const pieces = (0, dealtext_ts_1.splitTopLevel)(first);

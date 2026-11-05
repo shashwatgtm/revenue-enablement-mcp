@@ -148,8 +148,7 @@ function buildAccountPlan(args, d) {
         return best;
     };
     // ---- dates ----
-    const today = new Date();
-    const dayX = (n) => (0, dealtext_ts_1.isoDate)((0, dealtext_ts_1.onOrBeforeWorkday)(new Date(today.getTime() + n * 24 * 60 * 60 * 1000)));
+    const dayX = (n) => `day ${n} after the agreed plan start`;
     const out = [];
     out.push(`# Strategic account plan: ${accountName}`);
     // ---- in brief ----
@@ -310,7 +309,7 @@ By day 90 you should have a decision on ${existing ? 'the expansion' : 'the firs
         miss.push('`your solution` (it would let the plan name your product and its parts, and use them for whitespace)');
     if (!objections.length)
         miss.push('`account notes` that start with "Objections:" and list them with semicolons (it would add an answer for each)');
-    out.push(miss.length ? `**To sharpen this plan, give:**\n\n${miss.map((x) => `- ${x}`).join('\n')}\n\nThe plan is dated from today (${(0, dealtext_ts_1.isoDate)(today)}); review it monthly.` : `Everything this plan can use was given. What it cannot know is the renewal date and the account's priorities for the year; add them to your notes and move the dates above to match. The plan is dated from today (${(0, dealtext_ts_1.isoDate)(today)}); review it monthly.`);
+    out.push(miss.length ? `**To sharpen this plan, give:**\n\n${miss.map((x) => `- ${x}`).join('\n')}\n\nCalendar dates are not inferred by this plan. Agree the plan start and turn the relative days into dates before committing. Review it monthly.` : `Everything this plan can use was given. What it cannot know is the renewal date and the account's priorities for the year; add them to your notes and move the dates above to match. Calendar dates are not inferred by this plan. Agree the plan start and turn the relative days into dates before committing. Review it monthly.`);
     return out.join('\n\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }
 void dealtext_ts_1.partLabel;

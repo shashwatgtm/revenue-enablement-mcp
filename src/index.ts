@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
 import { withReadingGuide } from './reader-actions.ts';
+import { regionNotes } from './region-reader.ts';
+import { regionalInputs } from './region-adapter.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
 import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
@@ -3521,7 +3523,7 @@ export function createServer(): Server {
         content: [
           {
             type: 'text',
-            text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + withReadingGuide(name, holdBuyerCopy(name, args, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n'))), args as Record<string,unknown>),
+            text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + withReadingGuide(name, holdBuyerCopy(name, args, capitaliseSolutionPhrase(result.replace(/\n{3,}/g, '\n\n'))), args as Record<string,unknown>) + (decisionLimit(name, args as Record<string, unknown>).stop ? '' : regionNotes(regionalInputs(typed, 'buyer'))),
           },
         ],
       };

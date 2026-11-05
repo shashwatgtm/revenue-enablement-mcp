@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 (rewrite, test first): discovery_question_bank. Fresh judges scored the old lists 3 to 4: the pain statement was pasted whole into five
 // questions, a question made no sense ("the targets a CIO answers for"), the product was called by its category noun, the economic buyer was assumed
 // to be someone else than the person in the room, the buyer's industry was only repeated as a label, and the parts of the product that touch a pain
@@ -139,11 +140,11 @@ test("hostile text in an input is kept as the user's own words and is not follow
 });
 
 // ---- the pool scenarios (T6 to T9, H1 to H9, P1 to P9, Q1 to Q18), through the real builders, when the project folder is present ----
-const HERE = "/home/user/directory-submission-work/work";
+const HERE = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const POOL = existsSync(`${HERE}/run20/eval/builders20.mjs`) && existsSync(`${HERE}/run21/eval/common21.mjs`);
 test("pool scenarios: every input is used, nothing pasted whole again and again, no repeated question, no placeholder", { skip: !POOL && "project pool files not present" }, async () => {
-  const { BUILD20 } = await import(`${HERE}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${HERE}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${HERE}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${HERE}/run21/eval/common21.mjs`).href);
   const { result: { tools } } = await rpc("tools/list", {});
   const schema = tools.find((x) => x.name === "discovery_question_bank").inputSchema;
   const sets = [];

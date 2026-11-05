@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 (rewrite, test first): demo_script_builder. Fresh judges scored the old answers 2 to 3 for these faults: a must-show list made of page
 // statistics became demo steps ("over one million daily connections"), products were paired with the wrong pain, one pain was split in two,
 // the product's own named parts were never shown to the people who care about them, the script said it would not demo the product, and the
@@ -298,11 +299,11 @@ test("time parts add up to the demo length and a short demo says so", async () =
 });
 
 // ---- the pool scenarios (T6 to T9, H1 to H9, P1 to P9), through the real builders, when the project folder is present ----
-const HERE = "/home/user/directory-submission-work/work";
+const HERE = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const POOL = existsSync(`${HERE}/run20/eval/builders20.mjs`) && existsSync(`${HERE}/run21/eval/common21.mjs`);
 test("pool scenarios: every input is used, statistics are never steps, no placeholder, no repeated sentence", { skip: !POOL && "project pool files not present" }, async () => {
-  const { BUILD20 } = await import(`${HERE}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${HERE}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${HERE}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${HERE}/run21/eval/common21.mjs`).href);
   const { result: { tools } } = await rpc("tools/list", {});
   const schema = tools.find((x) => x.name === "demo_script_builder").inputSchema;
   const sets = [];

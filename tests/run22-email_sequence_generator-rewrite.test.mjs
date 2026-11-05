@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 (writer rev-w3), test first: email_sequence_generator is rewritten, not patched. The baseline judges scored it 3.00: statistics glued with
 // semicolons and then said again, the label of a claim (a 2022 survey, a page claim) only in the checklist, "president and CFOs", a persona who
 // owns nothing asked "who owns this", a product name cut or lower cased, a section called "In a customer's words" with no customer words, and
@@ -188,12 +189,12 @@ test("the tone changes the greeting, the closing and the ask", async () => {
 });
 
 // ---- the pool scenarios through the real builders (private folder; skipped where it is absent) ----
-const WORK = "/home/user/directory-submission-work/work";
+const WORK = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const havePool = existsSync(`${WORK}/run20/eval/builders20.mjs`) && existsSync(`${WORK}/run22/eval/pool2.mjs`);
 const IDS = ["T6", "T7", "T8", "T9", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", ...Array.from({ length: 18 }, (_, i) => `Q${i + 1}`)];
 test("pool scenarios T6 to T9, H1 to H9, P1 to P9, Q1 to Q18 (real builders)", { skip: !havePool && "private work folder not present" }, async () => {
-  const { BUILD20 } = await import(`${WORK}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${WORK}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${WORK}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${WORK}/run21/eval/common21.mjs`).href);
   const all = []; for (const s of ["T", "H", "P", "Q"]) all.push(...(await loadSet(s)));
   const tools = (await rpc("tools/list", {})).result.tools;
   const schema = tools.find((x) => x.name === "email_sequence_generator").inputSchema;

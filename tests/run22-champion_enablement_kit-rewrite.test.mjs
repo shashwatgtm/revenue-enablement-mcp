@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 (rewrite, test first): champion_enablement_kit. Fresh judges scored the old answers 3 to 4 for these faults: an objection label pasted into a
 // sentence as if it were a thing ("the owner of 'Integration effort'"), answers that said "I do not have a fact to give you", the same long paragraph
 // repeated under two objections, a memo "From" and "To" the same role, a memo that spoke of questions "you raised" when nobody had given any, one risk
@@ -191,11 +192,11 @@ test("hostile text in an input is kept as the user's own quoted words and is not
 });
 
 // ---- the pool scenarios (T6 to T9, H1 to H9, P1 to P9, Q1 to Q18), through the real builders, when the project folder is present ----
-const HERE = "/home/user/directory-submission-work/work";
+const HERE = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const POOL = existsSync(`${HERE}/run20/eval/builders20.mjs`) && existsSync(`${HERE}/run21/eval/common21.mjs`);
 test("pool scenarios: every input is used, no label pasted into a sentence, no repeated sentence, no placeholder", { skip: !POOL && "project pool files not present" }, async () => {
-  const { BUILD20 } = await import(`${HERE}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${HERE}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${HERE}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${HERE}/run21/eval/common21.mjs`).href);
   const { result: { tools } } = await rpc("tools/list", {});
   const schema = tools.find((x) => x.name === "champion_enablement_kit").inputSchema;
   const sets = [];

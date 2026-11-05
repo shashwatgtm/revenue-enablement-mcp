@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 (writer rev-w3), test first: win_loss_analyzer is rewritten, not patched. The baseline judges scored it 3.67: one answer lost the product
 // name (the title, the body and the inputs table said "the solution" instead of the product the user named), question 1 repeated a long
 // alternative phrase as if there were several options, the measures ignored a part of the deal (collections), and the answer was a scaffold.
@@ -140,12 +141,12 @@ test("money and days keep the display rules: one day, a cent value, large value"
 });
 
 // ---- the pool scenarios through the real builders (private folder; skipped where it is absent) ----
-const WORK = "/home/user/directory-submission-work/work";
+const WORK = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const havePool = existsSync(`${WORK}/run20/eval/builders20.mjs`) && existsSync(`${WORK}/run22/eval/pool2.mjs`);
 const IDS = ["T6", "T7", "T8", "T9", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", ...Array.from({ length: 18 }, (_, i) => `Q${i + 1}`)];
 test("pool scenarios T6 to T9, H1 to H9, P1 to P9, Q1 to Q18 (real builders)", { skip: !havePool && "private work folder not present" }, async () => {
-  const { BUILD20 } = await import(`${WORK}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${WORK}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${WORK}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${WORK}/run21/eval/common21.mjs`).href);
   const all = []; for (const s of ["T", "H", "P", "Q"]) all.push(...(await loadSet(s)));
   const schema = (await rpc("tools/list", {})).result.tools.find((x) => x.name === "win_loss_analyzer").inputSchema;
   for (const id of IDS) {

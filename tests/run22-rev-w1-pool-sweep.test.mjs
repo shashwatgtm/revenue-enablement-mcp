@@ -1,14 +1,15 @@
+import {pathToFileURL} from "node:url";
 // Run 22: the three rewritten Revenue tools run over the tuning pool scenarios (T6 to T9, H1 to H9, P1 to P9, Q1 to Q18) through the real builders of the
 // private project folder. The test is skipped when that folder is not on this machine (the public repo carries no real company). No company is named here.
 // Run: node --no-warnings --test tests/run22-rev-w1-pool-sweep.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const ROOT = "/home/user/directory-submission-work/work";
+const ROOT = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 let BUILD20, loadSet;
 try {
-  ({ BUILD20 } = await import(`${ROOT}/run20/eval/builders20.mjs`));
-  ({ loadSet } = await import(`${ROOT}/run21/eval/common21.mjs`));
+  ({ BUILD20 } = await import(pathToFileURL(`${ROOT}/run20/eval/builders20.mjs`).href));
+  ({ loadSet } = await import(pathToFileURL(`${ROOT}/run21/eval/common21.mjs`).href));
 } catch { /* not on this machine */ }
 
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));

@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 // Run 22 round 3 (writer rev-w3), test first. Fresh judges scored these at 3 and named the faults:
 //  - email_sequence_generator: a cut phrase ("one setup for local", "single API led intelligent") used as the topic of subjects and body lines;
 //    generic project questions for a payments reader; a sales leader's questions for a sales user; a fragment as the opening line; a
@@ -150,11 +151,11 @@ test("an evaluation scenario names one clean topic or points to its weak point, 
 });
 
 // ---- the pool scenarios the judges named (private folder; skipped where it is absent) ----
-const WORK = "/home/user/directory-submission-work/work";
+const WORK = process.env.HELIX_WORK || "/home/user/directory-submission-work/work";
 const havePool = existsSync(`${WORK}/run20/eval/builders20.mjs`) && existsSync(`${WORK}/run22/eval/pool2.mjs`);
 test("pool: Q3, P7, H3 emails and Q6, T7 traps (real builders)", { skip: !havePool && "private work folder not present" }, async () => {
-  const { BUILD20 } = await import(`${WORK}/run20/eval/builders20.mjs`);
-  const { loadSet } = await import(`${WORK}/run21/eval/common21.mjs`);
+  const { BUILD20 } = await import(pathToFileURL(`${WORK}/run20/eval/builders20.mjs`).href);
+  const { loadSet } = await import(pathToFileURL(`${WORK}/run21/eval/common21.mjs`).href);
   const all = []; for (const s of ["T", "H", "P", "Q"]) all.push(...(await loadSet(s)));
   const tools = (await rpc("tools/list", {})).result.tools;
   const run = async (tool, id) => { const sc = all.find((s) => s.id === id); const args = await BUILD20.revenue[tool](sc, 0, tools.find((x) => x.name === tool).inputSchema); return call(tool, args); };

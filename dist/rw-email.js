@@ -12,6 +12,7 @@ exports.buildEmailSequence = buildEmailSequence;
 const dealtext_ts_1 = require("./dealtext.js");
 const answers_ts_1 = require("./answers.js");
 const rw_kit_ts_1 = require("./rw-kit.js");
+const input_evidence_ts_1 = require("./input-evidence.js");
 const rw_common_ts_1 = require("./rw-common.js");
 exports.EMAIL_COUNTS = { cold_outreach: 5, warm_follow_up: 3, post_demo: 4, re_engagement: 3, proposal_follow_up: 4, nurture: 4, event_follow_up: 3, referral_request: 3 };
 const TITLES = { cold_outreach: 'Cold Outreach', warm_follow_up: 'Warm Follow-Up', post_demo: 'Post-Demo', re_engagement: 'Re-Engagement', proposal_follow_up: 'Proposal follow up', nurture: 'Nurture', event_follow_up: 'Event follow up', referral_request: 'Referral request' };
@@ -713,8 +714,13 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
     if (sequenceType === 'event_follow_up')
         checks.push('Name the event in email 1; the emails do not guess it.');
     const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => !x.held && a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
+    // An item the copy review holds (an absolute claim, or a named customer without publication permission) never reaches the emails,
+    // so the checklist must say it is held, not that it was used, and must not invite the sender to add it.
+    const heldNames = (0, input_evidence_ts_1.unapprovedCustomerNames)(args).map((n) => String(n).toLowerCase());
+    const isHeld = (p) => { const s = (0, dealtext_ts_1.proofPhrase)(p); return (0, input_evidence_ts_1.hasAbsoluteClaim)(s) || heldNames.some((n) => s.toLowerCase().includes(n)); };
+    const anyHeld = everyItem.some(isHeld);
     if (everyItem.length)
-        checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${(0, dealtext_ts_1.proofPhrase)(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
+        checks.push(`Check these before sending. Each is ${anyHeld ? 'listed' : 'used'} as you gave it, with the source it came with${anyHeld ? '. Items marked held are not in these emails' : ''}:\n${everyItem.map((p) => isHeld(p) ? `- ${(0, dealtext_ts_1.proofPhrase)(p)} (held: not in these emails until proof or permission is confirmed)` : `- ${(0, dealtext_ts_1.proofPhrase)(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
     // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
     const spokenTo = `${solution} ${valueText} ${proofText}`;
     const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2 && !related(a, spokenTo));

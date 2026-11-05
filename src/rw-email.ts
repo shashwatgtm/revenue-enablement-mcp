@@ -8,6 +8,7 @@ import { typedLength, parseProof, proofPhrase, familyOf, levelOf, joinList, clip
 import { roleFor } from './answers.ts';
 import { PROBLEM_WORD } from './rw-kit.ts';
 import type { Vertical } from './verticals.ts';
+import { hasAbsoluteClaim, unapprovedCustomerNames } from './input-evidence.ts';
 import { readSector, fitSector, productOf, isKind, doesLine, partsIn, sourceOf, endSentence, sentenceCase, listItems, isNotGiven, andList, dropRepeats, type Deps, type Product, type Source } from './rw-common.ts';
 
 export const EMAIL_COUNTS: Record<string, number> = { cold_outreach: 5, warm_follow_up: 3, post_demo: 4, re_engagement: 3, proposal_follow_up: 4, nurture: 4, event_follow_up: 3, referral_request: 3 };
@@ -597,7 +598,12 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   const checks: string[] = [`Add the recipient's name after "${hello.replace(',', '')}" if you have it; the emails do not guess it.`];
   if (sequenceType === 'event_follow_up') checks.push('Name the event in email 1; the emails do not guess it.');
   const everyItem = [...(mainItem && mainItem.label ? [mainItem] : []), ...proofItems, ...valueClaims].filter((x, i, a) => !x.held && a.indexOf(x) === i && !(extraClaims.includes(x) && mainItem && mainItem.label));
-  if (everyItem.length) checks.push(`Check these before sending. Each is used as you gave it, with the source it came with:\n${everyItem.map((p) => `- ${proofPhrase(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
+  // An item the copy review holds (an absolute claim, or a named customer without publication permission) never reaches the emails,
+  // so the checklist must say it is held, not that it was used, and must not invite the sender to add it.
+  const heldNames = unapprovedCustomerNames(args).map((n) => String(n).toLowerCase());
+  const isHeld = (p: ProofItem) => { const s = proofPhrase(p); return hasAbsoluteClaim(s) || heldNames.some((n) => s.toLowerCase().includes(n)); };
+  const anyHeld = everyItem.some(isHeld);
+  if (everyItem.length) checks.push(`Check these before sending. Each is ${anyHeld ? 'listed' : 'used'} as you gave it, with the source it came with${anyHeld ? '. Items marked held are not in these emails' : ''}:\n${everyItem.map((p) => isHeld(p) ? `- ${proofPhrase(p)} (held: not in these emails until proof or permission is confirmed)` : `- ${proofPhrase(p)} (${p.label || 'as you gave it'})${usedItems.includes(p) || bag.every((b2) => b2.item !== p) ? '' : ' (not used in these emails: add it where it fits)'}`).join('\n')}`);
   // a part of the problem that nothing the user gave (product, aim, proof) answers is said, so the sender can add what answers it
   const spokenTo = `${solution} ${valueText} ${proofText}`;
   const unspoken = atomsP.filter((a) => overlap(a, spokenTo) < 2 && !related(a, spokenTo));

@@ -5,6 +5,8 @@ exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
 const input_evidence_ts_1 = require("./input-evidence.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
+const region_reader_ts_1 = require("./region-reader.js");
+const region_adapter_ts_1 = require("./region-adapter.js");
 const price_comparison_ts_1 = require("./price-comparison.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
@@ -3637,7 +3639,7 @@ function createServer() {
                 content: [
                     {
                         type: 'text',
-                        text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, reader_actions_ts_1.withReadingGuide)(name, (0, input_evidence_ts_1.holdBuyerCopy)(name, args, (0, dealtext_ts_1.capitaliseSolutionPhrase)(result.replace(/\n{3,}/g, '\n\n'))), args),
+                        text: inputEvidence.notice + (inputEvidence.notice ? '\n\n' : '') + (0, reader_actions_ts_1.withReadingGuide)(name, (0, input_evidence_ts_1.holdBuyerCopy)(name, args, (0, dealtext_ts_1.capitaliseSolutionPhrase)(result.replace(/\n{3,}/g, '\n\n'))), args) + ((0, decision_limits_ts_1.decisionLimit)(name, args).stop ? '' : (0, region_reader_ts_1.regionNotes)((0, region_adapter_ts_1.regionalInputs)(typed, 'buyer'))),
                     },
                 ],
             };

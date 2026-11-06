@@ -165,7 +165,7 @@ export function buildChampionKit(args: Record<string, unknown>, d: ChampDeps): s
   };
   const annualValue = findAnnualValue(keyValuePoints);
   const priceValue = findPriceValue(budgetContext);
-  const bud = /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(budgetContext) || priceValue ? budgetContext.replace(/[.]+$/, '') : '';
+  const bud = /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(budgetContext) ? budgetContext.replace(/[.]+$/, '') : '';
   const canRecommend = Boolean(approvedAmount && authority);
   const request = canRecommend ? 'recommend that we approve' : 'request validation of the business case for';
   const budgetReview = `## Business case confirmation for ${P}

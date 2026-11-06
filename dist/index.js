@@ -6,6 +6,7 @@ exports.createServer = createServer;
 const input_evidence_ts_1 = require("./input-evidence.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const region_reader_ts_1 = require("./region-reader.js");
+const echo_layer_ts_1 = require("./echo-layer.js");
 const region_adapter_ts_1 = require("./region-adapter.js");
 const price_comparison_ts_1 = require("./price-comparison.js");
 const verticals_ts_1 = require("./verticals.js");
@@ -403,7 +404,7 @@ const tools = {
     // Tool 4: ROI Business Case Builder
     roi_business_case_builder: {
         name: 'roi_business_case_builder',
-        description: 'Helps you decide whether the buyer\'s CFO will accept your ROI case. You give your solution, its main value driver and the buyer\'s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
+        description: 'Helps you build an ROI case the buyer\'s finance team can check. You give your solution, its main value driver and the buyer\'s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -2025,7 +2026,7 @@ function executeTool(name, args) {
         const limit = (0, decision_limits_ts_1.decisionLimit)(name, args);
         if (limit.stop)
             return limit.text;
-        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_2.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + runTool(name, args);
+        return limit.text + (0, text_signals_ts_3.sectorChoiceNotice)(name, args, text => { const r = (0, verticals_ts_2.explainSector)({ seller: [text] }); return { id: r.vertical?.id, name: r.vertical?.name, source: r.source }; }) + (0, echo_layer_ts_1.applyEcho)(name, args, runTool(name, args));
     }
     finally {
         (0, sector_read_ts_1.setYourSector)(undefined);

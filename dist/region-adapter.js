@@ -37,8 +37,14 @@ function regionalInputs(args, industryRole = 'seller') {
     const result = { ...input, ...(seller.length ? { product_description: seller } : {}), ...(ownSector ? { sector: ownSector } : {}) };
     // Revenue's industry means the account or buyer industry. It cannot establish
     // the seller's market or override the seller's own product category.
-    if (industryRole === 'buyer')
+    // The buyer's industry text is deal context, like prospect_industry: a country named there selects the region only when no
+    // dedicated market field and no seller description names one, and an affirmative country in it removes the question.
+    if (industryRole === 'buyer') {
+        if (typeof result.industry === 'string' && result.industry.trim()) {
+            result.customer_industry = typeof result.customer_industry === 'string' && result.customer_industry.trim() ? [result.customer_industry, result.industry] : result.industry;
+        }
         delete result.industry;
+    }
     return result;
 }
 //# sourceMappingURL=region-adapter.js.map

@@ -6,7 +6,8 @@ import handler from '../netlify/functions/mcp.mjs';
 test('Revenue buyer industry cannot select a seller market or regulated sector',async()=>{
  const seller='Endpoint detection and response cybersecurity software';
  const absent=readRegionContext(regionalInputs({your_solution:seller,industry:'banking in India'},'buyer'));
- assert.deepEqual(absent.regions,[]);
+ // The buyer industry is deal context: its country selects the region, but never the seller's sector.
+ assert.deepEqual(absent.regions.map(r=>r.countries),[['IN']]);assert.equal(absent.regions[0].vertical_id,'cybersecurity');
  const args={account_name:'Test account',your_solution:'We sell '+seller+' in Germany.',industry:'banking in India'};
  const reading=readRegionContext(regionalInputs(args,'buyer'));
  assert.deepEqual(reading.regions.map(r=>r.countries),[['DE']]);

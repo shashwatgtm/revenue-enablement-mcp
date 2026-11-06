@@ -2,6 +2,7 @@
 import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { regionNotes } from './region-reader.ts';
+import { applyEcho } from './echo-layer.ts';
 import { regionalInputs } from './region-adapter.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
@@ -405,7 +406,7 @@ const tools: Record<string, Tool> = {
   // Tool 4: ROI Business Case Builder
   roi_business_case_builder: {
     name: 'roi_business_case_builder',
-    description: 'Helps you decide whether the buyer\'s CFO will accept your ROI case. You give your solution, its main value driver and the buyer\'s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
+    description: 'Helps you build an ROI case the buyer\'s finance team can check. You give your solution, its main value driver and the buyer\'s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2072,7 +2073,7 @@ function executeTool(name: string, args: Record<string, unknown>): string {
   try {
     const limit=decisionLimit(name,args);
     if(limit.stop)return limit.text;
-    return limit.text + sectorChoiceNotice(name,args,text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}}) + runTool(name,args);
+    return limit.text + sectorChoiceNotice(name,args,text=>{const r=explainSector({seller:[text]});return {id:r.vertical?.id,name:r.vertical?.name,source:r.source}}) + applyEcho(name,args,runTool(name,args));
   } finally {
     setYourSector(undefined);
   }

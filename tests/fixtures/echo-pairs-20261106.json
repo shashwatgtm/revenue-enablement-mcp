@@ -1,0 +1,208 @@
+[
+ {
+  "row": 1,
+  "tool": "champion_enablement_kit",
+  "base": {
+   "asset_type": "risk_assessment",
+   "your_solution": "Juspay, a cloud-native merchant acquiring platform for banks in India",
+   "champion_role": "Head of Merchant Acquiring",
+   "target_stakeholder": "Head of Vendor Risk",
+   "key_value_points": "Merchant onboarding in days instead of weeks\nOne integration for many payment methods and PSPs\nReconciliation during the day instead of overnight batches",
+   "known_objections": "a cloud platform run by a vendor is a material outsourcing arrangement; where is card and transaction data stored and processed; what happens to our merchants if the vendor has an outage",
+   "competitive_context": "the bank's current on-premise acquiring stack",
+   "budget_context": "illustrative: $500,000 a year from the payments business budget",
+   "urgency_drivers": "illustrative: the support contract for the current acquiring stack ends in 9 months",
+   "your_sector": "fintech"
+  },
+  "changed": {
+   "asset_type": "risk_assessment",
+   "your_solution": "Juspay, a cloud-native merchant acquiring platform for banks in India",
+   "champion_role": "Head of Merchant Acquiring",
+   "target_stakeholder": "Head of Procurement",
+   "key_value_points": "Merchant onboarding in days instead of weeks\nOne integration for many payment methods and PSPs\nReconciliation during the day instead of overnight batches",
+   "known_objections": "a cloud platform run by a vendor is a material outsourcing arrangement; where is card and transaction data stored and processed; what happens to our merchants if the vendor has an outage",
+   "competitive_context": "the bank's current on-premise acquiring stack",
+   "budget_context": "illustrative: $500,000 a year from the payments business budget",
+   "urgency_drivers": "illustrative: the support contract for the current acquiring stack ends in 9 months",
+   "your_sector": "fintech"
+  }
+ },
+ {
+  "row": 2,
+  "tool": "champion_enablement_kit",
+  "base": {
+   "asset_type": "executive_brief",
+   "champion_role": "Head of Customer Operations",
+   "target_stakeholder": "CFO",
+   "your_solution": "Bolna Enterprise",
+   "key_value_points": "Avoids an illustrative $172,800 a year at the outsourced call centre, net of the minutes passed to a person; payment reminder and verification calls answered in the customer's language, without the operations team staffing every minute; first reminder calls live in 6 weeks; data residency in India confirmed by security",
+   "known_objections": "why not stay with the call centre; usage costs could grow without limit",
+   "competitive_context": "the outsourced call centre in India",
+   "budget_context": "$108,000 a year for 2.4 million committed minutes (illustrative)",
+   "urgency_drivers": "The January reminder rollout depends on it",
+   "champion_wins": "The rollout ships on time",
+   "your_sector": "ai_native"
+  },
+  "changed": {
+   "asset_type": "executive_brief",
+   "champion_role": "Head of Customer Operations",
+   "target_stakeholder": "CFO",
+   "your_solution": "Bolna Enterprise",
+   "key_value_points": "Avoids an illustrative $172,800 a year at the outsourced call centre, net of the minutes passed to a person; payment reminder and verification calls answered in the customer's language, without the operations team staffing every minute; first reminder calls live in 6 weeks; data residency in India confirmed by security",
+   "known_objections": "who holds the call recordings; whether the voice agent meets the lender's call hours and retention rules",
+   "competitive_context": "the outsourced call centre in India",
+   "budget_context": "$108,000 a year for 2.4 million committed minutes (illustrative)",
+   "urgency_drivers": "The January reminder rollout depends on it",
+   "champion_wins": "The rollout ships on time",
+   "your_sector": "ai_native"
+  }
+ },
+ {
+  "row": 3,
+  "tool": "mutual_action_plan_generator",
+  "base": {
+   "deal_name": "Juspay at a bank in India",
+   "target_close_date": "2027-04-30",
+   "current_stage": "discovery",
+   "buyer_champion": "Head of Merchant Acquiring",
+   "economic_buyer": "Head of the payments business",
+   "technical_evaluators": "CIO",
+   "known_process_steps": "vendor risk questionnaire; information security review; the bank's materiality assessment; compliance review; test on masked data; legal and contract terms; procurement; board or committee approval",
+   "your_solution": "Juspay, a cloud-native merchant acquiring platform for banks",
+   "your_sector": "fintech"
+  },
+  "changed": {
+   "deal_name": "Juspay at a bank in India",
+   "target_close_date": "2027-01-29",
+   "current_stage": "discovery",
+   "buyer_champion": "Head of Merchant Acquiring",
+   "economic_buyer": "Head of the payments business",
+   "technical_evaluators": "CIO",
+   "known_process_steps": "vendor risk questionnaire; information security review; the bank's materiality assessment; compliance review; test on masked data; legal and contract terms; procurement; board or committee approval",
+   "your_solution": "Juspay, a cloud-native merchant acquiring platform for banks",
+   "your_sector": "fintech"
+  }
+ },
+ {
+  "row": 5,
+  "tool": "pricing_negotiation_guide",
+  "base": {
+   "deal_value": 108000,
+   "discount_requested": 20,
+   "your_solution": "Bolna Enterprise",
+   "value_delivered": "Illustrative, buyer team estimate: keeping these 2.4 million minutes a year at the outsourced call centre would cost about $192,000 a year",
+   "decision_timeline": "Signature by 18 December",
+   "approval_authority": "The CFO",
+   "business_model": "transactions",
+   "your_sector": "ai_native",
+   "scenario": "competitor_pricing",
+   "competitor_price": "No signed quote; a large rival publishes Rs 3.00 a minute plus Rs 0.40 telephony, about 3.7 cents a minute before GST",
+   "your_leverage": "The committed rate already includes telephony and the platform fee; the January rollout in India depends on it"
+  },
+  "changed": {
+   "deal_value": 108000,
+   "discount_requested": 20,
+   "your_solution": "Bolna Enterprise",
+   "value_delivered": "Illustrative, buyer team estimate: keeping these 2.4 million minutes a year at the outsourced call centre would cost about $192,000 a year",
+   "decision_timeline": "Signature by 18 December",
+   "approval_authority": "The CFO",
+   "business_model": "transactions",
+   "your_sector": "ai_native",
+   "scenario": "competitor_pricing",
+   "competitor_price": "A signed written quote from the rival at 3.0 cents a minute, telephony included, for the same 2.4 million minutes a year",
+   "your_leverage": "The committed rate already includes telephony and the platform fee; the January rollout in India depends on it"
+  }
+ },
+ {
+  "row": 7,
+  "tool": "email_sequence_generator",
+  "base": {
+   "sequence_type": "cold_outreach",
+   "target_persona": "General Manager",
+   "target_industry": "US franchised car dealer groups",
+   "your_solution": "Spyne",
+   "specific_pain_point": "after-hours internet leads get an auto-reply and no personal answer until the next morning",
+   "key_value_prop": "every sales and service lead gets a real answer and a booked slot, day or night, and your team spends its time on the leads that need a person",
+   "social_proof": "In a Spyne survey of nearly 1,200 US dealership executives, published December 2025, 74% named AI voice agents their top AI investment priority",
+   "call_to_action": "a 15 minute call to go through what the test found",
+   "tone": "consultative",
+   "sender_context": "[Your name], Account Executive, Spyne US, [phone]"
+  },
+  "changed": {
+   "sequence_type": "cold_outreach",
+   "target_persona": "Dealer Principal",
+   "target_industry": "US franchised car dealer groups",
+   "your_solution": "Spyne",
+   "specific_pain_point": "after-hours internet leads get an auto-reply and no personal answer until the next morning",
+   "key_value_prop": "every sales and service lead gets a real answer and a booked slot, day or night, and your team spends its time on the leads that need a person",
+   "social_proof": "In a Spyne survey of nearly 1,200 US dealership executives, published December 2025, 74% named AI voice agents their top AI investment priority",
+   "call_to_action": "a 15 minute call to go through what the test found",
+   "tone": "consultative",
+   "sender_context": "[Your name], Account Executive, Spyne US, [phone]"
+  }
+ },
+ {
+  "row": 8,
+  "tool": "proposal_section_writer",
+  "base": {
+   "customer_name": "the Bank",
+   "customer_industry": "Mid-sized private sector bank in India, transaction banking for corporate clients",
+   "customer_challenges": "Corporate clients ask for API-based escrow and virtual accounts; each new product takes about 6 months to build in-house; about 30% of collections are reconciled by hand; the RFP requires data stored in India and a full audit trail",
+   "your_solution": "TBX transaction banking platform: escrow and virtual accounts; payments and collections APIs; automated reconciliation; a white-label corporate banking portal",
+   "key_differentiators": "Integrated with 40+ banks and serving 220+ clients (company-reported); delivered through APIs and SaaS; the fastest bank integration in India",
+   "pricing": "Illustrative: one-time implementation fee of Rs 40 lakh; annual platform fee of Rs 1.2 crore for up to 5 million API calls; Rs 0.50 per call above that",
+   "implementation_approach": "Illustrative: discovery 2 weeks; sandbox integration 6 weeks; user acceptance testing with 3 pilot corporate clients 4 weeks; go-live in week 14",
+   "success_metrics": "Illustrative targets: share of collections reconciled automatically from 70% to 95%; time to onboard a new corporate client from 6 weeks to 2 weeks",
+   "tone": "consultative",
+   "your_sector": "fintech",
+   "section_type": "executive_summary",
+   "primary_audience": "c_suite"
+  },
+  "changed": {
+   "customer_name": "the Bank",
+   "customer_industry": "Mid-sized private sector bank in India, transaction banking for corporate clients",
+   "customer_challenges": "Corporate clients ask for API-based escrow and virtual accounts; each new product takes about 6 months to build in-house; about 30% of collections are reconciled by hand; the RFP requires data stored in India and a full audit trail",
+   "your_solution": "TBX transaction banking platform: escrow and virtual accounts; payments and collections APIs; automated reconciliation; a white-label corporate banking portal",
+   "key_differentiators": "Integrated with 40+ banks and serving 220+ clients (company-reported); delivered through APIs and SaaS; the fastest bank integration in India",
+   "pricing": "Illustrative: one-time implementation fee of Rs 40 lakh; annual platform fee of Rs 1.2 crore for up to 5 million API calls; Rs 0.50 per call above that",
+   "implementation_approach": "Illustrative: discovery 2 weeks; sandbox integration 6 weeks; user acceptance testing with 3 pilot corporate clients 4 weeks; go-live in week 14",
+   "success_metrics": "Illustrative targets: share of collections reconciled automatically from 70% to 95%; time to onboard a new corporate client from 6 weeks to 2 weeks",
+   "tone": "consultative",
+   "your_sector": "fintech",
+   "section_type": "executive_summary",
+   "primary_audience": "procurement"
+  }
+ },
+ {
+  "row": 9,
+  "tool": "proposal_section_writer",
+  "base": {
+   "customer_name": "the Bank",
+   "customer_industry": "Mid-sized private sector bank in India, transaction banking for corporate clients",
+   "customer_challenges": "Corporate clients ask for API-based escrow and virtual accounts; each new product takes about 6 months to build in-house; about 30% of collections are reconciled by hand; the RFP requires data stored in India and a full audit trail",
+   "your_solution": "TBX transaction banking platform: escrow and virtual accounts; payments and collections APIs; automated reconciliation; a white-label corporate banking portal",
+   "key_differentiators": "Integrated with 40+ banks and serving 220+ clients (company-reported); delivered through APIs and SaaS; the fastest bank integration in India",
+   "pricing": "Illustrative: one-time implementation fee of Rs 40 lakh; annual platform fee of Rs 1.2 crore for up to 5 million API calls; Rs 0.50 per call above that",
+   "implementation_approach": "Illustrative: discovery 2 weeks; sandbox integration 6 weeks; user acceptance testing with 3 pilot corporate clients 4 weeks; go-live in week 14",
+   "success_metrics": "Illustrative targets: share of collections reconciled automatically from 70% to 95%; time to onboard a new corporate client from 6 weeks to 2 weeks",
+   "tone": "consultative",
+   "your_sector": "fintech",
+   "section_type": "implementation_plan",
+   "primary_audience": "technical"
+  },
+  "changed": {
+   "customer_name": "the Bank",
+   "customer_industry": "Mid-sized private sector bank in India, transaction banking for corporate clients",
+   "customer_challenges": "Corporate clients ask for API-based escrow and virtual accounts; each new product takes about 6 months to build in-house; about 30% of collections are reconciled by hand; the RFP requires data stored in India and a full audit trail",
+   "your_solution": "TBX transaction banking platform: escrow and virtual accounts; payments and collections APIs; automated reconciliation; a white-label corporate banking portal",
+   "key_differentiators": "Integrated with 40+ banks and serving 220+ clients (company-reported); delivered through APIs and SaaS; the fastest bank integration in India",
+   "pricing": "Illustrative: one-time implementation fee of Rs 40 lakh; annual platform fee of Rs 1.2 crore for up to 5 million API calls; Rs 0.50 per call above that",
+   "implementation_approach": "Illustrative: discovery 2 weeks; sandbox integration 8 weeks; security review and user acceptance testing with 3 pilot corporate clients 6 weeks; go-live in week 20",
+   "success_metrics": "Illustrative targets: share of collections reconciled automatically from 70% to 95%; time to onboard a new corporate client from 6 weeks to 2 weeks",
+   "tone": "consultative",
+   "your_sector": "fintech",
+   "section_type": "implementation_plan",
+   "primary_audience": "technical"
+  }
+ }
+]

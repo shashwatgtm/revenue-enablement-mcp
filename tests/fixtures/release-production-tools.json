@@ -300,7 +300,7 @@
       },
       {
         "name": "roi_business_case_builder",
-        "description": "Helps you decide whether the buyer's CFO will accept your ROI case. You give your solution, its main value driver and the buyer's own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). Ask finance for the cash-only annual benefit when an investment decision depends on cash.",
+        "description": "Helps you build an ROI case the buyer's finance team can check. You give your solution, its main value driver and the buyer's own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). Ask finance for the cash-only annual benefit when an investment decision depends on cash.",
         "inputSchema": {
           "type": "object",
           "properties": {

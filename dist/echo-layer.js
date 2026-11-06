@@ -528,7 +528,7 @@ const LENSES = {
         subjects: (t, u) => [`What ${t} costs the group`, `One benchmark on ${t}`, `${upFirst(t)}: the cost across your ${u}`, `Where does ${t} sit?`, `Last note on ${t}`],
         lens: (n, _pain, units) => (n === 1 ? `For an owner the question is profit, not tools: a lead that goes unanswered is a sale at risk in one of your ${units}.` : `Across your ${units} the cost repeats: the same lost lead, at every site, every night.`),
         question: (pain, units) => `The question that decides this for an owner is the cost across ${units}: when ${pain}, how many leads are lost in a week, and what is one of them worth to the group?`,
-        ask: (cta, topic) => `A one line reply is enough: who looks after ${topic}? Or I can take ${cta} with whoever runs it day to day, instead of taking your time.`,
+        ask: (cta, topic, n) => [`A one line reply is enough: who looks after ${topic}? Or I can take ${cta} with whoever runs it day to day, instead of taking your time.`, `If a call is too much, tell me who runs this day to day and I will take ${cta} with them.`, `Your time is short, so the lightest answer is a name: who should I take ${cta} with?`, `If it is easier to hand this on, a name is enough and I will take ${cta} with them.`][n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : 3],
         proofKeys: /profit|revenue|gross|cost|margin|invest\w*|priority|growth|group/i,
         proofFrame: 'For an owner, the figure to weigh is where peers are putting their money:'
     },
@@ -546,7 +546,7 @@ const LENSES = {
         subjects: t => [`The cost of ${t}`, `A figure to check on ${t}`, `${upFirst(t)}: the numbers behind it`, `Who signs off on ${t}?`, `Last note on the cost of ${t}`],
         lens: () => `For finance the point is a cost you can check, not a promise.`,
         question: (pain) => `The question for finance is this: when ${pain}, what is the cost in a month, and which line carries it?`,
-        ask: (cta) => `If it helps, I can send the cost basis first and keep ${cta} for after you have read it.`,
+        ask: (cta, _t, n) => [`If it helps, I can send the cost basis first and keep ${cta} for after you have read it.`, `I can send the cost basis in writing before ${cta}, so the figures can be checked first.`, `The cost basis comes first in writing, and ${cta} follows only if the figures hold.`, `If the figures hold up, ${cta} is the next step.`][n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : 3],
         proofKeys: /cost|saving|revenue|roi|payback|margin|invest\w*|percent|%/i,
         proofFrame: 'For finance, the figure to check is this one:'
     },
@@ -555,7 +555,7 @@ const LENSES = {
         subjects: t => [`How ${t} connects to your systems`, `A technical result on ${t}`, `${upFirst(t)}: data and security questions`, `Who reviews ${t} on the technical side?`, `Last note on ${t}`],
         lens: () => `For the technical owner the questions are integration and data handling.`,
         question: (pain) => `The question for the technical owner is this: when ${pain}, which systems are involved and what would an integration have to touch?`,
-        ask: (cta) => `I can send the integration and security summary first, and keep ${cta} for the questions it raises.`,
+        ask: (cta, _t, n) => [`I can send the integration and security summary first, and keep ${cta} for the questions it raises.`, `The summary can go to your team first, with ${cta} to answer what it leaves open.`, `A written technical summary first, then ${cta} if it helps your review.`, `If the summary answers your questions, ${cta} is not needed.`][n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : 3],
         proofKeys: /integrat|secur|uptime|api|data|latency|compli\w*/i,
         proofFrame: 'For the technical review, the evidence to check is this one:'
     },
@@ -564,7 +564,7 @@ const LENSES = {
         subjects: t => [`Leads lost to ${t}`, `A result on ${t}`, `${upFirst(t)}: what happens to the lead`, `Where does the lead go?`, `Last note on ${t}`],
         lens: () => `For the person who owns lead conversion the cost is plain: leads that go cold do not book.`,
         question: (pain) => `The question for lead conversion is this: when ${pain}, how many leads go cold, and how many would have booked?`,
-        ask: (cta) => `Would ${cta} be a useful way to look at your own lead numbers?`,
+        ask: (cta, _t, n) => [`Would ${cta} be a useful way to look at your own lead numbers?`, `I can bring a simple count of leads and bookings for ${cta}.`, `${cta.charAt(0).toUpperCase() + cta.slice(1)} would use your own lead numbers.`, `If your own lead numbers show the gap, ${cta} is the next step.`][n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : 3],
         proofKeys: /convers\w*|booked|appointment|response|lead|pipeline|sales/i,
         proofFrame: 'For lead conversion, the figure to weigh is this one:'
     }
@@ -598,7 +598,7 @@ function emailSequence(args, out) {
                 b = b.replace(/^(Hello,\n\n)([^\n]*)(\n)/, (x, h, line, nl) => (line.replace(/[.]+$/, '') === proof.replace(/[.]+$/, '') ? h + lens.proofFrame + ' ' + lowFirst(proof) + '.' + nl : x));
         }
         // The ask follows the role, built on the call phrase this email already carries so the timing words stay.
-        b = b.replace(/Would ((?:a|an) [^\n]*?) be a useful way to look at this\?/, (_x, c) => lens.ask(c, topic));
+        b = b.replace(/Would ((?:a|an) [^\n]*?) be a useful way to look at this\?/, (_x, c) => lens.ask(c, topic, n));
         return pre + subjects[n - 1] + mid + b;
     });
     const note = [

@@ -40,7 +40,7 @@ test("pool scenarios: no placeholder, no dash, no healthcare word, and every con
       if (tool === "roi_business_case_builder") {
         assert.doesNotMatch(t, /Total Quantified Value|Net Annual Benefit|\*\*ROI\*\*\s*\||Payback Period/, `${where} prints a return`);
         assert.doesNotMatch(t, /win rate/i, where);
-        assert.doesNotMatch(t, /[A-Za-z]+_[A-Z][a-z]+/, `${where} shows a raw label`);
+        assert.doesNotMatch(t.replace(/<https?:[^>\s]*>/g, ''), /[A-Za-z]+_[A-Z][a-z]+/, `${where} shows a raw label`); // a source link in the region notes is not a label
       }
       if (tool === "account_plan_builder" && args.known_contacts) {
         const rows = t.split("\n").filter((l) => l.startsWith("| ") && l.includes(" | "));

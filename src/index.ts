@@ -245,7 +245,7 @@ const tools: Record<string, Tool> = {
   // Tool 1: Account Plan Builder
   account_plan_builder: {
     name: 'account_plan_builder',
-    description: 'Generate strategic account plans with power mapping (one row per contact you name), whitespace analysis, competitive questions and an answer for each objection. Builds a 90-day plan from the contacts, products, threats and notes you give it; it does not look the account up.',
+    description: 'Helps you decide how to grow an account in the next 90 days. You give the account name, plus contacts, products, threats and notes if you have them. You get a strategic account plan: a power map with one row per contact you name, whitespace analysis, competitive questions, an answer for each objection and a 90 day plan. It does not look the account up.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -294,7 +294,7 @@ const tools: Record<string, Tool> = {
   // Tool 2: Deal Strategy Coach
   deal_strategy_coach: {
     name: 'deal_strategy_coach',
-    description: 'Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.',
+    description: 'Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -358,7 +358,7 @@ const tools: Record<string, Tool> = {
   // Tool 3: Discovery Question Bank
   discovery_question_bank: {
     name: 'discovery_question_bank',
-    description: 'Writes a discovery question list from the framework you choose (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. Returns an opening for the conversation, questions in the language of the prospect\'s sector and on what your solution covers, the questions for each part of the framework, a closing for the call and what to say to an objection. It uses only the inputs you give and says which it did not get.',
+    description: 'Helps you decide what to ask on a discovery call. You give the framework you use (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. You get an opening for the conversation, questions in the language of the prospect\'s sector and on what your solution covers, questions for each part of the framework, a closing and what to say to an objection. It uses only the inputs you give and says which it did not get.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -405,7 +405,7 @@ const tools: Record<string, Tool> = {
   // Tool 4: ROI Business Case Builder
   roi_business_case_builder: {
     name: 'roi_business_case_builder',
-    description: 'Build an ROI business case from the buyer\'s own figures: annual value estimate, or current annual cost with expected improvement percent. With them it calculates the ROI, payback, three-year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
+    description: 'Helps you decide whether the buyer\'s CFO will accept your ROI case. You give your solution, its main value driver and the buyer\'s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -482,7 +482,7 @@ const tools: Record<string, Tool> = {
   // Tool 5: Mutual Action Plan Generator
   mutual_action_plan_generator: {
     name: 'mutual_action_plan_generator',
-    description: 'Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision.',
+    description: 'Helps you decide what has to happen, by whom and when, for a deal to sign on time. You give the deal name and the target close date, plus the current stage, the buyer\'s champion, economic buyer and evaluators, known requirements and process steps if you have them. You get a close plan both sides can work from, with milestones, owners and dates.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -539,7 +539,7 @@ const tools: Record<string, Tool> = {
   // Tool 6: Win/Loss Analyzer
   win_loss_analyzer: {
     name: 'win_loss_analyzer',
-    description: 'Writes a short win/loss review of one deal, a competitor pattern or a set of deals from the details you give. Returns a write-up in plain sentences that names the outcome, the stated reason in the buyer\'s words, what the reason points to and what the buyer weighed, then the questions for the review call and sector notes. It adds no figure or reason you did not give, and says plainly what the outcome or reason would add when it is missing.',
+    description: 'Helps you decide why you won or lost and what to change. You give the details of one deal, a competitor pattern or a set of deals. You get a short write up that names the outcome, the stated reason in the buyer\'s words, what the reason points to and what the buyer weighed, then questions for the review call and sector notes. It adds no figure or reason you did not give, and says what a missing outcome or reason would add.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -595,7 +595,7 @@ const tools: Record<string, Tool> = {
   // Tool 7: Proposal Section Writer
   proposal_section_writer: {
     name: 'proposal_section_writer',
-    description: 'Writes the proposal section you choose, such as an executive summary, solution overview or pricing justification, for a named buyer. Returns the section as sentences built from your solution, the buyer\'s challenges, your differentiators, pricing and success measures, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.',
+    description: 'Helps you write one section of a proposal for a named buyer. You give the section you need (such as an executive summary, solution overview or pricing justification), your solution, the buyer\'s challenges, your differentiators, pricing and success measures. You get that section in sentences built from your inputs, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -654,7 +654,7 @@ const tools: Record<string, Tool> = {
   // Tool 8: Email Sequence Generator
   email_sequence_generator: {
     name: 'email_sequence_generator',
-    description: 'Writes a multi-email sequence by persona, stage and objective, such as prospecting, nurture, follow-up or re-engagement. Returns each email with its subject, send day and body, built from your solution, the pain point, the value proposition, your proof and the ask, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.',
+    description: 'Helps you decide what to send, and when, to open or restart a conversation. You give the persona, stage and objective (prospecting, nurture, follow up or re engagement), plus your solution, the pain point, value proposition, proof and ask. You get each email with its subject, send day and body, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -713,7 +713,7 @@ const tools: Record<string, Tool> = {
   // Tool 9: Demo Script Builder
   demo_script_builder: {
     name: 'demo_script_builder',
-    description: 'Writes a demo script for the demo type, persona and use case you choose. Returns a timed run from opening to close, with spoken lines and a step for each feature you must show, tied to the pains you name, then discussion, close and follow-up lines and sector notes. The steps come from the parts of your solution and your pains, and the answer says where they came from and what it did not get.',
+    description: 'Helps you decide what to show in a demo, and in what order. You give the demo type, the persona and the use case, plus the features you must show and the pains you name. You get a timed run from opening to close, with spoken lines and a step for each feature tied to the pains, then discussion, close and follow up lines and sector notes. The answer says where each step came from and what it did not get.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -771,7 +771,7 @@ const tools: Record<string, Tool> = {
   // Tool 10: Pricing Negotiation Guide
   pricing_negotiation_guide: {
     name: 'pricing_negotiation_guide',
-    description: 'Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests.',
+    description: 'Helps you decide how to answer a discount request without giving away margin. You give the negotiation scenario, plus deal value, the discount asked, each side\'s leverage and who approves. You get a leverage assessment, a value based negotiation strategy, answers to common pushback and a discount approval framework.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -831,7 +831,7 @@ const tools: Record<string, Tool> = {
   // Tool 11: Champion Enablement Kit
   champion_enablement_kit: {
     name: 'champion_enablement_kit',
-    description: 'Writes an internal selling asset for your champion, such as an executive brief, an internal business case, objection responses or presentation talking points, built from your solution, the customer\'s situation and the objections you expect. Returns the asset in the champion\'s voice with the recommendation, the answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.',
+    description: 'Helps you give your champion what they need to sell internally. You give the asset you need (an executive brief, internal business case, objection responses or presentation talking points), your solution, the customer\'s situation and the objections you expect. You get the asset in the champion\'s voice with the recommendation, answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -888,7 +888,7 @@ const tools: Record<string, Tool> = {
   // Tool 12: Competitive Trap Setter
   competitive_trap_setter: {
     name: 'competitive_trap_setter',
-    description: 'Writes landmine questions and positioning tactics against a named competitor, so the buyer\'s own criteria expose its weak points without negative selling. Returns the set-up, your strengths and the competitor\'s weak points as you gave them, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and stage-specific tactics, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.',
+    description: 'Helps you decide which questions expose the gaps in your main competitor, without negative selling. You give the named competitor, your solution, your strengths and its weak points as you know them. You get the set up, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and tactics for your stage, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.',
     inputSchema: {
       type: 'object',
       properties: {

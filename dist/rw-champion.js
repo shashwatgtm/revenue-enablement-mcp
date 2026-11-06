@@ -144,7 +144,34 @@ function buildChampionKit(args, d) {
     const approvedCost = affirmativeBudget.find(x => /\b(?:approved|authori[sz]ed|confirmed)\b/i.test(x) && /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(x));
     const approvedAmount = approvedCost?.match(/(?:[$€£]\s*[\d,]+(?:\.\d+)?|\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?)/i)?.[0] ?? '';
     const authority = affirmativeBudget.map(x => x.match(/\b(?:decision owner|approval owner|budget authority)\s*:\s*(.+)/i)?.[1]).find(Boolean) ?? '';
-    const bud = /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(budgetContext) ? budgetContext.replace(/[.]+$/, '') : '';
+    const parseMoneyToken = (s) => {
+        const cleanToken = s.replace(/\s+/g, '');
+        const num = Number(cleanToken.replace(/^\$/, '').replace(/,/g, ''));
+        if (!Number.isFinite(num) || num <= 0)
+            return null;
+        return { raw: cleanToken, num };
+    };
+    const findAnnualValue = (text) => {
+        const reAfter = /(\$\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|(?<![.\dA-Za-z€£₹])(?:\d{1,3}(?:,\d{3})+|\d{3,})(?:\.\d+)?)(?!\s*(?:million|billion|thousand|lakh|crore|%|minutes?|mins?|calls?|hours?|days?|weeks?|months?|users?|seats?|cents?)\b)\s*(?:a\s+year|per\s+year|annually|\/year)\b/i;
+        const reBefore = /\b(?:a\s+year|per\s+year|annually|\/year)\b[^.;,\d$€£₹]{0,20}?(\$\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|(?<![.\dA-Za-z€£₹])(?:\d{1,3}(?:,\d{3})+|\d{3,})(?:\.\d+)?)(?!\s*(?:million|billion|thousand|lakh|crore|%|minutes?|mins?|calls?|hours?|days?|weeks?|months?|users?|seats?|cents?)\b)/i;
+        const m = text.match(reAfter) || text.match(reBefore);
+        return m ? parseMoneyToken(m[1]) : null;
+    };
+    const findPriceValue = (text) => {
+        if (/\b(?:not|no|unknown|unconfirmed)\s+(?:price|budget|cost)\b/i.test(text) && !/\$\s*\d/.test(text))
+            return null;
+        const re = /(\$\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|(?<![.\dA-Za-z€£₹])(?:\d{1,3}(?:,\d{3})+|(?!19\d\d\b|20\d\d\b)\d{4,})(?:\.\d+)?)(?!\s*(?:million|billion|thousand|lakh|crore|%|minutes?|mins?|calls?|hours?|days?|weeks?|months?|users?|seats?|cents?)\b)/i;
+        const m = text.match(re);
+        if (!m)
+            return null;
+        const before = text.slice(Math.max(0, (m.index ?? 0) - 8), m.index ?? 0);
+        if (/(?:€|£|₹|\b(?:Rs|INR|EUR|GBP)\s*)$/i.test(before))
+            return null;
+        return parseMoneyToken(m[1]);
+    };
+    const annualValue = findAnnualValue(keyValuePoints);
+    const priceValue = findPriceValue(budgetContext);
+    const bud = /(?:[$€£]\s*\d|\b(?:USD|EUR|GBP)\s*\d)/i.test(budgetContext) || priceValue ? budgetContext.replace(/[.]+$/, '') : '';
     const canRecommend = Boolean(approvedAmount && authority);
     const request = canRecommend ? 'recommend that we approve' : 'request validation of the business case for';
     const budgetReview = `## Business case confirmation for ${P}
@@ -184,9 +211,13 @@ ${canRecommend ? 'The named owner must still confirm the value evidence and scop
     const aim = outs[0] ? low(outs[0].head) : '';
     const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
     const quotedReturn = outClaims.find((c) => /\b(?:roi|return on investment|payback|return)\b/i.test(c.text));
-    const noReturn = quotedReturn
-        ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [(0, dealtext_ts_1.clip)(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Work out the return from our own cost figures and add it.`
-        : `No return figure is stated here, because none was given. Work out the return from our own cost figures and add it.`;
+    const noReturn = annualValue && priceValue
+        ? `From your own figures: ${annualValue.raw} a year against a price of ${priceValue.raw}, a return of ${(annualValue.num / priceValue.num).toFixed(1)} times in the first year, before any costs you have not listed.`
+        : annualValue
+            ? `From your own figures: ${annualValue.raw} a year; a price is needed for a return.`
+            : quotedReturn
+                ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [(0, dealtext_ts_1.clip)(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Work out the return from our own cost figures and add it.`
+                : `No return figure is stated here, because none was given. Work out the return from our own cost figures and add it.`;
     const outBullets = outs.map((o) => `- ${(0, rw_kit_ts_1.upFirst)(o.subs.length ? o.head : o.text)}${o.label ? ` (${o.label})` : ''}${o.subs.length && o.note ? ` (${o.note})` : ''}${o.subs.length ? `:\n${o.subs.map((x) => `  - ${(0, rw_kit_ts_1.upFirst)(x)}`).join('\n')}` : ''}`).join('\n');
     const altList = alts.length > 1 && alts.some((a) => /,|\band\b/i.test(a)) ? alts.join('; ') : (0, dealtext_ts_1.joinList)(alts);
     const altsSentence = alts.length ? `The alternatives we looked at are ${altList}.` : '';
@@ -255,7 +286,7 @@ ${canRecommend ? 'The named owner must still confirm the value evidence and scop
             overview ? `## What it is\n\n${overview}` : '',
             outs.length ? `## What we expect to get\n\n${outBullets}${claimNote ? `\n\n${claimNote}` : ''}` : '',
             alts.length ? `## What else we looked at\n\n${altsSentence}${aim ? ` I ${canRecommend ? 'recommend' : 'propose evaluating'} ${P}; the point that decides it is ${aim}.` : ''}` : '',
-            bud ? `## What it costs\n\n${bud}. ${noReturn}` : '',
+            bud || annualValue ? `## What it costs\n\n${bud ? `${bud}. ` : ''}${noReturn}` : '',
             answers.length ? `## Questions you may have\n\n${qa(false)}` : "",
             `## Decision requested\n\nI am asking you to ${askLine}.`,
             stake, readerNotes, checks,

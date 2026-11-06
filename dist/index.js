@@ -2120,6 +2120,50 @@ function executePricingNegotiationGuide(args) {
     const pilot = (evalSteps.find((x) => /\b(?:run|bring)\b.*\b(?:pilot|proof|trial)/i.test(x.m)) || evalSteps[0]).m;
     const comparison = (0, price_comparison_ts_1.readPriceComparison)(competitorPrice, dealValue);
     const priceDirection = comparison.direction;
+    const hasSignedOrWrittenQuote = /\b(?:signed|written)\s+(?:written\s+)?quote\b/i.test(competitorPrice) && !/\bno\s+(?:signed|written)\s+quote\b/i.test(competitorPrice);
+    const hasUnitPrice = /\b(?:a|per)\s+(?:minute|min|user|seat|month)\b/i.test(competitorPrice);
+    const hasQuoteDetail = hasSignedOrWrittenQuote || hasUnitPrice;
+    const quoteWord = hasSignedOrWrittenQuote ? (/\bsigned\b/i.test(competitorPrice) ? 'signed quote' : 'written quote') : 'quote';
+    const cleanedCompetitorQuote = competitorPrice.trim().replace(/[.]+$/, '');
+    const competitorQuestionsBlock = hasQuoteDetail
+        ? [
+            `1. "On the quote you shared ('${cleanedCompetitorQuote}'), what does the ${quoteWord} exclude across implementation, support tier, telephony or other add ons it names or omits?"`,
+            `2. "What contract term does that quote require, and what is the renewal price after the initial term?"`,
+            `3. "What volume or minute commitment sits behind that unit price, and what is the overage rate if usage goes above or below the commitment?"`,
+            `4. "Have you talked to their customers about total cost of ownership?"`,
+        ].join('\n')
+        : [
+            `1. "What's included in that price? Let's compare apples to apples."`,
+            `2. "Is that their initial price or after negotiation?"`,
+            `3. "What about implementation, training, and support costs?"`,
+            `4. "Have you talked to their customers about total cost of ownership?"`,
+        ].join('\n');
+    const competitorHiddenCostsBlock = (() => {
+        if (!hasQuoteDetail) {
+            return [
+                `- Implementation fees`,
+                `- Training costs`,
+                `- Integration complexity`,
+                `- Support tiers`,
+                `- ${ctx.model === 'saas' ? 'Per-user pricing as you grow' : 'Charges that grow with volume or scope'}`,
+                `- Overage or excess charges`,
+                `- Contract lock-in`,
+            ].join('\n');
+        }
+        const items = [
+            { text: 'Implementation fees', re: /\b(?:implement\w*|setup|set up|onboarding)\b/i },
+            { text: 'Support tiers', re: /\bsupport\b/i },
+            { text: 'Overage or excess charges', re: /\b(?:overage|excess)\b/i },
+            { text: 'Training costs', re: /\btrain\w*\b/i },
+            { text: 'Integration complexity', re: /\bintegrat\w*\b/i },
+            { text: 'Telephony and platform add ons', re: /\btelephony\b/i },
+            { text: ctx.model === 'saas' ? 'Per user pricing as you grow' : 'Charges that grow with volume or scope', re: /\b(?:million|thousand|volume|minutes|users|seats)\b/i },
+            { text: 'Contract lock in and renewal increases', re: /\b(?:lock|renewal)\b/i },
+        ];
+        const unmentioned = items.filter((item) => !item.re.test(competitorPrice)).map((item) => `- ${item.text} (not mentioned in the quote)`);
+        const mentioned = items.filter((item) => item.re.test(competitorPrice)).map((item) => `- ${item.text} (mentioned in the quote: confirm scope in writing)`);
+        return [...unmentioned, ...mentioned].join('\n');
+    })();
     const competitorLine = priceDirection === 'higher' ? `"The competitor quote is higher" (you supplied: ${competitorPrice})` : priceDirection === 'unclear' ? `"The price direction is not clear; compare the written quotes"${competitorPrice ? ` (you supplied: ${competitorPrice})` : ''}` : comparison.percent !== null ? `"Your competitor is ${comparison.percent}% cheaper"` : `"Your competitor is cheaper" (you supplied: ${competitorPrice})`;
     const scopeWord = ctx.model === 'saas' ? 'more users or a wider rollout' : ctx.model === 'connectivity' ? 'more sites or links' : ctx.model === 'services' ? 'a wider scope of services' : 'a wider scope';
     const haveValue = hasValue(args.deal_value) && dealValue > 0;
@@ -2349,19 +2393,10 @@ Confirm the same scope, units, period and exclusions in both written quotes. Ope
 ## Discovery Before Response
 
 ### Questions to Ask:
-1. "What's included in that price? Let's compare apples to apples."
-2. "Is that their initial price or after negotiation?"
-3. "What about implementation, training, and support costs?"
-4. "Have you talked to their customers about total cost of ownership?"
+${competitorQuestionsBlock}
 
 ### Hidden Costs to Surface:
-- Implementation fees
-- Training costs
-- Integration complexity
-- Support tiers
-- ${ctx.model === 'saas' ? 'Per-user pricing as you grow' : 'Charges that grow with volume or scope'}
-- Overage or excess charges
-- Contract lock-in
+${competitorHiddenCostsBlock}
 
 ---
 

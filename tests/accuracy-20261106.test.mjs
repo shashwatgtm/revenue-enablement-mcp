@@ -19,7 +19,7 @@ test('15b: when key_value_points has an annual figure and budget_context has a p
   asset_type:'executive_brief'
  });
  assert.ok(
-  t.includes('From your own figures: $172,800 a year against a price of $108,000, a return of 1.6 times in the first year, before any costs you have not listed.'),
+  t.includes('From the figures given: $172,800 a year, against a price of $108,000. Confirm both are for the same period and in the same currency, then work out the return.'),
   'new return sentence appears with 1.6 times return'
  );
  assert.ok(
@@ -35,7 +35,7 @@ test('15b: when key_value_points has an annual figure and budget_context has a p
   asset_type:'executive_brief'
  });
  assert.ok(
-  valueOnly.includes('From your own figures: $172,800 a year; a price is needed for a return.'),
+  valueOnly.includes('From the figures given: $172,800 a year; a price is needed for a return.'),
   'when only the value exists, prints the value and says a price is needed for a return'
  );
 });
@@ -53,7 +53,7 @@ test('15b: when neither annual value nor supported currency format is given, exe
   t.includes('No return figure is stated here, because none was given. Work out the return from our own cost figures and add it.'),
   'existing sentence is unchanged when no annual money figure is given'
  );
- assert.ok(!t.includes('From your own figures:'),'new return line does not appear when condition is absent');
+ assert.ok(!t.includes('From the figures given:'),'new return line does not appear when condition is absent');
 });
 
 test('15c: when competitor_price mentions a signed quote or unit price, questions tie to the quote and unmentioned hidden costs come first',async()=>{

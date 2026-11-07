@@ -208,9 +208,9 @@ ${canRecommend ? 'The named owner must still confirm the value evidence and scop
   const claimNote = claimy ? `A figure with a label in brackets comes from the vendor's own pages or stories, as labelled. It is not measured at our company.` : '';
   const quotedReturn = outClaims.find((c) => /\b(?:roi|return on investment|payback|return)\b/i.test(c.text));
   const noReturn = annualValue && priceValue
-    ? `From your own figures: ${annualValue.raw} a year against a price of ${priceValue.raw}, a return of ${(annualValue.num / priceValue.num).toFixed(1)} times in the first year, before any costs you have not listed.`
+    ? `From the figures given: ${annualValue.raw} a year, against a price of ${priceValue.raw}. Confirm both are for the same period and in the same currency, then work out the return.`
     : annualValue
-      ? `From your own figures: ${annualValue.raw} a year; a price is needed for a return.`
+      ? `From the figures given: ${annualValue.raw} a year; a price is needed for a return.`
       : quotedReturn
         ? `The only return stated is the vendor's figure, "${(quotedReturn.text.match(/\d[\d,.]*\s*%?\s*(?:ROI|return on investment|payback[^,;]*|return[^,;]*)/i) || [clip(quotedReturn.text.replace(/[.]+$/, ''), 90)])[0].trim()}"; it is the vendor's figure and was not measured at our company, so no return of our own is stated here. Work out the return from our own cost figures and add it.`
         : `No return figure is stated here, because none was given. Work out the return from our own cost figures and add it.`;

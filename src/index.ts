@@ -151,7 +151,11 @@ const KNOWN_NAMES = new Set((
   // Run 22 round 3: browsers, systems and developer tools that open a weak point or a pain ("Chrome dev tools were not accurate")
   'Chrome Firefox Safari Edge Android iOS Windows Linux macOS GitHub GitLab Docker Kubernetes ' +
   // Run 11: the company and competitor names in the test inputs and the page examples (run 19: the invented example names).
-  'Bengaluru Clari Northwind Metricly Lanehop Branchwire Answerloop Cloudmoat Spendrill Shelfwalk'
+  'Bengaluru Clari Northwind Metricly Lanehop Branchwire Answerloop Cloudmoat Spendrill Shelfwalk ' +
+  'Locus FarEye Shipsy BlackBuck Rivigo Delhivery Chargebee Zoho Freshdesk Keka Darwinbox Razorpay Happay PineLabs Cred ' +
+  'Bizom FieldAssist BeatRoute Vinculum Petpooja Zenoti Practo Infosys Wipro TCS HCL TechMahindra Mindtree Mphasis Genpact EXL ' +
+  'Airtel Jio Tata Commviva RouteMobile Tanla Gupshup Kaleyra BlackRock Aladdin CharlesRiver Murex Addepar Clearwater ' +
+  'QuantumStreet Harvey Glean Sarvam Krutrim YellowAI Uniphore ObserveAI'
 ).split(/\s+/).filter(Boolean));
 function bareWord(word: string): string {
   return word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
@@ -1033,12 +1037,12 @@ function readContext(explicitModel: unknown, input: { seller: unknown[]; context
 // A sector's proof shape as a phrase inside a sentence (lower case, no closing full stop).
 function proofOf(v: Vertical): string { return lowerFirstIfCommon(v.proofShape).replace(/[.]+$/, ''); }
 // Sector notes: the buying committee, what the sector measures and its usual objections (no figures, rule B82).
-function sectorNotes(v: Vertical | null, what: 'committee' | 'metrics' | 'objections' | 'all' = 'all'): string {
+function sectorNotes(v: Vertical | null, what: 'committee' | 'metrics' | 'objections' | 'committee+metrics' | 'committee+objections' | 'all' = 'all'): string {
   if (!v) return '';
   const out = [`### Sector notes: ${v.name}`];
-  if (what === 'committee' || what === 'all') out.push(`- **Who usually decides:** ${v.committee}`);
-  if (what === 'metrics' || what === 'all') out.push(`- **What this sector measures:** ${v.metrics.join(', ')}.`);
-  if (what === 'objections' || what === 'all') out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => o.objection.toLowerCase()).join('; ')}.`);
+  if (what === 'committee' || what === 'committee+metrics' || what === 'committee+objections' || what === 'all') out.push(`- **Who usually decides:** ${v.committee}`);
+  if (what === 'metrics' || what === 'committee+metrics' || what === 'all') out.push(`- **What this sector measures:** ${v.metrics.join(', ')}.`);
+  if (what === 'objections' || what === 'committee+objections' || what === 'all') out.push(`- **Objections this sector often raises:** ${v.objections.map((o) => o.objection.toLowerCase()).join('; ')}.`);
   if (what !== 'objections') out.push(`- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.`);
   out.push(`- **A proof point that lands:** ${v.proofShape}`);
   return out.join('\n');
@@ -1119,7 +1123,7 @@ function executeDealStrategyCoach(args: Record<string, unknown>): string {
   const cancelledRead = signal([blockers, nextSteps].join('; '), 'cancelled');
   const cancelled = args.project_status ? args.project_status === 'cancelled' : cancelledRead.state === 'affirmed';
   if (cancelled) return `# Deal Strategy Coach: ${dealName}\n\n## Hold: project cancelled\n\nHealth score: 0/100. Do not advance to signature. Confirm the cancellation with the buyer and remove the deal from the active forecast until a new project is explicitly confirmed.\n\n${args.project_status ? 'Basis: confirmed project status is cancelled.' : evidenceLine('Project status', cancelledRead)}\n\nA stage or champion label cannot turn a cancelled project into an active opportunity.`;
-  const compItems = splitItems(competitors).filter(c => !['negated','unclear'].includes(signal(c, 'incumbent').state));
+  const compItems = splitItems(competitors).filter(c => !/^(?:none|no|n\/a|nobody)\b/i.test(c.trim()) && !['negated','unclear'].includes(signal(c, 'incumbent').state) && readSignal(c, /\b(?:competitor\w*|rival|in (?:this|the) deal)\b/i).state !== 'negated');
 
   // Calculate deal health
   let healthScore = 70; // Start at 70
@@ -1486,7 +1490,7 @@ ${[
     `- **Champion:** ${championStatus === 'no_champion' ? 'none yet. Finding one comes before anything else.' : championStatus === 'potential_champion' ? 'a potential champion. Test them: do they have access to the buyer and a reason to push?' : championStatus === 'confirmed_champion' ? 'confirmed. Give them the material to sell internally.' : 'several contacts engaged (multi-threaded). Keep each one informed.'}`,
     `- **Economic buyer:** ${economicBuyer ? economicBuyer : `unknown.${dealCtx.v ? ` In ${dealCtx.v.name}, ${lowerFirstIfCommon(dealCtx.v.committee.split(';')[0])}.` : ''}`}`,
     compItems.length ? `- **Competition:** ${compItems.length} named (${joinList(compItems.map((c) => clip(c, 60)))}). Each is a row in the competitive table below.` : '- **Competition:** none named. Ask what they do today, including doing it by hand.',
-    blockerPresent ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
+    (blockerPresent || (blockers?.trim() && args.blocker_status !== 'none' && blockerRead.state !== 'negated')) ? `- **Blockers:** ${splitItems(blockers).length} typed. Each is answered below; answer them in the proposal before the buyer has to ask.` : '- **Blockers:** none typed. Ask what could stop this deal and write the answers down.',
     dealCtx.v ? `- **How deals usually run in ${dealCtx.v.name}:** ${dealCtx.v.salesMotion}` : '',
   ].filter(Boolean).join('\n')}
 
@@ -1960,7 +1964,7 @@ ${roiSummary}
 ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
-- Cost of delay: ${valueComputed ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : nc}
+- Cost of delay: ${valueComputed ? (printedNet > 0 ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : 'Not applicable while annual investment exceeds quantified annual value') : nc}
 - Implementation timeline: ${timelineText}
 
 ---
@@ -2934,7 +2938,7 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
     xClaims.length ? `- Claims to source before you send: a buyer will ask for the source of each, so add it or soften the wording: ${xClaims.map((c) => q(c)).join('; ')}.` : '',
     xFigures.length ? `- Figures to source: ${xFigures.map((c) => q(c)).join('; ')}.` : '',
     annotations.length ? `- Research notes taken out of the client text (confirm each with the customer or drop it): ${annotations.join('; ')}.` : '',
-    customerIndustry ? `- customer industry (${customerIndustry}) is named in the opening only. Add one sentence on how ${P} is used in ${customerIndustry}: the sector notes below describe the seller's side.` : '',
+    customerIndustry ? `- customer industry (${customerIndustry.replace(/\b(logistics_tech|vertical_saas|ai_native|enterprise_saas|smb_saas)\b/gi, (m) => m.replace(/_/g, ' '))}) is named in the opening only. Add one sentence on how ${P} is used in ${customerIndustry.replace(/\b(logistics_tech|vertical_saas|ai_native|enterprise_saas|smb_saas)\b/gi, (m) => m.replace(/_/g, ' '))}: the sector notes below describe the seller's side.` : '',
   ].filter(Boolean);
   const beforeSend = beforeLines.length ? `### Before you send (for you, not for the client)\n\n${beforeLines.join('\n')}` : '';
   const bullets = (items: string[], fallback: string) => (items.length ? items.map((c) => `- ${c.trim()}`).join('\n') : fallback);
@@ -2945,7 +2949,7 @@ function executeProposalSectionWriter(args: Record<string, unknown>): string {
   // written for the user: each is the user's or the customer's own figure.
   const C = customerName;
   const noPrice = 'No pricing was given. Add pricing (the components and the amounts) and this section shows it.';
-  const protection = `### Investment Protection\n\n*Include only the protections you actually offer, in your contract's words:*\n- Satisfaction commitment, if you offer one\n- Payment terms and options\n- Price for the term, and for how long\n${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}`;
+  const protection = `### Investment Protection\n\n*Include only the protections you actually offer, in your contract's words:*\n- Satisfaction commitment, if you offer one\n- Payment terms and options\n- Price for the term, and for how long`;
   const pricingFooter = `---\n\n*Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`;
   const PRICING_BY_AUDIENCE: Record<string, () => string> = {
     c_suite: () => `# Investment & Value
@@ -3110,7 +3114,7 @@ Put a number from ${customerName} against each row. Do not enter a figure they d
 | Money | What the problem costs in a year (the ROI Business Case Builder tool needs this) |
 | Risk | What one incident or failure costs, and how often it happens |
 | Growth | What the problem stops ${customerName} from doing |
-${v ? `\n${sectorNotes(v, 'metrics')}\n` : ''}
+
 ## What Success Looks Like
 
 ${outcomes.length ? `What ${customerName} wants, as you gave it:\n${outcomes.map((o) => `- ${cleanClaim(o)}`).join('\n')}` : `No success picture was given. Ask ${customerName} what would make this a success a year from now, and write it here in their words.`}
@@ -3256,7 +3260,7 @@ The value is ${customerName}'s own figure. Use the ROI Business Case Builder too
 - Satisfaction commitment, if you offer one
 - Payment terms and options
 - Price for the term, and for how long
-${v ? `\n${sectorNotes(v, 'objections')}\n` : ''}
+
 ---
 
 *Investment assumes standard scope. Add any custom pricing for specific requirements, only if you offer it.*`),
@@ -3448,7 +3452,7 @@ ${SUGGESTIONS_FOOTER}`,
   // Generate the requested section
   const generator = sections[sectionType];
   if (generator) {
-    return `${generator()}${evidenceStatus.length ? `\n\n### Evidence still to establish\n\n${evidenceStatus.map(item => `- ${item}`).join('\n')}\n\nThese are limits on the supplied claims, not reasons to choose the offer. Confirm the baseline, result and source with the buyer before making an outcome claim.` : ''}${v ? `\n\n---\n\n${sectorNotes(v, 'committee')}` : ''}`;
+    return `${generator()}${evidenceStatus.length ? `\n\n### Evidence still to establish\n\n${evidenceStatus.map(item => `- ${item}`).join('\n')}\n\nThese are limits on the supplied claims, not reasons to choose the offer. Confirm the baseline, result and source with the buyer before making an outcome claim.` : ''}${v ? `\n\n---\n\n${sectorNotes(v, sectionType === 'problem_statement' ? 'committee+metrics' : sectionType === 'pricing_justification' ? 'committee+objections' : 'committee')}` : ''}`;
   }
 
   return `Section type '${sectionType}' not recognized. Available sections: ${Object.keys(sections).join(', ')}`;

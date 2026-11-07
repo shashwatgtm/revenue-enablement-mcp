@@ -1925,7 +1925,7 @@ ${roiSummary}
 ${paybackSummary}` : `- ${NOT_COMPUTED}`}
 
 **Why Now:**
-- Cost of delay: ${valueComputed ? (printedNet > 0 ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : 'Not applicable while annual investment exceeds quantified annual value') : nc}
+- Cost of delay: ${valueComputed ? `${money(wholeDollars(totalValue / 12))}/month ${EXAMPLE}` : nc}
 - Implementation timeline: ${timelineText}
 
 ---

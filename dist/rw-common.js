@@ -286,9 +286,10 @@ function handleOf(text) {
 const WAY_OF_WORKING = /\b(?:threads?|links|wiki|wikis|channels?|chats?|shared (?:drive|inbox|folder|documents?)|folders?|spreadsheets?|inbox)\b/i;
 function readAlt(text, D, named = false) {
     const t = text.trim().replace(/[.]+$/, '');
+    const tAffirmed = t.replace(/\([^)]*\b(?:not|no|never|did not|didn't|without)\b[^)]*\)/gi, ' ').trim();
     const handle = handleOf(t);
     let kind;
-    if (GERUND_START.test(t) || APPROACH.test(t) || (!named && WAY_OF_WORKING.test(t) && !/\b(?:vendors?|providers?|competitors?|platforms?|suppliers?)\b/i.test(t)))
+    if (GERUND_START.test(tAffirmed) || APPROACH.test(tAffirmed) || (!named && WAY_OF_WORKING.test(tAffirmed) && !/\b(?:vendors?|providers?|competitors?|platforms?|suppliers?)\b/i.test(tAffirmed)))
         kind = 'approach';
     else if (hasProperNoun(t, D) && !(CATEGORY.test(t) && !named && /^[a-z]/.test(t)))
         kind = 'vendor';

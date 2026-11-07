@@ -106,7 +106,7 @@ const KINDS = [
         }),
     },
     {
-        id: 'security', test: /\b(secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|access control|breach\w*|pii|sovereign\w*)\b/i,
+        id: 'security', test: /\b(secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|access control|breach\w*|pii|sovereign\w*|appsec|infosec|repo access|on-?prem(?:ise)? vs\.? cloud|pen(?:etration)? test\w*|vulnerab\w*|sso\b|single sign[- ]on)\b/i,
         build: (_t, _c, p) => ({
             how: 'Bring the answers before they are asked: where the data is stored and processed, who can see it, how it is protected and deleted, and which review the buyer\'s security team will run. Offer the security documents first and a call with their reviewer.',
             confirm: `where ${p} stores and processes the buyer's data, who can access it, and which security documents you can share`,
@@ -197,6 +197,22 @@ const KINDS = [
             ask: 'What happens if nothing changes by the end of this quarter?',
         }),
     },
+    {
+        id: 'procurement', test: /\b(procurement|purchasing|vendor (?:registration|onboarding)|supplier (?:portal|onboarding)|rfp|rfq|tender|empanel\w*|po process|purchase order)\b/i,
+        build: (_t, _c, p) => ({
+            how: 'Ask procurement for the vendor onboarding checklist, required documents, and approval steps now so they run in parallel with the evaluation rather than after it.',
+            confirm: `which vendor registration documents ${p} already has ready to send`,
+            ask: 'What are the steps and lead times in your purchasing process from verbal yes to a signed purchase order?',
+        }),
+    },
+    {
+        id: 'service-level', test: /\b(sla\b|service[- ]levels?|uptime|response time|service credits?|turnaround time|tat\b)\b/i,
+        build: (_t, _c, p) => ({
+            how: 'Set out the exact service level in writing: how uptime or turnaround is measured, how it is reported, and what remedy or credit applies in your standard contract.',
+            confirm: `${p}'s documented SLA, uptime history, and standard remedy terms`,
+            ask: 'Which service-level measure matters most to your operations team, and how do you track it today?',
+        }),
+    },
 ];
 /** Answers one objection, blocker or buyer question by its kind, from the user's own words and the sector's usual objections. */
 function answerBlocker(text, ctx) {
@@ -220,7 +236,7 @@ function answerBlocker(text, ctx) {
     }
     // "Why do shipping charges vary ..." asks for a reason, whatever word it uses
     const ordered = /^why (?:do|does|is|are)\b/i.test(t) ? [KINDS.find((k) => k.id === 'why'), ...KINDS] : KINDS;
-    const readings = ordered.map(k => ({ k, reading: (0, text_signals_ts_2.readSignal)(t, k.test, text_signals_ts_2.SIGNALS[k.id]) }));
+    const readings = ordered.map(k => ({ k, reading: (0, text_signals_ts_2.readSignal)(t, k.test, k.id === 'adoption' && /\busage[- ](?:based|add-?on|tier|pricing|billing|model|fee)\b/i.test(t) ? undefined : text_signals_ts_2.SIGNALS[k.id]) }));
     for (const { k, reading } of readings) {
         if (reading.state === 'affirmed') {
             const built = k.build(t, ctx, p);

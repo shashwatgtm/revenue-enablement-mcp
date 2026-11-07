@@ -105,7 +105,7 @@ function buildDemoScript(args, d) {
     const typeLabel = d.cap(demoType.replace(/_/g, ' '));
     const primaryAudience = given('primary_audience');
     const attendees = given('attendees');
-    const customerIndustry = given('customer_industry');
+    const customerIndustry = given('customer_industry').replace(/\b(logistics_tech|vertical_saas|ai_native|enterprise_saas|smb_saas)\b/gi, (m) => m.replace(/_/g, ' '));
     const yourSolution = given('your_solution');
     const keyPainPoints = given('key_pain_points');
     const competitorGiven = given('competitor_context').replace(/[.]+$/, '');

@@ -22,7 +22,7 @@ function buildAccountPlan(args, d) {
     const arrGiven = typeof args.current_arr === 'number' && Number.isFinite(args.current_arr);
     const arr = arrGiven ? args.current_arr : 0;
     const contactsText = str('known_contacts');
-    const productsIn = str('current_products');
+    const productsIn = str('current_products').replace(/\b(logistics_tech|vertical_saas|ai_native|enterprise_saas|smb_saas)\b/gi, (m) => m.replace(/_/g, ' '));
     const expansionIn = str('expansion_opportunities');
     const threatsIn = str('competitive_threats');
     const solutionIn = str('your_solution');
@@ -120,7 +120,7 @@ function buildAccountPlan(args, d) {
     // Standalone evidence caveats are constraints on the plan, not areas to sell into.
     const evidenceCaveat = (text) => /^(?:(?:the |these |those )?(?:needs?|demand|budget|approval|sponsor|buyer|requirements?|expansion|opportunities?)\b.{0,45}\b(?:not (?:(?:yet|been) )*(?:confirmed|approved|verified|known|established)|unconfirmed|unknown|unverified)|no (?:confirmed|approved|verified|known) (?:need|demand|budget|approval|sponsor|buyer|requirement|expansion|opportunit))/i.test(text.trim());
     const expansionCaveats = expansionItems.filter(evidenceCaveat);
-    const expansion = expansionItems.filter((text) => !evidenceCaveat(text));
+    const expansion = expansionItems.filter((text) => !evidenceCaveat(text) && !/\b(?:do not|don't|no|never|without)\s+(?:pitch|propose|offer|sell|pursue|expand)\b/i.test(text));
     const qa = { P, parts, model, sellerText: solutionIn, stated: mr.stated, unit: unit || undefined, v, needs: [], alternatives: threats.map((t) => t.text) };
     const answers = (0, rw1_common_ts_1.dedupeAnswers)(objections.map((o) => ({ text: o, a: (0, rw1_common_ts_1.answerQuestion)(o, qa) })));
     // ---- the parts of the product against the account's own pain ----

@@ -254,7 +254,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
   const securityCovered = (processBy.evaluation || []).some((s) => s.who === 'security');
 
   // ---- blockers ----
-  const blockerItems = d.splitItems(blockersIn).filter((b) => blockerReading(b).state !== 'negated');
+  const blockerItems = d.splitItems(blockersIn);
   const qa: QACtx = { P, parts: partsOf(brief), model, sellerText: solutionIn, stated: mr.stated, unit: usage || undefined, v, needs: criteria.slice(0, 3).map(lowerStart), alternatives: [] };
   const blockerAnswers = dedupeAnswers(blockerItems.map((b) => ({ text: b, a: answerQuestion(b, qa) })));
   // a question about one kind of buyer (banks) in a deal with another (an insurer) is said so, since the reason may not carry over
@@ -492,7 +492,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
 
   const risks: string[] = ['## Risks & Blockers'];
   if (blockerAnswers.length) {
-    risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => { const cType = concernOf(stripEnd(b.text)); const rule = cType ? BLOCKER_RULES[cType.id] : null; const ans = b.a.id === 'general' && rule ? `${rule.m(quoted(stripEnd(b.text)).replace(/\|/g, '/'))}.` : b.a.answer; const own = b.a.id === 'general' && rule ? rule.owner : ownerFor(b.a.id); return `| ${stripEnd(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${ans} Confirm first: ${stripEnd(b.a.bring)}. | ${own} | Open |`; }).join('\n')}`);
+    risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${stripEnd(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${stripEnd(b.a.bring)}. | ${ownerFor(b.a.id)} | Open |`).join('\n')}`);
   } else if (v) {
     risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${(v.subtype === 'core-banking' && /\b(?:neo-?banks?|challenger banks?|digital[- ]only banks?|greenfield|new banks?|fintechs?|start-?ups?)\b/i.test(`${dealName} ${reqIn} ${blockersIn}`) ? v.objections.filter((o) => !/replacing a core|legacy core/i.test(o.objection)) : v.objections).slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);
   }

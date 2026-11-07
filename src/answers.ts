@@ -92,7 +92,7 @@ const KINDS: Kind[] = [
     },
   },
   {
-    id: 'terms', test: /\b(refund\w*|cancel\w*|pay again|next month|minimum|maximum|commitment|lock-?in|setup fee|set-up fee|annual maintenance|maintenance fee|renew\w*|legal|lawyers?|counsel|contracts?|contractual|liabilit\w*|indemnit\w*|redlines?|msa\b|dpa\b|clauses?|terms and conditions|intellectual property)\b/i,
+    id: 'terms', test: /\b(refund\w*|cancel\w*|pay again|next month|minimum|maximum|commitment|lock-?in|setup fee|set-up fee|annual maintenance|maintenance fee|renew\w*)\b/i,
     build: (_t, _c, p) => ({
       how: 'Answer in the written terms, in one place: what is paid and when, what is refundable, what happens on cancellation, and whether any minimum, commitment or maintenance fee applies. Never say "no commitment" or "fully refundable" unless the written terms say so.',
       confirm: `${p}'s current price list, billing terms and refund and cancellation policy, including any minimum or maintenance fee`,
@@ -116,7 +116,7 @@ const KINDS: Kind[] = [
     }),
   },
   {
-    id: 'security', test: /\b(secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|access control|breach\w*|pii|sovereign\w*|appsec|infosec|repo access|on-?prem(?:ise)? vs\.? cloud|pen(?:etration)? test\w*|vulnerab\w*|questionnaire|sso\b|single sign[- ]on)\b/i,
+    id: 'security', test: /\b(secur\w*|privacy|data (?:protection|residency|handling|location|sovereignty)|encrypt\w*|access control|breach\w*|pii|sovereign\w*|appsec|infosec|repo access|on-?prem(?:ise)? vs\.? cloud|pen(?:etration)? test\w*|vulnerab\w*|sso\b|single sign[- ]on)\b/i,
     build: (_t, _c, p) => ({
       how: 'Bring the answers before they are asked: where the data is stored and processed, who can see it, how it is protected and deleted, and which review the buyer\'s security team will run. Offer the security documents first and a call with their reviewer.',
       confirm: `where ${p} stores and processes the buyer's data, who can access it, and which security documents you can share`,
@@ -140,7 +140,7 @@ const KINDS: Kind[] = [
     }),
   },
   {
-    id: 'incumbent', test: /\b(already (?:have|use|has|do|got)|in-?house|build (?:it|this)|built (?:it|this)|existing|current (?:vendor|tool|system|provider|operator)|incumbent|overlap\w*|too many tools|point tools|best-of-breed|consolidat\w*|stitch\w*|replace\w*|pitching|rival|competitor|competing|native .* add-?on)\b/i,
+    id: 'incumbent', test: /\b(already (?:have|use|has|do|got)|in-?house|build (?:it|this)|built (?:it|this)|existing|current (?:vendor|tool|system|provider|operator)|incumbent|overlap\w*|too many tools|point tools|best-of-breed|consolidat\w*|stitch\w*|replace\w*)\b/i,
     build: (_t, _c, p) => ({
       how: 'Start from what the buyer\'s current setup does not do, in their words, and what that costs them. Position alongside it where you can and replace it only where the gap is clear. Draw the overlap line by line and honestly, including what the current tool does better.',
       confirm: `what ${p} covers that the current tool does not, and what the current tool covers that ${p} does not`,
@@ -213,28 +213,18 @@ const KINDS: Kind[] = [
     }),
   },
   {
-    id: 'service-level', test: /\b(sla\b|service[- ]levels?|uptime|availabilit\w*|response time|penalt\w*|service credits?|turnaround time|tat\b)\b/i,
+    id: 'service-level', test: /\b(sla\b|service[- ]levels?|uptime|response time|service credits?|turnaround time|tat\b)\b/i,
     build: (_t, _c, p) => ({
       how: 'Set out the exact service level in writing: how uptime or turnaround is measured, how it is reported, and what remedy or credit applies in your standard contract.',
       confirm: `${p}'s documented SLA, uptime history, and standard remedy terms`,
       ask: 'Which service-level measure matters most to your operations team, and how do you track it today?',
     }),
   },
-  {
-    id: 'capacity', test: /\b(bandwidth|no time|too busy|short[- ]staffed|understaffed|team capacity|internal resources|engineering time|it bandwidth)\b/i,
-    build: (_t, _c, p) => ({
-      how: 'Break the evaluation and setup into the exact hours needed from each person on the buyer\'s side, and show what your team prepares so their team only reviews and approves.',
-      confirm: `the hours and roles required from the buyer's team during a standard ${p} onboarding`,
-      ask: 'Who on your side would need to be involved, and how many hours a week can they realistically give this?',
-    }),
-  },
 ];
 
 /** Answers one objection, blocker or buyer question by its kind, from the user's own words and the sector's usual objections. */
 export function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer {
-  const clearance = clearanceAdvice(text);
-  const clearanceNegated = clearance && /\bNo blocker or delay is confirmed:/i.test(clearance);
-  if (clearanceNegated) return {kind:'clearance',how:clearance,confirm:'the required reviewers, scope and written approval record',ask:'Which required approval, if any, is still outstanding?',sector:''};
+  const clearance=clearanceAdvice(text); if(clearance)return {kind:'clearance',how:clearance,confirm:'the required reviewers, scope and written approval record',ask:'Which required approval, if any, is still outstanding?',sector:''};
   const t = text.trim();
   const p = ctx.product || 'your product';
   let sector = '';
@@ -249,18 +239,10 @@ export function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer 
   }
   // "Why do shipping charges vary ..." asks for a reason, whatever word it uses
   const ordered = /^why (?:do|does|is|are)\b/i.test(t) ? [KINDS.find((k) => k.id === 'why')!, ...KINDS] : KINDS;
-  const readings = ordered.map(k => ({k, reading: readSignal(t, k.test, k.id === 'adoption' && /\busage[- ](?:based|add-?on|tier|pricing|billing|model|fee)\b|\bpitching\b/i.test(t) ? undefined : SIGNALS[k.id])}));
-  const affirmed = readings.filter(x => x.reading.state === 'affirmed');
-  if (affirmed.length >= 2) {
-    const b1 = affirmed[0].k.build(t, ctx, p);
-    const b2 = affirmed[1].k.build(t, ctx, p);
-    const prefix = clearance ? `${clearance} ` : '';
-    return { kind: `${affirmed[0].k.id}+${affirmed[1].k.id}`, how: `${prefix}${b1.how} Also address ${affirmed[1].k.id}: ${b2.how} ${evidenceLine('Sentence read', affirmed[0].reading)}`, confirm: `${b1.confirm}; and ${b2.confirm}`, ask: `${b1.ask} Also: ${b2.ask}`, sector };
-  }
+  const readings = ordered.map(k => ({k, reading: readSignal(t, k.test, k.id === 'adoption' && /\busage[- ](?:based|add-?on|tier|pricing|billing|model|fee)\b/i.test(t) ? undefined : SIGNALS[k.id])}));
   for (const {k, reading} of readings) {
-    if (reading.state === 'affirmed') { const built = k.build(t,ctx,p); const prefix = clearance ? `${clearance} ` : ''; return {kind:k.id,...built,how:prefix+built.how+' '+evidenceLine('Sentence read',reading),sector}; }
+    if (reading.state === 'affirmed') { const built = k.build(t,ctx,p); return {kind:k.id,...built,how:built.how+' '+evidenceLine('Sentence read',reading),sector}; }
   }
-  if (clearance) return {kind:'clearance',how:clearance,confirm:'the required reviewers, scope and written approval record',ask:'Which required approval, if any, is still outstanding?',sector:''};
   const denied = readings.find(x => x.reading.state === 'negated' || x.reading.state === 'unclear');
   if (denied) return {kind:'not_confirmed',how:'No objection is confirmed by this wording. '+evidenceLine('Sentence read',denied.reading),confirm:'whether the buyer is raising a concern or saying it is absent',ask:'Is there an unresolved concern here?',sector:''};
   return {

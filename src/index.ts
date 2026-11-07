@@ -151,11 +151,7 @@ const KNOWN_NAMES = new Set((
   // Run 22 round 3: browsers, systems and developer tools that open a weak point or a pain ("Chrome dev tools were not accurate")
   'Chrome Firefox Safari Edge Android iOS Windows Linux macOS GitHub GitLab Docker Kubernetes ' +
   // Run 11: the company and competitor names in the test inputs and the page examples (run 19: the invented example names).
-  'Bengaluru Clari Northwind Metricly Lanehop Branchwire Answerloop Cloudmoat Spendrill Shelfwalk ' +
-  'Locus FarEye Shipsy BlackBuck Rivigo Delhivery Chargebee Zoho Freshdesk Keka Darwinbox Razorpay Happay PineLabs Cred ' +
-  'Bizom FieldAssist BeatRoute Vinculum Petpooja Zenoti Practo Infosys Wipro TCS HCL TechMahindra Mindtree Mphasis Genpact EXL ' +
-  'Airtel Jio Tata Commviva RouteMobile Tanla Gupshup Kaleyra BlackRock Aladdin CharlesRiver Murex Addepar Clearwater ' +
-  'QuantumStreet Harvey Glean Sarvam Krutrim YellowAI Uniphore ObserveAI'
+  'Bengaluru Clari Northwind Metricly Lanehop Branchwire Answerloop Cloudmoat Spendrill Shelfwalk'
 ).split(/\s+/).filter(Boolean));
 function bareWord(word: string): string {
   return word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');

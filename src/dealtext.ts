@@ -177,7 +177,11 @@ export function solutionBrief(input: string): SolutionBrief {
     // run 21c A1: no name was clearly given. A short description is used whole; a long one gives no short name (callers say "your solution").
     // A list of parts after a colon is still read.
     const wordsAll = full.split(/\s+/).length;
-    const short = wordsAll <= 6 ? full.replace(/[.]+$/, '') : '';
+    const toks = full.split(/\s+/);
+    const p0 = (toks[0] || '').replace(/[,;:]+$/, '');
+    const p1 = (toks[1] || '').replace(/[,;:]+$/, '');
+    const leadName = /^[A-Z][A-Za-z0-9.&'+-]*$/.test(p0) && !NOT_A_NAME.test(p0) && !isGenericWord(p0) ? (/^(?:AI|BPM|Business|Digital|Cloud|Labs|Tech|Technologies|Services|Solutions|Software|Systems|Group|Global|Networks|Platform)$/.test(p1) || (/^[A-Z][A-Za-z0-9.&'+-]*$/.test(p1) && !NOT_A_NAME.test(p1) && !isGenericWord(p1) && !/^(?:BPO|IT|HR|CRM|ERP|WMS|TMS|DMS|SFA|POS|CPQ|SDK|API|SAAS|SMB)$/.test(p1)) ? `${p0} ${p1}` : p0) : '';
+    const short = wordsAll <= 6 ? full.replace(/[.]+$/, '') : leadName;
     const at = full.indexOf(': ');
     let parts: string[] = [];
     if (at > 0 && at <= 120) {

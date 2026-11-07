@@ -285,7 +285,7 @@
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>
   <p><code>account_plan_builder</code></p>
-  <p class="hx-prose">Generate strategic account plans with power mapping, whitespace analysis, and expansion strategies. Provides actionable 90-day plans based on account intelligence. <a href="/tools/account-plan-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide how to grow an account in the next 90 days. You give the account name, plus contacts, products, threats and notes if you have them. You get a strategic account plan: a power map with one row per contact you name, whitespace analysis, competitive questions, an answer for each objection and a 90 day plan. It does not look the account up. <a href="/tools/account-plan-builder/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
@@ -302,7 +302,7 @@
 <section class="hx-section hx-wash" id="deal-strategy-coach" aria-labelledby="d-deal-strategy-coach">
   <h3 id="d-deal-strategy-coach">Deal Strategy Coach</h3>
   <p><code>deal_strategy_coach</code></p>
-  <p class="hx-prose">Get deal-specific winning strategies based on deal stage, competitive dynamics, and stakeholder positions. Provides tactical next steps and risk mitigation. <a href="/tools/deal-strategy-coach/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text. <a href="/tools/deal-strategy-coach/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
 <tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
@@ -321,7 +321,7 @@
 <section class="hx-section" id="discovery-question-bank" aria-labelledby="d-discovery-question-bank">
   <h3 id="d-discovery-question-bank">Discovery Question Bank</h3>
   <p><code>discovery_question_bank</code></p>
-  <p class="hx-prose">Get contextual discovery questions using MEDDPICC, BANT, SPICED, Challenger or Gap Selling, or all five at once. Questions adapt based on what you already know about the prospect. <a href="/tools/discovery-question-bank/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to ask on a discovery call. You give the framework you use (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. You get an opening for the conversation, questions in the language of the prospect&#x27;s sector and on what your solution covers, questions for each part of the framework, a closing and what to say to an objection. It uses only the inputs you give and says which it did not get. <a href="/tools/discovery-question-bank/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>framework</code></td><td>string</td><td>yes</td><td>meddpicc, bant, spiced, challenger, gap_selling, all</td><td>Discovery framework to use</td></tr>
 <tr><td><code>prospect_industry</code></td><td>string</td><td>no</td><td></td><td>Prospect industry for context</td></tr>
@@ -337,7 +337,7 @@
 <section class="hx-section hx-wash" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
   <h3 id="d-roi-business-case-builder">ROI Business Case Builder</h3>
   <p><code>roi_business_case_builder</code></p>
-  <p class="hx-prose">Build an ROI business case from your inputs: the annual value comes from the buyer&#x27;s own figures when you give them (annual_value_estimate, or current_annual_cost with expected_improvement_percent); otherwise from example assumptions and benchmarks labelled for you to replace. Includes ROI, payback and an executive summary. <a href="/tools/roi-business-case-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you build an ROI case the buyer&#x27;s finance team can check. You give your solution, its main value driver and the buyer&#x27;s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). <a href="/tools/roi-business-case-builder/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
@@ -359,7 +359,7 @@
 <section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
   <h3 id="d-mutual-action-plan-generator">Mutual Action Plan Generator</h3>
   <p><code>mutual_action_plan_generator</code></p>
-  <p class="hx-prose">Generate collaborative close plans with milestones, owners, and dates. Creates alignment between buyer and seller on path to decision. <a href="/tools/mutual-action-plan-generator/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what has to happen, by whom and when, for a deal to sign on time. You give the deal name and the target close date, plus the current stage, the buyer&#x27;s champion, economic buyer and evaluators, known requirements and process steps if you have them. You get a close plan both sides can work from, with milestones, owners and dates. <a href="/tools/mutual-action-plan-generator/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
 <tr><td><code>target_close_date</code></td><td>string</td><td>yes</td><td></td><td>Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so</td></tr>
@@ -378,7 +378,7 @@
 <section class="hx-section hx-wash" id="win-loss-analyzer" aria-labelledby="d-win-loss-analyzer">
   <h3 id="d-win-loss-analyzer">Win/Loss Analyzer</h3>
   <p><code>win_loss_analyzer</code></p>
-  <p class="hx-prose">Structure a win/loss review of one deal or a set of deals: organizes the deal details you provide and returns the factors and questions to investigate. <a href="/tools/win-loss-analyzer/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide why you won or lost and what to change. You give the details of one deal, a competitor pattern or a set of deals. You get a short write up that names the outcome, the stated reason in the buyer&#x27;s words, what the reason points to and what the buyer weighed, then questions for the review call and sector notes. It adds no figure or reason you did not give, and says what a missing outcome or reason would add. <a href="/tools/win-loss-analyzer/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>analysis_type</code></td><td>string</td><td>yes</td><td>single_deal, deal_portfolio, competitor_analysis, loss_pattern</td><td>Type of analysis</td></tr>
 <tr><td><code>deal_outcome</code></td><td>string</td><td>no</td><td>won, lost, no_decision, mixed</td><td>Deal outcome for single deal analysis</td></tr>
@@ -396,7 +396,7 @@
 <section class="hx-section" id="proposal-section-writer" aria-labelledby="d-proposal-section-writer">
   <h3 id="d-proposal-section-writer">Proposal Section Writer</h3>
   <p><code>proposal_section_writer</code></p>
-  <p class="hx-prose">Generate customized proposal sections tailored to specific buyers. Creates executive summaries, solution overviews, pricing justifications, and more. <a href="/tools/proposal-section-writer/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you write one section of a proposal for a named buyer. You give the section you need (such as an executive summary, solution overview or pricing justification), your solution, the buyer&#x27;s challenges, your differentiators, pricing and success measures. You get that section in sentences built from your inputs, with sector notes. It invents no figure, customer or date, and says once which inputs were not given. <a href="/tools/proposal-section-writer/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>section_type</code></td><td>string</td><td>yes</td><td>executive_summary, problem_statement, solution_overview, implementation_plan, pricing_justification, risk_mitigation, success_metrics, company_overview, case_studies, next_steps</td><td>Proposal section to generate</td></tr>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer name</td></tr>
@@ -415,7 +415,7 @@
 <section class="hx-section hx-wash" id="email-sequence-generator" aria-labelledby="d-email-sequence-generator">
   <h3 id="d-email-sequence-generator">Email Sequence Generator</h3>
   <p><code>email_sequence_generator</code></p>
-  <p class="hx-prose">Generate multi-touch email sequences by persona, stage, and objective. Creates prospecting, nurture, follow-up, and re-engagement sequences. <a href="/tools/email-sequence-generator/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to send, and when, to open or restart a conversation. You give the persona, stage and objective (prospecting, nurture, follow up or re engagement), plus your solution, the pain point, value proposition, proof and ask. You get each email with its subject, send day and body, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented. <a href="/tools/email-sequence-generator/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>sequence_type</code></td><td>string</td><td>yes</td><td>cold_outreach, warm_follow_up, post_demo, proposal_follow_up, re_engagement, nurture, event_follow_up, referral_request</td><td>Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline</td></tr>
 <tr><td><code>target_persona</code></td><td>string</td><td>yes</td><td></td><td>Target persona (e.g., VP Sales, CTO, CFO)</td></tr>
@@ -434,7 +434,7 @@
 <section class="hx-section" id="demo-script-builder" aria-labelledby="d-demo-script-builder">
   <h3 id="d-demo-script-builder">Demo Script Builder</h3>
   <p><code>demo_script_builder</code></p>
-  <p class="hx-prose">Create outcome-focused demo scripts tailored to specific personas and use cases. Includes discovery questions, feature-to-value mapping, and objection handling. <a href="/tools/demo-script-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to show in a demo, and in what order. You give the demo type, the persona and the use case, plus the features you must show and the pains you name. You get a timed run from opening to close, with spoken lines and a step for each feature tied to the pains, then discussion, close and follow up lines and sector notes. The answer says where each step came from and what it did not get. <a href="/tools/demo-script-builder/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>demo_type</code></td><td>string</td><td>yes</td><td>first_look, technical_deep_dive, executive_overview, competitive_displacement, expansion_upsell, proof_of_concept</td><td>Type of demo</td></tr>
 <tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td></td><td>Primary demo audience (role/persona)</td></tr>
@@ -453,7 +453,7 @@
 <section class="hx-section hx-wash" id="pricing-negotiation-guide" aria-labelledby="d-pricing-negotiation-guide">
   <h3 id="d-pricing-negotiation-guide">Pricing Negotiation Guide</h3>
   <p><code>pricing_negotiation_guide</code></p>
-  <p class="hx-prose">Get value-based pricing defense strategies and negotiation tactics. Helps maintain deal value while addressing discount requests. <a href="/tools/pricing-negotiation-guide/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide how to answer a discount request without giving away margin. You give the negotiation scenario, plus deal value, the discount asked, each side&#x27;s leverage and who approves. You get a leverage assessment, a value based negotiation strategy, answers to common pushback and a discount approval framework. <a href="/tools/pricing-negotiation-guide/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
 <tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current deal value</td></tr>
@@ -472,7 +472,7 @@
 <section class="hx-section" id="champion-enablement-kit" aria-labelledby="d-champion-enablement-kit">
   <h3 id="d-champion-enablement-kit">Champion Enablement Kit</h3>
   <p><code>champion_enablement_kit</code></p>
-  <p class="hx-prose">Create internal selling tools for your champion. Generates executive briefs, internal business cases, objection responses, and presentation talking points. <a href="/tools/champion-enablement-kit/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you give your champion what they need to sell internally. You give the asset you need (an executive brief, internal business case, objection responses or presentation talking points), your solution, the customer&#x27;s situation and the objections you expect. You get the asset in the champion&#x27;s voice with the recommendation, answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote. <a href="/tools/champion-enablement-kit/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>asset_type</code></td><td>string</td><td>yes</td><td>executive_brief, internal_business_case, objection_responses, presentation_talking_points, email_to_stakeholder, roi_one_pager, competitive_comparison, risk_assessment</td><td>Type of enablement asset</td></tr>
 <tr><td><code>champion_name</code></td><td>string</td><td>no</td><td></td><td>Champion name</td></tr>
@@ -491,7 +491,7 @@
 <section class="hx-section hx-wash" id="competitive-trap-setter" aria-labelledby="d-competitive-trap-setter">
   <h3 id="d-competitive-trap-setter">Competitive Trap Setter</h3>
   <p><code>competitive_trap_setter</code></p>
-  <p class="hx-prose">Generate landmine questions and competitive positioning tactics. Helps expose competitor weaknesses during evaluation without being negative. <a href="/tools/competitive-trap-setter/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide which questions expose the gaps in your main competitor, without negative selling. You give the named competitor, your solution, your strengths and its weak points as you know them. You get the set up, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and tactics for your stage, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor. <a href="/tools/competitive-trap-setter/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>competitor</code></td><td>string</td><td>yes</td><td></td><td>Primary competitor to position against</td></tr>
 <tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Known competitor weaknesses</td></tr>

@@ -124,10 +124,10 @@ export function productOf(solution: string, D: Deps): Product {
       let run = [t0.replace(/'s$/, '')];
       for (const t of toks.slice(1, 3)) {
         const w = t.replace(/[,;:]+$/, '');
-        const acronym = /^[A-Z]{2,5}$/.test(w) && !/^(?:AI|API|SMS|IOT|B2B|B2C|SAAS|CRM|ERP|HR|IT)$/.test(w);
+        const acronym = /^[A-Z]{2,5}$/.test(w) && !/^(?:API|SMS|IOT|B2B|B2C|SAAS|CRM|ERP|HR|IT|BPO)$/.test(w);
         const word = /^[A-Z][a-z]*[A-Z0-9.][A-Za-z0-9.&'+]*$/.test(w) && !D.isCommon(w) && !NOT_NAME.test(w);
-        // a name that starts in lower case with a capital inside ("eMarker Digital") keeps a capitalised word that only says what kind of firm it is: it is part of the name as typed
-        const kindWord = /^[a-z]+[A-Z]/.test(t0) && /^(?:Digital|Data|Technologies|Technology|Tech|Services|Solutions|Software|Systems|Group|Global|Labs|Consulting|Ventures|International|Holdings|Networks|Platform|Platforms|Cloud|Analytics)$/.test(w);
+        // a name that starts in lower case with a capital inside ("eMarker Digital") or a proper brand ("Airtel Business") keeps a capitalised word that says what kind of firm it is
+        const kindWord = (/^[a-z]+[A-Z]/.test(t0) || /^[A-Z]/.test(t0)) && /^(?:Business|Digital|Data|Technologies|Technology|Tech|Services|Solutions|Software|Systems|Group|Global|Labs|Consulting|Ventures|International|Holdings|Networks|Platform|Platforms|Cloud|Analytics)$/.test(w);
         if ((acronym || word || kindWord) && !/[,;:]$/.test(toks[toks.indexOf(t) - 1] || '')) run.push(w); else break;
       }
       name = run.join(' ');
@@ -237,9 +237,10 @@ export function handleOf(text: string): string {
 const WAY_OF_WORKING = /\b(?:threads?|links|wiki|wikis|channels?|chats?|shared (?:drive|inbox|folder|documents?)|folders?|spreadsheets?|inbox)\b/i;
 export function readAlt(text: string, D: Deps, named = false): Alt {
   const t = text.trim().replace(/[.]+$/, '');
+  const tAffirmed = t.replace(/\([^)]*\b(?:not|no|never|did not|didn't|without)\b[^)]*\)/gi, ' ').trim();
   const handle = handleOf(t);
   let kind: AltKind;
-  if (GERUND_START.test(t) || APPROACH.test(t) || (!named && WAY_OF_WORKING.test(t) && !/\b(?:vendors?|providers?|competitors?|platforms?|suppliers?)\b/i.test(t))) kind = 'approach';
+  if (GERUND_START.test(tAffirmed) || APPROACH.test(tAffirmed) || (!named && WAY_OF_WORKING.test(tAffirmed) && !/\b(?:vendors?|providers?|competitors?|platforms?|suppliers?)\b/i.test(tAffirmed))) kind = 'approach';
   else if (hasProperNoun(t, D) && !(CATEGORY.test(t) && !named && /^[a-z]/.test(t))) kind = 'vendor';
   else if (named && !CATEGORY.test(t)) kind = 'vendor';
   else kind = PROVIDER.test(t) && !TOOLISH.test(t) ? 'provider' : 'category';

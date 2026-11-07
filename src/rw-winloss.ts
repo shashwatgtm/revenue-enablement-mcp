@@ -19,7 +19,8 @@ const KINDS: Kind[] = [
   { re: /\b(?:in-?house|home-?grown|home-?built|build it|built (?:internally|by)|own team|diy|internal(?:ly)?)\b/i, label: 'an in-house build', why: 'their own team controls it and there is no licence or contract to buy', check: 'What does the in-house option cost to keep running, and who owns it if its builder leaves?', win: 'when the buyer counted what the in-house option costs to keep running' },
 ];
 const kindOf = (a: Alt): Kind | null => {
-  const k = KINDS.find((x) => x.re.test(a.text)) || null;
+  const cleanText = a.text.replace(/\([^)]*\b(?:not|no|never|did not|didn't|without)\b[^)]*\)/gi, ' ');
+  const k = KINDS.find((x) => x.re.test(cleanText)) || null;
   // "separate tools or vendors" needs a word for a tool, a vendor or a system; consolidating files by hand is manual work
   if (k && k.label === 'a set of separate tools or vendors' && !/\b(?:tools?|vendors?|systems?|solutions?|apps?|applications?|platforms?|providers?|suppliers?|products?|point)\b/i.test(a.text)) {
     return /\b(?:consolidat\w+|compil\w+|merg\w+|copy\w*|re-?key\w*|reconcil\w+|collat\w+)\b/i.test(a.text) ? KINDS[0] : null;
@@ -114,7 +115,8 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
   const refs = (cs: Contact[], word = 'and') => andList(cs.map(ref), word);
 
   // ---- the alternatives: named once, by a short handle ----
-  const named = wonBy && !/^(?:no decision|none|nobody|n\/a)\.?$/i.test(wonBy) ? wonBy : '';
+  const wonByBare = wonBy.replace(/\s*\([^)]*\)/g, '').trim();
+  const named = wonByBare && !/^(?:no decision|none|nobody|n\/a)\.?$/i.test(wonByBare) ? wonBy : '';
   interface Weighed extends Alt { group: number; winner: boolean; k: Kind | null }
   const weighed: Weighed[] = [];
   const addAlt = (t: string, isNamed: boolean, winner: boolean, group = 0) => {
@@ -360,7 +362,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
   if (hasD) rows.push(`| **Sales Cycle** | ${days(cycle)} |`);
   if (outcome) rows.push(`| **Outcome** | ${upperFirst(outcome.replace(/_/g, ' '))} |`);
   if (reason) rows.push(`| **Stated reason** | ${D.cap(reason)} |`);
-  if (wonBy) rows.push(`| **Competitor who won** | ${D.cap(wonBy)} |`);
+  if (wonBy) rows.push(`| **${outcome === 'won' ? 'Competitor beaten' : 'Competitor who won'}** | ${D.cap(wonBy)} |`);
   if (contacts.length) rows.push(`| **Stakeholders** | ${contacts.map((c) => c.raw).join('; ')} |`);
   const given = rows.length ? `## Inputs as you gave them\n\n| Item | Value |\n|---|---|\n${rows.join('\n')}\n` : '';
 

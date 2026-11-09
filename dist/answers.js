@@ -213,6 +213,14 @@ const KINDS = [
             ask: 'Which service-level measure matters most to your operations team, and how do you track it today?',
         }),
     },
+    {
+        id: 'legal', test: /\b(?:legal(?: review)?|counsel(?: approval)?|contract(?:ual)?(?: review)?|redlin\w*)\b/i,
+        build: (_t, _c, p) => ({
+            how: 'Ask the buyer and seller legal reviewers to list the unresolved contract clauses, name the owner of each change, and agree when the next draft will be reviewed. Keep signature after written approval of the final wording.',
+            confirm: `the latest contract draft for ${p}, the open clauses and the required legal approvals`,
+            ask: 'Which contract clauses remain open, who can approve them, and when is the next legal review?',
+        }),
+    },
 ];
 /** Answers one objection, blocker or buyer question by its kind, from the user's own words and the sector's usual objections. */
 function answerBlocker(text, ctx) {

@@ -269,6 +269,22 @@ export function blockerLines(text: string, ctx: BlockerContext): string[] {
   if (a.sector) lines.push(`- **Usual pattern in ${ctx.sectorName || 'this sector'}:** ${a.sector}`);
   return lines;
 }
+/** Keep compound deal blockers on separate lines, only when both sides name distinct concerns. */
+export function dealBlockerLines(text: string, ctx: BlockerContext): string[] {
+  // Negated lists keep the existing clearance reading; do not turn absent concerns into tasks.
+  if (/\b(?:no|not|neither|nor|without)\b/i.test(text)) return blockerLines(text, ctx);
+  const parts = text.replace(/\s+(?:are|is)\s+(?:both |all )?(?:pending|outstanding)\.?$/i, '')
+    .split(/,\s*(?:and\s+)?|\s+and\s+/i).map(t => t.trim()).filter(Boolean);
+  const answers = parts.map(part => answerBlocker(part, ctx));
+  if (parts.length < 2 || answers.some(a => ['general','not_confirmed','clearance'].includes(a.kind)) || new Set(answers.map(a => a.kind)).size < 2) return blockerLines(text, ctx);
+  return parts.map((part, i) => {
+    if (/\b(?:approved|complete|completed|cleared)\b/i.test(part)) return `- **${part}:** Record the completed approval; confirm whether its scope still covers this purchase.`;
+    const action = answers[i].kind === 'price' && /\bbudget\b/i.test(part)
+      ? 'Name the budget approver, confirm the amount and record the remaining sign-off step.'
+      : `Confirm ${answers[i].confirm}.`;
+    return `- **${part}:** ${action}`;
+  });
+}
 /** The answer in one cell or one sentence. */
 export function blockerShort(text: string, ctx: BlockerContext): string {
   const a = answerBlocker(text, ctx);

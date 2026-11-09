@@ -1434,7 +1434,7 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
 Each blocker you typed is answered on its own. Where the answer needs a fact about ${P}, it says what to confirm instead of stating one.
 
 ${items.map((b, i) => `**Blocker ${i + 1}: ${q(b)}**
-${(0, answers_ts_1.blockerLines)(b, bctx).join('\n')}`).join('\n\n')}
+${(0, answers_ts_1.dealBlockerLines)(b, bctx).join('\n')}`).join('\n\n')}
 
 **For any blocker that is a person:** find out whether they are threatened by the change, own a competing option or have a fair concern; answer their concern too, and ask your champion or an executive sponsor for cover only after that.
 

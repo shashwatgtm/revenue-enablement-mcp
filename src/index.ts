@@ -45,7 +45,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { cleanDeep, escapeDeep, escapeText, escapePiece } from './escape-inputs.ts';
 import { isEvidenceStatus, splitFeatureList, type ListItem, aAn, describeWith, painClauses, solutionBrief, capitaliseSolutionPhrase, parseContacts, parseProof, pickProof, proofPhrase, proofSource, tagKind, familyOf, clip, joinList, upperFirst, sentences, splitTopLevel, partLabel, addWorkdays, onOrBeforeWorkday, onOrAfterWorkday, workdaysBetween, isoDate, weekdayName, type Contact, type ProofItem, type SolutionBrief } from './dealtext.ts';
-import { answerBlocker, blockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
+import { answerBlocker, blockerLines, dealBlockerLines, blockerShort, roleFor, ROLE_KNOWLEDGE, namedThings, type BlockerContext } from './answers.ts';
 import { buildAccountPlan } from './rw1-account.ts';
 import { buildMutualActionPlan } from './rw1-map.ts';
 import { concernOf, type ConcernId } from './concern-types.ts';
@@ -1446,7 +1446,7 @@ ${dealCtx.v ? dealCtx.v.discovery.slice(0, 2).map((x) => `- "${x}"`).join('\n') 
 Each blocker you typed is answered on its own. Where the answer needs a fact about ${P}, it says what to confirm instead of stating one.
 
 ${items.map((b, i) => `**Blocker ${i + 1}: ${q(b)}**
-${blockerLines(b, bctx).join('\n')}`).join('\n\n')}
+${dealBlockerLines(b, bctx).join('\n')}`).join('\n\n')}
 
 **For any blocker that is a person:** find out whether they are threatened by the change, own a competing option or have a fair concern; answer their concern too, and ask your champion or an executive sponsor for cover only after that.
 

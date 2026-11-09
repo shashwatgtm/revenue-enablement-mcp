@@ -24,6 +24,8 @@ export declare function namedThings(text: string, skip?: string[]): string[];
 export declare function answerBlocker(text: string, ctx: BlockerContext): BlockerAnswer;
 /** The answer as lines for a list item. */
 export declare function blockerLines(text: string, ctx: BlockerContext): string[];
+/** Keep compound deal blockers on separate lines, only when both sides name distinct concerns. */
+export declare function dealBlockerLines(text: string, ctx: BlockerContext): string[];
 /** The answer in one cell or one sentence. */
 export declare function blockerShort(text: string, ctx: BlockerContext): string;
 export interface RoleKnowledge {

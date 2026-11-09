@@ -7,6 +7,7 @@ import { roleFor } from './answers.ts';
 import { buyerContextFor } from './verticals.ts';
 import { answerQuestion, briefOf, readModel, reframeSector, sellerOffers, cleanBrief, dedupeAnswers, sellerWords, cleanIndustry, industryFromTitle, lowerStart, modelWords, ownerKind, partsOf, quoted, readRole, some, stripEnd, type Deps, type QACtx } from './rw1-common.ts';
 import { concernOf, type ConcernId } from './concern-types.ts';
+import { readSignal } from './text-signals.ts';
 
 type Who = 'champion' | 'eb' | 'seller' | 'se' | 'both' | 'it' | 'security' | 'risk' | 'proc' | 'finance' | 'eval';
 interface Step { m: string; who: Who; owner?: string }
@@ -411,6 +412,16 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
     approval: { stage: 'proposal', owner: ebName, m: (q) => `Decision on ${q}: name the person who can clear it and book that meeting before the business case phase ends`, risk: (q) => `Approval (${q}): a decision maker who has not seen the plan can stop it late; bring them in at the next phase gate.` },
     timing: { stage: firstStage, owner: champName, m: (q) => `Timing for ${q}: confirm with the champion what fixes the date and what happens if it slips`, risk: (q) => `Timing (${q}): a date the buyer does not own will slip; tie the close to the buyer's own event.` },
   };
+  const matchedAnswerOwners = new Map<string, string>();
+  for (const item of blockerAnswers) {
+    if (item.a.id !== 'general') continue;
+    const type = concernOf(item.text);
+    if (!type || readSignal(item.text, type.test).state !== 'affirmed') continue;
+    const rule = BLOCKER_RULES[type.id];
+    item.a.answer = `${rule.m(quoted(item.text))}.`;
+    item.a.bring = `the named owner's written decision and supporting evidence for ${type.label}`;
+    matchedAnswerOwners.set(item.text, rule.owner);
+  }
   const ORDER = [...STAGE_ORDER, 'close'];
   const phaseFor = (stage: string): string => (bounds.find((b) => ORDER.indexOf(b.stage) >= ORDER.indexOf(stage)) || bounds[bounds.length - 1]).stage;
   // blockers of the same type share one milestone and one risk line, in the order the first of them was typed; blockers that
@@ -492,7 +503,7 @@ export function buildMutualActionPlan(args: Record<string, unknown>, d: Deps): s
 
   const risks: string[] = ['## Risks & Blockers'];
   if (blockerAnswers.length) {
-    risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${stripEnd(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${stripEnd(b.a.bring)}. | ${ownerFor(b.a.id)} | Open |`).join('\n')}`);
+    risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${stripEnd(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${stripEnd(b.a.bring)}. | ${matchedAnswerOwners.get(b.text) ?? ownerFor(b.a.id)} | Open |`).join('\n')}`);
   } else if (v) {
     risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${(v.subtype === 'core-banking' && /\b(?:neo-?banks?|challenger banks?|digital[- ]only banks?|greenfield|new banks?|fintechs?|start-?ups?)\b/i.test(`${dealName} ${reqIn} ${blockersIn}`) ? v.objections.filter((o) => !/replacing a core|legacy core/i.test(o.objection)) : v.objections).slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);
   }

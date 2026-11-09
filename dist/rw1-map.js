@@ -10,6 +10,7 @@ const answers_ts_1 = require("./answers.js");
 const verticals_ts_1 = require("./verticals.js");
 const rw1_common_ts_1 = require("./rw1-common.js");
 const concern_types_ts_1 = require("./concern-types.js");
+const text_signals_ts_1 = require("./text-signals.js");
 const STAGE_ORDER = ['discovery', 'evaluation', 'proposal', 'negotiation', 'procurement'];
 const STAGE_NAME = { discovery: 'Discovery', evaluation: 'Evaluation', proposal: 'Business Case & Alignment', negotiation: 'Commercial & Legal', procurement: 'Procurement' };
 const STAGE_AIM = {
@@ -460,6 +461,18 @@ function buildMutualActionPlan(args, d) {
         approval: { stage: 'proposal', owner: ebName, m: (q) => `Decision on ${q}: name the person who can clear it and book that meeting before the business case phase ends`, risk: (q) => `Approval (${q}): a decision maker who has not seen the plan can stop it late; bring them in at the next phase gate.` },
         timing: { stage: firstStage, owner: champName, m: (q) => `Timing for ${q}: confirm with the champion what fixes the date and what happens if it slips`, risk: (q) => `Timing (${q}): a date the buyer does not own will slip; tie the close to the buyer's own event.` },
     };
+    const matchedAnswerOwners = new Map();
+    for (const item of blockerAnswers) {
+        if (item.a.id !== 'general')
+            continue;
+        const type = (0, concern_types_ts_1.concernOf)(item.text);
+        if (!type || (0, text_signals_ts_1.readSignal)(item.text, type.test).state !== 'affirmed')
+            continue;
+        const rule = BLOCKER_RULES[type.id];
+        item.a.answer = `${rule.m((0, rw1_common_ts_1.quoted)(item.text))}.`;
+        item.a.bring = `the named owner's written decision and supporting evidence for ${type.label}`;
+        matchedAnswerOwners.set(item.text, rule.owner);
+    }
     const ORDER = [...STAGE_ORDER, 'close'];
     const phaseFor = (stage) => (bounds.find((b) => ORDER.indexOf(b.stage) >= ORDER.indexOf(stage)) || bounds[bounds.length - 1]).stage;
     // blockers of the same type share one milestone and one risk line, in the order the first of them was typed; blockers that
@@ -550,7 +563,7 @@ function buildMutualActionPlan(args, d) {
     out.push(`## Mutual Action Plan Timeline\n${processSteps.length ? `\nThe buyer's own process, as you gave it: ${(0, dealtext_ts_1.joinList)(processSteps.map(rw1_common_ts_1.quoted))}. Each step is placed as a milestone below.\n` : ''}\n${bounds.map((ph, i) => phaseBlock(ph, i + 1)).join('\n---\n\n')}`);
     const risks = ['## Risks & Blockers'];
     if (blockerAnswers.length) {
-        risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${(0, rw1_common_ts_1.stripEnd)(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${(0, rw1_common_ts_1.stripEnd)(b.a.bring)}. | ${ownerFor(b.a.id)} | Open |`).join('\n')}`);
+        risks.push(`Each blocker below is answered on its own question. Where an answer needs a fact about ${P}, it says what to confirm first.\n\n| Blocker | Answer | Owner | Status |\n|---------|--------|-------|--------|\n${blockerAnswers.map((b) => `| ${(0, rw1_common_ts_1.stripEnd)(b.text).replace(/\|/g, '/')}${/[?]$/.test(b.text.trim()) ? '?' : ''} | ${b.a.answer} Confirm first: ${(0, rw1_common_ts_1.stripEnd)(b.a.bring)}. | ${matchedAnswerOwners.get(b.text) ?? ownerFor(b.a.id)} | Open |`).join('\n')}`);
     }
     else if (v) {
         risks.push(`${v.name[0].toUpperCase()}${v.name.slice(1)} buyers usually raise these objections, so prepare an answer to each before the evaluation ends:\n\n${(v.subtype === 'core-banking' && /\b(?:neo-?banks?|challenger banks?|digital[- ]only banks?|greenfield|new banks?|fintechs?|start-?ups?)\b/i.test(`${dealName} ${reqIn} ${blockersIn}`) ? v.objections.filter((o) => !/replacing a core|legacy core/i.test(o.objection)) : v.objections).slice(0, 3).map((o) => `- ${o.objection}: ${o.response}`).join('\n')}`);

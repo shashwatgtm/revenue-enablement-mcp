@@ -1,10 +1,11 @@
 # Revenue Enablement
 
-> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in.
+> Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Sales Enablement plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae09b7a8e1c81919e201e1ae39b86f2
 
 - Web app (no sign-in): https://revenue-enablement.gtmhelix.com/
 - MCP server URL (Streamable HTTP, no sign-in, read-only tools): https://revenue-enablement.gtmhelix.com/mcp
 - Connect to Claude, ChatGPT, Cursor, VS Code, Windsurf: https://revenue-enablement.gtmhelix.com/connect/
+- Use it in ChatGPT: install the Helix Sales Enablement plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae09b7a8e1c81919e201e1ae39b86f2
 - Docs (MCP and REST, every field): https://revenue-enablement.gtmhelix.com/docs/
 - FAQ: https://revenue-enablement.gtmhelix.com/faq/
 - Privacy policy: https://revenue-enablement.gtmhelix.com/privacy/
@@ -33,7 +34,7 @@
 
 ### What is Revenue Enablement?
 
-Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in.
+Revenue Enablement is a free web app and AI connector with twelve sales tools, by Shashwat Ghosh of Helix GTM Consulting, for CROs and demand generation heads. Give it an account, a deal or a competitor, and it drafts account plans, discovery questions, ROI business cases, emails and demo scripts. Add https://revenue-enablement.gtmhelix.com/mcp in Claude, ChatGPT, Cursor, VS Code and Windsurf, no sign-in. In ChatGPT, you can also install the Helix Sales Enablement plugin from the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_6ae09b7a8e1c81919e201e1ae39b86f2
 
 ### Is Revenue Enablement free, and do I need an account?
 

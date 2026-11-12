@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="/assets/helix.css?v=5a5090e11c">
 <link rel="stylesheet" href="/assets/jtbd.css?v=c58d595f2b">
 <link rel="stylesheet" href="/assets/helix-report.css?v=f78ed582b4">
-<link rel="stylesheet" href="/assets/helix-look.css?v=a433d954b5">
+<link rel="stylesheet" href="/assets/helix-look.css?v=9b219b40a1">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -252,7 +252,7 @@
 }
 </script>
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
-<script src="/assets/look.js?v=c79f7e788f" defer></script>
+<script src="/assets/look.js?v=27a748b492" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
 </head>
 <body>
@@ -277,12 +277,13 @@
   <h2 id="sample-h">What you get</h2>
   <p class="hx-sample-note">This sample is a made up example, built from the inputs behind <em>Fill in an example</em>. It shows part of one section of the answer.</p>
   <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">Questions for Head of Last-Mile Operations</h3>
-<p>Owner: the account owner with Head of Last-Mile Operations. At the next discovery meeting about our product, ask the questions below and record the buyer’s own answer, its source and the person who can approve the next step. Check: a dated answer to the first unresolved buyer question.</p>
+<p>Owner: the account owner with Head of Last-Mile Operations. At the next discovery meeting about route planning software for last-mile delivery, ask the questions below and record the buyer’s own answer, its source and the person who can approve the next step. Check: a dated answer to that problem in the context above.</p>
 <ul>
-<li>In your role in third-party logistics, which numbers do you answer for in our product, and to whom?</li>
+<li>In your role in third-party logistics, which of the numbers you answer for does that problem move, and by how much?</li>
 <li>Who do you turn to first when this goes wrong in third-party logistics, and what do they say?</li>
 <li>Which part of the day goes wrong most often, and what does it cost?</li>
 <li>How do you measure it today, and who owns that number?</li>
+<li>What happens when plans change after work has started?</li>
 </ul></div>
   <p class="hx-sample-more"><a href="#ex-h">See the full example answer</a> or <a href="#run">run it with your own details</a>.</p>
 </section>
@@ -295,7 +296,7 @@
 <div class="hx-field"><label for="f-known_pain_points">Known pain points <span class="hx-opt">(optional)</span></label><textarea id="f-known_pain_points" name="known_pain_points" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-known_pain_points-help"></textarea><p class="hx-help" id="f-known_pain_points-help">Pain points already identified</p></div>
 <div class="hx-field"><label for="f-known_metrics">Known metrics <span class="hx-opt">(optional)</span></label><textarea id="f-known_metrics" name="known_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-known_metrics-help"></textarea><p class="hx-help" id="f-known_metrics-help">Metrics/KPIs already discussed</p></div>
 <div class="hx-field"><label for="f-deal_stage">Deal stage <span class="hx-opt">(optional)</span></label><select id="f-deal_stage" name="deal_stage" data-kind="string" aria-describedby="f-deal_stage-help"><option value="">Not specified</option><option value="first_call">First call</option><option value="discovery">Discovery</option><option value="deep_dive">Deep dive</option><option value="technical">Technical</option><option value="executive">Executive</option></select><p class="hx-help" id="f-deal_stage-help">Stage of conversation</p></div>
-<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-opt">(optional)</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution for relevant questions</p></div>
+<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-opt">(optional)</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Yroute planning software for last-mile delivery, sold as an annual subscription/solution for relevant questions</p></div>
 <div class="hx-field"><label for="f-gaps_to_fill">Gaps to fill <span class="hx-opt">(optional)</span></label><textarea id="f-gaps_to_fill" name="gaps_to_fill" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-gaps_to_fill-help"></textarea><p class="hx-help" id="f-gaps_to_fill-help">Specific information gaps to address</p></div>
 <div class="hx-field"><label for="f-your_sector">Your sector <span class="hx-opt">(optional)</span></label><select id="f-your_sector" name="your_sector" data-kind="string" aria-describedby="f-your_sector-help"><option value="">Not specified</option><option value="logistics_tech">Logistics tech</option><option value="fintech">Fintech</option><option value="saas">SaaS</option><option value="vertical_saas">Vertical saas</option><option value="ai_native">AI native</option><option value="ites">ITeS</option><option value="telecom">Telecom</option><option value="software">Software</option><option value="cybersecurity">Cybersecurity</option><option value="other">Other</option></select><p class="hx-help" id="f-your_sector-help">Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</p></div>
     <div class="hx-hp" aria-hidden="true"><label for="hp-discovery_question_bank">Leave this empty</label><input id="hp-discovery_question_bank" name="leave_this_empty" type="text" tabindex="-1" autocomplete="off"></div>
@@ -306,7 +307,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"framework": "meddpicc", "deal_stage": "discovery", "prospect_industry": "Third-party logistics", "prospect_role": "Head of Last-Mile Operations", "your_solution": "our product"}</script></div>
+  <script type="application/json" data-example>{"framework": "meddpicc", "deal_stage": "discovery", "prospect_industry": "Third-party logistics", "prospect_role": "Head of Last-Mile Operations", "your_solution": "route planning software for last-mile delivery, sold as an annual subscription", "known_pain_points": "About 1 in 6 deliveries fail on the first attempt", "gaps_to_fill": "Who signs off spend above $50,000\nWhat a failed delivery costs today", "your_sector": "logistics_tech"}</script></div>
 </section>
 
 <section class="hx-section hx-wash" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -328,7 +329,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">Generated on 2 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">Generated on 12 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -338,90 +339,146 @@
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Discovery Question Bank</h4>
 <h5 class="hxr-h3">Unanswered questions first</h5>
-<p>No explicit unanswered metric or information gap was supplied. Confirm the next missing decision with the buyer before selecting questions from the optional bank.</p>
+<ol>
+<li value="1">Who signs off a purchase like route planning software for last-mile delivery in third-party logistics, and have they seen that problem first-hand?</li>
+</ol>
+<p>   Evidence to establish: The buyer answer, its source and date, and the named person who can confirm it.<br>   Gap supplied: Who signs off spend above $50,000</p>
+<ol>
+<li value="2">What evidence would resolve &quot;What a failed delivery costs today&quot;?</li>
+</ol>
+<p>   Evidence to establish: The buyer answer, its source and date, and the named person who can confirm it.<br>   Gap supplied: What a failed delivery costs today</p>
 <h5 class="hxr-h3">Context</h5>
 <ul>
 <li><strong>Prospect Industry:</strong> Third-party logistics</li>
 <li><strong>Contact Role:</strong> Head of Last-Mile Operations</li>
 <li><strong>Deal Stage:</strong> discovery</li>
-<li><strong>Solution:</strong> our product</li>
+<li><strong>Solution:</strong> route planning software for last-mile delivery, sold as an annual subscription</li>
+<li><strong>Known Pain Points:</strong> About 1 in 6 deliveries fail on the first attempt</li>
+<li><strong>Information Gaps:</strong> Who signs off spend above $50,000</li>
 </ul>
-<p><em>Sector: not clear from your inputs (name the industry for sector notes). Business model: not stated. Tell us how you charge and the plan will adjust.</em></p>
+<p>What a failed delivery costs today</p>
+<p><em>Sector: from your choice: logistics tech, last mile delivery. Business model: software subscription (read from your inputs; confirm how you charge).</em></p>
 <hr>
 <h5 class="hxr-h3">Optional full question bank</h5>
 <p>Use only the sections needed after the unanswered questions above.</p>
 <h5 class="hxr-h3">Opening for a discovery conversation</h5>
 <p>Say it in your own voice:</p>
 <ul>
-<li>I would like to go deep on the problem you came to fix: where it starts, who it touches and what it costs.</li>
-<li>Who else should be part of this conversation about our product, besides you?</li>
+<li>I would like to go deep on &quot;about 1 in 6 deliveries fail on the first attempt&quot;: where it starts, who it touches and what it costs, in terms of first attempt delivery rate, failed delivery and return rate or cost per delivery.</li>
+<li>Who else should be part of this conversation about route planning software for last-mile delivery, besides you?</li>
+</ul>
+<hr>
+<h5 class="hxr-h3">Gaps to fill first</h5>
+<p>You said these are still open, so ask about them before anything else:</p>
+<ul>
+<li><strong>Who signs off spend above $50,000:</strong> Who signs off a purchase like route planning software for last-mile delivery in third-party logistics, and have they seen that problem first-hand?</li>
+<li><strong>What a failed delivery costs today:</strong> Can you walk me through what a failed delivery costs today for route planning software for last-mile delivery?</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Questions for Head of Last-Mile Operations</h5>
-<p>Owner: the account owner with Head of Last-Mile Operations. At the next discovery meeting about our product, ask the questions below and record the buyer’s own answer, its source and the person who can approve the next step. Check: a dated answer to the first unresolved buyer question.</p>
+<p>Owner: the account owner with Head of Last-Mile Operations. At the next discovery meeting about route planning software for last-mile delivery, ask the questions below and record the buyer’s own answer, its source and the person who can approve the next step. Check: a dated answer to that problem in the context above.</p>
 <ul>
-<li>In your role in third-party logistics, which numbers do you answer for in our product, and to whom?</li>
+<li>In your role in third-party logistics, which of the numbers you answer for does that problem move, and by how much?</li>
 <li>Who do you turn to first when this goes wrong in third-party logistics, and what do they say?</li>
 <li>Which part of the day goes wrong most often, and what does it cost?</li>
 <li>How do you measure it today, and who owns that number?</li>
 <li>What happens when plans change after work has started?</li>
 </ul>
 <hr>
+<h5 class="hxr-h3">Questions in the language of logistics tech, last mile delivery</h5>
+<ul>
+<li>How do you plan routes today, and how often does a dispatcher re plan during the day?</li>
+<li>What happens when an order, a driver or a road changes after the vehicles have left?</li>
+<li>How do you measure cost per delivery and first attempt delivery today, and who owns those numbers?</li>
+<li>Which systems hold the orders and the addresses (transport, warehouse, ERP, order management)?</li>
+<li>Where do failed deliveries come from: addresses, time windows, driver allocation or something else?</li>
+</ul>
+<hr>
+<h5 class="hxr-h3">Questions on the pain you described</h5>
+<ul>
+<li>On &quot;about 1 in 6 deliveries fail on the first attempt&quot;: how often does this reach you before it costs money, and who finds out first? And which of first attempt delivery rate or failed delivery and return rate does it show up in first?</li>
+</ul>
+<hr>
 <h5 class="hxr-h3">MEDDPICC questions</h5>
 <h6 class="hxr-h4">M: Metrics</h6>
 <ul>
-<li>How do you measure the number this problem moves today, and who owns that number?</li>
-<li>If the problem you came to fix were fixed, which of the number this problem moves would move first, and by how much would it have to move to matter to you?</li>
-<li>What does the problem you came to fix cost each month today in time, money or risk, and how did you arrive at that figure?</li>
+<li>How do you measure first attempt delivery rate today, and who owns that number?</li>
+<li>If that problem were fixed, which of first attempt delivery rate, failed delivery and return rate or cost per delivery would move first, and by how much would it have to move to matter to you?</li>
+<li>What does that problem cost each month today in time, money or risk, and how did you arrive at that figure?</li>
 </ul>
 <h6 class="hxr-h4">E: Economic buyer</h6>
 <ul>
-<li>Who signs off a purchase like our product in third-party logistics, and have they seen the problem you came to fix first-hand?</li>
-<li>What would the person who signs need to see to move forward on our product?</li>
-<li>Can we include the person who signs in the next conversation about our product?</li>
+<li>Who signs off a purchase like route planning software for last-mile delivery in third-party logistics, and have they seen that problem first-hand?</li>
+<li>What would the COO or Head of Supply Chain need to see to move forward on route planning software for last-mile delivery?</li>
+<li>Can we include the COO or Head of Supply Chain in the next conversation about route planning software for last-mile delivery?</li>
 </ul>
 <h6 class="hxr-h4">D: Decision criteria</h6>
 <ul>
-<li>What would be a must-have in our product for you, and what would be nice to have?</li>
-<li>How much weight do you give the number this problem moves when you compare options for our product?</li>
-<li>What would make you drop an option for our product?</li>
+<li>What would be a must-have in route planning software for last-mile delivery for you, and what would be nice to have?</li>
+<li>How much weight do you give first attempt delivery rate when you compare options for route planning software for last-mile delivery?</li>
+<li>What would make you drop an option for route planning software for last-mile delivery?</li>
 </ul>
 <h6 class="hxr-h4">D: Decision process</h6>
 <ul>
-<li>What steps does a decision on our product go through in third-party logistics, and who is involved at each step?</li>
-<li>What date are you working back from to have the problem you came to fix fixed, and what happens if it slips?</li>
+<li>What steps does a decision on route planning software for last-mile delivery go through in third-party logistics, and who is involved at each step?</li>
+<li>What date are you working back from to have that problem fixed, and what happens if it slips?</li>
 </ul>
 <h6 class="hxr-h4">P: Paper process</h6>
 <ul>
-<li>What do legal, security and procurement need to see before our product can be signed, and how long does each take?</li>
-<li>What would those reviewers look at hardest in our product?</li>
+<li>What do legal, security and procurement need to see before route planning software for last-mile delivery can be signed, and how long does each take?</li>
+<li>What would those reviewers look at hardest in route planning software for last-mile delivery?</li>
 </ul>
 <h6 class="hxr-h4">I: Identify pain</h6>
 <ul>
-<li>What is not working today in our product in third-party logistics?</li>
+<li>On &quot;about 1 in 6 deliveries fail on the first attempt&quot;: who feels it most, and what does it cost them?</li>
+<li>On that problem: what happens each week that it stays that way?</li>
 </ul>
 <h6 class="hxr-h4">C: Champion</h6>
 <ul>
-<li>Besides you, who else wants the problem you came to fix fixed?</li>
-<li>If I gave you a business case for our product, would you take it to the person who signs?</li>
-<li>What would that person need from us to push for our product?</li>
+<li>Besides you, who else wants that problem fixed: your head of IT?</li>
+<li>If I gave you a business case for route planning software for last-mile delivery, would you take it to the COO or Head of Supply Chain?</li>
+<li>What would that person need from us to push for route planning software for last-mile delivery?</li>
 </ul>
 <h6 class="hxr-h4">C: Competition</h6>
 <ul>
-<li>What do you use today instead of our product, and what do you like about it?</li>
+<li>What do you use today to deal with that problem, and what do you like about it?</li>
 <li>Have you considered building this yourselves, or leaving it as it is?</li>
-<li>Which other vendors are you speaking to about our product?</li>
+<li>Which other vendors are you speaking to about route planning software for last-mile delivery?</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Closing the call</h5>
 <ul>
-<li>Here is what I heard: the problem you want fixed with our product, and the decision sits with the person who signs. Have I got that right?</li>
-<li>What should I have asked about our product and did not?</li>
-<li>I would suggest we put a baseline on the number this problem moves before the next call. Who can give it to us?</li>
+<li>Here is what I heard: one problem you want fixed with route planning software for last-mile delivery, with the approval owner still to confirm. Have I got that right?</li>
+<li>The open points are who signs off spend above $50,000 and what a failed delivery costs today. Who can I speak to about each one?</li>
+<li>I would suggest we put a baseline on first attempt delivery rate before the next call. Who can give it to us?</li>
 </ul>
 <hr>
-<p>To sharpen this, give: known pain points (it would turn the questions from the area to the pain, one statement at a time); your solution (list the parts of the product with a few words on what each does; it would add a question on each part); known metrics (it would replace the sector&#39;s usual measure with the number the prospect gave).</p>
-<p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
+<h5 class="hxr-h3">If you hear an objection</h5>
+<ul>
+<li>If you hear &quot;we already have a TMS&quot;: Ask which daily decisions it does not make today (re planning when orders change, address cleaning, driver allocation) and position the product as working with it, not replacing it.</li>
+<li>If you hear &quot;drivers will not use a new app&quot;: Offer a pilot at one hub with an offline first driver app and agree how adoption is measured before the pilot starts.</li>
+<li>If you hear &quot;integration effort&quot;: Name the systems involved (transport, warehouse, ERP, order management) and the few data fields needed, and agree who on the buyer side owns each.</li>
+<li>If you hear &quot;our margins are too thin for this&quot;: Tie the price to cost per delivery and failed deliveries measured in the buyer&#39;s own data, not to a general claim.</li>
+</ul>
+<hr>
+<h6 class="hxr-h4">Sector notes: logistics tech, last mile delivery</h6>
+<ul>
+<li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the transport, warehouse and order systems; finance checks the cost per delivery case.</li>
+<li><strong>Words this sector&#39;s buyers use:</strong> dispatch, fleet, last mile, route plan, first attempt delivery, proof of delivery, third party logistics provider, cost per delivery, delivery SLA, delivery window. Use them where they are true for the prospect.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
+</ul>
+<h5 class="hxr-h3">Reading the answer</h5>
+<p>Use the question bank to test route planning software for last-mile delivery, beginning with three observations: ask Head of Last-Mile Operations for the most recent instance of &quot;About 1 in 6 deliveries fail on the first attempt&quot;; ask how often it happened and how the cost was counted; then ask what result and whose approval would justify changing the process. The remaining questions are optional probes, not a required script. The conclusion needs review if the buyer cannot confirm a recent instance, the metric counts a different scope or period, or the approval condition does not support a change.</p>
+<h5 class="hxr-h3">Decisions by role</h5>
+<p>Proposed owners. Confirm the named person before acting.</p>
+<p>Founder: ask Head of Last-Mile Operations for a recent example of &quot;About 1 in 6 deliveries fail on the first attempt&quot; before accepting it as a buying problem; record a counterexample where the current process worked.</p>
+<p>CEO: have finance verify the scope and period behind &quot;the unverified metric baseline&quot; before valuing the problem; distinguish total team effort from effort per person.</p>
+<p>CMO: check the attributed notes from Head of Last-Mile Operations before using &quot;About 1 in 6 deliveries fail on the first attempt&quot; in messaging; keep a seller hypothesis separate from the buyer&#39;s words.</p>
+<p>CRO: use the recent example, frequency and approval questions with Head of Last-Mile Operations first; advance only when the buyer confirms a problem and an observable acceptance condition.</p>
+<p>Demand generation head: test whether a fresh account with the same role reports &quot;About 1 in 6 deliveries fail on the first attempt&quot; before widening the audience; record accounts that deny it.</p>
+<p>To sharpen this, give: your solution (list the parts of the product with a few words on what each does; it would add a question on each part); known metrics (it would replace the sector&#39;s usual measure with the number the prospect gave).</p>
+<p>Suggested timings, lengths and counts: adjust them to your own.</p>
+<p>Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/discovery-question-bank/</span></footer>
   </article>
   
@@ -454,7 +511,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use the Discovery Question Bank tool with an AI assistant?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude, ChatGPT or Gemini</a>), then ask in plain words. Here is a prompt built from the tested example:</p>
-  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s Discovery Question Bank tool. framework: MEDDPICC; deal stage: Discovery; prospect industry: Third-party logistics; prospect role: Head of Last-Mile Operations; your solution: our product. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
+  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s Discovery Question Bank tool. framework: MEDDPICC; deal stage: Discovery; prospect industry: Third-party logistics; prospect role: Head of Last-Mile Operations; your solution: route planning software for last-mile delivery, sold as an annual subscription. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
 </section>
 
 <section class="hx-section hx-wash" aria-labelledby="works-h">
@@ -478,7 +535,7 @@
     &quot;deal_stage&quot;: &quot;discovery&quot;,
     &quot;prospect_industry&quot;: &quot;Third-party logistics&quot;,
     &quot;prospect_role&quot;: &quot;Head of Last-Mile Operations&quot;,
-    &quot;your_solution&quot;: &quot;our product&quot;
+    &quot;your_solution&quot;: &quot;route planning software for last-mile delivery, sold as an annual subscription&quot;
   }
 }</pre>
   </details>

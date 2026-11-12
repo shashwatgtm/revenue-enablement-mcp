@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="/assets/helix.css?v=5a5090e11c">
 <link rel="stylesheet" href="/assets/jtbd.css?v=c58d595f2b">
 <link rel="stylesheet" href="/assets/helix-report.css?v=f78ed582b4">
-<link rel="stylesheet" href="/assets/helix-look.css?v=a433d954b5">
+<link rel="stylesheet" href="/assets/helix-look.css?v=9b219b40a1">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -252,7 +252,7 @@
 }
 </script>
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
-<script src="/assets/look.js?v=c79f7e788f" defer></script>
+<script src="/assets/look.js?v=27a748b492" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
 </head>
 <body>
@@ -277,7 +277,7 @@
   <h2 id="sample-h">What you get</h2>
   <p class="hx-sample-note">This sample is a made up example, built from the inputs behind <em>Fill in an example</em>. It shows part of one section of the answer.</p>
   <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">Discovery Questions (Landmines)</h3>
-<p>Ask these as open questions, so the buyer finds the gaps of your first competitor in their own evaluation. The weak points are your notes and are never read out. For each answer, ask to see it live on the buyer&#39;s own data, not on a slide.</p>
+<p>Ask these as open questions, so the buyer finds the gaps of an enterprise route optimisation suite in their own evaluation. The weak points are your notes and are never read out. For each answer, ask to see it live on the buyer&#39;s own data, not on a slide.</p>
 <h4 class="hxr-h4">What the buyer told you matters</h4>
 <ul>
 <li>No priorities were given, so there is no question here yet.</li>
@@ -286,6 +286,8 @@
 <ul>
 <li>&quot;Which part of the day goes wrong most often, and what does it cost?&quot;</li>
 <li>&quot;What happens when plans change after work has started?&quot;</li>
+<li>&quot;How do you plan routes today, and how often does a dispatcher re plan during the day?&quot;</li>
+<li>&quot;What happens when an order, a driver or a road changes after the vehicles have left?&quot;</li>
 </ul></div>
   <p class="hx-sample-more"><a href="#ex-h">See the full example answer</a> or <a href="#run">run it with your own details</a>.</p>
 </section>
@@ -294,7 +296,7 @@
   <div class="win hx-form-win"><div class="win-bar"><span class="t">Run Competitive Trap Setter</span><span class="wb" aria-hidden="true"><i></i><i></i></span></div><form class="hx-form" method="post" action="/api/tools/competitive_trap_setter" data-tool="competitive_trap_setter" data-title="Competitive Trap Setter"><p class="hx-help">You need: Competitor, Your solution. You can add: Competitor weaknesses, Your strengths, Evaluation stage, Buyer priorities, Buyer persona, Trap type, Business model, Your sector.</p>
 <div class="hx-field"><label for="f-competitor">Competitor <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-competitor" name="competitor" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-competitor-help"></textarea><p class="hx-help" id="f-competitor-help">Primary competitor to position against</p></div>
 <div class="hx-field"><label for="f-competitor_weaknesses">Competitor weaknesses <span class="hx-opt">(optional)</span></label><textarea id="f-competitor_weaknesses" name="competitor_weaknesses" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-competitor_weaknesses-help"></textarea><p class="hx-help" id="f-competitor_weaknesses-help">Known competitor weaknesses</p></div>
-<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
+<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Yroute planning software for last-mile delivery/solution</p></div>
 <div class="hx-field"><label for="f-your_strengths">Your strengths <span class="hx-opt">(optional)</span></label><textarea id="f-your_strengths" name="your_strengths" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-your_strengths-help"></textarea><p class="hx-help" id="f-your_strengths-help">Your key differentiators</p></div>
 <div class="hx-field"><label for="f-evaluation_stage">Evaluation stage <span class="hx-opt">(optional)</span></label><select id="f-evaluation_stage" name="evaluation_stage" data-kind="string" aria-describedby="f-evaluation_stage-help"><option value="">Not specified</option><option value="early">Early</option><option value="mid">Mid</option><option value="late">Late</option><option value="finalist">Finalist</option></select><p class="hx-help" id="f-evaluation_stage-help">Stage of competitive evaluation</p></div>
 <div class="hx-field"><label for="f-buyer_priorities">Buyer priorities <span class="hx-opt">(optional)</span></label><textarea id="f-buyer_priorities" name="buyer_priorities" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-buyer_priorities-help"></textarea><p class="hx-help" id="f-buyer_priorities-help">What the buyer cares most about</p></div>
@@ -310,7 +312,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"competitor": "your first competitor", "your_solution": "our product", "evaluation_stage": "mid", "trap_type": "discovery_questions", "buyer_persona": "Head of Last-Mile Operations", "your_strengths": "Live in six weeks without IT help\nCleans unstructured addresses automatically\nRe-plans routes during the day", "competitor_weaknesses": "Months of setup before the first route\nStruggles with unstructured addresses"}</script></div>
+  <script type="application/json" data-example>{"competitor": "an enterprise route optimisation suite", "your_solution": "route planning software for last-mile delivery", "evaluation_stage": "mid", "trap_type": "discovery_questions", "buyer_persona": "Head of Last-Mile Operations", "your_strengths": "Live in six weeks without IT help\nCleans unstructured addresses automatically\nRe-plans routes during the day", "competitor_weaknesses": "Months of setup before the first route\nStruggles with unstructured addresses", "business_model": "saas", "your_sector": "logistics_tech"}</script></div>
 </section>
 
 <section class="hx-section hx-wash" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -332,7 +334,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">Generated on 2 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">Generated on 12 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -340,12 +342,17 @@
       <p class="hxr-meta"><span>Made with Competitive Trap Setter by Helix GTM Consulting</span><span>Based on the made-up example inputs</span><span>https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/</span></p>
     </header>
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
-    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Competitive Positioning: our product vs your first competitor</h4>
+    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Competitive Positioning: route planning software for last-mile delivery vs an enterprise route optimisation suite</h4>
 <h5 class="hxr-h3">The set-up</h5>
-<p>The product is in a mid stage evaluation against your first competitor. That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer&#39;s own experience with them; there is no single contract or reference list to ask about. What you said you sell: our product.</p>
-<p><em>Sector: not clear from your inputs (name the industry for sector notes). Business model: not stated. Tell us how you charge and the plan will adjust.</em></p>
-<p>Billing dependent steps are conditional: trials, seats and recurring renewals require a subscription; a statement of work requires a services contract; site or link commitments require connectivity billing. Confirm the applicable choice before using those steps.</p>
+<p>The route planning software is in a mid stage evaluation against an enterprise route optimisation suite. That describes a kind of tool rather than one named vendor, so the questions ask about tools of that kind and about the buyer&#39;s own experience with them; there is no single contract or reference list to ask about. What you said you sell: route planning software for last-mile delivery.</p>
+<p><em>Sector: from your choice: logistics tech, last mile delivery. Business model: software subscription (from your answer).</em></p>
 <p><strong>Who is evaluating:</strong> Head of Last-Mile Operations. Owner: the account owner with Head of Last-Mile Operations. Before the next comparison meeting, ask which of the supplied buyer priorities decides between the named alternatives. Check: record the buyer’s criterion, the evidence for each option and who approves it.</p>
+<h6 class="hxr-h4">Sector notes: logistics tech, last mile delivery</h6>
+<ul>
+<li><strong>Who usually decides:</strong> The COO or Head of Supply Chain signs; the Head of Logistics or Last Mile Operations champions; fleet and dispatch managers use it daily; IT checks the fit with the transport, warehouse and order systems; finance checks the cost per delivery case.</li>
+<li><strong>Words this sector&#39;s buyers use:</strong> dispatch, fleet, last mile, route plan, first attempt delivery, proof of delivery, third party logistics provider, cost per delivery, delivery SLA, delivery window. Use them where they are true for the prospect.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
+</ul>
 <h6 class="hxr-h4">Your notes (not for the buyer)</h6>
 <p><strong>Your strengths</strong></p>
 <ul>
@@ -353,14 +360,14 @@
 <li>Cleans unstructured addresses automatically</li>
 <li>Re-plans routes during the day</li>
 </ul>
-<p><strong>Weak points of your first competitor</strong></p>
+<p><strong>Weak points of an enterprise route optimisation suite</strong></p>
 <ul>
 <li>Months of setup before the first route</li>
 <li>Struggles with unstructured addresses</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Discovery Questions (Landmines)</h5>
-<p>Ask these as open questions, so the buyer finds the gaps of your first competitor in their own evaluation. The weak points are your notes and are never read out. For each answer, ask to see it live on the buyer&#39;s own data, not on a slide.</p>
+<p>Ask these as open questions, so the buyer finds the gaps of an enterprise route optimisation suite in their own evaluation. The weak points are your notes and are never read out. For each answer, ask to see it live on the buyer&#39;s own data, not on a slide.</p>
 <h6 class="hxr-h4">What the buyer told you matters</h6>
 <ul>
 <li>No priorities were given, so there is no question here yet.</li>
@@ -369,26 +376,38 @@
 <ul>
 <li>&quot;Which part of the day goes wrong most often, and what does it cost?&quot;</li>
 <li>&quot;What happens when plans change after work has started?&quot;</li>
+<li>&quot;How do you plan routes today, and how often does a dispatcher re plan during the day?&quot;</li>
+<li>&quot;What happens when an order, a driver or a road changes after the vehicles have left?&quot;</li>
 </ul>
 <h6 class="hxr-h4">Capability Landmines</h6>
-<p><strong>Weak point 1 of your first competitor (your note, not for the buyer):</strong> Months of setup before the first route<br><strong>Landmine Question:</strong> &quot;How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?&quot;<br><strong>Then show:</strong> Re-plans routes during the day</p>
-<p><strong>Weak point 2 of your first competitor (your note, not for the buyer):</strong> Struggles with unstructured addresses<br><strong>Landmine Question:</strong> &quot;How does each option cope with unstructured addresses?&quot;<br><strong>Then show:</strong> Cleans unstructured addresses automatically</p>
-<h6 class="hxr-h4">Questions about your first competitor</h6>
+<p><strong>Weak point 1 of an enterprise route optimisation suite (your note, not for the buyer):</strong> Months of setup before the first route<br><strong>Landmine Question:</strong> &quot;How long from signing to the first real result in each option, and what do you need to have ready? Could each show it on your own data?&quot;<br><strong>Then show:</strong> Re-plans routes during the day</p>
+<p><strong>Weak point 2 of an enterprise route optimisation suite (your note, not for the buyer):</strong> Struggles with unstructured addresses<br><strong>Landmine Question:</strong> &quot;How does each option cope with unstructured addresses?&quot;<br><strong>Then show:</strong> Cleans unstructured addresses automatically</p>
+<h6 class="hxr-h4">Questions about an enterprise route optimisation suite</h6>
 <ul>
 <li>&quot;Which tools of that kind have you tried or shortlisted, and what did the first demo not show?&quot;</li>
-<li>&quot;What does keeping your first competitor running cost you in a year, in people&#39;s time and in fees?&quot;</li>
+<li>&quot;What does keeping an enterprise route optimisation suite running cost you in a year, in people&#39;s time and in fees?&quot;</li>
 <li>&quot;What did you have to work around, and who does that work?&quot;</li>
 </ul>
 <hr>
 <h5 class="hxr-h3">Stage-Specific Tactics</h5>
 <h6 class="hxr-h4">Mid Stage Recommendations</h6>
-<p>Make sure your strongest criterion is one of the live tests. Let the buyer meet the limits of your first competitor in their own tests.</p>
+<p>Make sure your strongest criterion is one of the live tests, and bring the proof that lands in this sector: a before and after of cost per delivery or first attempt delivery at one hub, measured over a full cycle of busy and quiet weeks. Let the buyer meet the limits of an enterprise route optimisation suite in their own tests.</p>
+<h5 class="hxr-h3">Reading the answer</h5>
+<p>The questions support a buyer controlled comparison of route planning software for last-mile delivery and an enterprise route optimisation suite. A supplied weakness is a hypothesis, not a verified fact about the alternative. Test the same case and acceptance criterion on both. The conclusion needs review if the alternative passes the agreed test, the proposed strength cannot be demonstrated, or the buyer does not value the distinction.</p>
+<h5 class="hxr-h3">Decisions by role</h5>
+<p>Proposed owners. Confirm the named person before acting.</p>
+<p>Founder: ask the buyer whether &quot;one of the listed strengths&quot; changes their decision before endorsing the comparison; drop the distinction if it is not material.</p>
+<p>CEO: approve only the effort needed for an equal scope comparison of route planning software for last-mile delivery and an enterprise route optimisation suite; check that costs and test conditions are recorded for both.</p>
+<p>CMO: verify &quot;the claimed alternative weakness&quot; before using it externally; keep an unverified prospect observation out of factual claims about an enterprise route optimisation suite.</p>
+<p>CRO: ask the buyer to run the same example through an enterprise route optimisation suite and route planning software for last-mile delivery with an agreed pass condition; record contrary results as well as failures.</p>
+<p>Demand generation head: use the buyer validated criterion for route planning software for last-mile delivery to review a fresh audience sample; do not use the unverified weakness of an enterprise route optimisation suite as a targeting fact.</p>
 <h5 class="hxr-h3">To sharpen this, give:</h5>
 <p>What was not given, and what each input would change:</p>
 <ul>
 <li><code>buyer priorities</code>: it would add questions on what the buyer told you matters, and tie each weak point to one of them.</li>
 </ul>
-<p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
+<p>Suggested timings, lengths and counts: adjust them to your own.</p>
+<p>Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/competitive-trap-setter/</span></footer>
   </article>
   <p class="figcap">How the answer is laid out, using the sections the tool prints. Early, mid, late and finalist are the stages you can choose; the answer gives tactics for the stage you pick.</p>
@@ -399,7 +418,7 @@
   <p class="hx-prose">The tool pairs your Your strengths and Competitor weaknesses into open Discovery Questions (Landmines) (What the buyer told you matters, From the evaluator's role and the sector, Capability Landmines, and Questions about &lt;competitor&gt;) plus Stage-Specific Tactics for your evaluation stage (Early, Mid, Late, or Finalist). It keeps your competitor weakness notes under Your notes (not for the buyer) so reps never read them aloud as attacks; instead, reps ask open questions and ask to see every claim demonstrated live on the buyer's own data.</p>
   <h3 id="next-h">What to do next</h3>
   <ul class="hx-prose">
-    <li><strong>Founder:</strong> Check Capability Landmines to make sure every question you ask points directly to a live workflow your product can run on the buyer's own data right after you ask it.</li>
+    <li><strong>Founder:</strong> Check Capability Landmines to make sure every question you ask points directly to a live workflow yroute planning software for last-mile delivery can run on the buyer's own data right after you ask it.</li>
     <li><strong>CEO:</strong> Insist that the team never disparages a rival in writing or on a call; let the buyer discover the competitor's setup time or data limits in their own live test.</li>
     <li><strong>CMO:</strong> Add the buyer's stated evaluation criteria under Buyer priorities and specify your Your sector and Business model so the landmine questions tie directly to what the buyer grades.</li>
     <li><strong>CRO:</strong> Coach the account owner on the Who is evaluating check before the next comparison meeting: confirm which buyer priority decides between the options, what evidence proves it, and who approves it.</li>
@@ -421,7 +440,7 @@
 <section class="hx-section" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use the Competitive Trap Setter tool with an AI assistant?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude, ChatGPT or Gemini</a>), then ask in plain words. Here is a prompt built from the tested example:</p>
-  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s Competitive Trap Setter tool. competitor: your first competitor; your solution: our product; evaluation stage: Mid; trap type: Discovery questions; buyer persona: Head of Last-Mile Operations; your strengths: live in six weeks without IT help, cleans unstructured addresses automatically and re-plans routes during the day; competitor weaknesses: months of setup before the first route and struggles with unstructured addresses. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
+  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s Competitive Trap Setter tool. competitor: an enterprise route optimisation suite; your solution: route planning software for last-mile delivery; evaluation stage: Mid; trap type: Discovery questions; buyer persona: Head of Last-Mile Operations; your strengths: live in six weeks without IT help, cleans unstructured addresses automatically and re-plans routes during the day; competitor weaknesses: months of setup before the first route and struggles with unstructured addresses. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
 </section>
 
 <section class="hx-section hx-wash" aria-labelledby="works-h">
@@ -441,8 +460,8 @@
   <p class="hx-prose">MCP tool name: <code>competitive_trap_setter</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/competitive_trap_setter</code> with this JSON body (see <a href="/docs/#competitive-trap-setter">How it works</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
-    &quot;competitor&quot;: &quot;your first competitor&quot;,
-    &quot;your_solution&quot;: &quot;our product&quot;,
+    &quot;competitor&quot;: &quot;an enterprise route optimisation suite&quot;,
+    &quot;your_solution&quot;: &quot;route planning software for last-mile delivery&quot;,
     &quot;evaluation_stage&quot;: &quot;mid&quot;,
     &quot;trap_type&quot;: &quot;discovery_questions&quot;,
     &quot;buyer_persona&quot;: &quot;Head of Last-Mile Operations&quot;,

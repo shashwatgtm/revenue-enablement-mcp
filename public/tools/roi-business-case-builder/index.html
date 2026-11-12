@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="/assets/helix.css?v=5a5090e11c">
 <link rel="stylesheet" href="/assets/jtbd.css?v=c58d595f2b">
 <link rel="stylesheet" href="/assets/helix-report.css?v=f78ed582b4">
-<link rel="stylesheet" href="/assets/helix-look.css?v=a433d954b5">
+<link rel="stylesheet" href="/assets/helix-look.css?v=9b219b40a1">
 <script type="application/ld+json">{
  "@context": "https://schema.org",
  "@graph": [
@@ -283,7 +283,7 @@
  ]
 }</script>
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
-<script src="/assets/look.js?v=c79f7e788f" defer></script>
+<script src="/assets/look.js?v=27a748b492" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
 </head>
 <body>
@@ -310,9 +310,9 @@
 <section class="hx-section hx-sample hx-wash-top" aria-labelledby="sample-h">
   <h2 id="sample-h">What you get</h2>
   <p class="hx-sample-note">This sample is a made up example, built from the inputs behind <em>Fill in an example</em>. It shows part of one section of the answer.</p>
-  <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">What the buyer pays</h3>
-<p>At the annual price you gave ($90,000), the value the buyer sees must be above $90,000 a year for any positive return, and above $180,000 a year to return the price twice over. Over three years the buyer pays $270,000 before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first.</p>
-<p><code>annual revenue</code> and <code>employee count</code> describe the customer&#39;s size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.</p></div>
+  <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">ROI Analysis</h3>
+<h4 class="hxr-h4">Total Annual Value</h4>
+<div class="hx-table"><table><thead><tr><th>Category</th><th>Annual Value</th></tr></thead><tbody><tr><td><strong>Total Quantified Value</strong></td><td><strong>$180,000</strong></td></tr><tr><td><strong>Annual Investment</strong></td><td>$90,000</td></tr><tr><td><strong>Net Annual Benefit</strong></td><td>$90,000</td></tr></tbody></table></div></div>
   <p class="hx-sample-more"><a href="#ex-h">See the full example answer</a> or <a href="#run">run it with your own details</a>.</p>
 </section>
 
@@ -323,7 +323,7 @@
 <div class="hx-field"><label for="f-company_size">Company size <span class="hx-opt">(optional)</span></label><select id="f-company_size" name="company_size" data-kind="string" aria-describedby="f-company_size-help"><option value="">Not specified</option><option value="startup">Startup</option><option value="smb">Small and mid-size business</option><option value="mid_market">Mid-market</option><option value="enterprise">Enterprise</option></select><p class="hx-help" id="f-company_size-help">Company size tier</p></div>
 <div class="hx-field"><label for="f-annual_revenue">Annual revenue <span class="hx-opt">(optional)</span></label><input id="f-annual_revenue" name="annual_revenue" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-annual_revenue-help"><p class="hx-help" id="f-annual_revenue-help">Customer annual revenue</p></div>
 <div class="hx-field"><label for="f-employee_count">Employee count <span class="hx-opt">(optional)</span></label><input id="f-employee_count" name="employee_count" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-employee_count-help"><p class="hx-help" id="f-employee_count-help">Number of employees</p></div>
-<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Your product/solution</p></div>
+<div class="hx-field"><label for="f-your_solution">Your solution <span class="hx-req" aria-hidden="true">*</span></label><textarea id="f-your_solution" name="your_solution" rows="3" maxlength="6000" data-kind="string" required aria-required="true" aria-describedby="f-your_solution-help"></textarea><p class="hx-help" id="f-your_solution-help">Yroute planning software for last-mile delivery, sold as an annual subscription/solution</p></div>
 <div class="hx-field"><label for="f-solution_price">Solution price <span class="hx-opt">(optional)</span></label><input id="f-solution_price" name="solution_price" type="number" step="any" inputmode="decimal" min="0" data-kind="number" aria-describedby="f-solution_price-help"><p class="hx-help" id="f-solution_price-help">Annual cost of your solution</p></div>
 <div class="hx-field"><label for="f-primary_value_driver">Primary value driver <span class="hx-req" aria-hidden="true">*</span></label><select id="f-primary_value_driver" name="primary_value_driver" data-kind="string" required aria-required="true" aria-describedby="f-primary_value_driver-help"><option value="" disabled selected>Choose one</option><option value="revenue_increase">Revenue increase</option><option value="cost_reduction">Cost reduction</option><option value="productivity">Productivity</option><option value="risk_mitigation">Risk mitigation</option><option value="multiple">Multiple</option></select><p class="hx-help" id="f-primary_value_driver-help">Primary value category</p></div>
 <div class="hx-field"><label for="f-known_metrics">Known metrics <span class="hx-opt">(optional)</span></label><textarea id="f-known_metrics" name="known_metrics" rows="3" maxlength="6000" data-kind="string" aria-describedby="f-known_metrics-help"></textarea><p class="hx-help" id="f-known_metrics-help">Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</p></div>
@@ -341,7 +341,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"customer_name": "the retail customer", "industry": "Retail", "your_solution": "our product", "primary_value_driver": "cost_reduction", "company_size": "mid_market", "annual_revenue": "60000000", "employee_count": "800", "solution_price": "90000"}</script></div>
+  <script type="application/json" data-example>{"customer_name": "a mid-size retailer with its own delivery fleet", "industry": "Retail", "your_solution": "route planning software for last-mile delivery, sold as an annual subscription", "primary_value_driver": "cost_reduction", "company_size": "mid_market", "annual_revenue": "60000000", "employee_count": "800", "solution_price": "90000", "current_annual_cost": "1200000", "expected_improvement_percent": "15", "known_metrics": "About 1 in 6 deliveries fail on the first attempt; each failed delivery costs about $9 to re-attempt", "current_process": "Each store plans routes in its own spreadsheet every morning", "your_sector": "logistics_tech"}</script></div>
 </section>
 
 <section class="hx-section hx-wash" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -363,7 +363,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">Generated on 2 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">Generated on 12 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -371,41 +371,107 @@
       <p class="hxr-meta"><span>Made with ROI Business Case Builder by Helix GTM Consulting</span><span>Based on the made-up example inputs</span><span>https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/</span></p>
     </header>
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
-    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">ROI Business Case: the retail customer</h4>
-<p><em>Your inputs are shown as you gave them. No ROI percentage, payback period or headline return is shown, because no buyer cost or value figure was given and this tool does not make one up. What follows is the business case laid out for the retail customer, so that every number their finance contact will ask for has a place.</em></p>
-<h5 class="hxr-h3">The case in brief</h5>
-<p>Our product.</p>
-<p><em>Sector: not clear from your inputs (name the industry for sector notes). Business model: not stated. Tell us how you charge and the plan will adjust.</em></p>
-<h5 class="hxr-h3">What the buyer pays</h5>
-<p>At the annual price you gave ($90,000), the value the buyer sees must be above $90,000 a year for any positive return, and above $180,000 a year to return the price twice over. Over three years the buyer pays $270,000 before any one-time cost. This is arithmetic on your price and says nothing about the value. Amounts are in dollars, as the price field is; if your price is in another currency, convert it first.</p>
-<p><code>annual revenue</code> and <code>employee count</code> describe the customer&#39;s size. They are shown below as you gave them, but this tool does not turn them into a value: that would need a rate or share only the buyer can give.</p>
-<h5 class="hxr-h3">What this buyer will check</h5>
-<p>In retail and e-commerce, the losses a risk case can count are a failed peak season, lost or late orders, returns and chargebacks. Operations, finance and the technology lead check the cost per order, the peak season and the link to the store platform.</p>
-<h5 class="hxr-h3">Value drivers for retail</h5>
-<p>The driver you chose is described below.</p>
-<h6 class="hxr-h4">Cost reduction</h6>
-<p>Less money spent on the work or on the failure it causes today: hours, rework, errors, outside spend.</p>
+    <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">ROI Business Case: a mid-size retailer with its own delivery fleet</h4>
+<p><em>Your inputs are shown as you gave them. Every other figure comes from this tool&#39;s example assumptions (not from published research or the customer&#39;s data) and is marked as an example: replace those figures with the customer&#39;s own.</em></p>
+<h5 class="hxr-h3">Executive Summary</h5>
+<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td><strong>Customer</strong></td><td>a mid-size retailer with its own delivery fleet</td></tr><tr><td><strong>Industry</strong></td><td>Retail</td></tr><tr><td><strong>Company Size</strong></td><td>mid market</td></tr><tr><td><strong>Annual Revenue</strong></td><td>$60,000,000 (your input)</td></tr><tr><td><strong>Employees</strong></td><td>800 (your input)</td></tr><tr><td><strong>Solution</strong></td><td>route planning software for last-mile delivery, sold as an annual subscription</td></tr><tr><td><strong>Confidence Level</strong></td><td>Medium: the value comes from your own figures (15% of the current annual cost you supplied ($1,200,000)); confirm them with the buyer</td></tr></tbody></table></div>
+<hr>
+<h5 class="hxr-h3">Investment Summary</h5>
+<div class="hx-table"><table><thead><tr><th>Investment</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead><tbody><tr><td><strong>Solution Cost</strong></td><td>$90,000</td><td>$90,000</td><td>$90,000</td></tr><tr><td><strong>Implementation</strong> (Example figure: replace with your own)</td><td>$13,500</td><td>$0</td><td>$0</td></tr><tr><td><strong>Total Investment</strong></td><td>$103,500 (Example figure: replace with your own)</td><td>$90,000</td><td>$90,000</td></tr></tbody></table></div>
+<hr>
+<h5 class="hxr-h3">Value Breakdown</h5>
+<h6 class="hxr-h4">Value From Your Figures</h6>
+<p><strong>Calculation:</strong></p>
 <ul>
-<li><strong>Counted as:</strong> what the problem or the current process costs the buyer in a year (current annual cost) and the share they expect to remove (expected improvement percent).</li>
+<li>Annual value: 15% of the current annual cost you supplied ($1,200,000) = <strong>$180,000</strong></li>
+<li>Check with the buyer: does $1,200,000 cover the whole cost of the problem today, and is 15% the improvement they expect, not the best case?</li>
 </ul>
-<h5 class="hxr-h3">How the return will be worked out</h5>
-<p>No return is shown yet because the two numbers it rests on can only come from the buyer: what the problem costs them in a year, and the share of that cost our product would remove. This tool does not fill them with example hours, headcount, rates or industry averages. Once the buyer gives them, the yearly value is that cost times that share (or the yearly value the buyer states directly). The return is that value less the price you gave ($90,000 a year), compared with the price; payback is the number of months of value it takes to cover the price; and the three-year figure is three years of value less three years of price. Each is also shown at half and at one and a half times the value, so the buyer sees how much the case depends on the share they chose.</p>
-<h5 class="hxr-h3">The numbers to ask for</h5>
+<p><em>Not used in this calculation: the current process and known metrics you supplied (listed under Assumptions). Replace the example figures with that data.</em></p>
+<hr>
+<h5 class="hxr-h3">ROI Analysis</h5>
+<h6 class="hxr-h4">Total Annual Value</h6>
+<div class="hx-table"><table><thead><tr><th>Category</th><th>Annual Value</th></tr></thead><tbody><tr><td><strong>Total Quantified Value</strong></td><td><strong>$180,000</strong></td></tr><tr><td><strong>Annual Investment</strong></td><td>$90,000</td></tr><tr><td><strong>Net Annual Benefit</strong></td><td>$90,000</td></tr></tbody></table></div>
+<h6 class="hxr-h4">Key Metrics</h6>
+<p>Example figures: replace with your own.</p>
+<div class="hx-table"><table><thead><tr><th>Metric</th><th>Value</th><th>Example threshold</th></tr></thead><tbody><tr><td><strong>ROI</strong></td><td>100%</td><td>&gt;100% considered strong</td></tr><tr><td><strong>Payback Period</strong></td><td>6.0 months</td><td>&lt;12 months considered fast</td></tr><tr><td><strong>3-Year Net Value</strong></td><td>$270,000</td><td>-</td></tr><tr><td><strong>Value/Cost Ratio</strong></td><td>2.0x</td><td>&gt;3x considered excellent</td></tr></tbody></table></div>
+<p>ROI and three-year net value use the recurring annual price and leave out one-time implementation costs. The payback ratio is shown only when annual value exceeds that recurring price; otherwise no payback is claimed. It is a simple annual price divided by annual value ratio, not a cash-flow forecast.</p>
+<hr>
+<h5 class="hxr-h3">Assumptions</h5>
+<h6 class="hxr-h4">Key Assumptions</h6>
 <ol>
-<li value="1"><strong>What does the problem cost the buyer in a year today</strong>, in people&#39;s time, rework, errors and outside spend? This is <code>current annual cost</code>.</li>
-<li value="2"><strong>What share of that cost does the buyer expect our product to remove</strong>, and what is that based on (their own history, a pilot)? This is <code>expected improvement percent</code>.</li>
-<li value="3"><strong>If the buyer can value the result directly, what is it worth to them in a year?</strong> This is <code>annual value estimate</code>, and it can replace the two numbers above.</li>
+<li value="1">Implementation timeline: 90 days (Example figure: replace with your own)</li>
+<li value="2">Full value realization: 6-12 months post-implementation (Example figure: replace with your own)</li>
+<li value="3">Benchmark set used for hourly labor cost and revenue per employee: Retail</li>
+<li value="4">Company size multiplier: 1x (mid market), not used here, because revenue and employees were both supplied</li>
 </ol>
-<p>Then run ROI Business Case Builder again with them.</p>
-<p><strong>To sharpen this case, give:</strong></p>
+<h6 class="hxr-h4">Current State</h6>
+<p>Each store plans routes in its own spreadsheet every morning</p>
+<h6 class="hxr-h4">Customer-Provided Metrics</h6>
+<p>About 1 in 6 deliveries fail on the first attempt; each failed delivery costs about $9 to re-attempt</p>
+<h6 class="hxr-h4">About These Figures</h6>
+<p>The assumptions above are examples built into this tool, not findings from published research or from the customer&#39;s data. Replace them with the customer&#39;s own figures before you share this business case.</p>
+<hr>
+<h5 class="hxr-h3">Sensitivity Analysis</h5>
+<p>Example figures: replace with your own.</p>
+<h6 class="hxr-h4">Conservative Scenario (50% of projected value)</h6>
 <ul>
-<li><code>current process</code> (it would change the cost lines to price: one line for each way of working it replaces)</li>
-<li><code>known metrics</code> (it would change the reference points: results you can quote, kept apart from the buyer&#39;s figures)</li>
+<li>Annual Value: $90,000</li>
+<li>ROI: 0%</li>
+<li>Payback: No payback: annual value does not exceed the recurring annual price</li>
 </ul>
-<h5 class="hxr-h3">What you gave</h5>
-<div class="hx-table"><table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr><td><strong>Customer</strong></td><td>the retail customer</td></tr><tr><td><strong>Industry</strong></td><td>Retail (used for wording only; no industry figures are applied)</td></tr><tr><td><strong>Company Size</strong></td><td>mid market</td></tr><tr><td><strong>Annual Revenue</strong></td><td>$60,000,000 (your input)</td></tr><tr><td><strong>Employees</strong></td><td>800 (your input)</td></tr><tr><td><strong>Solution</strong></td><td>our product</td></tr><tr><td><strong>Annual price</strong></td><td>$90,000 (your input)</td></tr><tr><td><strong>Confidence Level</strong></td><td>Not rated: no buyer figure was given, so no value or return is calculated</td></tr></tbody></table></div>
-<p>Next steps: put the numbers above to the buyer and write down where each one comes from; run the tool again with them; have the buyer&#39;s finance contact check the figures before the case goes to the economic buyer.</p>
-<p>Suggested timings, lengths and counts: adjust them to your own.</p></div></details>
+<h6 class="hxr-h4">Aggressive Scenario (150% of projected value)</h6>
+<ul>
+<li>Annual Value: $270,000</li>
+<li>ROI: 200%</li>
+<li>Payback: 4.0 months</li>
+</ul>
+<hr>
+<h5 class="hxr-h3">Risk Factors &amp; Mitigation</h5>
+<div class="hx-table"><table><thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td>Delayed implementation</td><td>Lower Year 1 ROI</td><td>Phase approach, quick wins first</td></tr><tr><td>User adoption issues</td><td>Reduced value capture</td><td>Training, change management</td></tr><tr><td>Integration complexity</td><td>Higher implementation cost</td><td>Technical validation upfront</td></tr><tr><td>Market changes</td><td>Assumption invalidity</td><td>Replace the example assumptions with customer data</td></tr></tbody></table></div>
+<hr>
+<h5 class="hxr-h3">Next Steps</h5>
+<ol>
+<li value="1"><strong>Validate assumptions</strong>: Schedule discovery to confirm metrics</li>
+<li value="2"><strong>Customize calculations</strong>: Adjust with customer-provided data</li>
+<li value="3"><strong>Build executive presentation</strong>: Create 1-page summary for CFO</li>
+<li value="4"><strong>Identify champions</strong>: Find stakeholders who benefit from ROI</li>
+</ol>
+<hr>
+<h5 class="hxr-h3">One-Page Executive Summary</h5>
+<h6 class="hxr-h4">Why route planning software for last-mile delivery, sold as an annual subscription for a mid-size retailer with its own delivery fleet</h6>
+<p><strong>The Problem:</strong><br>Each store plans routes in its own spreadsheet every morning</p>
+<p><strong>The Solution:</strong><br>route planning software for last-mile delivery, sold as an annual subscription addresses these challenges.</p>
+<p><strong>The Value:</strong><br>Example figures: replace with your own.</p>
+<ul>
+<li><strong>$180,000</strong> in annual value</li>
+<li><strong>100%</strong> ROI</li>
+<li><strong>6.0 months</strong> payback</li>
+</ul>
+<p><strong>Why Now:</strong></p>
+<ul>
+<li>Cost of delay: $15,000/month (Example figure: replace with your own)</li>
+<li>Implementation timeline: 90 days (Example figure: replace with your own)</li>
+</ul>
+<hr>
+<p><em>Confidence: medium. The value comes from the figures you supplied; confirm them with the buyer before sharing.</em></p>
+<h6 class="hxr-h4">Sector notes: logistics tech, last mile delivery</h6>
+<ul>
+<li><strong>What this sector measures:</strong> cost per delivery, first attempt delivery rate, on time delivery, deliveries per vehicle per day, vehicle utilisation, failed delivery and return rate, dispatch planning time.</li>
+<li><strong>Words this sector&#39;s buyers use:</strong> dispatch, fleet, last mile, route plan, first attempt delivery, proof of delivery, third party logistics provider, cost per delivery, delivery SLA, delivery window. Use them where they are true for the prospect.</li>
+<li><strong>A proof point that lands:</strong> A before and after of cost per delivery or first attempt delivery at one hub, measured over a full cycle of busy and quiet weeks.</li>
+<li><strong>Turn one of these into the value:</strong> ask the buyer what cost per delivery costs them today, then use current annual cost and expected improvement percent.</li>
+</ul>
+<p>Suggested timings, lengths and counts: adjust them to your own.</p>
+<h5 class="hxr-h3">Reading the answer</h5>
+<p>The calculation supports checking the supplied route planning software for last-mile delivery economics. A calculated benefit is conditional on the supplied scope, price and improvement. Released capacity is not cash unless a cost is removed or additional contribution is evidenced. The conclusion needs review if the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit.</p>
+<h5 class="hxr-h3">Decisions by role</h5>
+<p>Proposed owners. Confirm the named person before acting.</p>
+<p>Founder: challenge whether the 15% improvement is achievable for route planning software for last-mile delivery before endorsing the case; revise scope or price if annual value does not cover the recurring fee.</p>
+<p>CEO: have finance verify the 1,200,000 annual cost baseline, 90,000 price period and implementation cost before committing; approve only a benefit that finance can substantiate.</p>
+<p>CMO: check &quot;About 1 in 6 deliveries fail on the first attempt; each failed delivery costs about $9 to re-attempt&quot; before publishing a return claim for route planning software for last-mile delivery; do not present labour capacity as an approved cash saving.</p>
+<p>CRO: agree a buyer measurement of the 15% improvement against the 1,200,000 baseline before revising the proposal; require the same scope and period.</p>
+<p>Demand generation head: keep this route planning software for last-mile delivery case out of positive return campaigns until the buyer confirms realized benefit and the 90,000 price period; retain any negative economics alongside it.</p>
+<p>Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/</span></footer>
   </article>
   <p class="figcap">How the answer is laid out, using the sections the tool prints. These are example assumptions. Example figure: replace with your own.</p>
@@ -444,7 +510,7 @@
 <section class="hx-section hx-wash" aria-labelledby="ai-h">
   <h2 id="ai-h">How do I use the ROI Business Case Builder tool with an AI assistant?</h2>
   <p class="hx-prose">Add Revenue Enablement once (see <a href="/connect/">Use it in Claude, ChatGPT or Gemini</a>), then ask in plain words. Here is a prompt built from the tested example:</p>
-  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s ROI Business Case Builder tool. customer name: the retail customer; industry: Retail; your solution: our product; primary value driver: Cost reduction; company size: Mid-market; annual revenue: 60000000; employee count: 800; solution price: 90000. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
+  <blockquote class="hx-quote">My role is not stated. Ask me for my role first. Use Revenue Enablement&#x27;s ROI Business Case Builder tool. customer name: a mid-size retailer with its own delivery fleet; industry: Retail; your solution: route planning software for last-mile delivery, sold as an annual subscription; primary value driver: Cost reduction; company size: Mid-market; annual revenue: 60000000; employee count: 800; solution price: 90000. If this tool is unavailable, ask me to open its web page; do not invent its output. In Gemini CLI or Antigravity, use the Helix GTM Suite skills package for related guidance, without claiming to run this connector.</blockquote>
 </section>
 
 <section class="hx-section" aria-labelledby="works-h">
@@ -464,9 +530,9 @@
   <p class="hx-prose">MCP tool name: <code>roi_business_case_builder</code>. REST: <code>POST https://revenue-enablement.gtmhelix.com/api/tools/roi_business_case_builder</code> with this JSON body (see <a href="/docs/#roi-business-case-builder">How it works</a>):</p>
   <pre class="hx-code-block">{
   &quot;input&quot;: {
-    &quot;customer_name&quot;: &quot;the retail customer&quot;,
+    &quot;customer_name&quot;: &quot;a mid-size retailer with its own delivery fleet&quot;,
     &quot;industry&quot;: &quot;Retail&quot;,
-    &quot;your_solution&quot;: &quot;our product&quot;,
+    &quot;your_solution&quot;: &quot;route planning software for last-mile delivery, sold as an annual subscription&quot;,
     &quot;primary_value_driver&quot;: &quot;cost_reduction&quot;,
     &quot;company_size&quot;: &quot;mid_market&quot;,
     &quot;annual_revenue&quot;: 60000000,

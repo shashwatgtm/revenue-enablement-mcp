@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="/assets/helix.css?v=5a5090e11c">
 <link rel="stylesheet" href="/assets/jtbd.css?v=c58d595f2b">
 <link rel="stylesheet" href="/assets/helix-report.css?v=f78ed582b4">
-<link rel="stylesheet" href="/assets/helix-look.css?v=a433d954b5">
+<link rel="stylesheet" href="/assets/helix-look.css?v=9b219b40a1">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -252,7 +252,7 @@
 }
 </script>
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
-<script src="/assets/look.js?v=c79f7e788f" defer></script>
+<script src="/assets/look.js?v=27a748b492" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
 </head>
 <body>
@@ -278,16 +278,11 @@
   <h2 id="sample-h">What you get</h2>
   <p class="hx-sample-note">This sample is a made up example, built from the inputs behind <em>Fill in an example</em>. It shows part of one section of the answer.</p>
   <div class="hxr-body hx-result-body hx-sample-body"><h3 class="hxr-h3">Situation Analysis</h3>
-<div class="hx-table"><table><thead><tr><th>Factor</th><th>Value</th></tr></thead><tbody><tr><td><strong>Solution</strong></td><td>not supplied</td></tr><tr><td><strong>Deal Value</strong></td><td>$30,000</td></tr><tr><td><strong>Discount Requested</strong></td><td>20%</td></tr><tr><td><strong>Revenue at Risk</strong></td><td>$6,000</td></tr></tbody></table></div>
+<p><em>Sector: from your choice: logistics tech. Business model: software subscription (from your answer).</em></p>
+<div class="hx-table"><table><thead><tr><th>Factor</th><th>Value</th></tr></thead><tbody><tr><td><strong>Solution</strong></td><td>not supplied</td></tr><tr><td><strong>Deal Value</strong></td><td>$30,000</td></tr><tr><td><strong>Discount Requested</strong></td><td>20%</td></tr><tr><td><strong>Revenue at Risk</strong></td><td>$6,000</td></tr><tr><td><strong>Post-Discount Value</strong></td><td>$24,000</td></tr><tr><td><strong>Decision Timeline</strong></td><td>end of quarter</td></tr><tr><td><strong>Approval Authority</strong></td><td>CFO</td></tr></tbody></table></div>
 <h3 class="hxr-h3">Leverage Assessment</h3>
 <h4 class="hxr-h4">Your Leverage</h4>
-<p>Common leverage points: tick the ones that apply.</p>
-<ul>
-<li>Unique capabilities they need</li>
-<li>Time pressure (implementation timeline)</li>
-<li>Switching costs from current state</li>
-<li>Champions already invested</li>
-</ul></div>
+<p>Common leverage points: tick the ones that apply.</p></div>
   <p class="hx-sample-more"><a href="#ex-h">See the full example answer</a> or <a href="#run">run it with your own details</a>.</p>
 </section>
 
@@ -312,7 +307,7 @@
     </div>
     
   </form>
-  <script type="application/json" data-example>{"scenario": "discount_request", "deal_value": "30000", "discount_requested": "20", "decision_timeline": "end of quarter", "approval_authority": "CFO"}</script></div>
+  <script type="application/json" data-example>{"scenario": "discount_request", "deal_value": "30000", "discount_requested": "20", "decision_timeline": "end of quarter", "approval_authority": "CFO", "business_model": "saas", "value_delivered": "Failed first deliveries down from 1 in 6 to 1 in 10 in the pilot city", "your_sector": "logistics_tech"}</script></div>
 </section>
 
 <section class="hx-section hx-wash" id="result" aria-live="polite" aria-labelledby="result-h" hidden>
@@ -334,7 +329,7 @@
 
 <section class="hx-section" aria-labelledby="ex-h">
   <h2 id="ex-h">Example answer</h2>
-  <p class="hx-prose">Generated on 2 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
+  <p class="hx-prose">Generated on 12 November 2026 from this branch, with the inputs behind <em>Fill in an example</em>. Your own inputs give a different result.</p>
   <article class="hxr hxr-example" aria-labelledby="ex-t">
     <header class="hxr-head">
       <p class="hxr-tag">Revenue Enablement report</p>
@@ -344,7 +339,7 @@
     <div class="hxr-actions"><button type="button" class="hx-btn hx-btn-ghost" data-print>Print or save as PDF</button></div>
     <details class="hx-run"><summary>Show the full result</summary><div class="hxr-body hx-result-body hx-output"><h4 class="hxr-h2">Pricing Negotiation Guide: Discount Request: our solution</h4>
 <h5 class="hxr-h3">Situation Analysis</h5>
-<p><em>Sector: not clear from your inputs (name the industry for sector notes). Business model: not stated. Tell us how you charge and the plan will adjust.</em></p>
+<p><em>Sector: from your choice: logistics tech. Business model: software subscription (from your answer).</em></p>
 <div class="hx-table"><table><thead><tr><th>Factor</th><th>Value</th></tr></thead><tbody><tr><td><strong>Solution</strong></td><td>not supplied</td></tr><tr><td><strong>Deal Value</strong></td><td>$30,000</td></tr><tr><td><strong>Discount Requested</strong></td><td>20%</td></tr><tr><td><strong>Revenue at Risk</strong></td><td>$6,000</td></tr><tr><td><strong>Post-Discount Value</strong></td><td>$24,000</td></tr><tr><td><strong>Decision Timeline</strong></td><td>end of quarter</td></tr><tr><td><strong>Approval Authority</strong></td><td>CFO</td></tr></tbody></table></div>
 <hr>
 <h5 class="hxr-h3">Leverage Assessment</h5>
@@ -369,8 +364,8 @@
 <hr>
 <h5 class="hxr-h3">Negotiation Strategy</h5>
 <h6 class="hxr-h4">Rule #1: Never Discount Without Getting Something</h6>
-<p><strong>Acceptable Trades:</strong><br>Example figures: replace with your own.</p>
-<div class="hx-table"><table><thead><tr><th>What They Want</th><th>What You Ask For In Return</th></tr></thead><tbody><tr><td>The 20% discount</td><td>A longer term</td></tr><tr><td>The 20% discount</td><td>Payment upfront</td></tr><tr><td>The 20% discount</td><td>A wider scope</td></tr><tr><td>The 20% discount</td><td>A case study and reference rights</td></tr></tbody></table></div>
+<p><strong>Trade options to confirm:</strong><br>Example figures: replace with your own.</p>
+<div class="hx-table"><table><thead><tr><th>What They Want</th><th>What You Ask For In Return</th></tr></thead><tbody><tr><td>The 20% discount</td><td>A longer term (multi-year)</td></tr><tr><td>The 20% discount</td><td>Payment upfront</td></tr><tr><td>The 20% discount</td><td>More users or a wider rollout</td></tr><tr><td>The 20% discount</td><td>A case study and reference rights</td></tr></tbody></table></div>
 <h6 class="hxr-h4">Rule #2: Understand the Real Ask</h6>
 <p><strong>Discovery Questions:</strong></p>
 <ul>
@@ -381,8 +376,7 @@
 </ul>
 <h6 class="hxr-h4">Rule #3: Reframe Value, Not Price</h6>
 <p><strong>Value Reframe:</strong></p>
-<p>&quot;Before we discuss price, let&#39;s revisit the value we identified together. What does this problem cost you today, and what would it be worth to fix it? At $30,000, how does that compare?&quot;</p>
-<p>(Add value delivered to put the buyer&#39;s own value points here instead of a question.)</p>
+<p>&quot;Before we discuss price, let&#39;s revisit what this has already delivered: Failed first deliveries down from 1 in 6 to 1 in 10 in the pilot city.<br>At $30,000, is that result worth more to you than the 20% you are asking for?&quot;</p>
 <hr>
 <h5 class="hxr-h3">Tactical Responses</h5>
 <h6 class="hxr-h4">&quot;We need a better price&quot;</h6>
@@ -435,7 +429,24 @@
 <li value="2"><strong>Show your work</strong>: What you&#39;ve tried</li>
 <li value="3"><strong>Make a recommendation</strong>: Not just the percentage the buyer asked for</li>
 <li value="4"><strong>Get approval before offering</strong>: Never surprise leadership</li>
-</ol></div></details>
+</ol>
+<hr>
+<h6 class="hxr-h4">Sector notes: logistics tech</h6>
+<ul>
+<li><strong>Objections this sector often raises:</strong> we already have a system for this; integration effort; our operations team will not change how they work; the cost is hard to justify on our margins.</li>
+<li><strong>A proof point that lands:</strong> A before and after of on time delivery or cost per shipment on one lane, site or region, measured over a full cycle of busy and quiet weeks.</li>
+<li><strong>Words this sector&#39;s buyers use:</strong> shipment, carrier, consignment, lead time, exception, service level, proof of delivery, third party logistics provider, transport management system, warehouse management system. Use them where they are true for the prospect.</li>
+</ul>
+<h5 class="hxr-h3">Reading the answer</h5>
+<p>This is preparation for negotiating the supplied offer. The supplied deal amount 30,000 and alternative quote &quot;the unverified alternative quote&quot; are not a like for like comparison until scope, period and exclusions match. Suggested terms require approval. The conclusion needs review if matched quote scope or period changes the comparison, delivery cost removes the margin, or the buyer cannot substantiate the claimed value.</p>
+<h5 class="hxr-h3">Decisions by role</h5>
+<p>Proposed owners. Confirm the named person before acting.</p>
+<p>Founder: ask the buyer which requirement makes &quot;Failed first deliveries down from 1 in 6 to 1 in 10 in the pilot city&quot; valuable before defending the 30,000 amount; retain any unmeasured benefit as a hypothesis.</p>
+<p>CEO: have finance reconcile the 30,000 amount with its period, delivery cost and minimum approved margin before authorizing a concession; name the person who can approve it.</p>
+<p>CMO: verify the source and scope of &quot;Failed first deliveries down from 1 in 6 to 1 in 10 in the pilot city&quot; before using it to justify price; remove unsupported savings or response time claims.</p>
+<p>CRO: obtain the scope, term and exclusions behind &quot;the unverified alternative quote&quot; and the 30,000 offer before discussing a discount; record unresolved differences.</p>
+<p>Demand generation head: check that any the supplied offer pricing message uses the approved scope and period before reuse; do not turn this negotiated quote into a public price promise.</p>
+<p>Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.</p></div></details>
     <footer class="hxr-foot"><span>Built by Shashwat Ghosh</span><span>https://revenue-enablement.gtmhelix.com/tools/pricing-negotiation-guide/</span></footer>
   </article>
   

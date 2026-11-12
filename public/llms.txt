@@ -92,7 +92,7 @@ Individual plugin install instructions remain specific to the plugin.
 
 ## Buyer routes
 
-- [All Helix tools](https://tools.gtmhelix.com/tools/): 49 tools and 37 different skills, 86 in all, in six connectors and nine plugins.
+- [All Helix tools](https://tools.gtmhelix.com/tools/): 52 tools and 37 different skills, 89 in all, in six connectors and nine plugins.
 - [Run a B2B win loss analysis](https://revenue-enablement.gtmhelix.com/tools/win-loss-analyzer/): Review a B2B deal you won or lost using what the buyer and deal records actually say. Enter the outcome, reasons and competitive context to organise the review. Separate confirmed facts from your interpretation, then use the patterns to choose questions for the next buyer interview and deal review.
 - [Roi Business Case Builder](https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/): Build a B2B sales business case using the costs and benefits the buyer can check. Enter the investment, annual benefit and planning period, then review return and payback alongside the assumptions. Take the draft to finance and confirm who owns each input before using it in an approval conversation.
 - [Deal Strategy Coach](https://revenue-enablement.gtmhelix.com/tools/deal-strategy-coach/): Review a B2B deal that needs a clear next step. Supply the buying roles, decision process, risks and current stage, then check the proposed actions against what the buyer has confirmed. Use the result to prepare the next conversation and agree a dated action with the person who owns it.

@@ -10,6 +10,7 @@ test('one money list reads identically on the page and server',()=>{
 test('static page has the funding questions, metadata, example and routes without JavaScript',()=>{
  const html=read('../public/tools/roi-business-case-builder/index.html');
  assert.equal(parseHTML(html).document.querySelectorAll('#currency option').length,6);
+ assert.equal(parseHTML(html).document.querySelector('#start').value,'');
  assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.ok(html.includes(PAGE_TITLE));assert.ok(html.includes(PAGE_HEADING));assert.match(html,/No email. Your figures are not stored/);assert.match(html,/id="result-panel"/);assert.match(html,/Example. Illustrative inputs/);assert.match(html,/share\.png/);assert.doesNotMatch(html,/Industry benchmarks|Financial_Services|Healthcare|Manufacturing|route planning|\bLTV\b|[\u2013\u2014]/i);assert.match(html,/<details><summary>Sharpen it/);assert.doesNotMatch(html,/<details open/);
  const raw=JSON.parse(html.match(/id="example-output" type="application\/json">([\s\S]*?)<\/script>/)[1]);
  const args={your_solution:'A Series B AI native firm in Hyderabad wants to fund an ABM programme for 40 target accounts in India',solution_price:9000000,primary_value_driver:'revenue_increase',known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; limit_months=12; margin=70; cycle_months=5; start=2026-11; currency=INR'};

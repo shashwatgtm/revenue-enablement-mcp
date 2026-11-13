@@ -10,6 +10,8 @@ export interface FundingChat {
     start?: string;
     currencies: string[];
     notRead: string[];
+    unreadMonths: string[];
+    unreadCounts: string[];
 }
 /** Currency marks are read over every caller text field, not inferred from a dollar sign's geography. */
 export declare function fundingTextCurrencies(words: string): string[];

@@ -118,6 +118,8 @@
     btn.replaceChildren(svg, sp);
   };
   var tint = function () {
+    // This tool links the shadow stylesheet externally to respect its existing CSP.
+    if (document.body.classList.contains('roi-funding-page')) return true;
     var host = document.getElementById('helix-assistant-launcher');
     if (!host || !host.shadowRoot) return false;
     var btn = host.shadowRoot.querySelector('button.launcher');

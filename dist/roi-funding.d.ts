@@ -20,6 +20,8 @@ export interface FundingClassification {
 export declare function classifyFunding(value: string): FundingClassification;
 export declare function fundingGeo(args: Args, explicit: string, currency: string): string;
 export interface FundingInputs {
+    unreadMonths: string[];
+    unreadCounts: string[];
     subject: string;
     classification: FundingClassification;
     fixed: boolean;

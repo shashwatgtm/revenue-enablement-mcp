@@ -5,7 +5,14 @@
   const valid=/^(?:(?:Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€)\s*)?-?\d[\d,]*(?:\.\d+)?\s*(?:lakh|crore|million|billion|thousand|k|m)?$/i.test(raw);
   const m=raw.match(/(-?\d[\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i);
   const codes={'rs':'INR','rs.':'INR','inr':'INR','₹':'INR','$':'USD','usd':'USD','£':'GBP','gbp':'GBP','€':'EUR','eur':'EUR','s$':'SGD','sgd':'SGD','aed':'AED'};
-  return {value:valid&&m?Number(m[1].replace(/,/g,''))*({lakh:1e5,crore:1e7,million:1e6,billion:1e9,thousand:1e3,k:1e3,m:1e6}[m[2]?.toLowerCase()]||1):undefined,currency:mark?codes[mark[0].toLowerCase()]:(codes[String(currency||'').toLowerCase()]||''),marked:!!mark,raw};
+  return {value:valid&&m?Number(m[1].replace(/,/g,''))*({lakh:1e5,crore:1e7,million:1e6,billion:1e9,thousand:1e3,k:1e3,m:1e6}[m[2]?.toLowerCase()]||1):undefined,currency:mark?codes[mark[0].toLowerCase()]:/\b(?:lakh|crore)\b/i.test(raw)?'INR':(codes[String(currency||'').toLowerCase()]||''),marked:!!mark||/\b(?:lakh|crore)\b/i.test(raw),raw};
+ }
+ function moneyEcho(parsed){
+  if(parsed.value===undefined)return 'Amounts stay in the currency you use.';
+  const n=parsed.value,c=parsed.currency;
+  if(!c)return 'Choose a currency to read '+n.toLocaleString('en-US');
+  const value=c==='INR'?(Math.abs(n)>=1e7?'Rs '+Number((n/1e7).toFixed(2))+' crore':Math.abs(n)>=1e5?'Rs '+Number((n/1e5).toFixed(2))+' lakh':'Rs '+n.toLocaleString('en-IN')):({USD:'$',GBP:'£',EUR:'€',AED:'AED ',SGD:'S$'}[c]||'')+n.toLocaleString('en-US');
+  return 'Read as '+value;
  }
  function escape(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
  function inline(s){return escape(s).replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>').replace(/(?<!["(])(https:\/\/[^\s<]+)/g,'<a href="$1">Source</a>');}
@@ -48,11 +55,19 @@
   let headline=first,note='';
   const ruleAt=headline.indexOf(" (this tool's rule, not a benchmark)");
   if(ruleAt>=0){headline=headline.slice(0,ruleAt)+'.';note="The default limit is this tool's rule, not a benchmark. Give your finance team's limit to change it.";}
-  return {headline,note,summaryHTML:markdown(invalid?'Check the named field and run the check again.':summary),detailsHTML:markdown(invalid?'':at<0?'':output.slice(at)),margin:invalid?'':margin,next,question,brand,noVerdict,invalid,outside,output};
+  return {headline,note,summaryHTML:markdown(invalid?'Check the named field and run the check again.\n'+(lines.find(l=>l.startsWith('Arithmetic only:'))||''):summary),detailsHTML:markdown(invalid?'':at<0?'':output.slice(at)),margin:invalid?'':margin,next,question,brand,noVerdict,invalid,outside,output};
  }
- root.HelixFunding={money,markdown,parseLine,resultView};
+ root.HelixFunding={money,moneyEcho,markdown,parseLine,resultView};
  if(typeof document==='undefined')return;
  const form=document.querySelector('#funding-form');if(!form)return;
+ // The assistant lives in a shadow root. Page selectors cannot reach its focus ring.
+ function styleAssistant(){
+  const shadow=document.querySelector('#helix-assistant-launcher')?.shadowRoot;if(!shadow)return false;
+  if(!shadow.querySelector('link[data-funding-look]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/assets/roi-funding-assistant.css';sheet.dataset.fundingLook='';shadow.append(sheet);}
+  return true;
+ }
+ if(!styleAssistant()){const observer=new MutationObserver(()=>{if(styleAssistant())observer.disconnect();});observer.observe(document.body,{childList:true,subtree:true});}
+
  const field=k=>form.elements.namedItem(k),status=document.querySelector('#form-status');
  const numeric=['customers','limit_months','margin','cycle_months','win_rate','fy_start'];
  const labels={subject:'Programme and location',spend:'Spend',currency:'Currency',customers:'New customers',per_customer:'Annual revenue per customer',limit_months:'Payback limit',margin:'Gross margin',cycle_months:'Sales cycle',win_rate:'Win rate',fy_start:'Financial year start month',start:'Spend start month'};
@@ -99,10 +114,17 @@
  document.querySelector('#next-input').addEventListener('click',e=>focusField(e.currentTarget.dataset.field));
  document.querySelector('#use-own').addEventListener('click',()=>focusField('subject'));
  field('unknown').addEventListener('change',()=>{for(const k of ['customers','per_customer']){if(field('unknown').checked)field(k).value='';field(k).disabled=field('unknown').checked;}});
- form.addEventListener('input',()=>{const S=money(field('spend').value,field('currency').value);document.querySelector('#money-read').textContent=S.value===undefined?'Amounts stay in the currency you use.':'Read as '+(S.currency||'the currency selected')+' '+S.value.toLocaleString(S.currency==='INR'?'en-IN':'en-US')+'. No conversion.';});
+ function updateMoney(){
+  const spend=money(field('spend').value),per=field('unknown').checked?null:money(field('per_customer').value);
+  const currencies=[...new Set([spend,per].filter(p=>p?.marked&&p.value!==undefined).map(p=>p.currency))];
+  if(currencies.length===1)field('currency').value=currencies[0];
+  document.querySelector('#money-read').textContent=moneyEcho(money(field('spend').value,field('currency').value));
+ }
+ form.addEventListener('input',updateMoney);
+ form.addEventListener('change',updateMoney);
  document.querySelector('#copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(line());status.textContent='Inputs copied. Keep the line and paste it back next time.';}catch(error){showError(error.message,error.field);}});
  const paste=document.querySelector('#paste-dialog');document.querySelector('#paste')?.addEventListener('click',()=>paste.showModal());
- document.querySelector('#apply-paste').addEventListener('click',()=>{try{const p=parseLine(document.querySelector('#paste-text').value);for(const k of ['subject','spend','currency','customers','per_customer','limit_months','margin','cycle_months','win_rate','fy_start','start','geo','period','signs'])if(field(k))field(k).value=p[k]??'';field('unknown').checked=!p.customers&&!p.per_customer;for(const k of ['customers','per_customer'])field(k).disabled=field('unknown').checked;clearErrors();paste.close();status.textContent='Your saved inputs are back. Check them before running.';}catch(error){document.querySelector('#paste-status').textContent=error.message;}});
+ document.querySelector('#apply-paste').addEventListener('click',()=>{try{const p=parseLine(document.querySelector('#paste-text').value);for(const k of ['subject','spend','currency','customers','per_customer','limit_months','margin','cycle_months','win_rate','fy_start','start','geo','period','signs'])if(field(k))field(k).value=p[k]??'';field('unknown').checked=!p.customers&&!p.per_customer;for(const k of ['customers','per_customer'])field(k).disabled=field('unknown').checked;clearErrors();updateMoney();paste.close();status.textContent='Your saved inputs are back. Check them before running.';}catch(error){document.querySelector('#paste-status').textContent=error.message;}});
  document.querySelector('#cancel-paste').addEventListener('click',()=>paste.close());
  function apiError(data){const raw=data.errors?.[0]||data.error||'The check could not complete.';const key=Object.keys(labels).find(k=>raw.includes(k)||raw.includes(({spend:'solution_price',subject:'your_solution'})[k]||'@none'));let message=raw;if(key){message=raw.replace(/solution_price|your_solution|per_customer|limit_months|cycle_months|win_rate|fy_start|known_metrics/g,m=>({solution_price:'Spend',your_solution:'Programme and location',known_metrics:'Programme figures'})[m]||labels[m]||'Figure').replace(/must be 0 or more\.?/,'cannot be negative.');}return {message,key};}
  form.noValidate=true;
@@ -111,7 +133,7 @@
   try{const known_metrics=line(),S=money(field('spend').value,field('currency').value);status.textContent='Checking your figures…';let response;try{response=await fetch('/api/tools/roi_business_case_builder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({input:{your_solution:field('subject').value,solution_price:S.value,primary_value_driver:'revenue_increase',known_metrics}})});}catch{throw new Error('The check did not answer. Try again.');}
    let data;try{data=await response.json();}catch{throw new Error('The check did not answer. Try again.');}
    if(!response.ok){const problem=apiError(data);const error=new Error(problem.message);error.field=problem.key;throw error;}
-   if(!data.text)throw new Error('The check did not answer. Try again.');render(data.text,false);status.textContent=/^Check your figures/.test(data.text)?'Correct the named figure.':'Checked on your inputs.';
+   if(!data.text)throw new Error('The check did not answer. Try again.');render(data.text,false);if(!/^Check your figures|outside this tool.s scope/.test(data.text)&&typeof root.gtag==='function')root.gtag('event','tool_complete',{tool:'roi_business_case_builder',page_path:location.pathname});status.textContent=/^Check your figures/.test(data.text)?'Correct the named figure.':'Checked on your inputs.';
   }catch(error){showError(error.message,error.field);}finally{button.disabled=false;}
  });
  const example=document.querySelector('#example-output');if(example)render(JSON.parse(example.textContent),true);

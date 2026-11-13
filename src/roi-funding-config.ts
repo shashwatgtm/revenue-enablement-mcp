@@ -37,3 +37,7 @@ export const CLASS_TABLE: {kind:FundingClass; group:string; pattern:RegExp}[] = 
  {kind:'direct',group:'media',pattern:/\b(?:paid (?:media|search|social|ads|advertising|campaigns?|acquisition|(?:LinkedIn|Google|Meta)(?: (?:programmes?|programs?|campaigns?|ads))?)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic|retargeting|content syndication)\b/gi},
  {kind:'direct',group:'outbound',pattern:/\b(?:outbound|cold (?:email|emailing|calling|outreach)|SDRs?|BDRs?|sales development|appointment setting|prospecting)\b/gi},
 ];
+
+// Implausible input safety limits. These are tool rules, never market benchmarks.
+export const MAX_PAYBACK_MONTHS = 120;
+export const MAX_REQUIRED_CUSTOMER_MULTIPLE = 100;

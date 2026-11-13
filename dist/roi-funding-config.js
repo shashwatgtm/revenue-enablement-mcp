@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CLASS_TABLE = exports.CLASS_NAMES = exports.BOOKING = exports.SHOW_COPY_INPUTS = exports.PAGE_SUBTITLE = exports.PAGE_HEADING = exports.PAGE_TITLE = exports.INDIA_FY_DEFAULT_START_MONTH = exports.PROOF_LINE = exports.SHOW_PROOF_LINE = exports.REFERENCE_LINE = exports.SHOW_BESSEMER_LINE = exports.GTM_FIX_RULE = exports.SHOW_GTM_FIX_RULE = exports.BOOTH_SPONSORSHIP_CLASS = exports.SMALL_TEST_MULTIPLE = exports.DEFAULT_LIMIT_MONTHS = void 0;
+exports.MAX_REQUIRED_CUSTOMER_MULTIPLE = exports.MAX_PAYBACK_MONTHS = exports.CLASS_TABLE = exports.CLASS_NAMES = exports.BOOKING = exports.SHOW_COPY_INPUTS = exports.PAGE_SUBTITLE = exports.PAGE_HEADING = exports.PAGE_TITLE = exports.INDIA_FY_DEFAULT_START_MONTH = exports.PROOF_LINE = exports.SHOW_PROOF_LINE = exports.REFERENCE_LINE = exports.SHOW_BESSEMER_LINE = exports.GTM_FIX_RULE = exports.SHOW_GTM_FIX_RULE = exports.BOOTH_SPONSORSHIP_CLASS = exports.SMALL_TEST_MULTIPLE = exports.DEFAULT_LIMIT_MONTHS = void 0;
 // Funding decisions approved for this release. The public tool contract stays unchanged.
 exports.DEFAULT_LIMIT_MONTHS = 12; // Decision 3.
 exports.SMALL_TEST_MULTIPLE = 2; // Decision 3.
@@ -39,4 +39,7 @@ exports.CLASS_TABLE = [
     { kind: 'direct', group: 'media', pattern: /\b(?:paid (?:media|search|social|ads|advertising|campaigns?|acquisition|(?:LinkedIn|Google|Meta)(?: (?:programmes?|programs?|campaigns?|ads))?)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic|retargeting|content syndication)\b/gi },
     { kind: 'direct', group: 'outbound', pattern: /\b(?:outbound|cold (?:email|emailing|calling|outreach)|SDRs?|BDRs?|sales development|appointment setting|prospecting)\b/gi },
 ];
+// Implausible input safety limits. These are tool rules, never market benchmarks.
+exports.MAX_PAYBACK_MONTHS = 120;
+exports.MAX_REQUIRED_CUSTOMER_MULTIPLE = 100;
 //# sourceMappingURL=roi-funding-config.js.map

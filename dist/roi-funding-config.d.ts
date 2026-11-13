@@ -20,4 +20,6 @@ export declare const CLASS_TABLE: {
     group: string;
     pattern: RegExp;
 }[];
+export declare const MAX_PAYBACK_MONTHS = 120;
+export declare const MAX_REQUIRED_CUSTOMER_MULTIPLE = 100;
 //# sourceMappingURL=roi-funding-config.d.ts.map

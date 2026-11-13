@@ -42,7 +42,7 @@ test('paid beats audience and booth sponsorship is demand spend',()=>{
  for(const phrase of [...probes.paid_beats_audience,'paid social','sponsored posts bought as ads','booth sponsorship','exhibition sponsorship'])assert.equal(classifyFunding(phrase).kind,'direct',phrase);
 });
 test('money units and currencies',()=>{
- for(const [s,v,c]of [['90 lakh',90*1e5,''],['1.5 crore',1.5*1e7,''],['1.2m',1.2*1e6,''],['400k',400*1e3,''],['AED 400,000',400000,'AED'],['S$250,000',250000,'SGD'],['SGD 250000',250000,'SGD'],['Rs 90 lakh',90*1e5,'INR']]){const got=readFundingMoney(s);assert.equal(got.value,v,s);assert.equal(got.currency,c,s);}
+ for(const [s,v,c]of [['90 lakh',90*1e5,'INR'],['1.5 crore',1.5*1e7,'INR'],['1.2m',1.2*1e6,''],['400k',400*1e3,''],['AED 400,000',400000,'AED'],['S$250,000',250000,'SGD'],['SGD 250000',250000,'SGD'],['Rs 90 lakh',90*1e5,'INR']]){const got=readFundingMoney(s);assert.equal(got.value,v,s);assert.equal(got.currency,c,s);}
 });
 test('chat only opens with new customers and annual revenue, never existing accounts',()=>{
  for(const known_metrics of probes.existing_customer_opposites){const o=buildRoiFunding(input({known_metrics}),clock);assert.doesNotMatch(o,/Passes|new ARR/);assert.match(o,/If this is your own marketing spend/);}

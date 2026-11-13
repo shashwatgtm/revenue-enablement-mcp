@@ -61,7 +61,7 @@ function readFundingMoney(value, currency = '') {
     const unsigned = normal.replace(/-\s*(?=\d)/, '');
     const parsed = (0, echo_layer_ts_1.readMoney)(mark ? unsigned : 'USD ' + unsigned, true);
     const valid = /^(?:(?:Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€)\s*)?-?\d[\d,]*(?:\.\d+)?\s*(?:lakh|crore|million|billion|thousand|k|m)?$/i.test(raw);
-    return { value: valid && parsed ? parsed.value * (/-\s*\d/.test(raw) ? -1 : 1) : undefined, currency: mark ? code(mark[0]) : code(currency), marked: !!mark, raw };
+    return { value: valid && parsed ? parsed.value * (/-\s*\d/.test(raw) ? -1 : 1) : undefined, currency: mark ? code(mark[0]) : /\b(?:lakh|crore)\b/i.test(raw) ? 'INR' : code(currency), marked: !!mark || /\b(?:lakh|crore)\b/i.test(raw), raw };
 }
 function fundingMoney(value, currency, derived = true) {
     const n = derived ? Math.round(value) : value;
@@ -125,6 +125,8 @@ function fundingGeo(args, explicit, currency) {
     const words = [text(args.your_solution), text(args.known_metrics), text(args.current_process)].join(' ');
     if (/\b(?:Africa|Nairobi|Kenya|Nigeria|Lagos|South Africa|Cape Town|Johannesburg)\b/i.test(explicit + ' ' + words))
         return 'Middle East and Africa';
+    if (/\b(?:Netherlands|Dutch|Germany|German|France|French|Spain|Spanish|Ireland|Irish|Belgium|Belgian|Austria|Austrian|Switzerland|Swiss|Portugal|Portuguese|Italy|Italian|Luxembourg)\b/i.test(explicit + ' ' + words))
+        return 'Western Europe';
     const regions = (0, region_reader_ts_1.readRegionContext)({ ...args, region: explicit }).regions;
     if (regions.length === 1)
         return GEO_NAMES[regions[0].region_id] ?? '';
@@ -192,12 +194,12 @@ function readFundingInputs(args, clock = () => new Date()) {
     if (!error && currencyConflict && ['direct', 'long'].includes(classification.kind))
         error = 'Check your figures: spend and revenue must be in the same currency.';
     const sellerFrame = !fixed && /\b(?:for (?:the |our )?client|client expects|our client)\b/i.test(words);
-    const guarded = sellerFrame || !(fixed && N !== undefined && A !== undefined) && !(N !== undefined && A !== undefined && ['revenue_increase', 'multiple'].includes(text(args.primary_value_driver)));
+    const guarded = (!fixed && (chat.unreadMonths.length > 0 || chat.unreadCounts.length > 0)) || sellerFrame || !(fixed && N !== undefined && A !== undefined) && !(N !== undefined && A !== undefined && ['revenue_increase', 'multiple'].includes(text(args.primary_value_driver)));
     const missing = fixed ? [] : chat.notRead;
     for (const [k, label] of [['customers', 'new customers'], ['per_customer', 'revenue per customer'], ['margin', 'gross margin'], ['cycle_months', 'sales cycle'], ['win_rate', 'win rate'], ['limit_months', 'payback limit']])
         if (fixed && fields[k] && ((k === 'per_customer' ? A : num(fields[k])) === undefined))
             missing.push(label);
-    return { subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification, fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, startGiven: !!(fixed ? fields.start : chat.start), fyGiven: fyInput !== undefined, spendCurrencyFromText, perCurrencyFromText, currencyConflict, currency, spendCurrency: spend.currency, perCurrency: per.currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
+    return { unreadMonths: fixed ? [] : chat.unreadMonths, unreadCounts: fixed ? [] : chat.unreadCounts, subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification, fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, startGiven: !!(fixed ? fields.start : chat.start), fyGiven: fyInput !== undefined, spendCurrencyFromText, perCurrencyFromText, currencyConflict, currency, spendCurrency: spend.currency, perCurrency: per.currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
 }
 function fundingVerdict(kind, p, L) {
     const rounded = (0, exports.fundingMonths)(p);
@@ -241,6 +243,10 @@ function fundingRoutes(i, failed = false, undecided = false) {
         return { action: 'Check the demand programme and the purchase separately.', routes: [book] };
     if (i.classification.kind === 'brand')
         return { action: 'Pick the signs you will track before committing the amount.', routes: [['Plan the PR work', plugin('pr-launch-pack')], book] };
+    if (undecided && ['abm', 'media', 'outbound'].includes(i.classification.group)) {
+        const [label, url] = i.classification.group === 'abm' ? ['Prioritise the accounts', tool('icp-intelligence', 'account_prioritization')] : i.classification.group === 'media' ? ['Scale Paid check', 'https://helix-scale-paid-check.shashwat-helix-gtm.chatgpt.site'] : ['Score the audience', tool('icp-intelligence', 'icp_scoring_model')];
+        return { action: 'Confirm the missing figures and check the programme before committing the spend.', routes: [[label, url], book] };
+    }
     if (undecided || i.classification.kind === 'other')
         return { action: 'Agree the missing assumptions before sizing the ask.', routes: [book, ['Size the market', tool('icp-intelligence', 'tam_sam_som_calculator')]] };
     switch (i.classification.group) {
@@ -270,13 +276,19 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const R = hasForecast ? N * A : undefined;
     const P = eligible && !i.currencyConflict && R !== undefined && R > 0 && S !== undefined ? 12 * S / R : undefined;
     const Pg = P !== undefined && G !== undefined ? P / (G / 100) : undefined;
-    const invalid = i.error || (S !== undefined && S > 0 && P !== undefined && P < 0.5 ? 'Check your figures: this says the spend comes back in under two weeks.' : '');
+    const required = S !== undefined && A !== undefined && A > 0 ? Math.ceil(12 * S / L / A) : undefined;
+    const absurd = P !== undefined && (P > rules.MAX_PAYBACK_MONTHS || N !== undefined && N > 0 && required !== undefined && required > rules.MAX_REQUIRED_CUSTOMER_MULTIPLE * N);
+    const invalid = i.error || (absurd ? (P > rules.MAX_PAYBACK_MONTHS ? 'Check your figures: this says the spend comes back in more than 10 years.' : 'Check your figures: this needs more than 100 times the customers you expect.') : '') || (S !== undefined && S > 0 && P !== undefined && P < 0.5 ? 'Check your figures: this says the spend comes back in under two weeks.' : '');
     const canJudge = eligible && hasForecast && S !== undefined && S > 0 && !invalid;
     const zero = canJudge && (N === 0 || A === 0);
     const decided = canJudge && P !== undefined && !zero;
     const base = decided ? fundingVerdict(kind, P, L) : undefined;
     const gm = decided && Pg !== undefined ? fundingVerdict(kind, Pg, L) : undefined;
-    let first = invalid || (S === undefined ? 'Not decided yet: give the spend.' : S === 0 ? 'A spend of 0 has no payback to check.' : kind === 'brand' ? 'Not a payback decision' : kind === 'enabler' ? 'Break-even only: what must be true' : kind === 'other' ? 'Not decided yet: what must be true' : zero ? 'Does not pass: no new revenue on your figures.' : !decided ? 'Not decided yet: what must be true' : `Pays back in ${months(P)} months. ${base.words}.`);
+    let first = invalid || (i.unreadMonths.length ? 'Not decided yet: which is your payback limit?' : i.unreadCounts.length ? 'Not decided yet: how many new customers?' : S === undefined ? 'Not decided yet: give the spend.' : S === 0 ? 'A spend of 0 has no payback to check.' : kind === 'brand' ? 'Not a payback decision' : kind === 'enabler' ? 'Break-even only: what must be true' : kind === 'other' ? 'Not decided yet: what must be true' : zero ? 'Does not pass: no new revenue on your figures.' : !decided ? 'Not decided yet: what must be true' : `Pays back in ${months(P)} months. ${base.words}.`);
+    if (decided && gm && gm.row !== base.row) {
+        const label = (row) => row === 'pass' ? 'Passes' : row === 'long' ? 'Passes as a long build' : row === 'smaller' ? 'Over your limit' : row === 'break-even' ? 'At your limit' : 'Does not pass at this size';
+        first = `${label(base.row)} on revenue (${months(P)} months). ${label(gm.row)} on gross margin (${months(Pg)} months).`;
+    }
     if (decided && !i.limitGiven)
         first = first.replace(`Passes your ${L} month limit`, `Passes a ${L} month limit (this tool's rule, not a benchmark)`) + " Give your finance team's limit to change it.";
     Ls.push(first, '', 'A calculation on your inputs. Not a forecast.');
@@ -297,6 +309,8 @@ function buildRoiFunding(args, clock = () => new Date()) {
     }
     Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}${i.spendCurrencyFromText ? ' (currency taken from your text)' : ''}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : givenPer(A)}${i.perCurrencyFromText ? ' (currency taken from your text)' : ''}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
     Ls.push(`- Gross margin: ${G === undefined ? 'MISSING' : G + ' percent'}.`, `- First touch to signed deal: ${C === undefined ? 'MISSING' : C + ' months'}.`, `- Win rate: ${W === undefined ? 'MISSING' : W + ' percent'}.`, `- Financial year starts: ${i.fy === undefined ? 'MISSING' : new Date(Date.UTC(2000, i.fy - 1, 1)).toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' })}${i.fy !== undefined && !i.fyGiven ? ' (India default)' : ''}.`, `- Spend starts: ${i.start}${i.startGiven ? ' (read from your inputs)' : ' (current month default)'}.`);
+    for (const figure of [...i.unreadMonths, ...i.unreadCounts])
+        Ls.push(`I read '${clean(figure)}' but not what it is. Confirm this figure before a funding verdict.`);
     if (!i.currency)
         Ls.push('Currency: MISSING. Which currency applies? Figures below are bare amounts; nothing is converted.');
     if (i.currencyConflict && !eligible)
@@ -310,8 +324,8 @@ function buildRoiFunding(args, clock = () => new Date()) {
             Ls.push(`${label}: ${clean(String(args[key]))}. Not used to judge this spend.`);
     if (zero)
         Ls.push('', 'On your figures this brings no new revenue, so there is no payback.');
-    if (!i.error && S !== undefined && S > 0 && P !== undefined && P < 0.5)
-        Ls.push('', `Arithmetic only: CAC ${cash(S / N)}; payback ${months(P)} months. No verdict.`);
+    if (!i.error && S !== undefined && S > 0 && P !== undefined && (P < 0.5 || absurd))
+        Ls.push('', `Arithmetic only: CAC ${cash(S / N)}; payback ${months(P)} months.${absurd && required !== undefined ? ` Required customers at ${L} months: ${required}; expected: ${N}.` : ''} No verdict.`);
     if (decided)
         Ls.push('', `CAC: ${cash(S / N)}. Expected new ARR: ${cash(R)}.`);
     if (gm) {
@@ -325,8 +339,6 @@ function buildRoiFunding(args, clock = () => new Date()) {
         Ls.push('', 'Give gross margin first so finance can check the contribution as well as revenue.');
     if (kind === 'brand') {
         Ls.push('', 'Brand awareness, AR and PR do not pay back inside a quarter, and a payback figure here would be made up. Decide it as an amount you can hold for a year, and track leading signs.');
-        if (S !== undefined && S > 0 && !invalid)
-            Ls.push(`For scale only: covering this cost in ${L} months requires ${cash(12 * S / L)} a year. This is a coverage requirement, not a revenue forecast.`);
         if (S !== undefined && S > 0 && A !== undefined && A > 0 && !invalid && !i.currencyConflict)
             Ls.push(`For scale only: covering this cost in ${L} months would take ${Math.ceil(12 * S / L / A)} new customers at what one pays you.`);
         Ls.push('Signs to pick: branded search; direct traffic; share of buyers who had heard of you before the first call; analyst briefings held and reports that include you; coverage in the publications your buyers read; inbound demos naming a source.');
@@ -381,7 +393,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
     if (/\b(?:outbound email|cold email|email outreach)\b/i.test(i.subject) && ['United Kingdom', 'United States'].includes(i.geo)) {
         Ls.push('', '### Outbound email note', i.geo === 'United Kingdom' ? 'You can email corporate bodies without prior consent. Sole traders and some partnerships are treated as individuals. Keep a "do not email" list. https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/' : 'CAN-SPAM makes no exception for business to business email. An opt-out must be honoured within 10 business days. https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business', 'Checked 13 Nov 2026. Check with your counsel before you size the list.');
     }
-    Ls.push('', '### How this is worked out', 'CAC = spend / new customers. Monthly ARR per customer = annual revenue per customer / 12. Payback = 12 x spend / (new customers x annual revenue per customer). Gross margin payback = payback / (gross margin / 100). Recovery = sales cycle + payback.', 'Required annual revenue = 12 x spend / limit. Required customers are rounded up. Required opportunities = required customers / (win rate / 100), rounded up.', 'Months are rounded half up to one decimal before comparison with the limit. Money results are rounded to the nearest whole unit. Counts are rounded up.', 'Demand programmes pass at the limit; up to twice the limit a smaller test could pass. A long build passes up to twice the limit. Beyond twice the limit neither passes. Brand, software and unmatched GTM work have no funding verdict.', `Rules of this tool: default ${rules.DEFAULT_LIMIT_MONTHS} month limit; half and one and a half times the revenue; twice the limit for a smaller test or long build; under 0.5 months needs checking; limit from 1 to 60 months; cycle at most 36 months; gross margin and win rate above 0 and at most 100 percent.`, 'Recovery is counted from the first day of the start month. Add sales cycle and payback, then round down to whole months to find the recovery month. No currency conversion.');
+    Ls.push('', '### How this is worked out', 'CAC = spend / new customers. Monthly ARR per customer = annual revenue per customer / 12. Payback = 12 x spend / (new customers x annual revenue per customer). Gross margin payback = payback / (gross margin / 100). Recovery = sales cycle + payback.', 'Required annual revenue = 12 x spend / limit. Required customers are rounded up. Required opportunities = required customers / (win rate / 100), rounded up.', 'Months are rounded half up to one decimal before comparison with the limit. Money results are rounded to the nearest whole unit. Counts are rounded up.', 'Demand programmes pass at the limit; up to twice the limit a smaller test could pass. A long build passes up to twice the limit. Beyond twice the limit neither passes. Brand, software and unmatched GTM work have no funding verdict.', `Rules of this tool: default ${rules.DEFAULT_LIMIT_MONTHS} month limit; half and one and a half times the revenue; twice the limit for a smaller test or long build; under 0.5 months, above ${rules.MAX_PAYBACK_MONTHS} months or required customers above ${rules.MAX_REQUIRED_CUSTOMER_MULTIPLE} times those expected needs checking; limit from 1 to 60 months; cycle at most 36 months; gross margin and win rate above 0 and at most 100 percent.`, 'Recovery is counted from the first day of the start month. Add sales cycle and payback, then round down to whole months to find the recovery month. No currency conversion.');
     if (gm && rules.SHOW_BESSEMER_LINE)
         Ls.push(rules.REFERENCE_LINE);
     Ls.push('', '### What this is not', 'This is not a forecast or an instruction to spend. It checks one programme on your inputs. It is not a market benchmark, a budget split, tax advice, legal advice or a software recommendation.');

@@ -2156,7 +2156,8 @@ function executePricingNegotiationGuide(args: Record<string, unknown>): string {
   // worked out from the deal value and the way the seller charges; no bracket is left where the inputs or the sector can supply the words.
   const ctx = readContext(args.business_model, { seller: [yourSolution], context: [yourLeverage, valueDelivered, buyerLeverage, competitorPrice] });
   const brief = solutionBrief(args.your_solution ? yourSolution : '');
-  const P = brief.short || 'our solution';
+  // 13 Nov 2026: the guide speaks to the seller, so an unnamed offer is "your offer", never "our solution".
+  const P = brief.short || 'your offer';
   const v = ctx.v;
   const holdExclusivity = pricingApprovalTermHeld(approvalAuthority, /\bexclusiv(?:ity|e)(?:\s+(?:rights?|obligations?))?\b/i);
   const holdReference = pricingApprovalTermHeld(approvalAuthority, /\b(?:references?|case stud(?:y|ies)|testimonials?)(?:\s+(?:rights?|obligations?))?\b/i);
@@ -2553,7 +2554,7 @@ If they're pressuring for a discount:
 
 ## Context: Existing Customer Renewal
 
-Renewals are different from new business. You have leverage (they're using ${P}) but also risk (they might leave).${haveValue ? ` The renewal is worth ${dealValueText}.` : ''}
+Renewals are different from new business. You have leverage (they already use ${brief.short || 'what you sell'}) but also risk (they might leave).${haveValue ? ` The renewal is worth ${dealValueText}.` : ''}
 
 ---
 
@@ -2607,7 +2608,7 @@ ${holdReference ? '- Do not request a case study or reference under these approv
 
 The renewal conversation is a good time to expand:
 
-"Since we're discussing renewal, I wanted to share ${brief.parts.length > 1 ? partLabel(brief.parts[1]) : 'what else ' + P + ' can do for you'}. Would you like to see how that could help?" Mention a customer example only if one has agreed.`,
+"Since we're discussing renewal, I wanted to share ${brief.parts.length > 1 ? partLabel(brief.parts[1]) : (brief.short ? 'what else ' + P + ' can do for you' : 'what else we can do for you')}. Would you like to see how that could help?" Mention a customer example only if one has agreed.`,
 
     multi_year_negotiation: () => `# Multi-Year Deal Negotiation
 
@@ -2739,7 +2740,7 @@ ${holdReference ? '- Keep case study and reference obligations out until their s
 
   const generator = scenarioGuides[scenario] || scenarioGuides['discount_request'];
   const pricingSector = v ? `\n\n---\n\n${sectorNotes(v, 'objections')}\n- **Words this sector's buyers use:** ${(['saas', 'software', 'vertical-saas', 'ai-native'].includes(v.id) ? v.vocabulary : v.vocabulary.filter((w) => !SAAS_ONLY.test(w))).join(', ')}. Use them where they are true for the prospect.` : '';
-  const text = generator().replace(/^# (.+)$/m, (m, t) => `# ${t}: ${P}`);
+  const text = generator().replace(/^# (.+)$/m, (m, t) => brief.short ? `# ${t}: ${P}` : m);
   // every scenario but the discount request (which has its own situation table) opens with the deal, the leverage and the approver
   const withDeal = scenario === 'discount_request' || !scenarioGuides[scenario]
     ? text

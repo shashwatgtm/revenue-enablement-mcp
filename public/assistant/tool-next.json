@@ -759,22 +759,22 @@
     {
       "tool": "roi_business_case_builder",
       "questions": [
-        "Which customer figures and price are needed for a defensible business case?",
-        "How should I read the assumptions and sensitivity range?"
+        "Does this marketing programme meet our payback limit?",
+        "How fragile is the result if fewer customers arrive?"
       ],
-      "next_tool": "champion_enablement_kit",
-      "why": "Help the internal supporter explain the supported business case.",
+      "next_tool": "account_prioritization",
+      "why": "Prioritise the accounts behind the ABM funding ask.",
       "repository": "revenue-enablement-mcp",
       "slug": "roi-business-case-builder",
-      "title": "ROI Business Case Builder",
-      "job": "Build an ROI business case template",
+      "title": "Marketing ROI and Payback Check",
+      "job": "Check payback on your own programme figures",
       "url": "https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/",
       "source_page": "public/tools/roi-business-case-builder/index.html",
       "job_table": "https://tools.gtmhelix.com/tools/#revenue",
       "next": {
-        "tool": "champion_enablement_kit",
-        "title": "Champion Enablement Kit",
-        "url": "https://revenue-enablement.gtmhelix.com/tools/champion-enablement-kit/"
+        "tool": "account_prioritization",
+        "title": "Prioritise the accounts",
+        "url": "https://icp-intelligence.gtmhelix.com/tools/account-prioritization/"
       }
     },
     {

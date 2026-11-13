@@ -54,11 +54,11 @@ const clean = (s) => s.replace(/[\r\n|<>]/g, ' ').replace(/[\u2013\u2014]/g, ','
 const code = (s) => /^(?:Rs\.?|INR|₹)$/i.test(s) ? 'INR' : /^(?:\$|USD)$/i.test(s) ? 'USD' : /^(?:£|GBP)$/i.test(s) ? 'GBP' : /^(?:€|EUR)$/i.test(s) ? 'EUR' : /^(?:S\$|SGD)$/i.test(s) ? 'SGD' : /^AED$/i.test(s) ? 'AED' : '';
 /** The page mirrors this small rule; a shared input list checks parity. No conversion. */
 function readFundingMoney(value, currency = '') {
-    const raw = String(value ?? '').trim();
+    const raw = String(value ?? '').trim().replace(/\\(?=\$)/g, '');
     const mark = raw.match(/Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€/i);
     const normal = raw.replace(/\bGBP\b/i, '£').replace(/\bEUR\b/i, '€');
     const unsigned = normal.replace(/-\s*(?=\d)/, '');
-    const parsed = (0, echo_layer_ts_1.readMoney)(mark ? unsigned : 'USD ' + unsigned);
+    const parsed = (0, echo_layer_ts_1.readMoney)(mark ? unsigned : 'USD ' + unsigned, true);
     const valid = /^(?:(?:Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€)\s*)?-?\d[\d,]*(?:\.\d+)?\s*(?:lakh|crore|million|billion|thousand|k|m)?$/i.test(raw);
     return { value: valid && parsed ? parsed.value * (/-\s*\d/.test(raw) ? -1 : 1) : undefined, currency: mark ? code(mark[0]) : code(currency), marked: !!mark, raw };
 }
@@ -69,10 +69,10 @@ function fundingMoney(value, currency, derived = true) {
             return `Rs ${Number((n / 1e7).toFixed(2))} crore`;
         if (Math.abs(n) >= 1e5)
             return `Rs ${Number((n / 1e5).toFixed(2))} lakh`;
-        return 'Rs ' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return 'Rs ' + n.toLocaleString('en-IN', { maximumFractionDigits: derived ? 0 : 20 });
     }
     const symbols = { USD: '$', GBP: '£', EUR: '€', AED: 'AED ', SGD: 'S$' };
-    return (symbols[currency] ?? '') + n.toLocaleString('en-US', { maximumFractionDigits: 2 }) + (symbols[currency] ? '' : ' in the currency you used');
+    return (symbols[currency] ?? '') + n.toLocaleString('en-US', { maximumFractionDigits: derived ? 0 : 20 }) + (symbols[currency] ? '' : ' in the currency you used');
 }
 const fundingMonths = (n) => Math.floor((n + Number.EPSILON) * 10 + 0.5) / 10;
 exports.fundingMonths = fundingMonths;
@@ -96,7 +96,7 @@ function classifyFunding(value) {
                     continue;
                 if (row.group === 'purchase' && /^\s+(?:firm|company|startup|business)\b/i.test(after))
                     continue;
-                if (row.group === 'sponsorship' && (booth || paid))
+                if (row.group === 'sponsorship' && ((booth && rules.BOOTH_SPONSORSHIP_CLASS === 'direct') || paid))
                     continue;
                 hits.push({ kind: row.kind, group: row.group, word: match[0] });
             }
@@ -112,7 +112,7 @@ function fundingGeo(args, explicit, currency) {
     const words = [text(args.your_solution), text(args.known_metrics), text(args.current_process)].join(' ');
     if (/\b(?:Africa|Nairobi|Kenya|Nigeria|Lagos|South Africa|Cape Town|Johannesburg)\b/i.test(explicit + ' ' + words))
         return 'Middle East and Africa';
-    const regions = (0, region_reader_ts_1.readRegionContext)({ your_solution: text(args.your_solution), known_metrics: text(args.known_metrics), region: explicit }).regions;
+    const regions = (0, region_reader_ts_1.readRegionContext)({ ...args, region: explicit }).regions;
     if (regions.length === 1)
         return GEO_NAMES[regions[0].region_id] ?? '';
     return { INR: 'India', GBP: 'United Kingdom', AED: 'Middle East and Africa', SGD: 'Southeast Asia' }[currency] ?? '';
@@ -127,8 +127,8 @@ function readFundingInputs(args, clock = () => new Date()) {
             if (at > 0)
                 fields[bit.slice(0, at).trim()] = bit.slice(at + 1).trim();
         }
-    const words = [metrics, text(args.current_process)].join('; ');
-    const newCount = words.match(/\b(\d+(?:\.\d+)?)\s+(?:new|expected|forecast|target)\s+(?:customers?|logos?)\b/i) ?? words.match(/\b(?:new|expected|forecast|target)\s+(?:customers?|logos?)\s*(?:[:=]|of|is|are)?\s*(\d+(?:\.\d+)?)/i) ?? words.match(/\b(\d+(?:\.\d+)?)\s+customers?\s+from this\b/i);
+    const words = [metrics, text(args.current_process), fixed ? '' : text(args.your_solution)].join('; ');
+    const newCount = words.match(/(?<![\w.-])(-?\d+(?:\.\d+)?)\s+(?:new|expected|forecast|target)\s+(?:customers?|logos?)\b/i) ?? words.match(/\b(?:new|expected|forecast|target)\s+(?:customers?|logos?)\s*(?:[:=]|of|is|are)?\s*(\d+(?:\.\d+)?)/i) ?? words.match(/\b(\d+(?:\.\d+)?)\s+customers?\s+from this\b/i);
     const amount = String.raw `((?:(?:Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€)\s*)?-?\d[\d,]*(?:\.\d+)?\s*(?:lakh|crore|million|billion|thousand|k|m)?)`;
     const annual = new RegExp(String.raw `(?:at|one (?:new )?customer pays|per customer(?: per year)?\s*[:=]?|annual revenue per customer\s*[:=]?)\s*${amount}\s*(?:each|a year|per year|annually|ARR)`, 'i').exec(words);
     const spendMention = new RegExp(String.raw `(?:spend|cost|budget)\s*(?:of|is|[:=])?\s*${amount}`, 'i').exec(words);
@@ -140,7 +140,8 @@ function readFundingInputs(args, clock = () => new Date()) {
     }
     const per = readFundingMoney(fixed ? fields.per_customer : annual?.[1], fields.currency);
     const metricNumber = (key, pattern) => fixed ? num(fields[key]) : num(words.match(pattern)?.[1]);
-    const N = fixed ? num(fields.customers) : num(newCount?.[1]);
+    const qualifiedCount = words.match(/\b(?:expect(?:ed)?|forecast|target)\s+(-?\d+(?:\.\d+)?)\s+(?:new\s+)?(?:customers?|logos?)\b/i);
+    const N = fixed ? num(fields.customers) : num((newCount ?? qualifiedCount)?.[1]);
     const A = per.value;
     const l = metricNumber('limit_months', /\b(?:payback )?limit\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)\s*(?:months?)?/i);
     const G = metricNumber('margin', /\b(?:gross )?margin\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i);
@@ -215,9 +216,9 @@ const FINANCE = {
 function fundingRoutes(i, failed = false, undecided = false) {
     const book = ['Book 45 minutes', rules.BOOKING];
     const tool = (host, name) => `https://${host}.gtmhelix.com/tools/${name.replace(/_/g, '-')}/`;
-    const plugin = (name) => `https://tools.gtmhelix.com/plugins/${['account-research', 'evidence-research-asset'].includes(name) ? 'b2b-research-market-and-account' : 'b2b-events-pr-and-launches'}/#${name}`;
+    const plugin = (name) => `https://tools.gtmhelix.com/plugins/${['account-research', 'evidence-research-asset'].includes(name) ? 'b2b-research-market-and-account' : 'b2b-events-pr-and-launches'}/`;
     if (failed)
-        return { action: 'Rework the programme size before taking it to finance.', routes: [['Audit the GTM plan', tool('gtmalpha', 'epic_audit')], book] };
+        return { action: 'Rework the programme size before taking it to finance.', routes: [['Audit the GTM plan', 'https://gtmalpha.gtmhelix.com/integration'], book] };
     if (i.classification.kind === 'enabler')
         return { action: 'Check the demand programme and the purchase separately.', routes: [book] };
     if (i.classification.kind === 'brand')
@@ -243,6 +244,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const { S, N, A, L, G, C, W } = i;
     const kind = i.classification.kind;
     const cash = (n) => fundingMoney(n, i.currency);
+    const given = (n) => fundingMoney(n, i.currency, false);
     const Ls = [];
     const hasForecast = !i.guarded && N !== undefined && A !== undefined;
     const R = hasForecast ? N * A : undefined;
@@ -268,7 +270,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
         if (fundingVerdict(kind, 2 * P, L).row !== base.row)
             Ls.push('', `Fragile. If half the customers arrive: ${months(2 * P)} months. ${fundingVerdict(kind, 2 * P, L).words}.`);
     }
-    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : cash(S)}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : cash(A)}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
+    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : given(A)}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
     if (i.classification.mixed && !eligible)
         Ls.push(`Read as ${rules.CLASS_NAMES[kind]} because you mentioned ${clean(i.classification.reason)}. If this is a demand programme, say what it is without that word.`);
     if (i.missing.length)
@@ -335,9 +337,9 @@ function buildRoiFunding(args, clock = () => new Date()) {
         Ls.push(rules.GTM_FIX_RULE);
     Ls.push('', '### Lines for finance');
     if (kind === 'brand')
-        Ls.push(`Amount: ${S === undefined ? 'MISSING' : cash(S)}.`, `Period held: ${clean(i.period)}.`, `Selected signs and values today: ${clean(i.signs) || 'MISSING'}.`);
+        Ls.push(`Amount: ${S === undefined ? 'MISSING' : given(S)}.`, `Period held: ${clean(i.period)}.`, `Selected signs and values today: ${clean(i.signs) || 'MISSING'}.`);
     else
-        Ls.push(`Spend: ${S === undefined ? 'MISSING' : cash(S)}.`, decided ? `Revenue payback: ${months(P)} months against ${L} months. ${gm ? `Gross margin payback: ${months(Pg)} months.` : ''}` : 'Expected new customers and annual revenue per customer need to be confirmed before a funding verdict.');
+        Ls.push(`Spend: ${S === undefined ? 'MISSING' : given(S)}.`, decided ? `Revenue payback: ${months(P)} months against ${L} months. ${gm ? `Gross margin payback: ${months(Pg)} months.` : ''}` : 'Expected new customers and annual revenue per customer need to be confirmed before a funding verdict.');
     for (const question of ['How many of these customers would have come without this spend?', 'Is the spend counted before or after recoverable tax?', 'Which financial year does the spend fall in, and which year does the return fall in?', ...(FINANCE[i.geo] ?? [])])
         Ls.push('- ' + question);
     const reading = (0, revenue_reader_actions_ts_1.revenueReading)('roi_business_case_builder', args, '');
@@ -346,7 +348,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
     if (/\b(?:outbound(?: email)?|cold email|email outreach)\b/i.test(i.subject) && ['United Kingdom', 'United States'].includes(i.geo)) {
         Ls.push('', '### Outbound email note', i.geo === 'United Kingdom' ? 'You can email corporate bodies without prior consent. Sole traders and some partnerships are treated as individuals. Keep a "do not email" list. https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/' : 'CAN-SPAM makes no exception for business to business email. An opt-out must be honoured within 10 business days. https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business', 'Checked 13 Nov 2026. Check with your counsel before you size the list.');
     }
-    Ls.push('', '### How this is worked out', 'CAC = spend / new customers. Monthly ARR per customer = annual revenue per customer / 12. Payback = 12 x spend / (new customers x annual revenue per customer). Gross margin payback = payback / (gross margin / 100). Recovery = sales cycle + payback.', 'Required annual revenue = 12 x spend / limit. Required customers are rounded up. Required opportunities = required customers / (win rate / 100), rounded up.', 'Months are rounded half up to one decimal before comparison with the limit. Money results are rounded to the nearest whole unit. Counts are rounded up.', 'Demand programmes pass at the limit; up to twice the limit a smaller test could pass. A long build passes up to twice the limit. Beyond twice the limit neither passes. Brand, software and unmatched GTM work have no funding verdict.', "Rules of this tool: default 12 month limit; half and one and a half times the revenue; twice the limit for a smaller test or long build; under 0.5 months needs checking; limit from 1 to 60 months; cycle at most 36 months; gross margin and win rate above 0 and at most 100 percent.", 'Recovery is counted from the first day of the start month. Add sales cycle and payback, then round down to whole months to find the recovery month. No currency conversion.');
+    Ls.push('', '### How this is worked out', 'CAC = spend / new customers. Monthly ARR per customer = annual revenue per customer / 12. Payback = 12 x spend / (new customers x annual revenue per customer). Gross margin payback = payback / (gross margin / 100). Recovery = sales cycle + payback.', 'Required annual revenue = 12 x spend / limit. Required customers are rounded up. Required opportunities = required customers / (win rate / 100), rounded up.', 'Months are rounded half up to one decimal before comparison with the limit. Money results are rounded to the nearest whole unit. Counts are rounded up.', 'Demand programmes pass at the limit; up to twice the limit a smaller test could pass. A long build passes up to twice the limit. Beyond twice the limit neither passes. Brand, software and unmatched GTM work have no funding verdict.', `Rules of this tool: default ${rules.DEFAULT_LIMIT_MONTHS} month limit; half and one and a half times the revenue; twice the limit for a smaller test or long build; under 0.5 months needs checking; limit from 1 to 60 months; cycle at most 36 months; gross margin and win rate above 0 and at most 100 percent.`, 'Recovery is counted from the first day of the start month. Add sales cycle and payback, then round down to whole months to find the recovery month. No currency conversion.');
     if (gm && rules.SHOW_BESSEMER_LINE)
         Ls.push(rules.REFERENCE_LINE);
     Ls.push('', '### What this is not', 'This is not a forecast or an instruction to spend. It checks one programme on your inputs. It is not a market benchmark, a budget split, tax advice, legal advice or a software recommendation.');

@@ -15,3 +15,8 @@ const buildHash=createHash('sha256').update(JSON.stringify([profile,payload,doma
 writeFileSync(path.join(root, 'src/build-profile.ts'), `// Generated at build time. Committed builds must use current.\nexport const BUILD_PROFILE: { profile: "current" | "slice" | "wave"; payload: "meta" | "full"; domainEnabled: boolean; buildHash: string } = { profile: ${JSON.stringify(profile)}, payload: ${JSON.stringify(payload)}, domainEnabled: ${domainEnabled}, buildHash: ${JSON.stringify(buildHash)} };\n`);
 const build = spawnSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc')], {cwd: root, stdio: 'inherit'});
 process.exitCode = build.status ?? 1;
+
+if (build.status === 0 && profile === 'current') {
+  const page = spawnSync(process.execPath, [path.join(root, 'scripts/build-roi-funding-page.mjs')], {cwd: root, stdio: 'inherit'});
+  process.exitCode = page.status ?? 1;
+}

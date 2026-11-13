@@ -45,9 +45,13 @@ test("demo_script_builder: demo_duration 0 falls back to the labelled default; 1
 });
 
 test("roi_business_case_builder: negative money prints as -$, not $-", async () => {
-  const r = await call("roi_business_case_builder", { your_solution: "FlowOps ABM", primary_value_driver: "revenue_increase", company_size: "smb", annual_value_estimate: 0.02, annual_revenue: 1, employee_count: 1, solution_price: 1 });
-  assert.doesNotMatch(r.text, /\$-\d/);
-  assert.match(r.text, /\| \*\*Net Annual Benefit\*\* \| -\$0\.98 /);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "FlowOps ABM", primary_value_driver: "revenue_increase", company_size: "smb", annual_value_estimate: 0.02, annual_revenue: 1, employee_count: 1, solution_price: 1 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("win_loss_analyzer: a deal value of 0 is shown as given, 1 day is singular, days get separators", async () => {

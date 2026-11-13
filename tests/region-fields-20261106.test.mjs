@@ -72,7 +72,7 @@ const call=async(tool,args)=>{
 const withText=(base,field,text)=>({...base,[field]:alpha?`Our sales pipeline is thin. ${text}.`:text});
 for(const [tool,base,field] of CASES.india)test(`${tool} ${field}: "in India" gives an India section and no question`,async()=>{
  const t=await call(tool,withText(base,field,'Mid-market manufacturers in India'));
- assert.ok(t.includes('### India'),t.slice(-600));assert.ok(!t.includes(QUESTION));
+ assert.ok(t.includes(tool==='roi_business_case_builder'?'- Region: India':'### India'),t.slice(-600));assert.ok(!t.includes(QUESTION));
 });
 for(const [tool,base,field] of CASES.us)test(`${tool} ${field}: "United States" gives North America`,async()=>{
  const t=await call(tool,withText(base,field,'Rollout across sites in the United States'));
@@ -80,7 +80,7 @@ for(const [tool,base,field] of CASES.us)test(`${tool} ${field}: "United States" 
 });
 for(const [tool,base,field] of CASES.spain)test(`${tool} ${field}: "Spain" gives Western Europe and Spain`,async()=>{
  const t=await call(tool,withText(base,field,'Close cycle of 9 days, target 4 days for the Spain team'));
- assert.ok(t.includes('### Western Europe · Spain'),t.slice(-600));assert.ok(!t.includes(QUESTION));
+ assert.ok(t.includes(tool==='roi_business_case_builder'?'- Region: Western Europe':'### Western Europe · Spain'),t.slice(-600));assert.ok(!t.includes(QUESTION));
 });
 for(const [tool,base,field] of CASES.mexico)test(`${tool} ${field}: "Mexico" gives the outside-regions line and no question`,async()=>{
  const t=await call(tool,withText(base,field,'Plants in Mexico'));

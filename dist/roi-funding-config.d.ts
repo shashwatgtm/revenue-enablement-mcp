@@ -1,6 +1,6 @@
 export declare const DEFAULT_LIMIT_MONTHS = 12;
 export declare const SMALL_TEST_MULTIPLE = 2;
-export declare const BOOTH_SPONSORSHIP_CLASS: "direct";
+export declare const BOOTH_SPONSORSHIP_CLASS: FundingClass;
 export declare const SHOW_GTM_FIX_RULE = true;
 export declare const GTM_FIX_RULE = "Shashwat's working rule: a GTM fix takes 9 to 15 months to show in revenue.";
 export declare const SHOW_BESSEMER_LINE = true;

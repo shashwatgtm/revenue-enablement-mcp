@@ -44,7 +44,7 @@ test('money units and currencies',()=>{
 });
 test('chat only opens with new customers and annual revenue, never existing accounts',()=>{
  for(const known_metrics of probes.existing_customer_opposites){const o=buildRoiFunding(input({known_metrics}),clock);assert.doesNotMatch(o,/Passes|new ARR/);assert.match(o,/If this is your own marketing spend/);}
- for(const known_metrics of ['we expect 5 new customers at 3000000 each','forecast 4 new logos at 45000 a year','target 6 new customers from this at 75000 ARR each'])assert.equal(readFundingInputs(input({known_metrics}),clock).guarded,false,known_metrics);
+ for(const known_metrics of ['we expect 5 new customers at 3000000 each','we expect 5 customers at 3000000 a year','forecast 4 new logos at 45000 a year','target 6 new customers from this at 75000 ARR each'])assert.equal(readFundingInputs(input({known_metrics}),clock).guarded,false,known_metrics);
  for(const primary_value_driver of ['cost_reduction','productivity','risk_mitigation'])assert.equal(readFundingInputs(input({known_metrics:'5 new customers at 3000000 each',primary_value_driver}),clock).guarded,true);
 });
 test('ten seller fills are never funded and never relabelled',()=>{
@@ -75,4 +75,22 @@ test('through the real handler the first line is the funding verdict, contract a
  const handler=createServer()._requestHandlers.get('tools/call');const result=await handler({method:'tools/call',params:{name:'roi_business_case_builder',arguments:input()}});assert.match(result.content[0].text,/^Pays back in/);
  for(const your_solution of probes.out_of_scope){const o=await handler({method:'tools/call',params:{name:'roi_business_case_builder',arguments:input({your_solution})}});assert.match(o.content[0].text,/outside this tool's scope/);assert.doesNotMatch(o.content[0].text,/https:/);}
  const o=await handler({method:'tools/call',params:{name:'roi_business_case_builder',arguments:input({your_solution:'Which ABM platform should we buy?'})}});assert.match(o.content[0].text,/calendly/);assert.doesNotMatch(o.content[0].text,/Passes/);
+});
+
+test('fixed money marks survive the real handler for every currency',async()=>{
+ const handler=createServer()._requestHandlers.get('tools/call');
+ for(const [currency,mark]of [['INR','Rs '],['USD','$'],['GBP','£'],['EUR','€'],['AED','AED '],['SGD','S$']]){
+  const arguments_={your_solution:'an ABM programme',solution_price:180000,primary_value_driver:'revenue_increase',known_metrics:`helix-roi-v1; customers=5; per_customer=${mark}45000; currency=${currency}; limit_months=12`};
+  const r=await handler({method:'tools/call',params:{name:'roi_business_case_builder',arguments:arguments_}});assert.match(r.content[0].text,/^Pays back in/);
+ }
+ const r=await handler({method:'tools/call',params:{name:'roi_business_case_builder',arguments:{your_solution:'an ABM programme in London',solution_price:180000,primary_value_driver:'revenue_increase',known_metrics:'helix-roi-v1; customers=5; per_customer=$45000; currency=GBP; limit_months=12'}}});assert.match(r.content[0].text,/^Check your figures: spend and revenue/);
+});
+test('negative chat numbers and gross margin disagreement never get a hidden positive result',()=>{
+ assert.match(buildRoiFunding(input({known_metrics:'-5 new customers at 3000000 a year'}),clock),/^Check your figures: new customers/);
+ const o=buildRoiFunding(input({known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; limit_months=12; margin=30; currency=INR'}),clock);
+ const P=12*9000000/(5*3000000),Pg=P/(30/100);assert.match(o,new RegExp(`On gross margin\\n${Pg.toFixed(1).replace('.','\\.')} months`));assert.match(o,/Passes on revenue, not on gross margin/);
+});
+test('all safety keyword groups stay without a verdict',()=>{
+ const phrases=['CDP','customer data platform','web personalisation','advertising technology','marketing cloud','marketing operations','webinar platform','event app','partner portal','partner management','sales enablement','sales engagement','buyer intent','contact data','lead data','account data','B2B data','firmographic data','technographic data','data enrichment','lead enrichment','revenue intelligence','conversation intelligence','sales intelligence','lead scoring','lead routing','lead management','sponsorship','sponsoring','sponsored content','sponsored posts','sponsored events','sponsored sessions','analyst briefings','analyst days','analyst firms','public relations','media relations','press releases','earned media','communications programme','thought leadership','AR/PR','PR agency','PR retainer','PR outreach','PR coverage','PR strategy','PR launch','PR team','podcast','newsletter','social media','influencer','out of home','OOH','billboard','brand campaign','brand building','brand refresh','brand positioning','brand programme','brand study','brand tracking','brand strategy','brand identity','brand design','brand lift','brand spend','brand reputation','rebrand','branding','go to market','GTM','fractional CMO','CMO advisory','CMO services','positioning project','messaging workshop','messaging framework','landing page','website revamp','website rebuild','website refresh','website relaunch','product launch','launch campaign'];
+ for(const phrase of phrases)for(const your_solution of [phrase,phrase+' and an ABM programme'])assert.doesNotMatch(buildRoiFunding(input({your_solution}),clock),/Passes/,your_solution);
 });

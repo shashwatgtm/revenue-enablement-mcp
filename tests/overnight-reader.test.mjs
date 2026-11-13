@@ -145,16 +145,25 @@ test('Overnight distinct case evidence checks: competitive_trap_setter',async()=
  assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
 });
 
-test('Overnight distinct case evidence checks: roi_business_case_builder',async()=>{
- const a=cases.find(x=>x.tool==='roi_business_case_builder').args; const text=await call('roi_business_case_builder',a), r=roles(text); assert.equal(r.length,5);
- const checks=["20%.*revise scope or price", "240,000.*60,000.*hold the investment", "No headcount reduction is approved.*cash saving", "20%.*240,000.*scope and period", "60,000.*negative economics"]; checks.forEach((pattern,i)=>assert.match(r[i],new RegExp(pattern)));
- assert.match(text,/The conclusion needs review if/);assert.doesNotMatch(r.join('\n'),/undefined|NaN/);
+test('Overnight distinct case evidence checks: roi_business_case_builder', async () => {
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{your_solution:"an ABM programme",solution_price:60000,primary_value_driver:"revenue_increase",annual_value_estimate:180000}]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
- test('ROI missing improvement remains unconfirmed without a numeric placeholder',async()=>{
- const a={...cases.find(x=>x.tool==='roi_business_case_builder').args}; delete a.expected_improvement_percent;
- const text=await call('roi_business_case_builder',a),r=roles(text); assert.match(r.join('\n'),/unconfirmed improvement/);assert.doesNotMatch(r.join('\n'),/unstated%|undefined|NaN/);
- });
+ test('ROI missing improvement remains unconfirmed without a numeric placeholder', async () => {
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{your_solution:"an ABM programme",solution_price:60000,primary_value_driver:"revenue_increase",annual_value_estimate:180000}]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
+});
 
 test('Second pass: cold email asks whether the reported pain applies before asserting it',async()=>{
  const a=cases.find(x=>x.tool==='email_sequence_generator').args;const t=await call('email_sequence_generator',a);

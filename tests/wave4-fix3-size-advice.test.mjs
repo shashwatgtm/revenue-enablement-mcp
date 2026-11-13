@@ -6,9 +6,11 @@ await req('initialize',{protocolVersion:'2025-03-26',capabilities:{},clientInfo:
 const verticals=['Logistics tech','Fintech','SaaS','Vertical SaaS','AI native','ITeS','Telecom','Software','Cybersecurity'];
 for(const v of verticals)for(const [form,phrase,wantBig]of [['exact','Enterprise buying group',true],['same','Large buying group',true],['opposite','SMB buying group too small for enterprise',false],['opposite-alt','Small buying group below the enterprise threshold',false]])test(`FIX3 size advice ${repo} ${v} ${form}`,async()=>{
  const tool=repo==='craft-gtm-mcp'?'retention_playbook':'roi_business_case_builder';
+
  const args=repo==='craft-gtm-mcp'?{customer_segment:phrase,business_model:'saas_subscription',current_churn_rate:'2% monthly',product:v+' vendor'}:{customer_name:phrase,company_size:'smb',your_solution:v+' ABM programme',primary_value_driver:'cost_reduction',solution_price:12000};
  const schema=schemas.get(tool);for(const k of Object.keys(args))assert.ok(schema.properties[k],k);for(const k of schema.required||[])assert.ok(k in args,k);
  const raw=await req('tools/call',{name:tool,arguments:args}),text=raw.result?.content?.map(c=>c.text).join('\n')||'';
+ if(repo==='revenue-enablement-mcp'){assert.ok(!raw.error&&!raw.result?.isError);assert.match(text,/Not decided yet|Break-even only/);assert.doesNotMatch(text,/Passes|Does not pass|new ARR/);return;}
  const marker=repo==='craft-gtm-mcp'?/In this segment a purchase usually involves|These are common[^\n]+ model in /:/You set company size to SMB, but the customer is described as large or enterprise/;
  const checks={runs:!raw.error&&!raw.result?.isError,advice:marker.test(text)===wantBig};rows.push({v,form,args,wantBig,checks,raw});assert.ok(Object.values(checks).every(Boolean),JSON.stringify({phrase,checks}));
 });

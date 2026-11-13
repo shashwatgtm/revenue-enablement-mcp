@@ -338,28 +338,7 @@
 <tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
-<section class="hx-section hx-wash" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
-  <h3 id="d-roi-business-case-builder">ROI Business Case Builder</h3>
-  <p><code>roi_business_case_builder</code></p>
-  <p class="hx-prose">Helps you build an ROI case the buyer&#x27;s finance team can check. You give your solution, its main value driver and the buyer&#x27;s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). <a href="/tools/roi-business-case-builder/">See what it does</a>.</p>
-  <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
-<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
-<tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
-<tr><td><code>annual_revenue</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
-<tr><td><code>employee_count</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Number of employees</td></tr>
-<tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
-<tr><td><code>solution_price</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
-<tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
-<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</td></tr>
-<tr><td><code>current_annual_cost</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</td></tr>
-<tr><td><code>expected_improvement_percent</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</td></tr>
-<tr><td><code>annual_value_estimate</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
-<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
-<tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
-  </tbody></table></div>
-</section>
+<section class="hx-section hx-wash" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder"><h3 id="d-roi-business-case-builder">Marketing ROI and Payback Check</h3><p><code>roi_business_case_builder</code></p><p class="hx-prose">Check whether your own marketing programme meets your payback limit. Give the spend, expected new customers and what one pays a year. Get CAC against monthly ARR, sensitivity, optional gross margin and financial year timing. Brand gets no payback verdict. Software and data purchases get break-even only. Missing figures stay missing. <a href="/tools/roi-business-case-builder/">Run the check</a>.</p><p>The connector contract stays unchanged. Your solution describes the programme. Solution price is total spend. The page sends revenue increase as the required value driver and puts the funding answers in the existing known metrics field.</p><pre>helix-roi-v1; customers=5; per_customer=3000000; limit_months=12; margin=70; cycle_months=5; start=2026-11; currency=INR; geo=India</pre><p>These are illustrative inputs. Optional keys: win rate as <code>win_rate</code>, financial year start month as <code>fy_start</code>, brand period as <code>period</code>, and selected signs with values as <code>signs</code>. Old annual value, cost and improvement fields are displayed as given, never used as new revenue. In chat, both expected new customers and annual revenue per customer are needed. Existing customers, target accounts and meetings do not open the guard.</p></section>
 <section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
   <h3 id="d-mutual-action-plan-generator">Mutual Action Plan Generator</h3>
   <p><code>mutual_action_plan_generator</code></p>

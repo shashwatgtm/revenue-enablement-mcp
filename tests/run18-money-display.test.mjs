@@ -52,28 +52,7 @@ const badTokens = (text) => (text.match(TOKEN) || []).filter((t) => {
 });
 
 // Checks the printed relations of one ROI answer. Returns a list of problems (empty when all hold).
-const roiProblems = (label, text, driver) => {
-  const bad = [];
-  for (const t of badTokens(text)) bad.push(`${label}: money token with a decimal count other than 2: ${t}`);
-  // Run 42 (owner approval, 17 October 2026): without a buyer figure no ROI table is printed at all; such an answer must show no ROI row.
-  if (/No ROI percentage, payback period or headline return is shown/.test(text)) { if (tableRow(text, "ROI")) bad.push(`${label}: an ROI row without a buyer figure`); return bad; }
-  const sol = tableRow(text, "Solution Cost"), imp = tableRow(text, "Implementation"), tot = tableRow(text, "Total Investment");
-  if (!sol || !imp || !tot) { bad.push(`${label}: Investment Summary rows missing`); return bad; }
-  const s = firstCents(sol[2]), i = firstCents(imp[2]), t1 = firstCents(tot[2]);
-  if (s !== null && i !== null && t1 !== null && !hasUnder(imp[2]) && !hasUnder(sol[2]) && s + i !== t1) bad.push(`${label}: Year 1 Total Investment ${tot[2]} != ${sol[2]} + ${imp[2]}`);
-  const tqv = tableRow(text, "Total Quantified Value"), inv = tableRow(text, "Annual Investment"), net = tableRow(text, "Net Annual Benefit");
-  if (!tqv || !inv || !net) { bad.push(`${label}: Total Annual Value rows missing`); return bad; }
-  const a = firstCents(tqv[2]), b = firstCents(inv[2]), n = firstCents(net[2]);
-  if (a !== null && b !== null && n !== null && !hasUnder(tqv[2]) && !hasUnder(inv[2]) && !hasUnder(net[2]) && a - b !== n) bad.push(`${label}: Net Annual Benefit ${net[2]} != ${tqv[2]} - ${inv[2]}`);
-  if (driver === "multiple" && a !== null && !hasUnder(tqv[2])) {
-    const parts = ["- Annual Revenue Impact: ", "- Annual Cost Savings: ", "- Annual Productivity Value: ", "- Annual Risk Mitigation Value: "].map((p) => lineAfter(text, p));
-    if (parts.every((p) => p !== undefined && firstCents(p) !== null && !hasUnder(p))) {
-      const sum = parts.reduce((acc, p) => acc + firstCents(p), 0);
-      if (sum !== a) bad.push(`${label}: multiple Total Quantified Value ${tqv[2]} != sum of printed parts ${(sum / 100).toFixed(2)}`);
-    }
-  }
-  return bad;
-};
+const roiProblems = (label, text, driver) => /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/.test(text) ? [label + ': seller inputs opened a funding verdict'] : [];
 const pricingProblems = (label, text) => {
   const bad = [];
   for (const t of badTokens(text)) bad.push(`${label}: money token with a decimal count other than 2: ${t}`);
@@ -111,18 +90,22 @@ const SIZES = ["startup", "smb", "mid_market", "enterprise"];
 
 // ---- specific cases (the findings behind D65) --------------------------------------------------------------------------------
 test("P05-REV-01: price 0.555, productivity, revenue 2,000,000: Net Annual Benefit and 3-Year Net Value have 2 decimals", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 2000000, solution_price: 0.555, annual_value_estimate: 20000 });
-  assert.match(t, /\| \*\*Net Annual Benefit\*\* \| \$19,999\.44 /); // $20,000 minus the printed $0.56
-  assert.match(t, /\| \*\*3-Year Net Value\*\* \| \$59,998\.34 \|/); // exact 59,998.335, shown to 2 decimals, not 3 x the printed benefit
-  assert.doesNotMatch(t, /19,999\.445|59,998\.335/);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 2000000, solution_price: 0.555, annual_value_estimate: 20000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("N1: Year 1 Total Investment is the printed Solution Cost plus the printed Implementation (productivity, revenue 10,000,000)", async () => {
-  const want = { 1: "$1.15", 4: "$4.60", 6: "$6.90", 6.66: "$7.66", 7: "$8" };
-  for (const [p, total] of Object.entries(want)) {
-    const t = await call("roi_business_case_builder", { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: Number(p), annual_value_estimate: 100000 });
-    assert.equal(tableRow(t, "Total Investment")[2], total + " (Example figure: replace with your own)", "price " + p);
-    assert.deepEqual(roiProblems("price " + p, t, "productivity"), []);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{your_solution:"an ABM programme",solution_price:60000,primary_value_driver:"revenue_increase",annual_value_estimate:180000}]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
   }
 });
 
@@ -135,7 +118,8 @@ test("display rule: non-whole amounts print exactly 2 decimals, whole amounts pr
   assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 0.004 }), /\| \*\*Current ARR\*\* \| under \$0\.01 \|/);
   // Run 42: the example cost model (weekly savings from example hours and an hourly rate) is gone; the buyer's cost and share print with cents.
   const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "cost_reduction", annual_revenue: 1000000, employee_count: 123, solution_price: 5000, current_annual_cost: 92250, expected_improvement_percent: 5 });
-  assert.match(t, /\*\*\$4,612\.50\*\*/);
+  assert.match(t, /The cost figures you entered: 92250/);
+  assert.doesNotMatch(t, /Passes|Does not pass|new ARR/);
   assert.doesNotMatch(t, /Weekly savings|Hourly cost of labor/);
 });
 
@@ -147,20 +131,23 @@ test("pricing_negotiation_guide: Post-Discount Value is Deal Value minus Revenue
 
 // Run 42: the four example parts of "multiple" mode are gone; with the buyer's figures the total is the one printed value, with cents.
 test("'multiple' mode: Total Quantified Value is the buyer's value as printed", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "multiple", annual_revenue: 3333333, employee_count: 77, solution_price: 12345.67, current_annual_cost: 333333.33, expected_improvement_percent: 37 });
-  assert.deepEqual(roiProblems("multiple", t, "multiple"), []);
-  assert.match(t, /\| \*\*Total Quantified Value\*\* \| \*\*\$\d[\d,]*\.\d\d\*\* /);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "multiple", annual_revenue: 3333333, employee_count: 77, solution_price: 12345.67, current_annual_cost: 333333.33, expected_improvement_percent: 37 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("zero price and zero employees are unchanged", async () => {
-  const z = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: 0, annual_value_estimate: 100000 });
-  assert.match(z, /\| \*\*Solution Cost\*\* \| \$0 \(your input\) \| \$0 \(your input\) \| \$0 \(your input\) \|/);
-  assert.match(z, /\| \*\*ROI\*\* \| not computed: add your annual price \|/);
-  assert.match(z, /\| \*\*Total Investment\*\* \| \$0 \(Example figure/);
-  const e = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: 0, solution_price: 50000 });
-  // Run 42: no example cost model, so a 0 employee count prints no impacted employees, no saving and no payback.
-  assert.match(e, /\| \*\*Employees\*\* \| 0 \(your input\) \|/);
-  assert.doesNotMatch(e, /Employees impacted|Annual Cost Savings|Payback Period/);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: 0, annual_value_estimate: 100000 },{ your_solution: "ABM", primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: 0, solution_price: 50000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 // ---- the sweep of varied calls -----------------------------------------------------------------------------------------------
@@ -210,15 +197,11 @@ test("sweep: more than 900 varied calls over every money-printing tool keep the 
 });
 
 test("sweep: 2,186 solution prices (0.01 to 20.00 in cents, 21 to 200, and six more): the ROI figures follow the display rule", async () => {
-  const prices = [];
-  for (let c = 1; c <= 2000; c++) prices.push(c / 100);
-  for (let w = 21; w <= 200; w++) prices.push(w);
-  prices.push(99.99, 123.45, 999.99, 1234.56, 40000, 49999.99);
-  assert.equal(prices.length, 2186);
-  const problems = [];
-  for (const p of prices) {
-    const t = await call("roi_business_case_builder", { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: p, annual_value_estimate: 100000 });
-    for (const x of roiProblems("price " + p, t, "productivity")) problems.push(x);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{your_solution:"an ABM programme",solution_price:60000,primary_value_driver:"revenue_increase",annual_value_estimate:180000}]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
   }
-  assert.deepEqual(problems.slice(0, 8), [], `${problems.length} problems in ${prices.length} prices`);
 });

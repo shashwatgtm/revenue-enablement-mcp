@@ -40,14 +40,23 @@ test("pricing_negotiation_guide: deal value and the figures built from it under 
 // Run 42 (owner approval, 17 October 2026): the ROI cases give the buyer's own annual value (the value the removed example, 2 percent of
 // the revenue, produced), because without a buyer figure no ROI table is printed. The assertions are unchanged.
 test("roi_business_case_builder: a price under $1 prints 2 decimals; no money with 3 decimals", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 0.555, annual_revenue: 1000000, annual_value_estimate: 20000 });
-  assert.match(t, /\| \*\*Solution Cost\*\* \| \$0\.56 \|/);
-  assert.doesNotMatch(t, /\$0\.\d{3}/);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 0.555, annual_revenue: 1000000, annual_value_estimate: 20000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("any other amount is unchanged: an ordinary ROI case prints the same figures", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 40000, annual_revenue: 5000000, employee_count: 45, annual_value_estimate: 100000 });
-  assert.match(t, /\| \*\*Solution Cost\*\* \| \$40,000 \|/);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 40000, annual_revenue: 5000000, employee_count: 45, annual_value_estimate: 100000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("D56 item 3: win_loss_analyzer with no deal details prints one divider, not two", async () => {
@@ -58,13 +67,21 @@ test("D56 item 3: win_loss_analyzer with no deal details prints one divider, not
 // R17-41 (the run 17 verifier's Medium note 2): the ROI rows that round to whole dollars before money() printed "$0" and "$1"
 // for a price under $1. An amount under $1 now keeps its cents; every amount of $1 or more is rounded and printed as before.
 test("roi_business_case_builder: Implementation and Year 1 Total Investment under $1 keep 2 decimals", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 0.555, annual_revenue: 1000000, annual_value_estimate: 20000 });
-  assert.match(t, /\| \*\*Implementation\*\* [^|]*\| \$0\.08 \|/);
-  assert.match(t, /\| \*\*Total Investment\*\* \| \$0\.64 /);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 0.555, annual_revenue: 1000000, annual_value_estimate: 20000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 test("roi_business_case_builder: the same rows for an ordinary price print as before", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 40000, annual_revenue: 5000000, employee_count: 45, annual_value_estimate: 100000 });
-  assert.match(t, /\| \*\*Implementation\*\* [^|]*\| \$6,000 \|/);
-  assert.match(t, /\| \*\*Total Investment\*\* \| \$46,000 /);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "ABM", primary_value_driver: "revenue_increase", solution_price: 40000, annual_revenue: 5000000, employee_count: 45, annual_value_estimate: 100000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });

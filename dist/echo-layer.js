@@ -611,8 +611,9 @@ function emailSequence(args, out) {
     ].join('\n');
     return insertBeforeHeading(text, /\n## Before you send/, note);
 }
-function readMoney(seg) {
-    const m = seg.match(/(Rs\.?|INR|₹|S\$|SGD|AED|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i);
+function readMoney(seg, regionalCurrencies = false) {
+    const pattern = regionalCurrencies ? /(Rs\.?|INR|₹|S\$|SGD|AED|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i : /(Rs\.?|INR|₹|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i;
+    const m = seg.match(pattern);
     if (!m)
         return null;
     const unitMult = { lakh: 1e5, crore: 1e7, million: 1e6, billion: 1e9, thousand: 1e3, k: 1e3, m: 1e6 };

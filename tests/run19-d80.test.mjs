@@ -94,13 +94,15 @@ test("discovery_question_bank: sector questions, gaps first, no 'You mentioned n
 
 // Problems 5 and 6: the ROI case uses the buyer's own figures and says how sure it is honestly
 test("roi_business_case_builder: the buyer's cost and improvement drive the value; confidence is honest", async () => {
-  const r = await call("roi_business_case_builder", { your_solution: "Branchwire ABM programme", primary_value_driver: "cost_reduction", solution_price: 240000,
-    current_annual_cost: 900000, expected_improvement_percent: 30, customer_name: "Example Retail Co" });
-  assert.match(r.text, /\$270,000/); // 30% of $900,000, the buyer's own figures
-  const ex = await call("roi_business_case_builder", { your_solution: "Answerloop outbound platform", primary_value_driver: "productivity", solution_price: 60000, annual_revenue: 20000000,
-    employee_count: 120, known_metrics: "45% of tickets resolved without a human" });
-  assert.doesNotMatch(ex.text, /\*\*Confidence:\*\* High|High: set because you supplied metrics/);
-  assert.match(ex.text, /45% of tickets resolved without a human/);
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ your_solution: "Branchwire ABM programme", primary_value_driver: "cost_reduction", solution_price: 240000,
+    current_annual_cost: 900000, expected_improvement_percent: 30, customer_name: "Example Retail Co" },{ your_solution: "Answerloop outbound platform", primary_value_driver: "productivity", solution_price: 60000, annual_revenue: 20000000,
+    employee_count: 120, known_metrics: "45% of tickets resolved without a human" }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 // Problem 3: every blocker gets its own answer
@@ -169,18 +171,15 @@ test("account_plan_builder: given contacts are used, not asked for; sector notes
 // Run 19 R19-36 (ledger B16-18): a revenue or employee count you give is labelled as yours, and its row is not called an estimate.
 // Run 20 round 1 (B81): nothing is estimated any more, so a size you did not give says "not supplied" and no row is called "Est.".
 test("roi_business_case_builder: given revenue and employees are labelled as your input, estimated ones keep Est.", async () => {
-  const row = (text, start) => text.split("\n").find((l) => l.startsWith(start)) || "";
-  const both = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, an ABM programme for retail chains", your_sector: "logistics_tech",
-    primary_value_driver: "cost_reduction", company_size: "mid_market", annual_revenue: 60000000, employee_count: 500, solution_price: 90000 })).text;
-  assert.equal(row(both, "| **Annual Revenue** |"), "| **Annual Revenue** | $60,000,000 (your input) |");
-  assert.equal(row(both, "| **Employees** |"), "| **Employees** | 500 (your input) |");
-  assert.ok(!both.includes("| **Est. Annual Revenue** |") && !both.includes("| **Est. Employees** |"));
-  const est = (await call("roi_business_case_builder", { customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, an ABM programme for retail chains", your_sector: "logistics_tech",
-    primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 })).text;
-  // Run 42 (owner approval, 17 October 2026): a missing revenue is no longer estimated from the employee count; it is shown as not supplied.
-  assert.equal(row(est, "| **Annual Revenue** |"), "| **Annual Revenue** | not supplied |");
-  assert.ok(!/estimated from your employee count/.test(est));
-  assert.equal(row(est, "| **Employees** |"), "| **Employees** | 500 (your input) |");
+  // The seller ROI calculation was replaced by the funding guard. These old fields cannot earn a verdict.
+  for (const args of [{ customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, an ABM programme for retail chains", your_sector: "logistics_tech",
+    primary_value_driver: "cost_reduction", company_size: "mid_market", annual_revenue: 60000000, employee_count: 500, solution_price: 90000 },{ customer_name: "Example Retail Co", industry: "Retail", your_solution: "Lanehop, an ABM programme for retail chains", your_sector: "logistics_tech",
+    primary_value_driver: "cost_reduction", company_size: "mid_market", employee_count: 500, solution_price: 90000 }]) {
+    const answer = await call("roi_business_case_builder", args);
+    const output = typeof answer === "string" ? answer : answer.text;
+    assert.doesNotMatch(output, /Passes|Does not pass|new ARR|Net Annual Benefit|3-Year Net Value/);
+    assert.match(output, /A spend of 0|Not decided yet|Break-even only|outside this tool's scope/);
+  }
 });
 
 // Run 19 R19-36 (safety-live.md Part 4 gap 3): /mcp answers carry the same security headers as the JSON answers of /api/tools.

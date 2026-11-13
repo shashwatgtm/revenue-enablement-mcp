@@ -19,6 +19,13 @@ for (const c of cases) test(`answer structure and promised role actions: ${c.too
   const message = await response.json();
   assert.ok(!message.error && message.result && !message.result.isError, 'fixture must produce a successful tool answer');
   const text = message.result.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
+  if(c.tool==='roi_business_case_builder') {
+    assert.match(text,/### What I read/);
+    assert.match(text,/A calculation on your inputs. Not a forecast/);
+    assert.doesNotMatch(text,/Passes|Does not pass|new ARR/);
+    for(const role of ['CMO','Demand generation head','Founder','CRO','CFO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
+    return;
+  }
   const reading = text.match(/^## Reading the answer\s*\n([\s\S]*?)(?=^## |$(?![\s\S]))/m)?.[1];
   assert.ok(reading && reading.trim().length > 80, 'substantive reading section is required');
   assert.match(reading, /The conclusion needs review if|Review the conclusion if|Change scope if|Evidence that could change this conclusion:/);

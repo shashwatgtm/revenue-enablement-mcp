@@ -7,6 +7,13 @@ for(const c of cases)test('Round 5 reader contract: '+c.tool,async()=>{
  const response=await handler(new Request('https://example.com/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:c.tool,arguments:c.args}})}));
  const r=(await response.json()).result;assert.ok(r&&!r.isError);
  const text=r.content.filter(x=>x.type==='text').map(x=>x.text).join('\n');
+  if(c.tool==='roi_business_case_builder') {
+    assert.match(text,/### What I read/);
+    assert.match(text,/A calculation on your inputs. Not a forecast/);
+    assert.doesNotMatch(text,/Passes|Does not pass|new ARR/);
+    for(const role of ['CMO','Demand generation head','Founder','CRO','CFO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
+    return;
+  }
  assert.match(text,/## Reading the answer/);
  assert.match(text,/The conclusion needs review if|Change scope if/);
  for(const role of ['Founder','CEO','CMO','CRO','Demand generation head'])assert.match(text,new RegExp('(?:^|\\n)'+role+':'));

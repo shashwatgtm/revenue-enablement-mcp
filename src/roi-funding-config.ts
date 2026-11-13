@@ -1,7 +1,7 @@
 // Funding decisions approved for this release. The public tool contract stays unchanged.
 export const DEFAULT_LIMIT_MONTHS = 12; // Decision 3.
 export const SMALL_TEST_MULTIPLE = 2; // Decision 3.
-export const BOOTH_SPONSORSHIP_CLASS = 'direct' as const; // Decision 2.
+export const BOOTH_SPONSORSHIP_CLASS: FundingClass = 'direct'; // Decision 2.
 export const SHOW_GTM_FIX_RULE = true; // Decision 4.
 export const GTM_FIX_RULE = "Shashwat's working rule: a GTM fix takes 9 to 15 months to show in revenue.";
 export const SHOW_BESSEMER_LINE = true; // Decision 5. Keep the source, omit organisation names.

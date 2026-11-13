@@ -45,7 +45,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | 1 | `account_plan_builder` | Account Plan Builder | Helps you decide how to grow an account in the next 90 days. You give the account name, plus contacts, products, threats and notes if you have them. You get a strategic account plan: a power map with one row per contact you name, whitespace analysis, competitive questions, an answer for each objection and a 90 day plan. It does not look the account up. |
 | 2 | `deal_strategy_coach` | Deal Strategy Coach | Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text. |
 | 3 | `discovery_question_bank` | Discovery Question Bank | Helps you decide what to ask on a discovery call. You give the framework you use (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. You get an opening for the conversation, questions in the language of the prospect's sector and on what your solution covers, questions for each part of the framework, a closing and what to say to an objection. It uses only the inputs you give and says which it did not get. |
-| 4 | `roi_business_case_builder` | ROI Business Case Builder | Helps you build an ROI case the buyer's finance team can check. You give your solution, its main value driver and the buyer's own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). |
+| 4 | `roi_business_case_builder` | ROI Business Case Builder | Check whether your own marketing programme meets your payback limit. Give the spend, expected new customers and what one pays a year. Get CAC against monthly ARR, sensitivity, optional gross margin and financial year timing. Brand gets no payback verdict. Software and data purchases get break-even only. Missing figures stay missing. |
 | 5 | `mutual_action_plan_generator` | Mutual Action Plan Generator | Helps you decide what has to happen, by whom and when, for a deal to sign on time. You give the deal name and the target close date, plus the current stage, the buyer's champion, economic buyer and evaluators, known requirements and process steps if you have them. You get a close plan both sides can work from, with milestones, owners and dates. |
 | 6 | `win_loss_analyzer` | Win/Loss Analyzer | Helps you decide why you won or lost and what to change. You give the details of one deal, a competitor pattern or a set of deals. You get a short write up that names the outcome, the stated reason in the buyer's words, what the reason points to and what the buyer weighed, then questions for the review call and sector notes. It adds no figure or reason you did not give, and says what a missing outcome or reason would add. |
 | 7 | `proposal_section_writer` | Proposal Section Writer | Helps you write one section of a proposal for a named buyer. You give the section you need (such as an executive summary, solution overview or pricing justification), your solution, the buyer's challenges, your differentiators, pricing and success measures. You get that section in sentences built from your inputs, with sector notes. It invents no figure, customer or date, and says once which inputs were not given. |
@@ -103,25 +103,28 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | `gaps_to_fill` | No | string | Specific information gaps to address |
 | `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
 
-#### 4. ROI Business Case Builder (`roi_business_case_builder`)
+#### 4. Marketing ROI and Payback Check (`roi_business_case_builder`)
 
-| Input | Required | Type | Description |
-|---|---|---|---|
-| `your_solution` | Yes | string | Your product/solution |
-| `primary_value_driver` | Yes | one of: `revenue_increase`, `cost_reduction`, `productivity`, `risk_mitigation`, `multiple` | Primary value category |
-| `customer_name` | No | string | Customer/prospect name |
-| `industry` | No | string | Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology |
-| `company_size` | No | one of: `startup`, `smb`, `mid_market`, `enterprise` | Company size tier |
-| `annual_revenue` | No | number (0 or more) | Customer annual revenue |
-| `employee_count` | No | number (0 or more) | Number of employees |
-| `solution_price` | No | number (0 or more) | Annual cost of your solution |
-| `known_metrics` | No | string | Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate |
-| `current_annual_cost` | No | number (0 or more) | Optional: what the problem or the current process costs the buyer a year, in dollars (their figure) |
-| `expected_improvement_percent` | No | number (0 to 100) | Optional: the share of that annual cost the buyer expects to save, in percent (their figure) |
-| `annual_value_estimate` | No | number (0 or more) | Optional: the buyer's own estimate of the annual value in dollars; used as the value when given |
-| `current_process` | No | string | How they do it today. Shown in the output; not used in the calculation |
-| `implementation_timeline` | No | string | Expected implementation time. Shown in the output; not used in the calculation |
-| `your_sector` | No | one of: `logistics_tech`, `fintech`, `saas`, `vertical_saas`, `ai_native`, `ites`, `telecom`, `software`, `cybersecurity`, `other` | Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. |
+Check whether your own marketing programme meets your payback limit. Give the spend, expected new customers and what one pays a year. Get CAC against monthly ARR, sensitivity, optional gross margin and financial year timing. Brand gets no payback verdict. Software and data purchases get break-even only. Missing figures stay missing.
+
+The tool contract is unchanged. The page posts existing schema fields only:
+
+| Field | Funding meaning |
+|---|---|
+| `your_solution` | The GTM programme being funded and its location |
+| `solution_price` | Total spend, in the currency you use |
+| `primary_value_driver` | Required legacy field. The page sends `revenue_increase` |
+| `known_metrics` | A fixed line, or chat text with expected new customers and annual revenue per customer |
+| `annual_value_estimate`, `current_annual_cost`, `expected_improvement_percent` | Shown as given; never used as new revenue or to award a funding verdict |
+| Other legacy fields | Context only; no estimated revenue or employee count |
+
+Illustrative inputs:
+
+```text
+helix-roi-v1; customers=5; per_customer=3000000; limit_months=12; margin=70; cycle_months=5; fy_start=4; start=2026-11; currency=INR; geo=India
+```
+
+Optional fixed-line keys also include `win_rate`, `period` and `signs`. Missing figures are not filled in. In chat, the guard needs both new customers and what one pays a year; existing customers, target accounts and meetings do not count. Same inputs and date give the same answer. [Open the check](https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/).
 
 #### 5. Mutual Action Plan Generator (`mutual_action_plan_generator`)
 
@@ -264,7 +267,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 |------|-----------|-----------|
 | **Account Executives** | `deal_strategy_coach`, `account_plan_builder`, `mutual_action_plan_generator` | Deal execution |
 | **SDRs/BDRs** | `email_sequence_generator`, `discovery_question_bank` | Outreach, qualification |
-| **Sales Engineers** | `demo_script_builder`, `roi_business_case_builder` | Technical selling |
+| **Marketing budget owners** | `roi_business_case_builder` | Check programme payback |
 | **Sales Managers** | `win_loss_analyzer`, `deal_strategy_coach` | Pipeline coaching |
 | **Sales Enablement** | `discovery_question_bank`, `champion_enablement_kit` | Training, tools |
 | **RevOps** | `win_loss_analyzer`, `pricing_negotiation_guide` | Process optimization |
@@ -276,7 +279,7 @@ Generated on 27 September 2026 from the server's own tool list, and checked agai
 | "I need to build a strategic account plan" | `account_plan_builder` |
 | "I need help navigating this deal" | `deal_strategy_coach` |
 | "I need discovery questions for my call" | `discovery_question_bank` |
-| "I need to build an ROI business case" | `roi_business_case_builder` |
+| "Should we fund this marketing programme?" | `roi_business_case_builder` |
 | "I need to create a mutual action plan" | `mutual_action_plan_generator` |
 | "I need to analyze our win/loss patterns" | `win_loss_analyzer` |
 | "I need to write proposal sections" | `proposal_section_writer` |

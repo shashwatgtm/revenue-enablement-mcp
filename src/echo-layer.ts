@@ -580,8 +580,9 @@ function emailSequence(args: Args, out: string): string {
 // Rows 8 and 9: proposal_section_writer
 // ---------------------------------------------------------------------------------------------------------------
 interface Money { cur: string; value: number }
-export function readMoney(seg: string): Money | null {
-  const m = seg.match(/(Rs\.?|INR|₹|S\$|SGD|AED|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i);
+export function readMoney(seg: string, regionalCurrencies = false): Money | null {
+  const pattern = regionalCurrencies ? /(Rs\.?|INR|₹|S\$|SGD|AED|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i : /(Rs\.?|INR|₹|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i;
+  const m = seg.match(pattern);
   if (!m) return null;
   const unitMult: Record<string, number> = { lakh: 1e5, crore: 1e7, million: 1e6, billion: 1e9, thousand: 1e3, k: 1e3, m: 1e6 };
   const cur = /^rs|inr|₹/i.test(m[1]) ? 'Rs' : m[1].toUpperCase() === 'USD' ? '$' : m[1];

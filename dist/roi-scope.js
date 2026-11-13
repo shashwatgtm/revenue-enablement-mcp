@@ -8,6 +8,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ROI_SCOPE_DECLINE = void 0;
 exports.roiFundingSubject = roiFundingSubject;
+exports.roiAnalystReportWords = roiAnalystReportWords;
 exports.roiInScope = roiInScope;
 exports.roiScopeDecline = roiScopeDecline;
 exports.ROI_SCOPE_DECLINE = [
@@ -104,6 +105,16 @@ function fundsGtm(text) {
             return true;
     }
     return false;
+}
+/** Analyst report signals reuse the scope vocabulary, without adding vendor identities elsewhere. */
+function roiAnalystReportWords(text) {
+    for (const clause of normalise(text).split(/[.;:!?\n,()[\]]+|\bbut\b|\bwhile\b|\bwhereas\b/i)) {
+        for (const match of clause.matchAll(IN_SCOPE)) {
+            if (/\b(?:quadrant|wave)\b/i.test(match[0]) && !NEGATION.test(clause.slice(0, match.index)))
+                return match[0];
+        }
+    }
+    return undefined;
 }
 /** True when the investment being justified is a GTM or marketing investment. */
 function roiInScope(args) {

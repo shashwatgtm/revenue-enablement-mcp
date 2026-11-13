@@ -105,6 +105,16 @@ function fundsGtm(text: string): boolean {
   return false;
 }
 
+/** Analyst report signals reuse the scope vocabulary, without adding vendor identities elsewhere. */
+export function roiAnalystReportWords(text: string): string | undefined {
+  for (const clause of normalise(text).split(/[.;:!?\n,()[\]]+|\bbut\b|\bwhile\b|\bwhereas\b/i)) {
+    for (const match of clause.matchAll(IN_SCOPE)) {
+      if (/\b(?:quadrant|wave)\b/i.test(match[0]) && !NEGATION.test(clause.slice(0, match.index))) return match[0];
+    }
+  }
+  return undefined;
+}
+
 /** True when the investment being justified is a GTM or marketing investment. */
 export function roiInScope(args: Record<string, unknown> | undefined): boolean {
   const text = (v: unknown): string => (typeof v === 'string' ? v : '');

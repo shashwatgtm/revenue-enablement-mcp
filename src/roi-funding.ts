@@ -1,6 +1,6 @@
 import {readMoney} from './echo-layer.ts';
 import {readRegionContext} from './region-reader.ts';
-import {roiFundingSubject, roiScopeDecline} from './roi-scope.ts';
+import {roiFundingSubject, roiScopeDecline, roiAnalystReportWords} from './roi-scope.ts';
 import {revenueReading} from './revenue-reader-actions.ts';
 import * as rules from './roi-funding-config.ts';
 
@@ -55,7 +55,9 @@ export function classifyFunding(value:string):FundingClassification {
    }
   }
  }
- const chosen=hits[0];
+ if(roiAnalystReportWords(bought))hits.push({kind:'brand',group:'relations',word:'an analyst report'});
+ const priority:rules.FundingClass[]=['enabler','brand','other','long','direct'];
+ const chosen=hits.sort((a,b)=>priority.indexOf(a.kind)-priority.indexOf(b.kind))[0];
  return chosen?{kind:chosen.kind,group:chosen.group,reason:chosen.word,mixed:new Set(hits.map(h=>h.kind)).size>1}:{kind:'other',group:'other',reason:'no direct revenue line',mixed:false};
 }
 const GEO_NAMES:Record<string,string>={'india':'India','middle-east':'Middle East and Africa','southeast-asia':'Southeast Asia','uk':'United Kingdom','north-america':'United States','western-europe':'Western Europe'};

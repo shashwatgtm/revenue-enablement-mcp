@@ -94,3 +94,11 @@ test('all safety keyword groups stay without a verdict',()=>{
  const phrases=['CDP','customer data platform','web personalisation','advertising technology','marketing cloud','marketing operations','webinar platform','event app','partner portal','partner management','sales enablement','sales engagement','buyer intent','contact data','lead data','account data','B2B data','firmographic data','technographic data','data enrichment','lead enrichment','revenue intelligence','conversation intelligence','sales intelligence','lead scoring','lead routing','lead management','sponsorship','sponsoring','sponsored content','sponsored posts','sponsored events','sponsored sessions','analyst briefings','analyst days','analyst firms','public relations','media relations','press releases','earned media','communications programme','thought leadership','AR/PR','PR agency','PR retainer','PR outreach','PR coverage','PR strategy','PR launch','PR team','podcast','newsletter','social media','influencer','out of home','OOH','billboard','brand campaign','brand building','brand refresh','brand positioning','brand programme','brand study','brand tracking','brand strategy','brand identity','brand design','brand lift','brand spend','brand reputation','rebrand','branding','go to market','GTM','fractional CMO','CMO advisory','CMO services','positioning project','messaging workshop','messaging framework','landing page','website revamp','website rebuild','website refresh','website relaunch','product launch','launch campaign'];
  for(const phrase of phrases)for(const your_solution of [phrase,phrase+' and an ABM programme'])assert.doesNotMatch(buildRoiFunding(input({your_solution}),clock),/Passes/,your_solution);
 });
+
+test('analyst report scope signals retain the brand decision in a mix',()=>{
+ for(const your_solution of ['Magic Quadrant work','Magic Quadrant work and an ABM programme']){
+  assert.equal(classifyFunding(your_solution).kind,'brand');assert.doesNotMatch(buildRoiFunding(input({your_solution}),clock),/Passes/);
+ }
+ assert.equal(classifyFunding('an ABM programme, not Magic Quadrant work').kind,'direct');
+ assert.equal(classifyFunding('an ABM wave').kind,'direct');
+});

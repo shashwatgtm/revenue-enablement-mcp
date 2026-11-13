@@ -95,10 +95,10 @@ const call = async (args) => {
 test('through the MCP handler: GTM cases are built, others get the plain decline with no figures', async () => {
   const base = {customer_name: 'a mid-market B2B SaaS company', primary_value_driver: 'revenue_increase', solution_price: 120000, annual_value_estimate: 300000};
   const built = await call({...base, your_solution: 'an ABM programme for 40 target accounts'});
-  assert.match(built, /ROI Business Case/);
-  assert.match(built, /\$300,000/);
+  assert.match(built, /Not decided yet/);
+  assert.match(built, /The annual value you entered: 300000/);
   const funded = await call({...base, your_solution: 'A logistics tech firm wants to fund an ABM programme'});
-  assert.match(funded, /ROI Business Case/);
+  assert.match(funded, /Not decided yet/);
   for (const v of verticals) {
     const text = await call({...base, your_solution: outside[v], your_sector: v.toLowerCase().replace(/ /g, '_')});
     assert.equal(text, ROI_SCOPE_DECLINE, v);

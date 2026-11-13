@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stakeholderKind = stakeholderKind;
 exports.personaKind = personaKind;
+exports.readMoney = readMoney;
 exports.applyEcho = applyEcho;
 const s = (v) => (typeof v === 'string' ? v.trim() : '');
 const items = (v) => s(v).split(/\r?\n|;/).map(x => x.trim().replace(/[.]+$/, '')).filter(Boolean);
@@ -611,7 +612,7 @@ function emailSequence(args, out) {
     return insertBeforeHeading(text, /\n## Before you send/, note);
 }
 function readMoney(seg) {
-    const m = seg.match(/(Rs\.?|INR|₹|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i);
+    const m = seg.match(/(Rs\.?|INR|₹|S\$|SGD|AED|\$|USD|€|£)\s*([\d][\d,]*(?:\.\d+)?)\s*(lakh|crore|million|billion|thousand|k|m)?/i);
     if (!m)
         return null;
     const unitMult = { lakh: 1e5, crore: 1e7, million: 1e6, billion: 1e9, thousand: 1e3, k: 1e3, m: 1e6 };

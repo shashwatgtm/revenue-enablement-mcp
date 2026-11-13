@@ -85,7 +85,7 @@ const outOfScope = (text: string): boolean => mentions(text, OUT_OF_SCOPE);
 // A company phrase with GTM words ("a PR agency") is kept.
 const WORD = String.raw`(?!(?:for|to|of|with|and|or|but|that|which|who|in|on|at|by|from|than|wants?|plans|needs?)\b)[\w-]+`;
 const COMPANY = new RegExp(String.raw`\b(?:(?:a|an|the|our|my|their|its|this|that)\s+)?(?:${WORD}\s+){0,4}(?:compan(?:y|ies)|firms?|business(?:es)?|providers?|vendors?|startups?|scale-?ups?|operators?|banks?|insurers?|lenders?|retailers?|manufacturers?|carriers?|telcos?|players?|sellers?|enterprises?|organi[sz]ations?)(?:['’]s)?\b`, 'gi');
-const withoutCompany = (text: string): string => text.replace(COMPANY, phrase => (inScope(phrase) ? phrase : ' '));
+const withoutCompany = (text: string): string => text.replace(COMPANY, phrase => ((inScope(phrase) || /data providers?/i.test(phrase)) ? phrase : ' '));
 
 /** Read the funded work, setting aside the funder's own industry and location. */
 export function roiFundingSubject(text: string): string {

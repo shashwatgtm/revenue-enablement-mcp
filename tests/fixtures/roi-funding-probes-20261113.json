@@ -1,0 +1,44 @@
+{
+  "_note": "Inputs only, written 13 Nov 2026 for the ROI funding check build. No expected figures: tests compute them from PLAN.md section 4. No company names. Amounts are illustrative inputs, not data.",
+  "verticals": ["logistics tech", "fintech", "SaaS", "vertical SaaS", "AI native", "ITeS", "telecom", "software", "cybersecurity"],
+  "geos": [
+    {"geo": "India", "places": ["Bengaluru", "Hyderabad", "Pune"], "currency": "INR", "spend": "Rs 90 lakh", "per_customer": "Rs 30 lakh"},
+    {"geo": "Middle East and Africa", "places": ["Dubai", "Riyadh", "Nairobi"], "currency": "AED", "spend": "AED 400,000", "per_customer": "AED 200,000"},
+    {"geo": "Southeast Asia", "places": ["Singapore", "Jakarta", "Kuala Lumpur"], "currency": "SGD", "spend": "S$250,000", "per_customer": "S$60,000"},
+    {"geo": "United Kingdom", "places": ["London", "Manchester"], "currency": "GBP", "spend": "£180,000", "per_customer": "£45,000"},
+    {"geo": "United States", "places": ["Austin", "New York", "San Francisco"], "currency": "USD", "spend": "$300,000", "per_customer": "$75,000"},
+    {"geo": "Western Europe", "places": ["Berlin", "Amsterdam", "Paris"], "currency": "EUR", "spend": "€200,000", "per_customer": "€50,000"}
+  ],
+  "direct_lines": ["an ABM programme for 40 target accounts", "events in the region", "a field marketing programme", "paid media on LinkedIn", "an outbound programme with 3 SDRs", "a demand generation programme", "an exhibition booth at a trade show"],
+  "long_build_lines": ["a content programme", "an SEO and AEO programme", "a partner programme with resellers"],
+  "brand_lines": ["brand awareness", "analyst relations", "a PR agency retainer", "a podcast series", "billboards near the airport"],
+  "enabler_lines": ["a CRM", "marketing automation", "a marketing technology stack", "marketing analytics and attribution", "intent data", "a sales engagement platform", "a dialer for the SDR team"],
+  "other_lines": ["a website redesign", "a product launch campaign", "a positioning workshop"],
+  "templates": {
+    "who_clause": "A {vertical} firm in {place} wants to fund {line}",
+    "our_company": "Our {vertical} company wants {line} in {geo}",
+    "plain": "{line} in {place}"
+  },
+  "red_team_probes_declined_today": [
+    "A logistics tech firm in Bengaluru wants to fund an ABM programme for 40 accounts",
+    "A cybersecurity firm in Dubai wants to fund events in the Gulf",
+    "LinkedIn campaign for CFOs at UK fintechs"
+  ],
+  "paid_beats_audience": ["paid social for our fintech in London", "social media ads targeting CFOs in Singapore", "LinkedIn ads for CISOs in the US"],
+  "existing_customer_opposites": ["we have 120 customers, average deal Rs 40 lakh", "40 target accounts in India", "225 meetings booked last year"],
+  "new_customer_phrasings": ["we expect 5 new customers at Rs 30 lakh each", "forecast 4 new logos at £45,000 a year", "target 6 new customers from this at $75,000 ARR each"],
+  "mixed_currency": [{"spend": "Rs 90 lakh", "per_customer": "$36,000"}, {"spend": "£180,000", "per_customer": "45000"}],
+  "out_of_scope": ["route planning software for a retailer's delivery fleet", "a data warehouse migration", "a SIEM for our security team", "a payment gateway integration", "an ERP rollout"],
+  "seller_frame_fills": [
+    {"your_solution": "our route optimisation platform", "solution_price": 90000, "primary_value_driver": "cost_reduction", "current_annual_cost": 1200000, "expected_improvement_percent": 15},
+    {"your_solution": "our intent data platform", "solution_price": 60000, "primary_value_driver": "revenue_increase", "annual_value_estimate": 180000},
+    {"your_solution": "ABM programme we run for the client", "solution_price": 90000, "primary_value_driver": "revenue_increase", "known_metrics": "client expects 5 new customers at £60k each"},
+    {"your_solution": "our sales enablement tool", "solution_price": 40000, "primary_value_driver": "productivity"},
+    {"your_solution": "our compliance software", "solution_price": 50000, "primary_value_driver": "risk_mitigation"}
+  ],
+  "fy_cases": [
+    {"run_date": "2026-11-13", "start": "2026-11", "fy_start": 4, "cycle_months": 5, "note": "worked example"},
+    {"start": "2026-11", "fy_start": 4, "T": 4.2, "note": "lands in March, same FY"},
+    {"start": "2026-12", "fy_start": 4, "T": 4.2, "note": "lands in April, next FY"}
+  ]
+}

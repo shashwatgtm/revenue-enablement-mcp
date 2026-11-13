@@ -133,14 +133,14 @@ export function revenueReading(name: string, a: Input, result: string): Reading 
  }
 
  if(name==='roi_business_case_builder'){
-  const price=num(a.solution_price,'unstated amount'),baseline=num(a.current_annual_cost,'unstated amount'),improvement=typeof a.expected_improvement_percent==='number' && Number.isFinite(a.expected_improvement_percent) ? num(a.expected_improvement_percent,'')+'%' : 'unconfirmed',metrics=label(a.known_metrics,'the unverified baseline'),noPayback=/^\| \*\*Payback Period\*\*[^\n]*No payback/im.test(result);
-  return {meaning:`The calculation supports checking the supplied ${solution} economics. ${noPayback?'Hold the investment: the stated annual value does not cover the recurring fee.':'A calculated benefit is conditional on the supplied scope, price and improvement.'} Released capacity is not cash unless a cost is removed or additional contribution is evidenced.`,evidence:`the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit`,roles:[
-   `Founder: challenge whether the ${improvement} improvement is achievable for ${solution} before endorsing the case; revise scope or price if annual value does not cover the recurring fee.`,
-   `CEO: have finance verify the ${baseline} annual cost baseline, ${price} price period and implementation cost before committing; ${noPayback?'hold the investment while annual value is below the recurring fee':'approve only a benefit that finance can substantiate'}.`,
-   `CMO: check "${metrics}" before publishing a return claim for ${solution}; do not present labour capacity as an approved cash saving.`,
-   `CRO: agree a buyer measurement of the ${improvement} improvement against the ${baseline} baseline before revising the proposal; require the same scope and period.`,
-   `Demand generation head: keep this ${solution} case out of positive return campaigns until the buyer confirms realized benefit and the ${price} price period; retain any negative economics alongside it.`,
+  return {meaning:'Check one marketing programme against your own payback limit.',evidence:'the expected new customers, annual revenue per customer or spend changes',roles:[
+   'CMO: take the result and the lines for finance to the budget meeting, or cut the ask to the size that meets the limit.',
+   'Demand generation head: check the half case and the customers that must close, then run the related tool.',
+   'Founder: check what must be true before spending.',
+   "CRO: check the opportunities needed at your team's win rate.",
+   'CFO: trace every number, read the gross margin row and ask how many customers would arrive without this spend.',
   ]};
  }
+
  return undefined;
 }

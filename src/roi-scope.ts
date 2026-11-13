@@ -25,14 +25,14 @@ const IN_SCOPE = new RegExp(String.raw`\b(?:` + [
   // ABM
   String.raw`ABM|account[- ]based (?:marketing|selling|advertising|engagement|experience|${N})`,
   // Events
-  String.raw`(?:virtual|hybrid|in[- ]person|field|customer|partner|hosted|owned|industry|flagship|user) events?|events? (?:${N}|marketing|sponsorships?|strategy|calendar|series|budget|presence|booths?|spend)|event[- ]led|trade[- ]?shows?|exhibitions?|expos?|conferences?(?![- ]?(?:call|calls|calling|bridges?|rooms?|systems?|phones?))|summits?|roundtables?|webinars?|(?:exhibition|trade[- ]?show|expo|conference) booths?|sponsorships?|sponsoring|sponsored (?:content|posts?|events?|sessions?)`,
+  String.raw`events?(?![- ](?:logs?|streams?|processing|sourcing|bus|handlers?|telemetry))|(?:virtual|hybrid|in[- ]person|field|customer|partner|hosted|owned|industry|flagship|user) events?|events? (?:${N}|marketing|sponsorships?|strategy|calendar|series|budget|presence|booths?|spend)|event[- ]led|trade[- ]?shows?|exhibitions?|expos?|conferences?(?![- ]?(?:call|calls|calling|bridges?|rooms?|systems?|phones?))|summits?|roundtables?|webinars?|(?:exhibition|trade[- ]?show|expo|conference) booths?|sponsorships?|sponsoring|sponsored (?:content|posts?|events?|sessions?)`,
   // Analyst and public relations, content
   String.raw`analyst relations|analyst (?:${N}|briefings?|days?|firms?)|Magic Quadrant|Forrester Wave|public relations|media relations|press (?:releases?|coverage|outreach|office)|earned media|thought leadership|communications (?:${N}|agency|agencies|campaigns?)`,
   String.raw`content (?:marketing|syndication|${N}|strategy|production|agency|agencies|studio|hub|calendar|creation|writing|series|engine|assets?|campaigns?|distribution|amplification)|podcasts?|newsletters?|social media|influencers?`,
   // SEO, AEO, GEO and AI search visibility
   String.raw`SEO|AEO|search engine optimi[sz]ation|answer engine optimi[sz]ation|generative engine optimi[sz]ation|AI search (?:visibility|optimi[sz]ation)|AI visibility|LLM visibility|organic search|search visibility|search rankings?`,
   // Media spend and brand
-  String.raw`paid (?:media|search|social|ads|advertising|campaigns?|acquisition)|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic (?:advertising|ads|media|buying|display|campaigns?)|retargeting|out[- ]of[- ]home|OOH|billboards?`,
+  String.raw`paid (?:media|search|social|ads|advertising|campaigns?|acquisition)|(?:LinkedIn|Google|Meta) (?:campaigns?|ads)|social media ads|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic (?:advertising|ads|media|buying|display|campaigns?)|retargeting|out[- ]of[- ]home|OOH|billboards?`,
   String.raw`brand (?:awareness|campaigns?|building|refresh|positioning|${N}|study|tracking|strategy|identity|design|lift|spend|reputation)|rebrand(?:ing)?|branding`,
   // Partnerships and channel
   String.raw`partner(?:ship)?s? (?:${N}|marketing|ecosystem|recruitment|enablement|portal|management)|partnerships?|channel (?:${N}|partners?|marketing|sales|incentives?)|reseller (?:${N}|network|recruitment)|co[- ]?marketing|co[- ]?sell(?:ing)?|affiliate (?:${N}|marketing)|alliances?|referral ${N}|ecosystem (?:${N}|partners?)`,
@@ -86,6 +86,14 @@ const outOfScope = (text: string): boolean => mentions(text, OUT_OF_SCOPE);
 const WORD = String.raw`(?!(?:for|to|of|with|and|or|but|that|which|who|in|on|at|by|from|than|wants?|plans|needs?)\b)[\w-]+`;
 const COMPANY = new RegExp(String.raw`\b(?:(?:a|an|the|our|my|their|its|this|that)\s+)?(?:${WORD}\s+){0,4}(?:compan(?:y|ies)|firms?|business(?:es)?|providers?|vendors?|startups?|scale-?ups?|operators?|banks?|insurers?|lenders?|retailers?|manufacturers?|carriers?|telcos?|players?|sellers?|enterprises?|organi[sz]ations?)(?:['’]s)?\b`, 'gi');
 const withoutCompany = (text: string): string => text.replace(COMPANY, phrase => (inScope(phrase) ? phrase : ' '));
+
+/** Read the funded work, setting aside the funder's own industry and location. */
+export function roiFundingSubject(text: string): string {
+  const value = text.trim();
+  const who = /^(?:a|an|the|our|my|we|i|this|that)\b.{0,220}?\b(?:wants?\s+(?:to\s+)?|(?:is|are)\s+planning\s+to\s+|plans?\s+to\s+|will\s+fund\s+|(?:is|are)\s+funding\s+)(?:fund\s+|invest\s+in\s+|buy\s+|launch\s+)?/i.exec(value);
+  if (who && !NEGATION.test(who[0])) return value.slice(who[0].length).trim();
+  return withoutCompany(value.replace(/^funding\s+/i, ''));
+}
 // "wants to fund an ABM programme", "is investing in brand awareness": the words after a
 // funding verb name the investment, whatever the funder's industry.
 const FUNDING = /\b(?:fund(?:s|ed|ing)?|invest(?:s|ed|ing)?(?: in)?|launch(?:es|ed|ing)?|buy(?:s|ing)?|spend(?:s|ing)? on|commission(?:s|ed|ing)?|sponsor(?:s|ed|ing)?|want(?:s|ed)?|plans|planned|needs?|budget(?:s|ed|ing)? for)\b/gi;
@@ -100,7 +108,7 @@ function fundsGtm(text: string): boolean {
 /** True when the investment being justified is a GTM or marketing investment. */
 export function roiInScope(args: Record<string, unknown> | undefined): boolean {
   const text = (v: unknown): string => (typeof v === 'string' ? v : '');
-  const solution = withoutCompany(text(args?.your_solution));
+  const solution = roiFundingSubject(text(args?.your_solution));
   if (fundsGtm(solution)) return true;
   const purpose = solution.search(PURPOSE);
   const head = purpose > 0 ? solution.slice(0, purpose) : solution;

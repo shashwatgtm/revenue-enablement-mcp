@@ -33,6 +33,11 @@ export interface FundingInputs {
     W: number | undefined;
     fy: number | undefined;
     start: string;
+    startGiven: boolean;
+    fyGiven: boolean;
+    spendCurrencyFromText: boolean;
+    perCurrencyFromText: boolean;
+    currencyConflict: boolean;
     currency: string;
     spendCurrency: string;
     perCurrency: string;

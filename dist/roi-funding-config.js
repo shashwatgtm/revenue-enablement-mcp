@@ -7,10 +7,10 @@ exports.SMALL_TEST_MULTIPLE = 2; // Decision 3.
 exports.BOOTH_SPONSORSHIP_CLASS = 'direct'; // Decision 2.
 exports.SHOW_GTM_FIX_RULE = true; // Decision 4.
 exports.GTM_FIX_RULE = "Shashwat's working rule: a GTM fix takes 9 to 15 months to show in revenue.";
-exports.SHOW_BESSEMER_LINE = true; // Decision 5. Keep the source, omit organisation names.
-exports.REFERENCE_LINE = 'A US venture investor set these targets in 2021 for payback on gross margin: under 12 months for SMB customers, under 18 for mid-market, under 24 for enterprise. No regional benchmark is shown here. https://www.bvp.com/atlas/scaling-to-100-million';
-exports.SHOW_PROOF_LINE = true; // Decision 8. No client identity in public copy.
-exports.PROOF_LINE = "Shashwat's own ABM result: Rs 2.35 crore TCV in 6 months and 225+ sales meetings. https://gtmhelix.com/about/";
+exports.SHOW_BESSEMER_LINE = true; // Decision 5. Cited source identity is allowed.
+exports.REFERENCE_LINE = 'Bessemer Venture Partners set these targets in 2021 for payback on gross margin: under 12 months for SMB customers, under 18 for mid-market, under 24 for enterprise. No regional benchmark is shown here. https://www.bvp.com/atlas/scaling-to-100-million';
+exports.SHOW_PROOF_LINE = true; // Decision 8. Published past engagement identity is allowed.
+exports.PROOF_LINE = "Shashwat's own ABM result at Seclore: Rs 2.35 crore TCV in 6 months and 225+ sales meetings. https://gtmhelix.com/about/";
 exports.INDIA_FY_DEFAULT_START_MONTH = 4; // Decision 9.
 exports.PAGE_TITLE = 'Marketing ROI and Payback Check for B2B Teams | Helix GTM'; // Decision 11.
 exports.PAGE_HEADING = 'Should you fund this marketing programme?';
@@ -36,7 +36,7 @@ exports.CLASS_TABLE = [
     { kind: 'direct', group: 'marketing', pattern: /\b(?:marketing|demand[- ]gen(?:eration)?|lead[- ]gen(?:eration)?|pipeline generation|email (?:campaigns?|nurture|nurturing)|nurture (?:programmes?|programs?|campaigns?|streams?|journeys?))\b/gi },
     { kind: 'direct', group: 'abm', pattern: /\b(?:ABM|ABX|account[- ]based (?:marketing|selling|advertising|engagement|experience|programmes?|programs?))\b/gi },
     { kind: 'direct', group: 'events', pattern: /\b(?:events?|trade[- ]?shows?|exhibitions?|expos?|conferences?|summits?|roundtables?|webinars?|booths?)\b/gi },
-    { kind: 'direct', group: 'media', pattern: /\b(?:paid (?:media|search|social|ads|advertising|campaigns?|acquisition)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic|retargeting|content syndication)\b/gi },
+    { kind: 'direct', group: 'media', pattern: /\b(?:paid (?:media|search|social|ads|advertising|campaigns?|acquisition|(?:LinkedIn|Google|Meta)(?: (?:programmes?|programs?|campaigns?|ads))?)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic|retargeting|content syndication)\b/gi },
     { kind: 'direct', group: 'outbound', pattern: /\b(?:outbound|cold (?:email|emailing|calling|outreach)|SDRs?|BDRs?|sales development|appointment setting|prospecting)\b/gi },
 ];
 //# sourceMappingURL=roi-funding-config.js.map

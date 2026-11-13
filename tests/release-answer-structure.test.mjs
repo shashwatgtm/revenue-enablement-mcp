@@ -23,7 +23,7 @@ for (const c of cases) test(`answer structure and promised role actions: ${c.too
     assert.match(text,/### What I read/);
     assert.match(text,/A calculation on your inputs. Not a forecast/);
     assert.doesNotMatch(text,/Passes|Does not pass|new ARR/);
-    for(const role of ['CMO','Demand generation head','Founder','CRO','CFO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
+    for(const role of ['Founder','CRO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
     return;
   }
   const reading = text.match(/^## Reading the answer\s*\n([\s\S]*?)(?=^## |$(?![\s\S]))/m)?.[1];

@@ -123,13 +123,29 @@ function revenueReading(name, a, result) {
             ] };
     }
     if (name === 'roi_business_case_builder') {
-        return { meaning: 'Check one marketing programme against your own payback limit.', evidence: 'the expected new customers, annual revenue per customer or spend changes', roles: [
+        let roles;
+        if (result.startsWith('Check your figures'))
+            roles = [];
+        else if (result.startsWith('Not a payback decision'))
+            roles = [
+                'CMO: hold the amount for a year and track the signs you picked; take those lines to finance.',
+                'Founder: agree the amount you can hold for a year and the signs you will track.',
+                'CFO: confirm the amount, the period held and the current values of the selected signs.',
+            ];
+        else if (/^(?:Not decided yet|Break-even only|A spend of 0)/.test(result))
+            roles = [
+                'Founder: confirm what must be true before spending, then add the next number requested.',
+                'CRO: check expected new customers and what one pays a year, then add the next number requested.',
+            ];
+        else
+            roles = [
                 'CMO: take the result and the lines for finance to the budget meeting, or cut the ask to the size that meets the limit.',
                 'Demand generation head: check the half case and the customers that must close, then run the related tool.',
                 'Founder: check what must be true before spending.',
                 "CRO: check the opportunities needed at your team's win rate.",
                 'CFO: trace every number, read the gross margin row and ask how many customers would arrive without this spend.',
-            ] };
+            ];
+        return { meaning: 'Check one marketing programme against your own payback limit.', evidence: 'the expected new customers, annual revenue per customer or spend changes', roles };
     }
     return undefined;
 }

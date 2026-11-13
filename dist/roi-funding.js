@@ -47,6 +47,7 @@ const echo_layer_ts_1 = require("./echo-layer.js");
 const region_reader_ts_1 = require("./region-reader.js");
 const roi_scope_ts_1 = require("./roi-scope.js");
 const revenue_reader_actions_ts_1 = require("./revenue-reader-actions.js");
+const roi_funding_chat_ts_1 = require("./roi-funding-chat.js");
 const rules = __importStar(require("./roi-funding-config.js"));
 const text = (x) => typeof x === 'string' ? x.trim() : '';
 const num = (x) => x !== undefined && x !== null && String(x).trim() !== '' && Number.isFinite(Number(x)) ? Number(x) : undefined;
@@ -72,7 +73,7 @@ function fundingMoney(value, currency, derived = true) {
         return 'Rs ' + n.toLocaleString('en-IN', { maximumFractionDigits: derived ? 0 : 20 });
     }
     const symbols = { USD: '$', GBP: '£', EUR: '€', AED: 'AED ', SGD: 'S$' };
-    return (symbols[currency] ?? '') + n.toLocaleString('en-US', { maximumFractionDigits: derived ? 0 : 20 }) + (symbols[currency] ? '' : ' in the currency you used');
+    return (symbols[currency] ?? '') + n.toLocaleString('en-US', { maximumFractionDigits: derived ? 0 : 20 });
 }
 const fundingMonths = (n) => Math.floor((n + Number.EPSILON) * 10 + 0.5) / 10;
 exports.fundingMonths = fundingMonths;
@@ -82,7 +83,7 @@ function classifyFunding(value) {
     const subject = /^\s*(?:a |an |the |our )?vendor\b/i.test(value) ? value : (0, roi_scope_ts_1.roiFundingSubject)(value);
     // A funder's industry and an audience description cannot turn a programme into a purchase.
     const bought = subject.split(/\b(?:for|targeting|aimed at|sold to|serving)\b/i)[0];
-    const paid = /\b(?:paid (?:media|social|search|ads|advertising|campaigns?|acquisition)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads)\b/i.test(bought);
+    const paid = /\b(?:paid (?:media|social|search|ads|advertising|campaigns?|acquisition|(?:LinkedIn|Google|Meta)(?: (?:programmes?|programs?|campaigns?|ads))?)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads)\b/i.test(bought);
     const hits = [];
     for (const row of rules.CLASS_TABLE) {
         if (paid && row.group === 'audience')
@@ -93,9 +94,15 @@ function classifyFunding(value) {
                 const after = clause.slice((match.index ?? 0) + match[0].length);
                 if (NEGATION.test(before))
                     continue;
+                const people = /\b(?:SDRs?|BDRs?|sales development|outbound team|appointment setting)\b/i.test(clause);
+                const purchase = /\b(?:platforms?|tools?|software|licen[cs]es?|seats|subscriptions?|databases?|automation|stack|suite|analytics|attribution|apps?|vendors?)\b/i.test(clause);
+                if (row.group === 'data' && /^(?:sales engagement|sales enablement)$/i.test(match[0]) && people && !purchase)
+                    continue;
                 if (row.group === 'purchase' && /^\s+(?:firm|company|startup|business)\b/i.test(after))
                     continue;
                 if (row.group === 'sponsorship') {
+                    if (rules.BOOTH_SPONSORSHIP_CLASS === 'direct' && /^sponsoring$/i.test(match[0]) && /^\s+(?:an?\s+)?(?:trade[- ]?show\s+|exhibition\s+)?booth\b/i.test(after))
+                        continue;
                     if (rules.BOOTH_SPONSORSHIP_CLASS === 'direct' && /\b(?:booth|exhibition|trade[- ]?show)\s*$/i.test(before))
                         continue;
                     if (/^sponsored posts?$/i.test(match[0]) && /^\s+bought as ads\b/i.test(after))
@@ -134,32 +141,36 @@ function readFundingInputs(args, clock = () => new Date()) {
                 fields[bit.slice(0, at).trim()] = bit.slice(at + 1).trim();
         }
     const words = [metrics, text(args.current_process), fixed ? '' : text(args.your_solution)].join('; ');
-    const newCount = words.match(/(?<![\w.-])(-?\d+(?:\.\d+)?)\s+(?:new|expected|forecast|target)\s+(?:customers?|logos?)\b/i) ?? words.match(/\b(?:new|expected|forecast|target)\s+(?:customers?|logos?)\s*(?:[:=]|of|is|are)?\s*(\d+(?:\.\d+)?)/i) ?? words.match(/\b(\d+(?:\.\d+)?)\s+customers?\s+from this\b/i);
-    const amount = String.raw `((?:(?:Rs\.?|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€)\s*)?-?\d[\d,]*(?:\.\d+)?\s*(?:lakh|crore|million|billion|thousand|k|m)?)`;
-    const annual = new RegExp(String.raw `(?:at|one (?:new )?customer pays|per customer(?: per year)?\s*[:=]?|annual revenue per customer\s*[:=]?)\s*${amount}\s*(?:each|a year|per year|annually|ARR)`, 'i').exec(words);
-    const spendMention = new RegExp(String.raw `(?:spend|cost|budget)\s*(?:of|is|[:=])?\s*${amount}`, 'i').exec(words);
-    const spend = readFundingMoney(args.solution_price ?? (fixed ? fields.spend : spendMention?.[1]), fields.currency);
-    if (!fixed && spendMention) {
-        const marked = readFundingMoney(spendMention[1]);
+    const now = clock();
+    const chat = (0, roi_funding_chat_ts_1.readFundingChat)(words, now);
+    const spend = readFundingMoney(args.solution_price ?? (fixed ? fields.spend : chat.spend), fields.currency);
+    if (!fixed && chat.spend) {
+        const marked = readFundingMoney(chat.spend);
         spend.marked = marked.marked;
         spend.currency = marked.currency;
     }
-    const per = readFundingMoney(fixed ? fields.per_customer : annual?.[1], fields.currency);
-    const metricNumber = (key, pattern) => fixed ? num(fields[key]) : num(words.match(pattern)?.[1]);
-    const qualifiedCount = words.match(/\b(?:expect(?:ed)?|forecast|target)\s+(-?\d+(?:\.\d+)?)\s+(?:new\s+)?(?:customers?|logos?)\b/i);
-    const N = fixed ? num(fields.customers) : num((newCount ?? qualifiedCount)?.[1]);
+    const per = readFundingMoney(fixed ? fields.per_customer : chat.perCustomer, fields.currency);
+    const currencies = fixed ? [...new Set([spend.currency, per.currency, code(fields.currency ?? '')].filter(Boolean))] : [...new Set([...chat.currencies, spend.currency, per.currency].filter(Boolean))];
+    const spendCurrencyFromText = !fixed && (!spend.marked || typeof args.solution_price === 'number') && currencies.length === 1 && spend.value !== undefined;
+    const perCurrencyFromText = !fixed && !per.marked && currencies.length === 1 && per.value !== undefined;
+    if (spendCurrencyFromText)
+        spend.currency = currencies[0];
+    if (perCurrencyFromText)
+        per.currency = currencies[0];
+    const currencyConflict = currencies.length > 1;
+    const N = fixed ? num(fields.customers) : chat.customers;
     const A = per.value;
-    const l = metricNumber('limit_months', /\b(?:payback )?limit\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)\s*(?:months?)?/i);
-    const G = metricNumber('margin', /\b(?:gross )?margin\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i);
-    const C = metricNumber('cycle_months', /\b(?:sales cycle|cycle|first touch to signed deal)\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i);
-    const W = metricNumber('win_rate', /\bwin rate\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i);
+    const l = fixed ? num(fields.limit_months) : chat.limit;
+    const G = fixed ? num(fields.margin) : chat.margin;
+    const C = fixed ? num(fields.cycle_months) : chat.cycle;
+    const W = fixed ? num(fields.win_rate) : chat.win;
     const currency = spend.currency || per.currency || code(fields.currency ?? '');
     const geo = fundingGeo(args, fields.geo ?? '', currency);
-    const fyInput = metricNumber('fy_start', /\b(?:fy start|financial year start)\s*(?:month|[:=])?\s*(-?\d+)/i);
+    const fyInput = fixed ? num(fields.fy_start) : chat.fy;
     const fy = fyInput ?? (geo === 'India' ? rules.INDIA_FY_DEFAULT_START_MONTH : undefined);
-    const now = clock();
     const defaultStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-    const start = fields.start || words.match(/\bstart\s*[:=]?\s*(\d{4}-\d{2})/i)?.[1] || defaultStart;
+    const start = (fixed ? fields.start : chat.start) || defaultStart;
+    const classification = classifyFunding(text(args.your_solution));
     const L = l ?? rules.DEFAULT_LIMIT_MONTHS;
     let error = '';
     for (const [label, n] of [['spend', spend.value], ['new customers', N], ['revenue per customer', A], ['payback limit', l], ['gross margin', G], ['sales cycle', C], ['win rate', W], ['financial year start month', fyInput]]) {
@@ -178,14 +189,15 @@ function readFundingInputs(args, clock = () => new Date()) {
         error = 'Check your figures: financial year start must be a month from 1 to 12.';
     if (!error && !/^\d{4}-(?:0[1-9]|1[0-2])$/.test(start))
         error = 'Check your figures: give the start month as year and month.';
-    if (!error && spend.value !== undefined && A !== undefined && ((spend.currency && per.currency && spend.currency !== per.currency) || (!fixed && spend.marked !== per.marked)))
+    if (!error && currencyConflict && ['direct', 'long'].includes(classification.kind))
         error = 'Check your figures: spend and revenue must be in the same currency.';
-    const guarded = !(fixed && N !== undefined && A !== undefined) && !(N !== undefined && A !== undefined && ['revenue_increase', 'multiple'].includes(text(args.primary_value_driver)));
-    const missing = [];
+    const sellerFrame = !fixed && /\b(?:for (?:the |our )?client|client expects|our client)\b/i.test(words);
+    const guarded = sellerFrame || !(fixed && N !== undefined && A !== undefined) && !(N !== undefined && A !== undefined && ['revenue_increase', 'multiple'].includes(text(args.primary_value_driver)));
+    const missing = fixed ? [] : chat.notRead;
     for (const [k, label] of [['customers', 'new customers'], ['per_customer', 'revenue per customer'], ['margin', 'gross margin'], ['cycle_months', 'sales cycle'], ['win_rate', 'win rate'], ['limit_months', 'payback limit']])
         if (fixed && fields[k] && ((k === 'per_customer' ? A : num(fields[k])) === undefined))
             missing.push(label);
-    return { subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification: classifyFunding(text(args.your_solution)), fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, currency, spendCurrency: spend.currency, perCurrency: per.currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
+    return { subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification, fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, startGiven: !!(fixed ? fields.start : chat.start), fyGiven: fyInput !== undefined, spendCurrencyFromText, perCurrencyFromText, currencyConflict, currency, spendCurrency: spend.currency, perCurrency: per.currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
 }
 function fundingVerdict(kind, p, L) {
     const rounded = (0, exports.fundingMonths)(p);
@@ -249,16 +261,16 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const i = readFundingInputs(args, clock);
     const { S, N, A, L, G, C, W } = i;
     const kind = i.classification.kind;
+    const eligible = kind === 'direct' || kind === 'long';
     const cash = (n) => fundingMoney(n, i.currency);
     const given = (n) => fundingMoney(n, i.spendCurrency, false);
     const givenPer = (n) => fundingMoney(n, i.perCurrency, false);
     const Ls = [];
     const hasForecast = !i.guarded && N !== undefined && A !== undefined;
     const R = hasForecast ? N * A : undefined;
-    const P = R !== undefined && R > 0 && S !== undefined ? 12 * S / R : undefined;
+    const P = eligible && !i.currencyConflict && R !== undefined && R > 0 && S !== undefined ? 12 * S / R : undefined;
     const Pg = P !== undefined && G !== undefined ? P / (G / 100) : undefined;
     const invalid = i.error || (S !== undefined && S > 0 && P !== undefined && P < 0.5 ? 'Check your figures: this says the spend comes back in under two weeks.' : '');
-    const eligible = kind === 'direct' || kind === 'long';
     const canJudge = eligible && hasForecast && S !== undefined && S > 0 && !invalid;
     const zero = canJudge && (N === 0 || A === 0);
     const decided = canJudge && P !== undefined && !zero;
@@ -274,14 +286,25 @@ function buildRoiFunding(args, clock = () => new Date()) {
             const p = 12 * S / (R * multiple);
             Ls.push(`| ${label} | ${cash(R * multiple)} | ${months(p)} months | ${fundingVerdict(kind, p, L).words} |`);
         }
+        if (A !== undefined && A > 0) {
+            const required = Math.ceil(12 * S / L / A);
+            Ls.push('', `Customers that must close for this to pass: ${required} of the ${N} you expect.`);
+            if (W !== undefined)
+                Ls.push(`Required opportunities at your ${W} percent win rate: ${Math.ceil(required / (W / 100))}.`);
+        }
         if (fundingVerdict(kind, 2 * P, L).row !== base.row)
             Ls.push('', `Fragile. If half the customers arrive: ${months(2 * P)} months. ${fundingVerdict(kind, 2 * P, L).words}.`);
     }
-    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : givenPer(A)}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
+    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}${i.spendCurrencyFromText ? ' (currency taken from your text)' : ''}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : givenPer(A)}${i.perCurrencyFromText ? ' (currency taken from your text)' : ''}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
+    Ls.push(`- Gross margin: ${G === undefined ? 'MISSING' : G + ' percent'}.`, `- First touch to signed deal: ${C === undefined ? 'MISSING' : C + ' months'}.`, `- Win rate: ${W === undefined ? 'MISSING' : W + ' percent'}.`, `- Financial year starts: ${i.fy === undefined ? 'MISSING' : new Date(Date.UTC(2000, i.fy - 1, 1)).toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' })}${i.fy !== undefined && !i.fyGiven ? ' (India default)' : ''}.`, `- Spend starts: ${i.start}${i.startGiven ? ' (read from your inputs)' : ' (current month default)'}.`);
+    if (!i.currency)
+        Ls.push('Currency: MISSING. Which currency applies? Figures below are bare amounts; nothing is converted.');
+    if (i.currencyConflict && !eligible)
+        Ls.push('Two currencies were given. No calculation combines them. Confirm the spend and revenue currency before checking customers needed.');
     if (i.classification.mixed && !eligible)
-        Ls.push(`Read as ${rules.CLASS_NAMES[kind]} because you mentioned ${clean(i.classification.reason)}. If this is a demand programme, say what it is without that word.`);
+        Ls.push(`Read as ${rules.CLASS_NAMES[kind]} because you mentioned ${clean(i.classification.reason)}. Say whether this is a tool you buy or work you run.`);
     if (i.missing.length)
-        Ls.push(`Read as missing because text was given for: ${i.missing.join(', ')}.`);
+        Ls.push(`Treated as missing. Not read as a number or date: ${i.missing.join(', ')}.`);
     for (const [key, label] of [['annual_value_estimate', 'The annual value you entered'], ['current_annual_cost', 'The cost figures you entered'], ['expected_improvement_percent', 'The improvement percentage you entered']])
         if (args[key] !== undefined)
             Ls.push(`${label}: ${clean(String(args[key]))}. Not used to judge this spend.`);
@@ -302,29 +325,32 @@ function buildRoiFunding(args, clock = () => new Date()) {
         Ls.push('', 'Give gross margin first so finance can check the contribution as well as revenue.');
     if (kind === 'brand') {
         Ls.push('', 'Brand awareness, AR and PR do not pay back inside a quarter, and a payback figure here would be made up. Decide it as an amount you can hold for a year, and track leading signs.');
-        if (S !== undefined && S > 0 && A !== undefined && A > 0 && !invalid)
+        if (S !== undefined && S > 0 && !invalid)
+            Ls.push(`For scale only: covering this cost in ${L} months requires ${cash(12 * S / L)} a year. This is a coverage requirement, not a revenue forecast.`);
+        if (S !== undefined && S > 0 && A !== undefined && A > 0 && !invalid && !i.currencyConflict)
             Ls.push(`For scale only: covering this cost in ${L} months would take ${Math.ceil(12 * S / L / A)} new customers at what one pays you.`);
         Ls.push('Signs to pick: branded search; direct traffic; share of buyers who had heard of you before the first call; analyst briefings held and reports that include you; coverage in the publications your buyers read; inbound demos naming a source.');
     }
     Ls.push('', '### Recovery and financial year');
     if (i.geo === 'India' && i.fy === 4)
         Ls.push('Financial year read as April to March (India default). Change it if yours differs.', 'Source: https://www.incometaxindia.gov.in/w/section-3-172');
-    if (decided && C !== undefined)
-        Ls.push(`Months to recovery: ${months(C + P)}.`, fundingRecovery(i.start, C + P, i.fy));
+    if (decided && C !== undefined) {
+        Ls.push(`${gm ? 'Months to recovery on revenue' : 'Months to recovery'}: ${months(C + P)}.`, (gm ? 'Recovery on revenue: ' : '') + fundingRecovery(i.start, C + P, i.fy));
+        if (gm && (0, exports.fundingMonths)(C + Pg) !== (0, exports.fundingMonths)(C + P))
+            Ls.push(`Months to recovery on gross margin: ${months(C + Pg)}.`, `Recovery on gross margin: ${fundingRecovery(i.start, C + Pg, i.fy)}`);
+    }
     else if (eligible)
         Ls.push('Add the months from first touch to signed deal to see which financial year the money comes back in.');
-    if (i.geo !== 'India' && i.fy === undefined)
+    if (i.geo !== 'India' && i.fy === undefined && !(decided && C !== undefined))
         Ls.push('Which month starts your financial year?');
     Ls.push('', '### What must be true');
     if (S !== undefined && S > 0 && !invalid && kind !== 'brand') {
-        Ls.push(`Required ${i.guarded ? 'annual revenue' : 'new ARR'} at ${L} months: ${cash(12 * S / L)}.`);
-        if (A !== undefined && A > 0) {
+        Ls.push(`Required ${i.guarded && !i.fixed ? 'annual revenue' : 'new ARR'} at ${L} months: ${cash(12 * S / L)}.`);
+        if (A !== undefined && A > 0 && !i.currencyConflict) {
             const required = Math.ceil(12 * S / L / A);
             Ls.push(`Required new customers: ${required}.`);
-            if (W !== undefined)
+            if (W !== undefined && !decided)
                 Ls.push(`Required opportunities at your ${W} percent win rate: ${Math.ceil(required / (W / 100))}.`);
-            if (decided)
-                Ls.push(`Customers that must close for this to pass: ${required} of the ${N} you expect.`);
         }
     }
     const asks = [];
@@ -349,8 +375,8 @@ function buildRoiFunding(args, clock = () => new Date()) {
         Ls.push(`Spend: ${S === undefined ? 'MISSING' : given(S)}.`, decided ? `Revenue payback: ${months(P)} months against ${L} months. ${gm ? `Gross margin payback: ${months(Pg)} months.` : ''}` : 'Expected new customers and annual revenue per customer need to be confirmed before a funding verdict.');
     for (const question of ['How many of these customers would have come without this spend?', 'Is the spend counted before or after recoverable tax?', 'Which financial year does the spend fall in, and which year does the return fall in?', ...(FINANCE[i.geo] ?? [])])
         Ls.push('- ' + question);
-    const reading = (0, revenue_reader_actions_ts_1.revenueReading)('roi_business_case_builder', args, '');
-    if (reading)
+    const reading = (0, revenue_reader_actions_ts_1.revenueReading)('roi_business_case_builder', args, first);
+    if (reading && !invalid)
         Ls.push('', ...reading.roles);
     if (/\b(?:outbound email|cold email|email outreach)\b/i.test(i.subject) && ['United Kingdom', 'United States'].includes(i.geo)) {
         Ls.push('', '### Outbound email note', i.geo === 'United Kingdom' ? 'You can email corporate bodies without prior consent. Sole traders and some partnerships are treated as individuals. Keep a "do not email" list. https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/' : 'CAN-SPAM makes no exception for business to business email. An opt-out must be honoured within 10 business days. https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business', 'Checked 13 Nov 2026. Check with your counsel before you size the list.');

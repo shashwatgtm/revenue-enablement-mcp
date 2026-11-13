@@ -11,7 +11,7 @@ for(const c of cases)test('Round 5 reader contract: '+c.tool,async()=>{
     assert.match(text,/### What I read/);
     assert.match(text,/A calculation on your inputs. Not a forecast/);
     assert.doesNotMatch(text,/Passes|Does not pass|new ARR/);
-    for(const role of ['CMO','Demand generation head','Founder','CRO','CFO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
+    for(const role of ['Founder','CRO']) assert.match(text,new RegExp('(?:^|\\n)'+role+':'));
     return;
   }
  assert.match(text,/## Reading the answer/);

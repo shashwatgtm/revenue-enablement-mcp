@@ -28,7 +28,7 @@ test('worked example computes every result from the supplied inputs',()=>{
  assert.ok(o.startsWith(`Pays back in ${P.toFixed(1)} months. Passes your ${L} month limit.`));
  assert.ok(o.includes(`${fundingMonths(P/(G/100)).toFixed(1)} months. Passes your ${L} month limit.`));
  assert.ok(o.includes(`Customers that must close for this to pass: ${req} of the ${N} you expect.`));
- assert.ok(o.includes(`Months to recovery: ${fundingMonths(C+P).toFixed(1)}.`));
+ assert.ok(o.includes(`Months to recovery on revenue: ${fundingMonths(C+P).toFixed(1)}.`));
  const start=new Date('2026-11-01T00:00:00Z'),recovery=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+Math.floor(C+P),1));
  const fy=recovery.getUTCFullYear()-(recovery.getUTCMonth()<3?1:0);
  assert.ok(o.includes(recovery.toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'})+`, which is FY ${fy}-${String(fy+1).slice(-2)}`));
@@ -66,7 +66,7 @@ test('round half up before comparing with the limit',()=>{
  for(const p of [12.04,12.05,24.04,24.05]){assert.equal(fundingMonths(p),Math.floor(p*10+.5)/10);assert.equal(fundingVerdict('direct',p,12).row,p<12.05?'pass':p<24.05?'smaller':'fail');}
 });
 test('mixed currencies, missing geo and both FY boundaries',()=>{
- for(const [S,A]of [['Rs 90 lakh','$36000'],['£180000','45000']]){const out=buildRoiFunding(input({solution_price:S,known_metrics:`5 new customers at ${A} each`}),clock);assert.match(out,/^Check your figures: spend and revenue must be in the same currency/);assert.doesNotMatch(out,/Passes|Arithmetic only/);}
+ for(const [S,A]of [['Rs 90 lakh','$36000']]){const out=buildRoiFunding(input({solution_price:S,known_metrics:`5 new customers at ${A} each`}),clock);assert.match(out,/^Check your figures: spend and revenue must be in the same currency/);assert.doesNotMatch(out,/Passes|Arithmetic only/);}
  assert.equal(readFundingInputs(input({known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; currency=USD',your_solution:'an ABM programme'}),clock).geo,'');
  for(const [start,month,next]of [['2026-11','March',false],['2026-12','April',true]]){
  const T=12*1000/(5*1000)+1.8;

@@ -37,7 +37,7 @@ const IN_SCOPE = new RegExp(String.raw `\b(?:` + [
     // SEO, AEO, GEO and AI search visibility
     String.raw `SEO|AEO|search engine optimi[sz]ation|answer engine optimi[sz]ation|generative engine optimi[sz]ation|AI search (?:visibility|optimi[sz]ation)|AI visibility|LLM visibility|organic search|search visibility|search rankings?`,
     // Media spend and brand
-    String.raw `paid (?:media|search|social|ads|advertising|campaigns?|acquisition)|(?:LinkedIn|Google|Meta) (?:campaigns?|ads)|social media ads|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic (?:advertising|ads|media|buying|display|campaigns?)|retargeting|out[- ]of[- ]home|OOH|billboards?`,
+    String.raw `paid (?:media|search|social|ads|advertising|campaigns?|acquisition|(?:LinkedIn|Google|Meta)(?: (?:programmes?|programs?|campaigns?|ads))?)|(?:LinkedIn|Google|Meta) (?:campaigns?|ads)|social media ads|sponsored posts bought as ads|media (?:spends?|buying|budgets?|plans?|mix|campaigns?)|ad ?spends?|advertising|adverts?|ads|PPC|pay[- ]per[- ]click|programmatic (?:advertising|ads|media|buying|display|campaigns?)|retargeting|out[- ]of[- ]home|OOH|billboards?`,
     String.raw `brand (?:awareness|campaigns?|building|refresh|positioning|${N}|study|tracking|strategy|identity|design|lift|spend|reputation)|rebrand(?:ing)?|branding`,
     // Partnerships and channel
     String.raw `partner(?:ship)?s? (?:${N}|marketing|ecosystem|recruitment|enablement|portal|management)|partnerships?|channel (?:${N}|partners?|marketing|sales|incentives?)|reseller (?:${N}|network|recruitment)|co[- ]?marketing|co[- ]?sell(?:ing)?|affiliate (?:${N}|marketing)|alliances?|referral ${N}|ecosystem (?:${N}|partners?)`,
@@ -89,7 +89,7 @@ const COMPANY = new RegExp(String.raw `\b(?:(?:a|an|the|our|my|their|its|this|th
 const withoutCompany = (text) => text.replace(COMPANY, phrase => ((inScope(phrase) || /data providers?/i.test(phrase)) ? phrase : ' '));
 /** Read the funded work, setting aside the funder's own industry and location. */
 function roiFundingSubject(text) {
-    const value = text.trim();
+    const value = text.trim().replace(/\bfor\s+our\s+(?:logistics tech|fintech|vertical SaaS|SaaS|AI native|ITeS|telecom|software|cybersecurity)\s+(?:product|platform|company)\b.*$/i, '').trim();
     const who = /^(?:a|an|the|our|my|we|i|this|that)\b.{0,220}?\b(?:wants?\s+(?:to\s+)?|(?:is|are)\s+planning\s+to\s+|plans?\s+to\s+|will\s+fund\s+|(?:is|are)\s+funding\s+)(?:fund\s+|invest\s+in\s+|buy\s+|launch\s+)?/i.exec(value);
     if (who && !NEGATION.test(who[0]))
         return value.slice(who[0].length).trim();

@@ -9,7 +9,7 @@ test('one money list reads identically on the page and server',()=>{
 });
 test('static page has the funding questions, metadata, example and routes without JavaScript',()=>{
  const html=read('../public/tools/roi-business-case-builder/index.html');
- assert.equal(parseHTML(html).document.querySelectorAll('#currency option').length,6);
+ assert.equal(parseHTML(html).document.querySelectorAll('#currency option[value]:not([value=""])').length,6);
  assert.equal(parseHTML(html).document.querySelector('#start').value,'');
  assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.ok(html.includes(PAGE_TITLE));assert.ok(html.includes(PAGE_HEADING));assert.match(html,/No email. Your figures are not stored/);assert.match(html,/id="result-panel"/);assert.match(html,/Example. Illustrative inputs/);assert.match(html,/share\.png/);assert.doesNotMatch(html,/Industry benchmarks|Financial_Services|Healthcare|Manufacturing|route planning|\bLTV\b|[\u2013\u2014]/i);assert.match(html,/<details><summary>Sharpen it/);assert.doesNotMatch(html,/<details open/);
  const raw=JSON.parse(html.match(/id="example-output" type="application\/json">([\s\S]*?)<\/script>/)[1]);
@@ -29,10 +29,12 @@ test('a hundred outputs contain only input, computed or sourced rule numbers',()
   const a={your_solution:'an ABM programme in India',solution_price:S,primary_value_driver:'revenue_increase',known_metrics:`helix-roi-v1; customers=${N}; per_customer=${A}; limit_months=${L}; margin=${G}; cycle_months=${C}; win_rate=${W}; currency=INR; start=2026-11`};
   let output=buildRoiFunding(a,clock);
   // Sourced notes and stated rules have their own attribution, audited separately.
-  output=output.split('\n').filter(l=>!/^Rules of this tool:|^At 90 days|^A US venture investor|^Source:|^Spend starts in FY|^Recovery =|^Required annual revenue =|^CAC =|^How|^Which/.test(l)).join('\n');
-  const allowed=[S,N,A,L,G,C,W,R,S/N,P,P/(G/100),C+P,12*S/L,required,Math.ceil(required/(W/100)),.5*R,1.5*R,2*P,P/1.5].flatMap(v=>[String(v),v.toFixed(1),fundingMoney(v,'INR'),fundingMoney(v,'INR',false)]);
-  const tokens = value => value.match(/(?<![\w])\d[\d,]*(?:\.\d+)?/g)||[];
-  const allowedTokens = new Set(allowed.flatMap(tokens));
+  output=output.split('\n').filter(l=>!/^Rules of this tool:|^At 90 days|^Bessemer Venture Partners|^Source:|^Spend starts in FY|^Recovery =|^Required annual revenue =|^CAC =|^How|^Which/.test(l)).join('\n');
+  const allowed=[S,N,A,L,G,C,W,R,S/N,P,P/(G/100),C+P,C+P/(G/100),12*S/L,required,Math.ceil(required/(W/100)),.5*R,1.5*R,2*P,P/1.5].flatMap(v=>[String(v),v.toFixed(1),fundingMoney(v,'INR'),fundingMoney(v,'INR',false)]);
+  const tokens = value => (value.match(/(?<![\w])\d[\d,]*(?:\.\d+)?/g)||[]).map(token=>token.replace(/,+$/,''));
+  const start=a.known_metrics.match(/start=([^;]+)/)[1], [year,month]=start.split('-').map(Number);
+  const dateTokens=[0,C+P,C+P/(G/100)].flatMap(T=>{const d=new Date(Date.UTC(year,month-1+Math.floor(T),1));const fy=d.getUTCFullYear()-(d.getUTCMonth()<3?1:0);return [d.getUTCFullYear(),fy,fy+1].flatMap(y=>[String(y),String(y).slice(-2)]);});
+  const allowedTokens = new Set([...allowed.flatMap(tokens),...tokens(start),...dateTokens]);
   for (const token of tokens(output)) assert.ok(allowedTokens.has(token), `unattributed number ${token} in run ${k}`);
 
  }

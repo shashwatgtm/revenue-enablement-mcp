@@ -179,7 +179,7 @@ function readFundingInputs(args, clock = () => new Date()) {
     for (const [k, label] of [['customers', 'new customers'], ['per_customer', 'revenue per customer'], ['margin', 'gross margin'], ['cycle_months', 'sales cycle'], ['win_rate', 'win rate'], ['limit_months', 'payback limit']])
         if (fixed && fields[k] && ((k === 'per_customer' ? A : num(fields[k])) === undefined))
             missing.push(label);
-    return { subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification: classifyFunding(text(args.your_solution)), fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
+    return { subject: (0, roi_scope_ts_1.roiFundingSubject)(text(args.your_solution)), classification: classifyFunding(text(args.your_solution)), fixed, guarded, S: spend.value, N, A, L, G, C, W, fy, start, currency, spendCurrency: spend.currency, perCurrency: per.currency, geo, limitGiven: l !== undefined, error, missing, signs: fields.signs ?? '', period: fields.period ?? 'MISSING' };
 }
 function fundingVerdict(kind, p, L) {
     const rounded = (0, exports.fundingMonths)(p);
@@ -244,7 +244,8 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const { S, N, A, L, G, C, W } = i;
     const kind = i.classification.kind;
     const cash = (n) => fundingMoney(n, i.currency);
-    const given = (n) => fundingMoney(n, i.currency, false);
+    const given = (n) => fundingMoney(n, i.spendCurrency, false);
+    const givenPer = (n) => fundingMoney(n, i.perCurrency, false);
     const Ls = [];
     const hasForecast = !i.guarded && N !== undefined && A !== undefined;
     const R = hasForecast ? N * A : undefined;
@@ -270,7 +271,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
         if (fundingVerdict(kind, 2 * P, L).row !== base.row)
             Ls.push('', `Fragile. If half the customers arrive: ${months(2 * P)} months. ${fundingVerdict(kind, 2 * P, L).words}.`);
     }
-    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : given(A)}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
+    Ls.push('', '### What I read', `- Funded work: ${rules.CLASS_NAMES[kind]}.`, `- Region: ${i.geo || 'MISSING. Which region applies?'}`, `- Spend: ${S === undefined ? 'MISSING' : given(S)}.`, `- Expected new customers: ${N ?? 'MISSING'}.`, `- What one pays a year: ${A === undefined ? 'MISSING' : givenPer(A)}.`, `- Payback limit: ${L} months${i.limitGiven ? ' (your limit)' : " (this tool's rule, not a benchmark)"}.`);
     if (i.classification.mixed && !eligible)
         Ls.push(`Read as ${rules.CLASS_NAMES[kind]} because you mentioned ${clean(i.classification.reason)}. If this is a demand programme, say what it is without that word.`);
     if (i.missing.length)
@@ -280,7 +281,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
             Ls.push(`${label}: ${clean(String(args[key]))}. Not used to judge this spend.`);
     if (zero)
         Ls.push('', 'On your figures this brings no new revenue, so there is no payback.');
-    if (invalid && P !== undefined)
+    if (!i.error && S !== undefined && S > 0 && P !== undefined && P < 0.5)
         Ls.push('', `Arithmetic only: CAC ${cash(S / N)}; payback ${months(P)} months. No verdict.`);
     if (decided)
         Ls.push('', `CAC: ${cash(S / N)}. Expected new ARR: ${cash(R)}.`);
@@ -323,7 +324,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const asks = [];
     if (S === undefined)
         asks.push('What will it cost?');
-    else if (S > 0 && !invalid) {
+    else if (S > 0 && !invalid && kind !== 'brand') {
         if (A === undefined)
             asks.push('What does one new customer pay a year?');
         if (N === undefined)

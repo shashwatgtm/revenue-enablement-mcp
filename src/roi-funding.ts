@@ -68,7 +68,7 @@ export function fundingGeo(args:Args,explicit:string,currency:string):string {
  return ({INR:'India',GBP:'United Kingdom',AED:'Middle East and Africa',SGD:'Southeast Asia'} as Record<string,string>)[currency]??'';
 }
 export interface FundingInputs {
- subject:string; classification:FundingClassification; fixed:boolean; guarded:boolean; S:number|undefined;N:number|undefined;A:number|undefined;L:number;G:number|undefined;C:number|undefined;W:number|undefined;fy:number|undefined;start:string;currency:string;geo:string;limitGiven:boolean;error:string;missing:string[];signs:string;period:string;
+ subject:string; classification:FundingClassification; fixed:boolean; guarded:boolean; S:number|undefined;N:number|undefined;A:number|undefined;L:number;G:number|undefined;C:number|undefined;W:number|undefined;fy:number|undefined;start:string;currency:string;spendCurrency:string;perCurrency:string;geo:string;limitGiven:boolean;error:string;missing:string[];signs:string;period:string;
 }
 export function readFundingInputs(args:Args,clock:FundingClock=()=>new Date()):FundingInputs {
  const metrics=text(args.known_metrics);const fixed=/^helix-roi-v1(?:;|$)/.test(metrics);
@@ -104,7 +104,7 @@ export function readFundingInputs(args:Args,clock:FundingClock=()=>new Date()):F
  if(!error&&spend.value!==undefined&&A!==undefined&&((spend.currency&&per.currency&&spend.currency!==per.currency)||(!fixed&&spend.marked!==per.marked)))error='Check your figures: spend and revenue must be in the same currency.';
  const guarded=!(fixed&&N!==undefined&&A!==undefined)&&!(N!==undefined&&A!==undefined&&['revenue_increase','multiple'].includes(text(args.primary_value_driver)));
  const missing:string[]=[];for(const [k,label]of [['customers','new customers'],['per_customer','revenue per customer'],['margin','gross margin'],['cycle_months','sales cycle'],['win_rate','win rate'],['limit_months','payback limit']] )if(fixed&&fields[k]&&((k==='per_customer'?A:num(fields[k]))===undefined))missing.push(label);
- return {subject:roiFundingSubject(text(args.your_solution)),classification:classifyFunding(text(args.your_solution)),fixed,guarded,S:spend.value,N,A,L,G,C,W,fy,start,currency,geo,limitGiven:l!==undefined,error,missing,signs:fields.signs??'',period:fields.period??'MISSING'};
+ return {subject:roiFundingSubject(text(args.your_solution)),classification:classifyFunding(text(args.your_solution)),fixed,guarded,S:spend.value,N,A,L,G,C,W,fy,start,currency,spendCurrency:spend.currency,perCurrency:per.currency,geo,limitGiven:l!==undefined,error,missing,signs:fields.signs??'',period:fields.period??'MISSING'};
 }
 export function fundingVerdict(kind:rules.FundingClass,p:number,L:number):{row:string;words:string} {
  const rounded=fundingMonths(p);
@@ -151,7 +151,7 @@ export function fundingRoutes(i:FundingInputs,failed=false,undecided=false):{act
 export function buildRoiFunding(args:Args,clock:FundingClock=()=>new Date()):string {
  const decline=roiScopeDecline('roi_business_case_builder',args);if(decline)return decline;
  const i=readFundingInputs(args,clock);const {S,N,A,L,G,C,W}=i;const kind=i.classification.kind;
- const cash=(n:number)=>fundingMoney(n,i.currency);const given=(n:number)=>fundingMoney(n,i.currency,false);const Ls:string[]=[];
+ const cash=(n:number)=>fundingMoney(n,i.currency);const given=(n:number)=>fundingMoney(n,i.spendCurrency,false);const givenPer=(n:number)=>fundingMoney(n,i.perCurrency,false);const Ls:string[]=[];
  const hasForecast=!i.guarded&&N!==undefined&&A!==undefined;const R=hasForecast?N*A:undefined;
  const P=R!==undefined&&R>0&&S!==undefined?12*S/R:undefined;
  const Pg=P!==undefined&&G!==undefined?P/(G/100):undefined;
@@ -167,12 +167,12 @@ export function buildRoiFunding(args:Args,clock:FundingClock=()=>new Date()):str
   for(const [label,multiple]of [['Half arrive',0.5],['Your figures',1],['One and a half times',1.5]] as [string,number][]){const p=12*S!/(R!*multiple);Ls.push(`| ${label} | ${cash(R!*multiple)} | ${months(p)} months | ${fundingVerdict(kind,p,L).words} |`);}
   if(fundingVerdict(kind,2*P!,L).row!==base!.row)Ls.push('',`Fragile. If half the customers arrive: ${months(2*P!)} months. ${fundingVerdict(kind,2*P!,L).words}.`);
  }
- Ls.push('','### What I read',`- Funded work: ${rules.CLASS_NAMES[kind]}.`,`- Region: ${i.geo||'MISSING. Which region applies?'}`,`- Spend: ${S===undefined?'MISSING':given(S)}.`,`- Expected new customers: ${N??'MISSING'}.`,`- What one pays a year: ${A===undefined?'MISSING':given(A)}.`,`- Payback limit: ${L} months${i.limitGiven?' (your limit)':" (this tool's rule, not a benchmark)"}.`);
+ Ls.push('','### What I read',`- Funded work: ${rules.CLASS_NAMES[kind]}.`,`- Region: ${i.geo||'MISSING. Which region applies?'}`,`- Spend: ${S===undefined?'MISSING':given(S)}.`,`- Expected new customers: ${N??'MISSING'}.`,`- What one pays a year: ${A===undefined?'MISSING':givenPer(A)}.`,`- Payback limit: ${L} months${i.limitGiven?' (your limit)':" (this tool's rule, not a benchmark)"}.`);
  if(i.classification.mixed&&!eligible)Ls.push(`Read as ${rules.CLASS_NAMES[kind]} because you mentioned ${clean(i.classification.reason)}. If this is a demand programme, say what it is without that word.`);
  if(i.missing.length)Ls.push(`Read as missing because text was given for: ${i.missing.join(', ')}.`);
  for(const [key,label]of [['annual_value_estimate','The annual value you entered'],['current_annual_cost','The cost figures you entered'],['expected_improvement_percent','The improvement percentage you entered']] )if(args[key]!==undefined)Ls.push(`${label}: ${clean(String(args[key]))}. Not used to judge this spend.`);
  if(zero)Ls.push('','On your figures this brings no new revenue, so there is no payback.');
- if(invalid&&P!==undefined)Ls.push('',`Arithmetic only: CAC ${cash(S!/N!)}; payback ${months(P)} months. No verdict.`);
+ if(!i.error&&S!==undefined&&S>0&&P!==undefined&&P<0.5)Ls.push('',`Arithmetic only: CAC ${cash(S!/N!)}; payback ${months(P)} months. No verdict.`);
  if(decided)Ls.push('',`CAC: ${cash(S!/N!)}. Expected new ARR: ${cash(R!)}.`);
  if(gm){Ls.push('','### On gross margin',`${months(Pg!)} months. ${gm.words}.`);if(gm.row!==base!.row)Ls.push('Fragile. The gross margin row changes the result.');if(base!.row==='pass'&&gm.row!=='pass')Ls.push('Passes on revenue, not on gross margin');}
  if(/\b(?:services|ITeS|outsourcing|managed services|agency)\b/i.test(text(args.your_solution))&&G===undefined)Ls.push('','Give gross margin first so finance can check the contribution as well as revenue.');
@@ -191,7 +191,7 @@ export function buildRoiFunding(args:Args,clock:FundingClock=()=>new Date()):str
   Ls.push(`Required ${i.guarded?'annual revenue':'new ARR'} at ${L} months: ${cash(12*S/L)}.`);
   if(A!==undefined&&A>0){const required=Math.ceil(12*S/L/A);Ls.push(`Required new customers: ${required}.`);if(W!==undefined)Ls.push(`Required opportunities at your ${W} percent win rate: ${Math.ceil(required/(W/100))}.`);if(decided)Ls.push(`Customers that must close for this to pass: ${required} of the ${N} you expect.`);}
  }
- const asks:string[]=[];if(S===undefined)asks.push('What will it cost?');else if(S>0&&!invalid){if(A===undefined)asks.push('What does one new customer pay a year?');if(N===undefined)asks.push('How many new customers do you expect?');else if(W===undefined&&A!==undefined)asks.push('What win rate should finance use?');}
+ const asks:string[]=[];if(S===undefined)asks.push('What will it cost?');else if(S>0&&!invalid&&kind!=='brand'){if(A===undefined)asks.push('What does one new customer pay a year?');if(N===undefined)asks.push('How many new customers do you expect?');else if(W===undefined&&A!==undefined)asks.push('What win rate should finance use?');}
  Ls.push(...asks.slice(0,2));
  Ls.push('','At 90 days you can read leading signs only.');
  if(rules.SHOW_GTM_FIX_RULE&&(kind==='long'||kind==='brand'||!decided&&kind!=='enabler'))Ls.push(rules.GTM_FIX_RULE);

@@ -34,6 +34,8 @@ export interface FundingInputs {
     fy: number | undefined;
     start: string;
     currency: string;
+    spendCurrency: string;
+    perCurrency: string;
     geo: string;
     limitGiven: boolean;
     error: string;

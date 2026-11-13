@@ -64,7 +64,7 @@ test('round half up before comparing with the limit',()=>{
  for(const p of [12.04,12.05,24.04,24.05]){assert.equal(fundingMonths(p),Math.floor(p*10+.5)/10);assert.equal(fundingVerdict('direct',p,12).row,p<12.05?'pass':p<24.05?'smaller':'fail');}
 });
 test('mixed currencies, missing geo and both FY boundaries',()=>{
- for(const [S,A]of [['Rs 90 lakh','$36000'],['£180000','45000']]){const out=buildRoiFunding(input({solution_price:S,known_metrics:`5 new customers at ${A} each`}),clock);assert.match(out,/^Check your figures: spend and revenue must be in the same currency/);assert.doesNotMatch(out,/Passes/);}
+ for(const [S,A]of [['Rs 90 lakh','$36000'],['£180000','45000']]){const out=buildRoiFunding(input({solution_price:S,known_metrics:`5 new customers at ${A} each`}),clock);assert.match(out,/^Check your figures: spend and revenue must be in the same currency/);assert.doesNotMatch(out,/Passes|Arithmetic only/);}
  assert.equal(readFundingInputs(input({known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; currency=USD',your_solution:'an ABM programme'}),clock).geo,'');
  for(const [start,month,next]of [['2026-11','March',false],['2026-12','April',true]]){
  const T=12*1000/(5*1000)+1.8;

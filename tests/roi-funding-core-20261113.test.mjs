@@ -29,7 +29,9 @@ test('worked example computes every result from the supplied inputs',()=>{
  assert.ok(o.includes(`${fundingMonths(P/(G/100)).toFixed(1)} months. Passes your ${L} month limit.`));
  assert.ok(o.includes(`Customers that must close for this to pass: ${req} of the ${N} you expect.`));
  assert.ok(o.includes(`Months to recovery: ${fundingMonths(C+P).toFixed(1)}.`));
- assert.match(o,/November 2027, which is FY 2027-28/);
+ const start=new Date('2026-11-01T00:00:00Z'),recovery=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+Math.floor(C+P),1));
+ const fy=recovery.getUTCFullYear()-(recovery.getUTCMonth()<3?1:0);
+ assert.ok(o.includes(recovery.toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'})+`, which is FY ${fy}-${String(fy+1).slice(-2)}`));
  assert.match(o,/Fragile/);
 });
 test('least verdict safety for every configured safety phrase alone and mixed',()=>{
@@ -68,7 +70,9 @@ test('mixed currencies, missing geo and both FY boundaries',()=>{
  assert.equal(readFundingInputs(input({known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; currency=USD',your_solution:'an ABM programme'}),clock).geo,'');
  for(const [start,month,next]of [['2026-11','March',false],['2026-12','April',true]]){
  const T=12*1000/(5*1000)+1.8;
- assert.match(fundingRecovery(start,T,4),new RegExp(`${month} 2027, which is FY ${next?'2027-28':'2026-27'}`));
+ const [year,m]=start.split('-').map(Number),at=new Date(Date.UTC(year,m-1+Math.floor(T),1)),fy=at.getUTCFullYear()-(at.getUTCMonth()<3?1:0);
+ assert.equal(at.toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'}),month);
+ assert.ok(fundingRecovery(start,T,4).includes(`${month} ${at.getUTCFullYear()}, which is FY ${fy}-${String(fy+1).slice(-2)}`));
  }
 });
 test('through the real handler the first line is the funding verdict, contract and policy hold',async()=>{
@@ -101,4 +105,17 @@ test('analyst report scope signals retain the brand decision in a mix',()=>{
  }
  assert.equal(classifyFunding('an ABM programme, not Magic Quadrant work').kind,'direct');
  assert.equal(classifyFunding('an ABM wave').kind,'direct');
+});
+
+test('paid ads do not erase a separate sponsorship; only bought posts and booths are excepted',()=>{
+ for(const your_solution of ['sponsorship and paid media','brand sponsorship and social ads','booth sponsorship and another sponsorship','sponsored content and paid social']){
+  assert.equal(classifyFunding(your_solution).kind,'brand',your_solution);assert.doesNotMatch(buildRoiFunding(input({your_solution}),clock),/Passes/,your_solution);
+ }
+ for(const phrase of ['sponsored posts bought as ads','booth sponsorship','exhibition sponsorship'])assert.equal(classifyFunding(phrase).kind,'direct',phrase);
+});
+test('search case variants and outbound email notes have their stated scope',()=>{
+ for(const phrase of ['seo programme','aeo programme','SEO programme','Search Engine Optimisation','AI Search visibility','organic SEARCH'])assert.equal(classifyFunding(phrase).kind,'long',phrase);
+ for(const [your_solution,expected]of [['an outbound email programme in London',true],['an outbound calling programme in London',false],['cold calling in the United States',false],['cold email in the United States',true]]){
+  const o=buildRoiFunding(input({your_solution}),clock);assert.equal(o.includes('### Outbound email note'),expected,your_solution);
+ }
 });

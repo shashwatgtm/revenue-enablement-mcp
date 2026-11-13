@@ -83,7 +83,6 @@ function classifyFunding(value) {
     // A funder's industry and an audience description cannot turn a programme into a purchase.
     const bought = subject.split(/\b(?:for|targeting|aimed at|sold to|serving)\b/i)[0];
     const paid = /\b(?:paid (?:media|social|search|ads|advertising|campaigns?|acquisition)|social (?:media )?ads|(?:LinkedIn|Google|Meta) (?:ads|campaigns?)|sponsored posts bought as ads)\b/i.test(bought);
-    const booth = /\b(?:booth|exhibition|trade[- ]?show)\s+sponsorship\b/i.test(bought);
     const hits = [];
     for (const row of rules.CLASS_TABLE) {
         if (paid && row.group === 'audience')
@@ -96,8 +95,12 @@ function classifyFunding(value) {
                     continue;
                 if (row.group === 'purchase' && /^\s+(?:firm|company|startup|business)\b/i.test(after))
                     continue;
-                if (row.group === 'sponsorship' && ((booth && rules.BOOTH_SPONSORSHIP_CLASS === 'direct') || paid))
-                    continue;
+                if (row.group === 'sponsorship') {
+                    if (rules.BOOTH_SPONSORSHIP_CLASS === 'direct' && /\b(?:booth|exhibition|trade[- ]?show)\s*$/i.test(before))
+                        continue;
+                    if (/^sponsored posts?$/i.test(match[0]) && /^\s+bought as ads\b/i.test(after))
+                        continue;
+                }
                 hits.push({ kind: row.kind, group: row.group, word: match[0] });
             }
         }
@@ -349,7 +352,7 @@ function buildRoiFunding(args, clock = () => new Date()) {
     const reading = (0, revenue_reader_actions_ts_1.revenueReading)('roi_business_case_builder', args, '');
     if (reading)
         Ls.push('', ...reading.roles);
-    if (/\b(?:outbound(?: email)?|cold email|email outreach)\b/i.test(i.subject) && ['United Kingdom', 'United States'].includes(i.geo)) {
+    if (/\b(?:outbound email|cold email|email outreach)\b/i.test(i.subject) && ['United Kingdom', 'United States'].includes(i.geo)) {
         Ls.push('', '### Outbound email note', i.geo === 'United Kingdom' ? 'You can email corporate bodies without prior consent. Sole traders and some partnerships are treated as individuals. Keep a "do not email" list. https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/' : 'CAN-SPAM makes no exception for business to business email. An opt-out must be honoured within 10 business days. https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business', 'Checked 13 Nov 2026. Check with your counsel before you size the list.');
     }
     Ls.push('', '### How this is worked out', 'CAC = spend / new customers. Monthly ARR per customer = annual revenue per customer / 12. Payback = 12 x spend / (new customers x annual revenue per customer). Gross margin payback = payback / (gross margin / 100). Recovery = sales cycle + payback.', 'Required annual revenue = 12 x spend / limit. Required customers are rounded up. Required opportunities = required customers / (win rate / 100), rounded up.', 'Months are rounded half up to one decimal before comparison with the limit. Money results are rounded to the nearest whole unit. Counts are rounded up.', 'Demand programmes pass at the limit; up to twice the limit a smaller test could pass. A long build passes up to twice the limit. Beyond twice the limit neither passes. Brand, software and unmatched GTM work have no funding verdict.', `Rules of this tool: default ${rules.DEFAULT_LIMIT_MONTHS} month limit; half and one and a half times the revenue; twice the limit for a smaller test or long build; under 0.5 months needs checking; limit from 1 to 60 months; cycle at most 36 months; gross margin and win rate above 0 and at most 100 percent.`, 'Recovery is counted from the first day of the start month. Add sales cycle and payback, then round down to whole months to find the recovery month. No currency conversion.');

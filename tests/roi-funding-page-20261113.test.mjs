@@ -11,6 +11,8 @@ test('static page has the funding questions, metadata, example and routes withou
  const html=read('../public/tools/roi-business-case-builder/index.html');
  assert.equal(parseHTML(html).document.querySelectorAll('#currency option[value]:not([value=""])').length,6);
  assert.equal(parseHTML(html).document.querySelector('#start').value,'');
+ assert.deepEqual([...parseHTML(html).document.querySelectorAll('#funding-form input:not([type=checkbox]),#funding-form textarea,#funding-form select')].filter(e=>e.value).map(e=>e.id),[]);
+ assert.doesNotMatch(html,/What you sell|Implementation|ROI >100|3x|benchmark set|buyer's CFO|from this branch/i);
  assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.ok(html.includes(PAGE_TITLE));assert.ok(html.includes(PAGE_HEADING));assert.match(html,/No email. Your figures are not stored/);assert.match(html,/id="result-panel"/);assert.match(html,/Example. Illustrative inputs/);assert.match(html,/share\.png/);assert.doesNotMatch(html,/Industry benchmarks|Financial_Services|Healthcare|Manufacturing|route planning|\bLTV\b|[\u2013\u2014]/i);assert.match(html,/<details><summary>Sharpen it/);assert.doesNotMatch(html,/<details open/);
  const raw=JSON.parse(html.match(/id="example-output" type="application\/json">([\s\S]*?)<\/script>/)[1]);
  const args={your_solution:'A Series B AI native firm in Hyderabad wants to fund an ABM programme for 40 target accounts in India',solution_price:9000000,primary_value_driver:'revenue_increase',known_metrics:'helix-roi-v1; customers=5; per_customer=3000000; limit_months=12; margin=70; cycle_months=5; start=2026-11; currency=INR'};
@@ -21,6 +23,8 @@ test('rendering escapes caller markup and input line parsing is reversible',()=>
  assert.doesNotMatch(globalThis.HelixFunding.markdown('<img src=x onerror=alert(1)>'),/<img/);
  assert.deepEqual(globalThis.HelixFunding.parseLine('helix-roi-v1; spend=90 lakh; customers=5'),{spend:'90 lakh',customers:'5'});
  assert.throws(()=>globalThis.HelixFunding.parseLine('not a saved line'));
+ const missing=buildRoiFunding({your_solution:'an ABM programme',solution_price:9000000,primary_value_driver:'revenue_increase',known_metrics:'helix-roi-v1; currency=INR'},()=>new Date('2026-11-14'));
+ const view=globalThis.HelixFunding.resultView(missing);assert.match(view.summaryHTML,/Required new ARR/);assert.doesNotMatch(view.summaryHTML,/Required annual revenue =/);assert.equal(view.next,'per_customer');
 });
 test('a hundred outputs contain only input, computed or sourced rule numbers',()=>{
  const clock=()=>new Date('2026-11-13T00:00:00Z');

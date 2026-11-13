@@ -8,6 +8,7 @@ import { regionalInputs } from './region-adapter.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
 import { softwareAdvice, SOFTWARE_REFERRAL } from './software-policy.ts';
+import { roiScopeDecline } from './roi-scope.ts';
 import { BUILD_PROFILE } from './build-profile.ts';
 import {reserveTools,isReserveTool,callReserveTool} from './reserve-tools.ts';
 import { attachWidgets } from './widget-layer.ts';
@@ -3734,6 +3735,9 @@ export function createServer(): Server {
 
     const advice = softwareAdvice(typed);
     if (advice) return { content: [{ type: 'text', text: advice }] };
+    // Owner decision, 13 Nov 2026: ROI cases for GTM and marketing investments only (src/roi-scope.ts).
+    const outOfScope = roiScopeDecline(name, typed);
+    if (outOfScope) return { content: [{ type: 'text', text: outOfScope }] };
 
 
     try {

@@ -10,7 +10,7 @@ const {default:handler}=await import(alpha?'../netlify/functions/mcp-sse.js':'..
 const {regionNotes,NO_REGION_SUFFIX}=await import(alpha?'../netlify/lib/region-reader.js':'../dist/region-reader.js');
 const future=days=>new Date(Date.now()+days*86400000).toISOString().slice(0,10);
 const SOFT='Invoice automation software';
-const ROI={your_solution:SOFT,primary_value_driver:'cost_reduction'};
+const ROI={your_solution:'an ABM programme',primary_value_driver:'cost_reduction'};
 const ICP={current_icp:'Mid-market logistics firms',product_category:'freight visibility software'};
 const IMPACT={target_customer:'Operations leads at mid-size carriers',key_benefit:'Fewer late deliveries',differentiation:'Live tracking'};
 const CRISIS={company:'A regional carrier',industry:'logistics_tech',customer_base:'b2b_enterprise',data_sensitivity:'low_general'};

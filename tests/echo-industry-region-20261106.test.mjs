@@ -10,7 +10,7 @@ const call=async(tool,args)=>{
  const j=await r.json();assert.ok(j.result&&j.result.content,JSON.stringify(j).slice(0,300));
  return j.result.content.map(c=>c.text).join('\n');
 };
-const ROI={customer_name:'the Bank',your_solution:'TBX transaction banking platform: escrow and virtual accounts; payments and collections APIs',solution_price:12000000,primary_value_driver:'cost_reduction',current_annual_cost:30000000,expected_improvement_percent:60};
+const ROI={customer_name:'the Bank',your_solution:'TBX ABM programme for transaction banking teams',solution_price:12000000,primary_value_driver:'cost_reduction',current_annual_cost:30000000,expected_improvement_percent:60};
 for(const industry of ['Mid-sized private sector bank in India','Regional parcel and express delivery in India'])
  test(`roi_business_case_builder industry "${industry}" gives an India section and no question`,async()=>{
   const t=await call('roi_business_case_builder',{...ROI,industry});

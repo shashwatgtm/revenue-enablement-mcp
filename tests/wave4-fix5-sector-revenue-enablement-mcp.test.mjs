@@ -7,6 +7,8 @@ const bases={"account_plan_builder": {"account_name": "Account A", "industry": "
 const verticals=['Logistics tech','Fintech','SaaS','Vertical SaaS','AI native','ITeS','Telecom','Software','Cybersecurity'];
 const paraphrases=['Logistics technology vendor','Financial technology provider','Software as a service provider','Industry-specific SaaS vendor','AI-first vendor','IT-enabled services provider','Telecommunications provider','Developer tools for version control and automated testing','Endpoint threat detection and incident response platform'];
 for(const[tool,field]of Object.entries(fields)){
+ // Owner decision, 13 Nov 2026: ROI cases cover GTM and marketing investments only, so these sector-only solutions get the plain decline (tests/roi-scope-20261113.test.mjs).
+ if(tool==='roi_business_case_builder')continue;
  const schema=schemas.get(tool),dropdown=schema.properties.your_sector?'your_sector':schema.properties.industry?.enum?'industry':null;if(!dropdown)continue;
  for(const[i,v]of verticals.entries())for(const[form,text,choice,want]of [['exact',v+' vendor',verticals[(i+1)%9],true],['same',paraphrases[i],verticals[(i+1)%9],true],['opposite','We are not a '+verticals[(i+1)%9]+' vendor. We are a '+v+' vendor.',v,false],['matching',v+' vendor',v,false],['excluded','We are not a '+v+' vendor.',v,true]])test(`FIX5 sector ${tool} ${v} ${form}`,async()=>{
  const args={...bases[tool],[field]:text,[dropdown]:choice.toLowerCase().replaceAll(' ','_')};for(const[k,val]of Object.entries(args)){assert.ok(schema.properties[k],k);if(schema.properties[k].enum)assert.ok(schema.properties[k].enum.includes(val),k)}for(const k of schema.required||[])assert.ok(k in args,k);

@@ -12,6 +12,7 @@ const region_adapter_ts_1 = require("./region-adapter.js");
 const price_comparison_ts_1 = require("./price-comparison.js");
 const verticals_ts_1 = require("./verticals.js");
 const software_policy_ts_1 = require("./software-policy.js");
+const roi_scope_ts_1 = require("./roi-scope.js");
 const build_profile_ts_1 = require("./build-profile.js");
 const reserve_tools_ts_1 = require("./reserve-tools.js");
 const widget_layer_ts_1 = require("./widget-layer.js");
@@ -3671,6 +3672,10 @@ function createServer() {
         const advice = (0, software_policy_ts_1.softwareAdvice)(typed);
         if (advice)
             return { content: [{ type: 'text', text: advice }] };
+        // Owner decision, 13 Nov 2026: ROI cases for GTM and marketing investments only (src/roi-scope.ts).
+        const outOfScope = (0, roi_scope_ts_1.roiScopeDecline)(name, typed);
+        if (outOfScope)
+            return { content: [{ type: 'text', text: outOfScope }] };
         try {
             const result = (0, pricing_lines_ts_1.pricingLines)(name, executeTool(name, args));
             return {

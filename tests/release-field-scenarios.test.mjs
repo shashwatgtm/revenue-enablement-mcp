@@ -6,6 +6,9 @@ const {default:handler}=await import(alpha?'../netlify/functions/mcp-sse.js':'..
 const facts=JSON.parse(readFileSync(new URL('./fixtures/release-field-facts.json',import.meta.url)));
 const bases=JSON.parse(readFileSync(new URL('./fixtures/round5-reader-cases.json',import.meta.url)));
 const tools=JSON.parse(readFileSync(new URL('./fixtures/release-production-tools.json',import.meta.url))).tools_list.tools;
+// Owner decision, 13 Nov 2026: the ROI tool builds cases for GTM and marketing investments only. The nine field products are
+// other investments, so the ROI answer is the plain decline (tests/roi-scope-20261113.test.mjs covers the scope rules).
+const roiDecline=existsSync(new URL('../dist/roi-scope.js',import.meta.url))?(await import('../dist/roi-scope.js')).ROI_SCOPE_DECLINE:null;
 const fields=s=>({
  product_category:s.product, product_description:s.product, your_product:s.product, your_solution:s.product, product:s.product, product_context:`${s.product}. ${s.pain}. Hypothesis: ${s.capability}.`, product_feature:s.product,
  company:'Synthetic field case',company_name:'Synthetic field case', product_name:'Synthetic field product', account_name:'Synthetic field account', customer_name:'Anonymous pilot customer', customer_company:'Anonymous field customer', deal_name:`${s.product} evaluation`,
@@ -61,6 +64,7 @@ for(const c of bases){
   const message=await response.json();
   assert.ok(!message.error&&message.result&&!message.result.isError,JSON.stringify(message));
   const text=message.result.content.filter(v=>v.type==='text').map(v=>v.text).join('\n');
+  if(roiDecline&&c.tool==='roi_business_case_builder'){assert.equal(text,roiDecline);return;}
   assert.match(text,/## Reading the answer/);
   assert.doesNotMatch(text,/\bNaN\b|\[object Object\]|\bundefined\b/);
   // Assert concrete supplied field evidence and the tool's decision, rather

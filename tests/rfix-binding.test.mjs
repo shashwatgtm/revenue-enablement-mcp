@@ -12,6 +12,8 @@ const rpc=async(tool,args)=>{const r=await handler(new Request('https://example.
 const notes=r=>r.content.filter(c=>c.type==='text').map(c=>c.text).join('\n').split('## Region and industry context')[1]||'';
 for(const seed of seeds){
  if(seed.tool==='generate_roadmap')continue;
+ // Owner decision, 13 Nov 2026: ROI cases cover GTM and marketing investments only; these lending and payments products get the plain decline.
+ if(seed.tool==='roi_business_case_builder')continue;
  const field=alpha?(seed.tool==='epic_audit'?'challenge':'gtm_challenge'):revenue?'your_solution':pkg.name.includes('icp-intelligence')?'product_category':fields[seed.tool];
  const args=text=>{const a={...seed.args,[field]:text};delete a.your_sector;if(alpha||seed.tool==='crisis_planner')a.industry='fintech';return a;};
  for(const [id,input,control,headings] of [

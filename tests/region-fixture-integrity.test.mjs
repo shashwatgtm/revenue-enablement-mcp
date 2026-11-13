@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {NO_REGION_SUFFIX} from '../dist/region-reader.js';
+// 13 Nov 2026: re-pinned after the ROI scope change renamed the placeholder "Helix Platform" to "Helix ABM Platform" (in scope).
+// The only change in each fixture is that name; checked by running the tool and comparing the old text with the name swapped.
 const original={
-  "roi-own-price-omitted.md": "052d4e12e1f0cf6e43902ab7063dd8ce29bc69ba",
-  "roi-own-price-0.01.md": "99dfb9972bb7af1492b02342cdd835e3097fd620",
-  "roi-own-price-1.md": "e7bb3b8bdb1c346a7213d2b980bdbf941c6c4f00",
-  "roi-own-price-50000.md": "909326d8bceeb5bea4ed2097504887cf59c0cc7f"
+  "roi-own-price-omitted.md": "6f8a5675820f6cec586ba9c29891c41b5dc25cfd",
+  "roi-own-price-0.01.md": "8aa874cf49f0fa5ab7ac093828b2564076194eac",
+  "roi-own-price-1.md": "8c032684b1237de5550a2304770210bdc2c2f2fd",
+  "roi-own-price-50000.md": "1d53a459b83b720080b1acaf679f5f8472240d75"
 };
 for(const [name,sha]of Object.entries(original))test('Saved output changes only by the exact region clarification: '+name,()=>{
  const current=readFileSync(new URL('./fixtures/'+name,import.meta.url),'utf8');

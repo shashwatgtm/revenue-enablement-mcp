@@ -5,6 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));
+// Owner decision, 13 Nov 2026: ROI cases cover GTM and marketing investments only; these products get the plain decline.
+const { ROI_SCOPE_DECLINE } = await import("../dist/roi-scope.js");
 let nextId = 1;
 const call = async (name, args) => {
   const r = await handler(new Request("https://x.gtmhelix.com/mcp", { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" }, body: JSON.stringify({ jsonrpc: "2.0", id: nextId++, method: "tools/call", params: { name, arguments: args } }) }));
@@ -47,6 +49,7 @@ test("a plain description with no name never gives its first word as a name", as
       ["mutual_action_plan_generator", { deal_name: "Retail deal", target_close_date: future(60), your_solution: sol, blockers: "How much does it cost?" }],
     ]) {
       const t = await call(tool, args);
+      if (tool === "roi_business_case_builder") { assert.equal(t, ROI_SCOPE_DECLINE); continue; }
       assert.doesNotMatch(t, bad, `${tool}: ${sol.slice(0, 20)}`);
       assert.ok(t.includes(sol.split(/[:,]/)[0].slice(0, 25)) || /your solution|the solution/.test(t), `${tool}: the description is quoted or the words are neutral`);
     }
@@ -57,7 +60,7 @@ test("a name written as Name, a description is still used; a name given in the c
   const t = await call("account_plan_builder", { account_name: "Brightcrate Retail", your_solution: "Lanehop, a routing and dispatch platform for last-mile delivery", known_contacts: "Head of Last-mile (champion)" });
   assert.match(t, /with Lanehop/);
   const u = await call("roi_business_case_builder", { customer_name: "Hotel groups account (Mewsly customer)", your_solution: "Mewsly operating system for hotels that joins reservations, housekeeping and billing", primary_value_driver: "cost_reduction" });
-  assert.match(u, /Mewsly/);
+  assert.equal(u, ROI_SCOPE_DECLINE); // a hotel operating system is outside the ROI scope (13 Nov 2026)
 });
 
 test("the MAP counts calendar days from the dates, and a comma list of requirements is one criterion each", async () => {

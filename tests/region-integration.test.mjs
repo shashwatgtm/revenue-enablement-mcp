@@ -24,7 +24,9 @@ test('Canonical taxonomy includes all nine verticals and 57 observed subtypes',(
  assert.equal(new Set(SUBTYPES.map(s=>s.id)).size,57);
  for(const s of SUBTYPES)assert.ok(VERTICALS.some(v=>v.id===s.vertical));
 });
-for(const c of baseline.cases){
+// Owner decision, 13 Nov 2026: ROI cases cover GTM and marketing investments only. The saved ROI case (an invoice processing service)
+// now gets the plain decline, so its historical bytes are not replayed here (tests/roi-scope-20261113.test.mjs covers the decline).
+for(const c of baseline.cases.filter(c=>!(revenue&&c.tool==='roi_business_case_builder'))){
  test(c.tool+': removing only the exact region question restores historical baseline bytes at capture date',async()=>{
   // Account planning uses the execution date. Compare its historical fixture at
   // its original date, rather than silently regenerating expected output today.

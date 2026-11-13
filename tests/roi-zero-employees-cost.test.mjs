@@ -19,7 +19,7 @@ const call = async (args) => {
   const j = await r.json();
   return j.result.content.map((c) => c.text).join("\n");
 };
-const BASE = { customer_name: "Example Clinic Group", your_solution: "FlowOps", company_size: "smb", solution_price: 50000 };
+const BASE = { customer_name: "Example Clinic Group", your_solution: "FlowOps ABM", company_size: "smb", solution_price: 50000 };
 
 const noSaving = (t, label) => {
   assert.doesNotMatch(t, /Employees impacted|Annual Cost Savings|Hourly cost of labor|\| \*\*ROI\*\* \|/, label);

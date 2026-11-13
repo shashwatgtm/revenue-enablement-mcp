@@ -48,7 +48,7 @@ const sensLines = (text, label) =>
     .split("\n")
     .filter((l) => l.startsWith(label));
 
-const PROD = { your_solution: "Helix Platform", primary_value_driver: "productivity" };
+const PROD = { your_solution: "Helix ABM Platform", primary_value_driver: "productivity" };
 
 // ---------- no buyer figure: sizes shown as given, nothing estimated, no return ----------
 const noReturn = (text, label) => {
@@ -94,7 +94,7 @@ test("annual_revenue 0 with the buyer's own value: every figure is computed from
 });
 
 test("annual_revenue 0 with cost_reduction: the value does not come from revenue, so every figure is computed", async () => {
-  const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 0, employee_count: 100, solution_price: 40000 });
+  const { text } = await call({ your_solution: "Helix ABM Platform", primary_value_driver: "cost_reduction", annual_revenue: 0, employee_count: 100, solution_price: 40000 });
   assert.ok(!text.includes("not computed"));
   assert.equal(row(text, "| **Annual Revenue** |"), "| **Annual Revenue** | $0 (your input) |");
 });
@@ -129,7 +129,7 @@ test("employee_count 0 (revenue given): shown as 0 (your input), never estimated
 });
 
 test("employee_count 0, cost_reduction, no buyer figure: no impacted employees, no savings, no return", async () => {
-  const { text } = await call({ your_solution: "Helix Platform", primary_value_driver: "cost_reduction", annual_revenue: 10000000, employee_count: 0, solution_price: 40000 });
+  const { text } = await call({ your_solution: "Helix ABM Platform", primary_value_driver: "cost_reduction", annual_revenue: 10000000, employee_count: 0, solution_price: 40000 });
   assert.equal(row(text, "| **Employees** |"), "| **Employees** | 0 (your input) |");
   noReturn(text, "cost_reduction employees 0");
 });

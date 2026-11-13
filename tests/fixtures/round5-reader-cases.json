@@ -36,7 +36,7 @@
   {
     "tool": "roi_business_case_builder",
     "args": {
-      "your_solution": "Invoice processing service",
+      "your_solution": "Outbound prospecting service",
       "primary_value_driver": "cost_reduction",
       "solution_price": 60000,
       "current_annual_cost": 240000,

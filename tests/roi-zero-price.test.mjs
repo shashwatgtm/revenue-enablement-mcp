@@ -33,7 +33,7 @@ const call = async (args) => {
 // Run 42 (owner approval, 17 October 2026): without a buyer figure the tool calculates no ROI, so the D34 price rules are checked on the
 // calculation path: BASE gives the buyer's own annual value, $100,000, the value the old example (1 percent of this revenue) produced.
 // The fixtures were regenerated once from that path (roi-own-price-*.md); the old ones held the removed example-based answer.
-const BASE = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000, annual_value_estimate: 100000 };
+const BASE = { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000, annual_value_estimate: 100000 };
 // Run 19 (D80, problem 5): the fixtures were regenerated once; the only change is the honest confidence line (Low when the value
 // rests on example assumptions) and, where the example ROI is very high, a note to add the buyer's own figures.
 // Run 19 R19-36 (ledger B16-18): regenerated again; the only change is the revenue you give, labelled "(your input)" in the
@@ -127,7 +127,7 @@ for (const [price, file] of [[0.01, "roi-own-price-0.01.md"], [1, "roi-own-price
 
 test("Run 42: without a buyer figure no ROI, payback or value is shown, whatever the price", async () => {
   for (const price of [undefined, null, 0, 0.01, 50000]) {
-    const args = { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
+    const args = { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000 };
     if (price !== undefined) args.solution_price = price;
     const { isError, text } = await call(args);
     assert.equal(isError, false);

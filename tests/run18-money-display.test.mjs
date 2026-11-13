@@ -111,7 +111,7 @@ const SIZES = ["startup", "smb", "mid_market", "enterprise"];
 
 // ---- specific cases (the findings behind D65) --------------------------------------------------------------------------------
 test("P05-REV-01: price 0.555, productivity, revenue 2,000,000: Net Annual Benefit and 3-Year Net Value have 2 decimals", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "F", primary_value_driver: "productivity", annual_revenue: 2000000, solution_price: 0.555, annual_value_estimate: 20000 });
+  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 2000000, solution_price: 0.555, annual_value_estimate: 20000 });
   assert.match(t, /\| \*\*Net Annual Benefit\*\* \| \$19,999\.44 /); // $20,000 minus the printed $0.56
   assert.match(t, /\| \*\*3-Year Net Value\*\* \| \$59,998\.34 \|/); // exact 59,998.335, shown to 2 decimals, not 3 x the printed benefit
   assert.doesNotMatch(t, /19,999\.445|59,998\.335/);
@@ -120,7 +120,7 @@ test("P05-REV-01: price 0.555, productivity, revenue 2,000,000: Net Annual Benef
 test("N1: Year 1 Total Investment is the printed Solution Cost plus the printed Implementation (productivity, revenue 10,000,000)", async () => {
   const want = { 1: "$1.15", 4: "$4.60", 6: "$6.90", 6.66: "$7.66", 7: "$8" };
   for (const [p, total] of Object.entries(want)) {
-    const t = await call("roi_business_case_builder", { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: Number(p), annual_value_estimate: 100000 });
+    const t = await call("roi_business_case_builder", { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: Number(p), annual_value_estimate: 100000 });
     assert.equal(tableRow(t, "Total Investment")[2], total + " (Example figure: replace with your own)", "price " + p);
     assert.deepEqual(roiProblems("price " + p, t, "productivity"), []);
   }
@@ -134,7 +134,7 @@ test("display rule: non-whole amounts print exactly 2 decimals, whole amounts pr
   assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 0.123 }), /\| \*\*Current ARR\*\* \| \$0\.12 \|/);
   assert.match(await call("account_plan_builder", { account_name: "A", current_arr: 0.004 }), /\| \*\*Current ARR\*\* \| under \$0\.01 \|/);
   // Run 42: the example cost model (weekly savings from example hours and an hourly rate) is gone; the buyer's cost and share print with cents.
-  const t = await call("roi_business_case_builder", { your_solution: "F", primary_value_driver: "cost_reduction", annual_revenue: 1000000, employee_count: 123, solution_price: 5000, current_annual_cost: 92250, expected_improvement_percent: 5 });
+  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "cost_reduction", annual_revenue: 1000000, employee_count: 123, solution_price: 5000, current_annual_cost: 92250, expected_improvement_percent: 5 });
   assert.match(t, /\*\*\$4,612\.50\*\*/);
   assert.doesNotMatch(t, /Weekly savings|Hourly cost of labor/);
 });
@@ -147,17 +147,17 @@ test("pricing_negotiation_guide: Post-Discount Value is Deal Value minus Revenue
 
 // Run 42: the four example parts of "multiple" mode are gone; with the buyer's figures the total is the one printed value, with cents.
 test("'multiple' mode: Total Quantified Value is the buyer's value as printed", async () => {
-  const t = await call("roi_business_case_builder", { your_solution: "F", primary_value_driver: "multiple", annual_revenue: 3333333, employee_count: 77, solution_price: 12345.67, current_annual_cost: 333333.33, expected_improvement_percent: 37 });
+  const t = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "multiple", annual_revenue: 3333333, employee_count: 77, solution_price: 12345.67, current_annual_cost: 333333.33, expected_improvement_percent: 37 });
   assert.deepEqual(roiProblems("multiple", t, "multiple"), []);
   assert.match(t, /\| \*\*Total Quantified Value\*\* \| \*\*\$\d[\d,]*\.\d\d\*\* /);
 });
 
 test("zero price and zero employees are unchanged", async () => {
-  const z = await call("roi_business_case_builder", { your_solution: "F", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: 0, annual_value_estimate: 100000 });
+  const z = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: 0, annual_value_estimate: 100000 });
   assert.match(z, /\| \*\*Solution Cost\*\* \| \$0 \(your input\) \| \$0 \(your input\) \| \$0 \(your input\) \|/);
   assert.match(z, /\| \*\*ROI\*\* \| not computed: add your annual price \|/);
   assert.match(z, /\| \*\*Total Investment\*\* \| \$0 \(Example figure/);
-  const e = await call("roi_business_case_builder", { your_solution: "F", primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: 0, solution_price: 50000 });
+  const e = await call("roi_business_case_builder", { your_solution: "ABM", primary_value_driver: "cost_reduction", annual_revenue: 5000000, employee_count: 0, solution_price: 50000 });
   // Run 42: no example cost model, so a 0 employee count prints no impacted employees, no saving and no payback.
   assert.match(e, /\| \*\*Employees\*\* \| 0 \(your input\) \|/);
   assert.doesNotMatch(e, /Employees impacted|Annual Cost Savings|Payback Period/);
@@ -196,7 +196,7 @@ test("sweep: more than 900 varied calls over every money-printing tool keep the 
   // ROI in every use case mode
   for (let k = 0; k < 400; k++) {
     const driver = MODES[k % MODES.length];
-    const args = { your_solution: "F", primary_value_driver: driver, industry: pick(INDUSTRIES), company_size: pick(SIZES) };
+    const args = { your_solution: "ABM", primary_value_driver: driver, industry: pick(INDUSTRIES), company_size: pick(SIZES) };
     if (rnd() < 0.85) args.annual_revenue = amount();
     if (rnd() < 0.5) args.employee_count = pick([0, intIn(1, 5000), intIn(1, 400) + 0.5]);
     if (rnd() < 0.8) args.solution_price = pick([amount(), amount(), intIn(1, 200000), intIn(1, 20000) / 100]);
@@ -217,7 +217,7 @@ test("sweep: 2,186 solution prices (0.01 to 20.00 in cents, 21 to 200, and six m
   assert.equal(prices.length, 2186);
   const problems = [];
   for (const p of prices) {
-    const t = await call("roi_business_case_builder", { your_solution: "Helix Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: p, annual_value_estimate: 100000 });
+    const t = await call("roi_business_case_builder", { your_solution: "Helix ABM Platform", primary_value_driver: "productivity", annual_revenue: 10000000, solution_price: p, annual_value_estimate: 100000 });
     for (const x of roiProblems("price " + p, t, "productivity")) problems.push(x);
   }
   assert.deepEqual(problems.slice(0, 8), [], `${problems.length} problems in ${prices.length} prices`);

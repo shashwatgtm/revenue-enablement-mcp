@@ -11,7 +11,7 @@
 | **Company Size** | not supplied (treated as mid market) |
 | **Annual Revenue** | $10,000,000 (your input) |
 | **Est. Employees** | 40, estimated from your annual revenue (Example figure: replace with your own) |
-| **Solution** | Helix Platform |
+| **Solution** | Helix ABM Platform |
 | **Confidence Level** | Medium: the value comes from your own figures (your own estimate of the annual value, $100,000); confirm them with the buyer |
 
 ---
@@ -112,13 +112,13 @@ Example figures: replace with your own.
 
 ## One-Page Executive Summary
 
-### Why Helix Platform for your customer
+### Why Helix ABM Platform for your customer
 
 **The Problem:**
 Not given. Add current process, in the customer's own words, and it will be shown here.
 
 **The Solution:**
-Helix Platform addresses these challenges.
+Helix ABM Platform addresses these challenges.
 
 **The Value:**
 Example figures: replace with your own.
@@ -138,21 +138,21 @@ Suggested timings, lengths and counts: adjust them to your own.
 
 ## Reading the answer
 
-The calculation supports checking the supplied Helix Platform economics. A calculated benefit is conditional on the supplied scope, price and improvement. Released capacity is not cash unless a cost is removed or additional contribution is evidenced. The conclusion needs review if the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit.
+The calculation supports checking the supplied Helix ABM Platform economics. A calculated benefit is conditional on the supplied scope, price and improvement. Released capacity is not cash unless a cost is removed or additional contribution is evidenced. The conclusion needs review if the verified baseline, achievable improvement, recurring fee or implementation cost changes, or capacity cannot be converted into a supported benefit.
 
 ## Decisions by role
 
 Proposed owners. Confirm the named person before acting.
 
-Founder: challenge whether the unconfirmed improvement is achievable for Helix Platform before endorsing the case; revise scope or price if annual value does not cover the recurring fee.
+Founder: challenge whether the unconfirmed improvement is achievable for Helix ABM Platform before endorsing the case; revise scope or price if annual value does not cover the recurring fee.
 
 CEO: have finance verify the unstated amount annual cost baseline, unstated amount price period and implementation cost before committing; approve only a benefit that finance can substantiate.
 
-CMO: check "the unverified baseline" before publishing a return claim for Helix Platform; do not present labour capacity as an approved cash saving.
+CMO: check "the unverified baseline" before publishing a return claim for Helix ABM Platform; do not present labour capacity as an approved cash saving.
 
 CRO: agree a buyer measurement of the unconfirmed improvement against the unstated amount baseline before revising the proposal; require the same scope and period.
 
-Demand generation head: keep this Helix Platform case out of positive return campaigns until the buyer confirms realized benefit and the unstated amount price period; retain any negative economics alongside it.
+Demand generation head: keep this Helix ABM Platform case out of positive return campaigns until the buyer confirms realized benefit and the unstated amount price period; retain any negative economics alongside it.
 
 
 Region context: Which region applies: India, Southeast Asia, Middle East, UK, Western Europe or North America? Add it to your description and rerun.

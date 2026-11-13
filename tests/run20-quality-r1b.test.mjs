@@ -6,6 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 const { default: handler } = await import(new URL("../netlify/functions/mcp.mjs", import.meta.url));
+const { ROI_SCOPE_DECLINE } = await import(new URL("../dist/roi-scope.js", import.meta.url));
 let nextId = 1;
 const rpc = async (method, params) => {
   const r = await handler(new Request("https://x.gtmhelix.com/mcp", {
@@ -537,6 +538,8 @@ test("an investment seller (AI native) gets no corporate finance or support-desk
     const r = await call(name, args);
     assert.equal(r.isError, false, name);
     assert.doesNotMatch(r.text, /The CFO signs|close the books|ERP posting|Finance Controller|month-end|resolution rate|help ?desk|support ticket/i, name);
+    // Owner decision, 13 Nov 2026: ROI cases cover GTM and marketing investments only; an investment fund gets the plain decline.
+    if (name === "roi_business_case_builder") { assert.equal(r.text, ROI_SCOPE_DECLINE); continue; }
     assert.match(r.text, /investment management/i, `${name} should say the model is investment management`);
   }
 });

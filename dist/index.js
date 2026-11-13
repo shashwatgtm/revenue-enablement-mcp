@@ -7,6 +7,7 @@ const input_evidence_ts_1 = require("./input-evidence.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const region_reader_ts_1 = require("./region-reader.js");
 const echo_layer_ts_1 = require("./echo-layer.js");
+const pricing_lines_ts_1 = require("./pricing-lines.js");
 const region_adapter_ts_1 = require("./region-adapter.js");
 const price_comparison_ts_1 = require("./price-comparison.js");
 const verticals_ts_1 = require("./verticals.js");
@@ -3671,7 +3672,7 @@ function createServer() {
         if (advice)
             return { content: [{ type: 'text', text: advice }] };
         try {
-            const result = executeTool(name, args);
+            const result = (0, pricing_lines_ts_1.pricingLines)(name, executeTool(name, args));
             return {
                 content: [
                     {

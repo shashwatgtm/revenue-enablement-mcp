@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 42Q: the recurring judge faults on the unseen set, fixed in general (no company names in code). Invented sellers only (B81).
 //  1. a services firm with your_sector set to ites is sold as services unless its own words state a subscription charge;
 //  2. a must-show list of integration names is one claim, not one demo step per name; the steps come from the parts that answer the pains;
@@ -22,7 +23,7 @@ const SERVICES = "Corvane, Business services and advanced technology for large e
 
 test("your_sector ites: a services firm that names products and technology is sold as services", async () => {
   const t = await call("demo_script_builder", { demo_type: "first_look", customer_industry: "banks", your_solution: SERVICES, key_pain_points: "month end close takes too long", demo_duration: 30, your_sector: "ites" });
-  assert.match(modelLine(t), /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(modelLine(t), /Business model: (?!not stated)/);
   // its own charge words still decide: a subscription stated by the seller is a subscription
   const s = await call("demo_script_builder", { demo_type: "first_look", customer_industry: "banks", your_solution: `${SERVICES}, sold as a subscription per user`, key_pain_points: "month end close takes too long", demo_duration: 30, your_sector: "ites" });
   assert.match(modelLine(s), /^Business model: software subscription/);

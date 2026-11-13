@@ -9,6 +9,9 @@ const {regionNotes,readRegionContext,NO_REGION_SUFFIX}=await import(alpha?'../ne
 const {regionalInputs}=await import(alpha?'../netlify/lib/region-adapter.js':'../dist/region-adapter.js');
 const {VERTICALS,SUBTYPES}=await import(alpha?'../netlify/lib/verticals.js':'../dist/verticals.js');
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/regions-baseline.json',import.meta.url),'utf8'));
+// 13 Nov 2026 (owner): the saved answers stay as reviewed; tools with no price now drop the business model and quote lines (src/pricing-lines.ts).
+const {pricingLines}=alpha?{pricingLines:(t,x)=>x}:await import('../dist/pricing-lines.js');
+const priced=(tool,v)=>typeof v==='string'?pricingLines(tool,v):Array.isArray(v)?v.map(x=>priced(tool,x)):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,priced(tool,x)])):v;
 const rpc=async(method,params)=>{const r=await handler(new Request('https://example.com/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})}));return(await r.json()).result;};
 const fields={case_study_generator:'your_product',newsletter_builder:'your_product',webinar_script:'your_product',content_repurposer:'source_content',thought_leadership_series:'your_take',testimonial_capture:'your_product',sales_enablement_content:'product',craft_content_improver:'content'};
 test('Region wiring preserves the complete reviewed tool contract',async()=>assert.deepEqual(await rpc('tools/list',{}),baseline.contract));
@@ -34,7 +37,7 @@ for(const c of baseline.cases){
   assert.ok(text.endsWith(NO_REGION_SUFFIX));
   result.content[0].text=text.slice(0,-NO_REGION_SUFFIX.length);
   for(const k of ['structuredContent','_meta'])if(result[k]){const strip=v=>typeof v==='string'?(v.endsWith(NO_REGION_SUFFIX)?v.slice(0,-NO_REGION_SUFFIX.length):v):Array.isArray(v)?v.map(strip):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,strip(x)])):v;result[k]=strip(result[k]);}
-  assert.deepEqual(result,c.result);
+  assert.deepEqual(result,priced(c.tool,c.result));
  });
  if(alpha&&c.tool==='generate_roadmap')continue; // All reviewed inputs are enums. Do not invent a hidden market field.
  for(const [country,region]of [['India','India'],['Singapore','Southeast Asia'],['United Arab Emirates','Middle East'],['United Kingdom','UK'],['Germany','Western Europe'],['United States','North America']]){

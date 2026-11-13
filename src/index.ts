@@ -3,6 +3,7 @@ import { guardInputs, holdBuyerCopy } from './input-evidence.ts';
 import { withReadingGuide } from './reader-actions.ts';
 import { regionNotes } from './region-reader.ts';
 import { applyEcho } from './echo-layer.ts';
+import { pricingLines } from './pricing-lines.ts';
 import { regionalInputs } from './region-adapter.ts';
 import { readPriceComparison } from './price-comparison.ts';
 import { billingLine } from './verticals.ts';
@@ -3736,7 +3737,7 @@ export function createServer(): Server {
 
 
     try {
-      const result = executeTool(name, args as Record<string, unknown>);
+      const result = pricingLines(name, executeTool(name, args as Record<string, unknown>));
       return {
         content: [
           {

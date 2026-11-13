@@ -1,3 +1,4 @@
+// 13 Nov 2026 (owner): tools with no price no longer print "Business model: not stated" (src/pricing-lines.ts); these checks now assert that no business model is claimed.
 // Run 20 round 1b (D92): the judges' findings on the 12 Revenue tools, one behaviour per test.
 // Written before the fixes. Companies are invented (Lanehop, Branchwire, Spendrill ...): real companies stay in the private project repo (B81).
 // Run: node --test tests/run20-quality-r1b.test.mjs
@@ -543,12 +544,12 @@ test("a TMS is software (not a people-delivered service) in the tools that state
   const tms = "Lanehop, an agentic transportation management system (TMS) and last mile delivery platform: dispatch planning, route planning, control tower and analytics, for captive, contracted, outsourced and hybrid fleets";
   for (const [name, args] of [["discovery_question_bank", { framework: "meddpicc", your_solution: tms }], ["competitive_trap_setter", { competitor: "Routeline", your_solution: tms }], ["pricing_negotiation_guide", { scenario: "budget_objection", your_solution: tms }]]) {
     const r = await call(name, args);
-    assert.match(r.text, /Business model: not stated\. Tell us how you charge and the plan will adjust\./, name);
+    assert.doesNotMatch(r.text, /Business model: (?!not stated)/, name);
     assert.doesNotMatch(r.text, /per FTE|per ticket|people-delivered/, name);
   }
 });
 test("a services firm whose name holds the word software is a services firm", async () => {
   const sonata = "Northgate Software Services, modernization engineering services: cloud, data, business automation and managed services, delivered through its own playbook";
   const r = await call("discovery_question_bank", { framework: "meddpicc", prospect_role: "CIO", your_solution: sonata });
-  assert.match(r.text, /Business model: not stated\. Tell us how you charge and the plan will adjust\./);
+  assert.doesNotMatch(r.text, /Business model: (?!not stated)/);
 });

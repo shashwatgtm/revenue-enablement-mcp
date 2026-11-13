@@ -30,7 +30,7 @@ test('R1 paid channel scope and the four night-review sentences are demand progr
 });
 test('R1 people stay programmes while explicit purchases stay purchases',()=>{
  for(const phrase of ['outbound SDR and sales engagement programme','BDR sales engagement team','sales development and sequencing programme','appointment setting and sales engagement programme'])assert.equal(classifyFunding(phrase).kind,'direct',phrase);
- for(const phrase of ['sales engagement platform','outbound SDR programme and sales engagement software','BDR team with sequencing licences','sales engagement seats for the SDR team']){assert.equal(classifyFunding(phrase).kind,'enabler',phrase);assert.doesNotMatch(buildRoiFunding(a({your_solution:phrase}),clock),/Passes/);}
+ for(const phrase of ['sales engagement platform','sales enablement for an SDR programme','outbound SDR programme and sales engagement software','BDR team with sequencing licences','sales engagement seats for the SDR team']){assert.equal(classifyFunding(phrase).kind,'enabler',phrase);assert.doesNotMatch(buildRoiFunding(a({your_solution:phrase}),clock),/Passes/);}
  assert.equal(classifyFunding('Sponsoring a trade show booth in London').kind,'direct');
 });
 test('R1 read-back exposes refinements, counts sit by sensitivity and both recovery bases are named',()=>{

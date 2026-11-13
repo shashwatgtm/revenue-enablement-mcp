@@ -96,7 +96,7 @@ function classifyFunding(value) {
                     continue;
                 const people = /\b(?:SDRs?|BDRs?|sales development|outbound team|appointment setting)\b/i.test(clause);
                 const purchase = /\b(?:platforms?|tools?|software|licen[cs]es?|seats|subscriptions?|databases?|automation|stack|suite|analytics|attribution|apps?|vendors?)\b/i.test(clause);
-                if (row.group === 'data' && /^(?:sales engagement|sales enablement)$/i.test(match[0]) && people && !purchase)
+                if (row.group === 'data' && /^sales engagement$/i.test(match[0]) && people && !purchase)
                     continue;
                 if (row.group === 'purchase' && /^\s+(?:firm|company|startup|business)\b/i.test(after))
                     continue;

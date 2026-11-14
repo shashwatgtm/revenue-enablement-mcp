@@ -757,7 +757,7 @@ New tests span clinics, banks, logistics and insurance. Ten separator groups run
 
 All 14 round 1 count expectations still pass. One assertion was updated to the newly required honest wording for nonblank unread text; no owner byte-pinned contract was changed. Existing single-deal writing and the connector tool list, descriptions and schemas are unchanged. Package version stays 1.2.32.
 
-Focused suite: **293 passed, zero failed, one private-pool test skipped**. Full fixed-branch suite: **8,977 passed, one failed, 30 skipped**. Fresh main suite: **8,701 passed, one failed, 30 skipped**. Round 1 baseline in this run: **8,716 passed, one failed, 30 skipped**. The sole failure in all three is `scripts/test-in-field.mjs`, **already failing on main**, because the private HELIX_WORK run20/run21/run22 fixture folder is unavailable. There is no new suite failure. Current-dist verification is recorded below after the generated build commit.
+Focused suite: **293 passed, zero failed, one private-pool test skipped**. Full fixed-branch suite: **8,977 passed, one failed, 30 skipped**. Fresh main suite: **8,701 passed, one failed, 30 skipped**. Round 1 baseline in this run: **8,716 passed, one failed, 30 skipped**. The sole failure in all three is `scripts/test-in-field.mjs`, **already failing on main**, because the private HELIX_WORK run20/run21/run22 fixture folder is unavailable. There is no new suite failure. Fresh current-dist verification passed: **all 192 committed dist files equal a fresh current build**.
 
 Exact commands from the fix checkout:
 
@@ -774,13 +774,13 @@ npm test > /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/after-ful
 npm run build
 npm test > /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/main-full-tests.txt 2>&1
 # Real-handler captures (runner takes a checkout and a receipt label):
-node /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/capture.mjs /workspace/winloss-main-round2 main
-node /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/capture.mjs /workspace/winloss-round1-review round1
-node /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/capture.mjs /workspace/winloss-count-fix-20261114 round2
+node scripts/capture-winloss-round2.mjs /workspace/winloss-main-round2 /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/main.json
+node scripts/capture-winloss-round2.mjs /workspace/winloss-round1-review /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/round1.json
+node scripts/capture-winloss-round2.mjs /workspace/winloss-count-fix-20261114 /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round2/round2.json
 # After committing the generated build:
 npm run check:current-dist
 ```
 
-The permanent fixtures and assertions are tests/winloss-round2-cases.mjs and tests/winloss-round2.test.mjs. The committed comparison receipt retains real main/round1/round2 output excerpts for every input and mode. The comparison runner and full raw captured outputs remain in the hub’s ignored work/winloss-count-fix-round2/ scratch folder.
+The permanent fixtures and assertions are tests/winloss-round2-cases.mjs and tests/winloss-round2.test.mjs. The committed comparison receipt retains real main/round1/round2 output excerpts for every input and mode. The portable real-handler capture runner is scripts/capture-winloss-round2.mjs. The report-generation helper and full raw captured outputs remain in the hub’s ignored work/winloss-count-fix-round2/ scratch folder.
 
 Scope: no release, publish, deploy, merge or PR. No model, key, provider or Site was touched. BRIEF-V4-LIVE.md was not read or started. Owner release review remains a separate step.

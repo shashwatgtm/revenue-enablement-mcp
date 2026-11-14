@@ -1,3 +1,4 @@
+import { readPortfolioDeals } from './portfolio-outcomes.ts';
 import { isPlaceholder } from './input-evidence.ts';
 import { outcomeReading } from './text-signals.ts';
 // Run 22 (writer rev-w3): win_loss_analyzer, rewritten. The product the user named is kept in the title, the write-up and the inputs table;
@@ -149,16 +150,17 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
   // ---- the write-up ----
   const para: string[] = [];
   if (isPortfolio) {
-    const deals = splitList(multiple);
-    const kind = (d: string) => (/\bno[ _-]?decision\b/i.test(d) ? 'nd' : /\b(?:lost|loss)\b/i.test(d) ? 'lost' : /\b(?:won|win)\b/i.test(d) ? 'won' : 'open');
+    const rows = readPortfolioDeals(multiple);
+    const deals = rows.map(d => d.text);
     const n = { won: 0, lost: 0, nd: 0, open: 0 };
-    deals.forEach((d) => { n[kind(d) as 'won' | 'lost' | 'nd' | 'open']++; });
+    rows.forEach(d => { n[d.outcome]++; });
+    para.push('Outcome rule: a stated won or lost outcome takes precedence over its reason. A standalone no decision is its own outcome and is excluded from won-or-lost counts.');
     if (deals.length) {
-      const counts = [`${n.won} won`, `${n.lost} lost`, `${n.nd} no decision`, n.open ? `${n.open} with no outcome written` : ''].filter(Boolean);
+      const counts = [`${n.won} won`, `${n.lost} lost`, `${n.nd} no decision`, n.open ? `${n.open} open` : ''].filter(Boolean);
       para.push(`**The deals you listed.** You listed ${deals.length} deal${deals.length === 1 ? '' : 's'}: ${counts.join(', ')}. These are counts of your own lines, not a benchmark.\n\n${deals.map((d) => `- ${d}`).join('\n')}`);
       if (n.won + n.lost > 0) para.push(`**Win rate on these lines.** Of the ${n.won + n.lost} deals marked won or lost, ${n.won} ${n.won === 1 ? 'was' : 'were'} won.`);
       // the competitors and reasons the lines repeat
-      const lostLines = deals.filter((d) => kind(d) === 'lost' || kind(d) === 'nd');
+      const lostLines = rows.filter(d => d.outcome === 'lost' || d.outcome === 'nd');
       const rivals = new Map<string, number>();
       for (const d of deals) { const w = d.match(/\b([A-Z][A-Za-z0-9.&'-]+)\s+won\b/); if (w) rivals.set(w[1], (rivals.get(w[1]) || 0) + 1); }
       const repeated = [...rivals].filter(([, c]) => c >= 2);

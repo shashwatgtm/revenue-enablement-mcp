@@ -350,6 +350,6 @@ npm run check:current-dist
 
 The 14 input cases run through both real MCP portfolio modes twice. The tests check identical output on repeat, summary totals, won-or-lost denominators and loss-review counts. A separate same-meaning/opposite test confirms that a stated outcome controls the count. The before/after excerpts above were captured from the real MCP handler, not constructed from expected values.
 
-Focused suite: 32 passed, 0 failed, 1 private-pool test skipped. Full suite: 8,716 passed, 1 failed, 30 skipped. The sole failure is `scripts/test-in-field.mjs`, already failing on main at the base commit: the private run20/run21/run22 fixture folder is not present and HELIX_WORK is unset. Baseline: 8,701 passed, the same 1 failed and 30 skipped. No new full-suite failure. Fresh current-dist check: pending post-commit verification.
+Focused suite: 32 passed, 0 failed, 1 private-pool test skipped. Full suite: 8,716 passed, 1 failed, 30 skipped. The sole failure is `scripts/test-in-field.mjs`, already failing on main at the base commit: the private run20/run21/run22 fixture folder is not present and HELIX_WORK is unset. Baseline: 8,701 passed, the same 1 failed and 30 skipped. No new full-suite failure. Fresh current-dist check passed: all 163 committed dist files equal a fresh current build.
 
 Owner action: review and authorize release separately. Nothing has been released or deployed.

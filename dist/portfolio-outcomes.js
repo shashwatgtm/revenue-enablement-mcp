@@ -10,10 +10,13 @@ const outcomeWords = [
 const anyOutcome = outcomeWords.map(([, words]) => `(?:${words})`).join('|');
 const startsOutcome = outcomeWords.map(([kind, words]) => ({ kind, re: new RegExp(`^(?:${words})\\b`, 'i') }));
 const proseOutcome = new RegExp(`^(.+?)\\s+(${anyOutcome})(.*)$`, 'i');
+const wholeOutcome = new RegExp(`^(?:${anyOutcome})[.!]?$`, 'i');
+const outcomeHeading = new RegExp(`^(?:${anyOutcome})\\s+(?:review|report|summary|analysis|counts?|rates?)\\b`, 'i');
+const openStage = /^(?:negotiation|proposal|discovery|qualification|demo|evaluation|commit)\b/i;
 function plain(text) {
     // MCP escapes caller Markdown before this module. Decode only the parsing view;
     // never return it for printing. Also works for direct calls with ordinary text.
-    return text.replace(/\\([^\p{L}\p{N}\s])/gu, '$1').trim();
+    return text.replace(/\\([^\p{L}\p{N}\s])/gu, '$1').replace(/[’‘]/g, "'").trim();
 }
 const tidyCell = (s) => s.trim().replace(/^["'*`]+|["'*`]+$/g, '').trim();
 function status(text, explicit = false) {
@@ -24,16 +27,19 @@ function status(text, explicit = false) {
             continue;
         const tail = s.slice(hit[0].length).trim();
         // Do not turn a contraction, question or conflicting alternatives into a firm outcome.
-        if (/^['’]t\b|^\?|^(?:maybe|possibly|perhaps|not confirmed|unconfirmed)\b/i.test(tail))
+        if (/^['’]t\b|^\?|^(?:maybe|possibly|perhaps|if|unless|would|will|could|might|not confirmed|unconfirmed)\b/i.test(tail))
             return null;
         if (new RegExp(`^(?:or|and|/)\\s*(?:${anyOutcome})\\b`, 'i').test(tail))
             return null;
-        if (tail && !explicit && !/^[,;.:()[\]{}\-–—]|^(?:because|due to|after|on|for|with|at|since|by|today|yesterday|this|last|reason|budget)\b|^(?:the|an?)\s+(?:order|contract|agreement|deal)\b/i.test(tail))
-            return null;
         return kind;
     }
-    return null;
+    const stage = explicit ? openStage.exec(s) : null;
+    return stage && !/^\s*\?/.test(s.slice(stage[0].length)) ? 'open' : null;
 }
+const exactStatus = (s) => wholeOutcome.test(tidyCell(s)) ? status(s) : null;
+const uncertainStart = (s) => /^(?:if|unless|suppose|imagine|maybe|possibly|perhaps|could|would|should|might|may|will|whether|did|does|can)\b/i.test(s.trim()) || /^(?:has|have|was|were|is|are)\b.*\?/i.test(s.trim());
+const negatedEnd = (s) => /\b(?:not|never|no longer|[a-z]+n['’]t)\s*$/i.test(s);
+const negativeBefore = (s) => /\b(?:not|never|no longer|[a-z]+n['’]t)\b/i.test(s);
 function cells(line) {
     const delimiters = new Set();
     let quoted = false;
@@ -97,74 +103,116 @@ const totals = /^(?:grand\s+total|sub[ -]?total|total|overall|summary|aggregate)
 const resultHeader = /^(?:deal[ _-]?|pipeline[ _-]?)?(?:outcome|status|result|stage)$/i;
 const nameHeader = /^(?:deal(?: name)?|name|account(?: name)?|opportunity(?: name)?|customer|client)$/i;
 function rowStatus(text, listed) {
-    if (labelLine.test(text) || totals.test(text))
+    if (labelLine.test(text) || totals.test(text) || uncertainStart(text))
         return null;
-    // An explicit result field outranks a preceding reason, whatever the column order.
+    // Explicit result fields are facts, not reasons, regardless of their position.
     const named = /\b(?:outcome|status|result|stage)\s*[:=]\s*([^,|;\t]+)/gi;
     for (const hit of text.matchAll(named)) {
         const result = status(hit[1], true);
         if (result)
             return result;
     }
-    const normalized = text.replace(/\bno\s*[-–—]\s*decision\b/gi, 'no decision').replace(/\bclosed\s*[-–—]\s*(won|lost)\b/gi, 'closed $1');
+    const normalized = text.replace(/(?:->|=>|→)/g, ':').replace(/\bno\s*[-–—]\s*decision\b/gi, 'no decision').replace(/\bclosed\s*[-–—]\s*(won|lost)\b/gi, 'closed $1');
     const parts = normalized.split(/[,|:\t;()[\]{}\-–—]|\bwas\b/i).map(tidyCell).filter(Boolean);
-    for (let i = 0; i < parts.length; i++) {
+    // Later segments follow an identifier. A reason marker ends the result fields.
+    // Start-of-segment outcomes accept arbitrary trailing reasons, not a tail-word list.
+    for (let i = 1; i < parts.length; i++) {
         if (/^(?:reason|notes?|comments?)\b\s*[:=]?$/i.test(parts[i]))
             break;
+        if (negatedEnd(parts.slice(0, i).join(' ')))
+            continue;
         const found = status(parts[i]);
-        // A bare outcome label is not a named deal. A list marker can identify a row.
-        if (found && (listed || parts.length > 1 || i > 0))
+        if (found)
             return found;
     }
-    // Natural subject/predicate rows need no chosen separator. Article fragments,
-    // future/negated results and a rival's win are not our stated deal outcome.
-    const match = proseOutcome.exec(normalized);
-    if (!match || /\b(?:not|never|no longer|didn't|wasn't|isn't|would|will|may|might|maybe|possibly|perhaps|could|should|if|whether|hope|hoped|expected|planned)\b|\babout\b|\b(?:reason|incumbent|competitor|rival|vendor)\s*$/i.test(match[1]))
+    if (parts.length) {
+        const first = outcomeHeading.test(parts[0]) ? null : status(parts[0]);
+        if (first && (listed || parts.length > 1 || !exactStatus(parts[0])))
+            return first;
+    }
+    if (startsOutcome.some(({ re }) => re.test(normalized)))
+        return null;
+    return subjectStatus(normalized);
+}
+function subjectStatus(text) {
+    // The predicate, not the following object or reason, establishes the outcome.
+    const match = proseOutcome.exec(text);
+    if (!match || uncertainStart(text) || negativeBefore(match[1]) || /\b(?:would|will|may|might|maybe|possibly|perhaps|could|should|if|whether|hope|hoped|expected|planned)\b|\babout\b|\b(?:reason|incumbent|competitor|rival|vendor)\s*$/i.test(match[1]))
         return null;
     return status(match[2] + match[3]);
+}
+function sentenceRows(raw) {
+    const rows = [];
+    let start = 0;
+    const boundary = /[.!?](?:["”'’]?)(\s+)(?=\S)/g;
+    for (const hit of raw.matchAll(boundary)) {
+        const end = hit.index + hit[0].length - hit[1].length;
+        const candidate = raw.slice(start, end);
+        // A numbered-list dot is formatting, not the end of a deal sentence.
+        if (!content(candidate).syntax)
+            continue;
+        rows.push(candidate.trim());
+        start = hit.index + hit[0].length;
+    }
+    if (raw.slice(start).trim())
+        rows.push(raw.slice(start).trim());
+    return rows;
 }
 function readPortfolioDeals(input) {
     const rows = [];
     let schema = null;
     for (const raw of input.split(/\r\n|\n|\r/)) {
-        const { syntax, listed } = content(raw);
-        if (!syntax || /^[|\s:\-]+$/.test(syntax))
+        const original = content(raw), originalFields = cells(original.syntax);
+        if (!original.syntax || /^[|\s:\-]+$/.test(original.syntax))
             continue;
-        const fields = cells(syntax);
-        const outcome = fields.values.findIndex(x => resultHeader.test(x));
-        const name = fields.values.findIndex(x => nameHeader.test(x));
-        if (fields.separator && outcome >= 0 && name >= 0) {
-            schema = { separator: fields.separator, outcome, name };
+        const outcome = originalFields.values.findIndex(x => resultHeader.test(x));
+        const name = originalFields.values.findIndex(x => nameHeader.test(x));
+        if (originalFields.separator && outcome >= 0 && name >= 0) {
+            schema = { separator: originalFields.separator, outcome, name };
             continue;
         }
-        if (totals.test(fields.values[0]) || labelLine.test(syntax) || (!listed && !fields.separator && status(syntax)))
+        if (totals.test(originalFields.values[0]) || labelLine.test(original.syntax))
             continue;
-        let found;
-        if (schema && schema.separator === fields.separator) {
-            // A supplied outcome column is authoritative. Never borrow its reason as a
-            // result when that cell is unread, even if the reason mentions an outcome.
-            found = fields.values[schema.name] ? status(fields.values[schema.outcome] || '', true) : null;
-        }
-        else {
-            // Preserve CSV quoting before considering other row punctuation.
-            const explicit = fields.values.map(x => x.match(/^(?:outcome|status|result|stage)\s*[:=]\s*(.+)$/i)?.[1]).find(Boolean);
-            found = explicit ? status(explicit, true) : null;
-            if (!found) {
-                for (let i = 0; i < fields.values.length; i++) {
-                    if (/^(?:reason|notes?|comments?)\s*:/i.test(fields.values[i]))
-                        break;
-                    const value = status(fields.values[i]);
-                    if (value && (listed || fields.values.length > 1)) {
-                        found = value;
-                        break;
-                    }
-                }
+        // An export row remains one record even when its quoted reason has sentences.
+        const firstIsProse = !status(originalFields.values[0]) && rowStatus(originalFields.values[0], original.listed) !== null;
+        const exportRow = originalFields.separator && (schema?.separator === originalFields.separator || originalFields.separator !== ',' || (raw.includes('"') && !firstIsProse));
+        for (const piece of exportRow ? [raw] : sentenceRows(raw)) {
+            const { syntax, listed } = content(piece), fields = cells(syntax);
+            if (!syntax || totals.test(fields.values[0]) || labelLine.test(syntax) || uncertainStart(syntax) || (!listed && !fields.separator && exactStatus(syntax)))
+                continue;
+            let found = null;
+            if (schema && schema.separator === fields.separator) {
+                // Only a labelled result/stage field can turn a CRM stage into open.
+                found = fields.values[schema.name] ? status(fields.values[schema.outcome] || '', true) : null;
             }
-            if (!found && !fields.values.some(x => /^(?:reason|notes?|comments?)\s*:/i.test(x)))
-                found = rowStatus(syntax, listed);
+            else {
+                const explicit = fields.values.map(x => x.match(/^(?:outcome|status|result|stage)\s*[:=]\s*(.+)$/i)?.[1]).find(Boolean);
+                found = explicit ? status(explicit, true) : null;
+                // A stated result in the first prose segment precedes any later reason.
+                if (!found)
+                    found = rowStatus(fields.values[0], listed);
+                if (!found && fields.values.length > 1)
+                    found = exactStatus(fields.values[0]);
+                if (!found)
+                    for (let i = 1; i < fields.values.length; i++) {
+                        if (/^(?:reason|notes?|comments?)\s*:/i.test(fields.values[i]))
+                            break;
+                        if (negatedEnd(fields.values.slice(0, i).join(' ')))
+                            continue;
+                        const value = status(fields.values[i]);
+                        if (value) {
+                            found = value;
+                            break;
+                        }
+                    }
+                // A colon/prose result can precede a comma-separated reason. Read that
+                // first segment without letting the later reason supply a different result.
+                if (!found)
+                    found = rowStatus(fields.values[0], listed);
+            }
+            if (found)
+                rows.push({ text: piece.trim(), outcome: found });
         }
-        if (found)
-            rows.push({ text: raw.trim(), outcome: found });
     }
     return rows;
 }

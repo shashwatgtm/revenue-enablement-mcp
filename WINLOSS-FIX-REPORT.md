@@ -784,3 +784,940 @@ npm run check:current-dist
 The permanent fixtures and assertions are tests/winloss-round2-cases.mjs and tests/winloss-round2.test.mjs. The committed comparison receipt retains real main/round1/round2 output excerpts for every input and mode. The portable real-handler capture runner is scripts/capture-winloss-round2.mjs. The report-generation helper and full raw captured outputs remain in the hub’s ignored work/winloss-count-fix-round2/ scratch folder.
 
 Scope: no release, publish, deploy, merge or PR. No model, key, provider or Site was touched. BRIEF-V4-LIVE.md was not read or started. Owner release review remains a separate step.
+
+
+## Round 3
+
+Reviewed on 15 Nov 2026 IST. Same branch, codex/winloss-count-fix-20261114. Current main was fetched at a62b50ee6bbce626f7f81f860fb72f8d61e2c00c; round 2 was captured from an isolated checkout at 2a261f324c80cf583cad79b5f3cfc7dae8e6e035. Every before and after below is captured from the real local MCP handler. No deployed endpoint was called.
+
+### Before, why it matters, after
+
+Round 2 recognized the outcome word, then rejected it unless its trailing words matched a short list. That dropped ordinary buyer notes such as lost to the incumbent and subject sentences such as We won the clinic chain. It could also collapse two deals on one line into an unread note, and it discarded known open CRM stages. Main was right on several of those inputs while the branch was wrong. A portfolio summary must not lose a deal merely because its reason follows its outcome.
+
+Outcome phrases now match at the start of their segment and accept following objects, dates and reasons without a tail-word whitelist. Negated, hypothetical, ambiguous and questioning outcomes remain unread. Prefix guards apply before the result; a negation or quoted question in the following reason does not erase an asserted result. ASCII and curly-apostrophe contractions are handled as negation. A stated won/lost outcome still outranks a reason mentioning no decision.
+
+The reader separates natural sentences while preserving numbered-list markers and quoted CRM rows. A recognized outcome in each sentence or line creates one record; duplicate records are not silently merged. Arrows ->, => and → are normalized only in the parsing view. In an explicitly labelled outcome or stage field, Negotiation, Proposal, Discovery, Qualification, Demo, Evaluation and Commit count as open. These stage words outside such a field do not invent an outcome, and an unknown result cell never borrows a result from its reason. Blank versus unread wording, headings, totals, source escaping and the common parsed-row counts are retained. Authored output adds no em/en dash or exclamation.
+
+### Review inputs and earlier review cases, actual outputs
+
+#### review-numbered-dashes
+
+Input:
+
+```text
+Q3 deal review
+1. Insurer A - Won - faster claims
+2. Insurer B - Lost - went with incumbent
+3. Insurer C - No decision - project paused
+4. Insurer D - Lost - price
+Total: 4 deals
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 6 deals: 1 won, 2 lost, 1 no decision, 2 with no outcome written. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 3 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** 3 lines are lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals you listed.** You listed 4 deals: 1 won, 2 lost, 1 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 3 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** 3 lines are lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 4 deals: 1 won, 2 lost, 1 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 3 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** 3 lines are lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-closed-and-open
+
+Input:
+
+```text
+hospital x: closed won
+hospital y: closed lost (budget)
+hospital z: still open, proposal sent
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 3 deals: 1 won, 1 lost, 0 no decision, 1 with no outcome written. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 2 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals you listed.** You listed 3 deals: 1 won, 1 lost, 0 no decision, 1 open. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 2 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 3 deals: 1 won, 1 lost, 0 no decision, 1 open. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 2 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-text-without-outcomes
+
+Input:
+
+```text
+We spoke to five banks this quarter and most liked the demo.
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 0 lost, 0 no decision, 1 with no outcome written. These are counts of your own lines, not a benchmark.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+#### review-arrow-trailing-rival
+
+Input:
+
+```text
+3PL South -> lost to a rival on price
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-colon-trailing-rival
+
+Input:
+
+```text
+3PL South: lost to a rival on price
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-comma-trailing-incumbent
+
+Input:
+
+```text
+3PL South, lost to the incumbent
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-subject-trailing-incumbent
+
+Input:
+
+```text
+Bank B lost to the incumbent
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-we-won-object
+
+Input:
+
+```text
+We won the clinic chain
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 1 won, 0 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 1 was won.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 1 won, 0 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 1 was won.
+```
+
+#### review-we-lost-object-and-reason
+
+Input:
+
+```text
+We lost the Pune lab group on price
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+#### review-stage-negotiation
+
+Input:
+
+```text
+Stage,Account,Value
+Negotiation,Bank D,5L
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 2 deals: 0 won, 0 lost, 0 no decision, 2 with no outcome written. These are counts of your own lines, not a benchmark.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 0 lost, 0 no decision, 1 open. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+```
+
+#### review-two-subject-sentences
+
+Input:
+
+```text
+We won the clinic chain. We lost the Pune lab group on price.
+```
+
+Main:
+
+```text
+**The deals you listed.** You listed 1 deal: 0 won, 1 lost, 0 no decision. These are counts of your own lines, not a benchmark.
+**Win rate on these lines.** Of the 1 deals marked won or lost, 0 were won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+Round 2:
+
+```text
+**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.
+```
+
+Round 3:
+
+```text
+**The deals you listed.** You listed 2 deals: 1 won, 1 lost, 0 no decision. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.
+**Win rate on these lines.** Of the 2 deals marked won or lost, 1 was won.
+**What the lost and undecided lines say.** One line is lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.
+```
+
+The captured main revision reads each individual first-person win/loss note as one deal. It reads the combined two-sentence note as only one lost deal. The table records the observed main outputs. All seven literal rows/alternatives in the round 3 review table are included, plus the combined two-sentence input and all three review inputs from the round 2 brief.
+
+### Complete main-versus-branch table
+
+**545 inputs**: all 14 round 1 cases, all 261 round 2 cases, and 270 round 3 cases. Every input runs through both portfolio modes twice on each revision: 1090 mode checks and 2180 real-handler calls per revision. Every repeated output is byte-identical.
+
+Tuple order is **total / won / lost / no decision / open**. An unread line counted by main is shown separately; it is not an open result. For an empty result, correctness also requires the right blank-versus-unread explanation. Counts below are from deal_portfolio; loss_pattern is independently checked and agrees.
+
+| Input | Expected | Main | Round 2 | Round 3 | Result |
+|---|---|---|---|---|---|
+| owner-eight-with-heading | 8 / 3 / 5 / 0 / 0 | 9 / 3 / 4 / 1 / 0 (+1 unread) | 8 / 3 / 5 / 0 / 0 | 8 / 3 / 5 / 0 / 0 | Pass |
+| csv-header | 3 / 1 / 2 / 0 / 0 | 4 / 1 / 1 / 1 / 0 (+1 unread) | 3 / 1 / 2 / 0 / 0 | 3 / 1 / 2 / 0 / 0 | Pass |
+| markdown-header | 2 / 1 / 1 / 0 / 0 | 4 / 1 / 0 / 1 / 0 (+2 unread) | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| heading-forms | 2 / 1 / 1 / 0 / 0 | 7 / 2 / 2 / 1 / 0 (+2 unread) | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| totals-and-subtotals | 2 / 1 / 1 / 0 / 0 | 6 / 2 / 3 / 0 / 0 (+1 unread) | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| blank-lines | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| mixed-case | 3 / 1 / 1 / 1 / 0 | 4 / 1 / 0 / 2 / 0 (+1 unread) | 3 / 1 / 1 / 1 / 0 | 3 / 1 / 1 / 1 / 0 | Pass |
+| zero-won | 2 / 0 / 1 / 1 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 0 / 1 / 1 / 0 | Pass |
+| all-lost | 3 / 0 / 3 / 0 / 0 | 3 / 0 / 2 / 1 / 0 | 3 / 0 / 3 / 0 / 0 | 3 / 0 / 3 / 0 / 0 | Pass |
+| one-deal | 1 / 0 / 1 / 0 / 0 | 2 / 0 / 1 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| standalone-and-reason-no-decision | 2 / 0 / 1 / 1 / 0 | 2 / 0 / 0 / 2 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 0 / 1 / 1 / 0 | Pass |
+| quoted-csv-and-rival-win | 2 / 1 / 1 / 0 / 0 | 3 / 0 / 1 / 1 / 0 (+1 unread) | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| only-headers-and-unlabelled-notes | 0 / 0 / 0 / 0 / 0 | 6 / 2 / 0 / 1 / 0 (+3 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| open-explicit-outcome | 2 / 1 / 0 / 0 / 1 | 4 / 1 / 1 / 0 / 0 (+2 unread) | 2 / 1 / 0 / 0 / 1 | 2 / 1 / 0 / 0 / 1 | Pass |
+| review-numbered-dashes | 4 / 1 / 2 / 1 / 0 | 6 / 1 / 2 / 1 / 0 (+2 unread) | 4 / 1 / 2 / 1 / 0 | 4 / 1 / 2 / 1 / 0 | Pass |
+| review-closed-and-open | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 0 (+1 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| review-text-without-outcomes | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| clinic-comma-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-comma-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-comma-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-pipe-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-pipe-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-pipe-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-colon-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-colon-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-colon-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-hyphen-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-hyphen-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-hyphen-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-en_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-en_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-en_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-em_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-em_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-em_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-tab-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-tab-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-tab-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-was-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-was-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-was-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-parentheses-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-parentheses-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-parentheses-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| clinic-square_brackets-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-square_brackets-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| clinic-square_brackets-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-comma-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-comma-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-comma-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-pipe-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-pipe-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-pipe-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-colon-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-colon-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-colon-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-hyphen-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-hyphen-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-hyphen-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-en_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-en_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-en_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-em_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-em_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-em_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-tab-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-tab-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-tab-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-was-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-was-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-was-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-parentheses-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-parentheses-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-parentheses-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| bank-square_brackets-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-square_brackets-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| bank-square_brackets-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-comma-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-comma-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-comma-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-pipe-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-pipe-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-pipe-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-colon-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-colon-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-colon-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-hyphen-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-hyphen-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-hyphen-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-en_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-en_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-en_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-em_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-em_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-em_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-tab-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-tab-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-tab-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-was-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-was-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-was-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-parentheses-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-parentheses-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-parentheses-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| logistics-lead-square_brackets-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-square_brackets-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| logistics-lead-square_brackets-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-comma-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-comma-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-comma-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-pipe-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-pipe-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-pipe-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-colon-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-colon-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-colon-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-hyphen-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-hyphen-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-hyphen-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-en_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-en_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-en_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-em_dash-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-em_dash-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-em_dash-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-tab-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-tab-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-tab-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-was-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-was-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-was-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-parentheses-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-parentheses-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-parentheses-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| insurer-square_brackets-exact | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-square_brackets-same | 4 / 1 / 1 / 1 / 1 | 6 / 1 / 1 / 1 / 0 (+3 unread) | 4 / 1 / 1 / 1 / 1 | 4 / 1 / 1 / 1 / 1 | Pass |
+| insurer-square_brackets-opposite | 4 / 0 / 2 / 1 / 1 | 6 / 0 / 2 / 1 / 0 (+3 unread) | 4 / 0 / 2 / 1 / 1 | 4 / 0 / 2 / 1 / 1 | Pass |
+| alias-1-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-1-same | 1 / 1 / 0 / 0 / 0 | 3 / 1 / 0 / 0 / 0 (+2 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-1-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-2-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-2-same | 1 / 1 / 0 / 0 / 0 | 3 / 1 / 0 / 0 / 0 (+2 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-2-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-3-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-3-same | 1 / 1 / 0 / 0 / 0 | 3 / 1 / 0 / 0 / 0 (+2 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-3-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-4-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-4-same | 1 / 1 / 0 / 0 / 0 | 3 / 1 / 0 / 0 / 0 (+2 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-4-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-5-exact | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-5-same | 1 / 1 / 0 / 0 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-5-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-6-exact | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-6-same | 1 / 1 / 0 / 0 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-6-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-7-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-7-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 1 / 0 / 0 (+2 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-7-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-8-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-8-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 1 / 0 / 0 (+2 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-8-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-9-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-9-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 1 / 0 / 0 (+2 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-9-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-10-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-10-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 1 / 0 / 0 (+2 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-10-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-11-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-11-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-11-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-12-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-12-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-12-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-13-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-13-same | 1 / 0 / 1 / 0 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| alias-13-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-14-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-14-same | 1 / 0 / 0 / 1 / 0 | 3 / 0 / 0 / 1 / 0 (+2 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-14-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-15-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-15-same | 1 / 0 / 0 / 1 / 0 | 3 / 0 / 0 / 1 / 0 (+2 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-15-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-16-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-16-same | 1 / 0 / 0 / 1 / 0 | 3 / 0 / 0 / 1 / 0 (+2 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-16-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-17-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-17-same | 1 / 0 / 0 / 1 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-17-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-18-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-18-same | 1 / 0 / 0 / 1 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| alias-18-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-19-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-19-same | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-19-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-20-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-20-same | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-20-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-21-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-21-same | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-21-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-22-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-22-same | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-22-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| alias-23-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-23-same | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| alias-23-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| export-clinic-csv-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-csv-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-csv-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-clinic-pipe-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-pipe-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-pipe-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-clinic-tab-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-tab-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-clinic-tab-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-bank-csv-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-csv-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-csv-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-bank-pipe-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-pipe-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-pipe-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-bank-tab-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-tab-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-bank-tab-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-logistics-lead-csv-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-csv-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-csv-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-logistics-lead-pipe-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-pipe-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-pipe-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-logistics-lead-tab-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-tab-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-logistics-lead-tab-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-insurer-csv-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-csv-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-csv-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-insurer-pipe-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-pipe-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-pipe-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| export-insurer-tab-exact | 3 / 1 / 1 / 0 / 1 | 5 / 1 / 0 / 1 / 0 (+3 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-tab-same | 3 / 1 / 1 / 0 / 1 | 5 / 0 / 0 / 1 / 0 (+4 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| export-insurer-tab-opposite | 3 / 0 / 2 / 0 / 1 | 5 / 0 / 1 / 1 / 0 (+3 unread) | 3 / 0 / 2 / 0 / 1 | 3 / 0 / 2 / 0 / 1 | Pass |
+| unread-same-meaning | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| unread-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| blank | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| reason-never-overrides-lost | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| reason-same-meaning | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 2 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| reason-opposite | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| negated-result | 0 / 0 / 0 / 0 / 0 | 3 / 2 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| negated-same-meaning | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| negated-opposite | 2 / 2 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 2 / 2 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| bare-labels-are-not-records | 0 / 0 / 0 / 0 / 0 | 6 / 1 / 2 / 1 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| identical-records-still-count | 2 / 2 / 0 / 0 / 0 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 2 / 2 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| status-column-not-first | 3 / 1 / 1 / 0 / 1 | 4 / 1 / 1 / 1 / 0 (+1 unread) | 3 / 1 / 1 / 0 / 1 | 3 / 1 / 1 / 0 / 1 | Pass |
+| explicit-status-after-reason | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| unknown-explicit-column-is-not-reason | 1 / 0 / 1 / 0 / 0 | 3 / 1 / 0 / 1 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| different-section-format | 2 / 1 / 0 / 0 / 1 | 5 / 1 / 0 / 0 / 0 (+4 unread) | 2 / 1 / 0 / 0 / 1 | 2 / 1 / 0 / 0 / 1 | Pass |
+| no-spaces-hyphen | 3 / 1 / 1 / 1 / 0 | 3 / 1 / 1 / 1 / 0 | 3 / 1 / 1 / 1 / 0 | 3 / 1 / 1 / 1 / 0 | Pass |
+| result-before-identifier-with-header | 2 / 1 / 0 / 1 / 0 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 0 / 1 / 0 | Pass |
+| ambiguous-result | 0 / 0 / 0 / 0 / 0 | 2 / 0 / 1 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| natural-clinic-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-clinic-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-clinic-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| natural-bank-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-bank-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-bank-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| natural-logistics-lead-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-logistics-lead-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-logistics-lead-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| natural-insurer-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-insurer-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| natural-insurer-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| repeated-whitespace | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 0 / 1 / 0 | Pass |
+| unlisted-bare-status-labels | 0 / 0 / 0 / 0 / 0 | 5 / 1 / 1 / 0 / 0 (+3 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-in-explicit-outcome-column | 0 / 0 / 0 / 0 / 0 | 4 / 2 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| review-arrow-trailing-rival | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| review-colon-trailing-rival | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| review-comma-trailing-incumbent | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| review-subject-trailing-incumbent | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| review-we-won-object | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| review-we-lost-object-and-reason | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| review-stage-negotiation | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| review-two-subject-sentences | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| reason-clinic-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-clinic-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-clinic-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-clinic-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-clinic-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-clinic-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-clinic-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| subjects-clinic-opposite | 2 / 2 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| arrows-clinic-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-negotiation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-negotiation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-negotiation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-proposal-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-proposal-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-proposal-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-discovery-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-discovery-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-discovery-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-qualification-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-qualification-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-qualification-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-demo-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-demo-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-demo-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-evaluation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-evaluation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-evaluation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-clinic-commit-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-commit-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-clinic-commit-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| reason-bank-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-bank-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-bank-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-bank-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-bank-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-bank-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-bank-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| subjects-bank-opposite | 2 / 2 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| arrows-bank-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-negotiation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-negotiation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-negotiation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-proposal-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-proposal-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-proposal-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-discovery-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-discovery-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-discovery-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-qualification-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-qualification-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-qualification-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-demo-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-demo-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-demo-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-evaluation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-evaluation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-evaluation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-bank-commit-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-commit-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-bank-commit-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| reason-logistics-lead-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-logistics-lead-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-logistics-lead-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-logistics-lead-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-logistics-lead-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-logistics-lead-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-logistics-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| subjects-logistics-lead-opposite | 2 / 2 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| arrows-logistics-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-negotiation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-negotiation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-negotiation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-proposal-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-proposal-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-proposal-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-discovery-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-discovery-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-discovery-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-qualification-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-qualification-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-qualification-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-demo-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-demo-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-demo-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-evaluation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-evaluation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-evaluation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-logistics-lead-commit-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-commit-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-logistics-lead-commit-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| reason-insurer-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-insurer-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-insurer-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-insurer-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-insurer-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-insurer-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-insurer-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| subjects-insurer-opposite | 2 / 2 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| arrows-insurer-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-negotiation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-negotiation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-negotiation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-proposal-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-proposal-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-proposal-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-discovery-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-discovery-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-discovery-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-qualification-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-qualification-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-qualification-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-demo-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-demo-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-demo-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-evaluation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-evaluation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-evaluation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-insurer-commit-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-commit-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-insurer-commit-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| reason-it-services-lead-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-it-services-lead-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-it-services-lead-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-it-services-lead-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| subjects-it-services-lead-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| arrows-it-services-lead-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| reason-it-services-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| subjects-it-services-lead-opposite | 2 / 2 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 2 / 0 / 0 / 0 | Pass |
+| arrows-it-services-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-negotiation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-negotiation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-negotiation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-proposal-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-proposal-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-proposal-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-discovery-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-discovery-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-discovery-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-qualification-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-qualification-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-qualification-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-demo-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-demo-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-demo-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-evaluation-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-evaluation-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-evaluation-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| stage-it-services-lead-commit-exact | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-commit-same | 1 / 0 / 0 / 0 / 1 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| stage-it-services-lead-commit-opposite | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-1-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-1-same | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-1-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-2-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-2-same | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-2-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-3-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-3-same | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-3-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-4-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-4-same | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-4-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-5-exact | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-5-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-5-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-6-exact | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-6-same | 1 / 1 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-6-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-7-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-7-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-7-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-8-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-8-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-8-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-9-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-9-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-9-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-10-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-10-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-10-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-11-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-11-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-11-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-12-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-12-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-12-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-13-exact | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-13-same | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| prefix-13-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-14-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-14-same | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-14-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-15-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-15-same | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-15-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-16-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-16-same | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-16-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-17-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-17-same | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-17-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-18-exact | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-18-same | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 1 / 0 | 1 / 0 / 0 / 1 / 0 | Pass |
+| prefix-18-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-19-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-19-same | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-19-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-20-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-20-same | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-20-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-21-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-21-same | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-21-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-22-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-22-same | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-22-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| prefix-23-exact | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-23-same | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| prefix-23-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| negation-exact | 0 / 0 / 0 / 0 / 0 | 3 / 2 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| negation-same | 0 / 0 / 0 / 0 / 0 | 3 / 2 / 0 / 0 / 0 (+1 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| negation-opposite | 3 / 3 / 0 / 0 / 0 | 3 / 2 / 0 / 0 / 0 (+1 unread) | 2 / 2 / 0 / 0 / 0 | 3 / 3 / 0 / 0 / 0 | Pass |
+| hypothesis-before-comma-outcome | 0 / 0 / 0 / 0 / 0 | 3 / 3 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| new-plain-reason-after-colon | 3 / 1 / 1 / 1 / 0 | 3 / 1 / 1 / 1 / 0 | 0 / 0 / 0 / 0 / 0 | 3 / 1 / 1 / 1 / 0 | Pass |
+| sentences-with-numbered-lines | 3 / 1 / 1 / 0 / 1 | 4 / 0 / 1 / 0 / 0 (+3 unread) | 0 / 0 / 0 / 0 / 0 | 3 / 1 / 1 / 0 / 1 | Pass |
+| sentence-reason-not-a-second-deal | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 2 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| quoted-export-remains-one-record | 2 / 0 / 1 / 0 / 1 | 3 / 0 / 1 / 0 / 0 (+2 unread) | 1 / 0 / 1 / 0 / 0 | 2 / 0 / 1 / 0 / 1 | Pass |
+| stage-only-in-stage-field | 1 / 0 / 0 / 0 / 1 | 3 / 0 / 0 / 0 / 0 (+3 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| unknown-stage-does-not-borrow-reason | 1 / 0 / 0 / 0 / 1 | 3 / 1 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | Pass |
+| question-not-an-outcome | 0 / 0 / 0 / 0 / 0 | 3 / 3 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| negated-rival-does-not-negate-own-win | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| no-loss-then-current-open | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 0 / 0 / 1 | 1 / 0 / 0 / 0 / 1 | Pass |
+| first-field-name-not-its-status | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 2 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| sentence-with-comma-in-reason | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| totals-are-not-sentences | 1 / 1 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| contraction-clinic-exact | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-clinic-same | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-clinic-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| contraction-bank-exact | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-bank-same | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-bank-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| contraction-logistics-lead-exact | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-logistics-lead-same | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-logistics-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| contraction-insurer-exact | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-insurer-same | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-insurer-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| contraction-it-services-lead-exact | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-it-services-lead-same | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 0 / 0 / 0 (+1 unread) | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| contraction-it-services-lead-opposite | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| quoted-reason-question-exact | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| quoted-reason-question-same | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | 1 / 1 / 0 / 0 / 0 | Pass |
+| quoted-reason-question-opposite | 1 / 0 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | Pass |
+| unconfirmed-stage-question | 0 / 0 / 0 / 0 / 0 | 2 / 0 / 0 / 0 / 0 (+2 unread) | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+| quoted-comma-prose-exact | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| quoted-comma-prose-same | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| quoted-comma-prose-opposite | 2 / 1 / 1 / 0 / 0 | 1 / 0 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| first-stated-result-before-reason | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 0 / 2 / 0 | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| first-stated-result-before-reason-same | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 0 / 2 / 0 | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| first-stated-result-before-reason-opposite | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 0 / 2 / 0 | 2 / 0 / 1 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| prefix-before-unlabelled-no-decision-reason | 2 / 1 / 1 / 0 / 0 | 2 / 0 / 0 / 2 / 0 | 2 / 1 / 0 / 1 / 0 | 2 / 1 / 1 / 0 / 0 | Pass |
+| bare-ambiguous-prefix | 0 / 0 / 0 / 0 / 0 | 2 / 0 / 2 / 0 / 0 | 2 / 1 / 1 / 0 / 0 | 0 / 0 / 0 / 0 / 0 | Pass |
+
+**Cases where main is right and the branch is wrong: 0.** This is zero in each portfolio mode. Across both modes, main is fully correct on 274/1090 checks, round 2 on 748/1090, and round 3 on **1090/1090**. A partly right main summary is not fully correct when it counts a heading, labels open as unread, merges two outcome sentences, or claims unread text is blank. These scores describe the recorded inputs, not unrestricted natural-language understanding.
+
+### Tests and remaining limits
+
+New groups cover clinics, banks, logistics, insurance and IT services, with an exact statement, same-meaning/count rewording and opposite in every vertical. They cover trailing reasons after every existing outcome phrase, subject/object sentences, two sentences on one line, dates after signed, all three arrow separators, every listed CRM stage in outcome/stage columns, and quoted CSV reasons that must stay one record. Negation, hypotheticals, questions before the result, contractions, quoted questions inside a reason, source-field boundaries, numbered-list dots and summary sentences have explicit cases. Each new case checks the outcome of every parsed record, the totals, the denominator, the loss-review count and identical MCP output in both modes. All 275 earlier inputs pass unchanged.
+
+Only the portfolio parser and its generated build change in production code. Package version stays 1.2.32. Tool names, descriptions, schemas and the tool list are unchanged. Single-deal owner contracts are unchanged. No release, publish, deploy, merge or PR. No model, key, provider or Site work. BRIEF-V4-LIVE.md was not read or started.
+
+Focused suite: **563 passed, zero failed, one private-pool test skipped**. Full fixed-branch suite: **9,247 passed, one failed, 30 skipped**. Fresh main suite: **8,701 passed, one failed, 30 skipped**. Round 2 had 8,977 passes with the same failure and skip count. The sole failure is `scripts/test-in-field.mjs`, **already failing on main**, because the private HELIX_WORK run20/run21/run22 fixtures are unavailable. No new suite failure was introduced. Fresh current-dist verification is recorded after the generated build commit.
+
+Exact commands (from the fix checkout unless stated):
+
+```sh
+git pull --rebase origin codex/winloss-count-fix-20261114
+git fetch origin main
+git worktree add --detach /workspace/winloss-round2-review 2a261f3
+# Existing isolated main checkout: /workspace/winloss-main-round2
+# Checkouts used links to already installed node_modules; no package changed.
+npm run build
+node --test tests/winloss-count-fix.test.mjs tests/winloss-round2.test.mjs tests/winloss-round3.test.mjs tests/run22-win_loss_analyzer-rewrite.test.mjs tests/run21c-draft-win_loss_analyzer.test.mjs
+npm test > /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round3/after-full-tests.txt 2>&1
+# In /workspace/winloss-main-round2:
+npm run build
+npm test > /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round3/main-full-tests.txt 2>&1
+# Back in the fix checkout:
+node scripts/capture-winloss-round3.mjs /workspace/winloss-main-round2 /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round3/main.json
+node scripts/capture-winloss-round3.mjs /workspace/winloss-round2-review /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round3/round2.json
+node scripts/capture-winloss-round3.mjs /workspace/winloss-count-fix-20261114 /workspace/gtmhelix-tools-hub/work/winloss-count-fix-round3/round3.json
+# After committing generated files:
+npm run check:current-dist
+```
+
+The portable capture script is committed. Inputs and assertions are in tests/winloss-round3-cases.mjs and tests/winloss-round3.test.mjs. The complete cross-revision count and excerpt receipt is tests/fixtures/winloss-round3-comparison.json; full raw outputs and report-generation scratch remain in the hub's ignored work/winloss-count-fix-round3 folder. The hub state is closed for winloss_round3 only after this branch is pushed. Release review remains a separate owner step.

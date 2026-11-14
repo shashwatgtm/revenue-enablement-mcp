@@ -1696,7 +1696,7 @@ New groups cover clinics, banks, logistics, insurance and IT services, with an e
 
 Only the portfolio parser and its generated build change in production code. Package version stays 1.2.32. Tool names, descriptions, schemas and the tool list are unchanged. Single-deal owner contracts are unchanged. No release, publish, deploy, merge or PR. No model, key, provider or Site work. BRIEF-V4-LIVE.md was not read or started.
 
-Focused suite: **563 passed, zero failed, one private-pool test skipped**. Full fixed-branch suite: **9,247 passed, one failed, 30 skipped**. Fresh main suite: **8,701 passed, one failed, 30 skipped**. Round 2 had 8,977 passes with the same failure and skip count. The sole failure is `scripts/test-in-field.mjs`, **already failing on main**, because the private HELIX_WORK run20/run21/run22 fixtures are unavailable. No new suite failure was introduced. Fresh current-dist verification is recorded after the generated build commit.
+Focused suite: **563 passed, zero failed, one private-pool test skipped**. Full fixed-branch suite: **9,247 passed, one failed, 30 skipped**. Fresh main suite: **8,701 passed, one failed, 30 skipped**. Round 2 had 8,977 passes with the same failure and skip count. The sole failure is `scripts/test-in-field.mjs`, **already failing on main**, because the private HELIX_WORK run20/run21/run22 fixtures are unavailable. No new suite failure was introduced. Fresh current-dist verification passed: **all 192 committed dist files equal a fresh current build**.
 
 Exact commands (from the fix checkout unless stated):
 

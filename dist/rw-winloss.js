@@ -166,7 +166,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
         para.push('Outcome rule: a stated won or lost outcome takes precedence over its reason. A standalone no decision is its own outcome and is excluded from won-or-lost counts.');
         if (deals.length) {
             const counts = [`${n.won} won`, `${n.lost} lost`, `${n.nd} no decision`, n.open ? `${n.open} open` : ''].filter(Boolean);
-            para.push(`**The deals you listed.** You listed ${deals.length} deal${deals.length === 1 ? '' : 's'}: ${counts.join(', ')}. These are counts of your own lines, not a benchmark.\n\n${deals.map((d) => `- ${d}`).join('\n')}`);
+            para.push(`**The deals you listed.** You listed ${deals.length} deal${deals.length === 1 ? '' : 's'}: ${counts.join(', ')}. These counts cover lines with a readable outcome. Headings, totals and unread notes are not counted. This is not a benchmark.\n\n${deals.map((d) => `- ${d}`).join('\n')}`);
             if (n.won + n.lost > 0)
                 para.push(`**Win rate on these lines.** Of the ${n.won + n.lost} deals marked won or lost, ${n.won} ${n.won === 1 ? 'was' : 'were'} won.`);
             // the competitors and reasons the lines repeat
@@ -184,7 +184,7 @@ Confirm the buyer's actual decision and correct the selected outcome or notes be
                 para.push(`**What the lost and undecided lines say.** ${lostLines.length === 1 ? 'One line is' : `${lostLines.length} lines are`} lost or undecided. Read them side by side for a reason that repeats, and ask the buyer in each whether it was the real reason or the polite one.`);
         }
         else {
-            para.push(`**The deals.** No deals were listed, so there is nothing to count. The write-up covers ${name} from the other inputs.`);
+            para.push(multiple ? '**The deals.** I could not read a won, lost, open or no decision outcome on any line. Write one per deal, for example: Deal A, lost, price.' : `**The deals.** No deals were listed, so there is nothing to count. The write-up covers ${name} from the other inputs.`);
         }
         if (solution)
             para.push(`**What was sold.** ${[(0, rw_common_ts_1.isKind)(P, D) ? (0, rw_common_ts_1.endSentence)((0, rw_common_ts_1.isKind)(P, D)) : `${name}.`].join(' ')}`);

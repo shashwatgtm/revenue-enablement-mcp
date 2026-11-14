@@ -12,7 +12,7 @@ for (const c of CASES) test(`portfolio outcome count: ${c.id}`, async()=>{
  for(const mode of ['deal_portfolio','loss_pattern']) {
   const t=await call(c.input,mode); assert.equal(t,await call(c.input,mode),'identical repeat');
   assert.match(t,/Outcome rule: a stated won or lost outcome takes precedence over its reason/);
-  if(!n.total) { assert.match(t,/No deals were listed, so there is nothing to count/); continue; }
+  if(!n.total) { assert.match(t,/I could not read a won, lost, open or no decision outcome on any line/); assert.doesNotMatch(t,/No deals were listed/); continue; }
   assert.ok(t.includes(`You listed ${n.total} deal${n.total===1?'':'s'}: ${n.won} won, ${n.lost} lost, ${n.nd} no decision`));
   if(n.open) assert.ok(t.includes(`${n.open} open`));
   if(n.won+n.lost) assert.ok(t.includes(`Of the ${n.won+n.lost} deals marked won or lost, ${n.won} ${n.won===1?'was':'were'} won.`));

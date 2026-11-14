@@ -21,6 +21,7 @@ for(const geo of geos)test(`R2 count exact, same meaning and opposites in ${geo}
 });
 test('R2 N1 buyer table, word counts and recognised timing',()=>{
  for(const [phrase,N,A]of [['30 customers, $40k each',30,40000],['30 customers, ACV of $40,000',30,40000],['30 deals at $40k ACV',30,40000],['thirty new customers',30,undefined],['four new customers',4,undefined],['30 new customers, $40k per customer per year',30,40000],['2 new customers, ARR 45 lakh each',2,45*1e5]]){const i=readFundingInputs(input(phrase),now);assert.equal(i.N,N,phrase);assert.equal(i.A,A,phrase);}
+ assert.equal(readFundingInputs(input('4 new customers; total ARR $360k'),now).A,undefined);
  const words='one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety'.split(' '),values=[...Array.from({length:20},(_,i)=>i+1),30,40,50,60,70,80,90];
  words.forEach((word,j)=>assert.equal(readFundingChat(`${word} new customers`,now()).customers,values[j]));
  const i=readFundingInputs(input('we have 120 customers; 4 new customers at $90k ACV; cycle 2 months; starting in 3 months; payback within 12 months'),now);assert.deepEqual(i.unreadMonths,[]);assert.equal(i.C,2);assert.equal(i.start,'2027-02');assert.match(buildRoiFunding(input('4 new customers at $90k ACV; sales cycle nine months; payback within 12 months'),now),/^Pays back/);

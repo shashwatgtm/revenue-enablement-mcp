@@ -53,7 +53,7 @@ function readFundingChat(words, now) {
             customers = quantity(m[1]);
     }
     const annual = [
-        new RegExp(String.raw `\b(?:ACV|ARR(?=\s+(?:Rs|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€|\d))|ARR per (?:new )?(?:customer|client)|annual revenue per (?:new )?(?:customer|client)|revenue per (?:new )?(?:customer|client)(?: per year)?)\s*(?:of|is|[:=])?\s*(${AMOUNT})`, 'i'),
+        new RegExp(String.raw `\b(?:ACV|ARR per (?:new )?(?:customer|client)|annual revenue per (?:new )?(?:customer|client)|revenue per (?:new )?(?:customer|client)(?: per year)?)\s*(?:of|is|[:=])?\s*(${AMOUNT})`, 'i'),
         new RegExp(String.raw `\b(?:one (?:new )?(?:customer|client) pays|each pays|per customer(?: per year)?)\s*(?:of|is|[:=])?\s*(${AMOUNT})`, 'i'),
         new RegExp(String.raw `\bat\s+(${AMOUNT})\s*(?:each|a year|per year|annually|ARR|ACV)`, 'i'),
         new RegExp(String.raw `(${AMOUNT})\s*(?:each\b|per (?:new )?(?:customer|client)(?:\s*\(?per year\)?)?)`, 'i'),
@@ -112,7 +112,7 @@ function readFundingChat(words, now) {
         start = `${year}-${String(month + 1).padStart(2, '0')}`;
     }
     const notRead = [];
-    for (const [label, present, readValue] of [['new customers', /\b(?:customers?|logos?|clients?)\b/i, customers], ['annual revenue per customer', /\b(?:ACV|ARR(?=\s+(?:Rs|INR|₹|S\$|SGD|AED|USD|GBP|EUR|\$|£|€|\d))|ARR per customer|annual revenue per customer|each pays)\b/i, (annual?.[1] ?? pairedAmount)], ['payback limit', /\b(?:payback|finance accepts|limit)\b/i, limit], ['gross margin', /\bmargin\b/i, margin], ['sales cycle', /\b(?:sales cycle|cycle months)\b/i, cycle], ['win rate', /\bwin rate\b/i, win], ['financial year start', /\b(?:financial year starts?|FY starts?)\b/i, fy], ['spend start month', /\bstart(?:ing)?\s+(?!month)/i, start]])
+    for (const [label, present, readValue] of [['new customers', /\b(?:customers?|logos?|clients?)\b/i, customers], ['annual revenue per customer', /\b(?:ACV|ARR per customer|annual revenue per customer|each pays)\b/i, (annual?.[1] ?? pairedAmount)], ['payback limit', /\b(?:payback|finance accepts|limit)\b/i, limit], ['gross margin', /\bmargin\b/i, margin], ['sales cycle', /\b(?:sales cycle|cycle months)\b/i, cycle], ['win rate', /\bwin rate\b/i, win], ['financial year start', /\b(?:financial year starts?|FY starts?)\b/i, fy], ['spend start month', /\bstart(?:ing)?\s+(?!month)/i, start]])
         if (present.test(label === 'spend start month' ? startWords : value) && readValue === undefined)
             notRead.push(label);
     const unreadMonths = durations.filter(m => !assignedMonths.has(m.index)).map(m => m[0]);

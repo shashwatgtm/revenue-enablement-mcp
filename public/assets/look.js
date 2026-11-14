@@ -118,8 +118,6 @@
     btn.replaceChildren(svg, sp);
   };
   var tint = function () {
-    // This tool links the shadow stylesheet externally to respect its existing CSP.
-    if (document.body.classList.contains('roi-funding-page')) return true;
     var host = document.getElementById('helix-assistant-launcher');
     if (!host || !host.shadowRoot) return false;
     var btn = host.shadowRoot.querySelector('button.launcher');
@@ -131,7 +129,8 @@
       }
       return true;
     }
-    if (!host.shadowRoot.querySelector('style[data-look]')) {
+    // The funding page links this shadow stylesheet externally under the existing CSP.
+    if (!document.body.classList.contains('roi-funding-page') && !host.shadowRoot.querySelector('style[data-look]')) {
       var st = document.createElement('style'); st.setAttribute('data-look', '');
       st.textContent = 'button.launcher{display:inline-flex;align-items:center;gap:8px;background:#FFFDF9;border:1.5px solid #641220;color:#641220;font-weight:600;box-shadow:0 4px 16px rgba(60,20,28,.18)}button.launcher:hover{background:#F3EADF}button.launcher .hx-gpt{width:18px;height:18px;flex:none;color:#641220}@media (max-width:600px){button.launcher{padding:9px 14px;font-size:13px;gap:6px}button.launcher .hx-gpt{width:16px;height:16px}}' +
         ':host{font-family:"Instrument Sans",Arial,sans-serif;color:#1D1416}.panel{background:#FBF7F1;border:1px solid rgba(100,18,32,.28);border-top:3px solid #641220;border-radius:16px;box-shadow:0 18px 50px rgba(60,20,28,.18)}.heading{padding:14px 16px;border-bottom:1px solid #EADFD6}h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:21px;letter-spacing:-.01em;color:#1D1416}.close{border-radius:999px;border:1px solid rgba(100,18,32,.35);background:#FFFDF9;color:#641220;font-weight:600;padding:6px 12px}.panel-body{padding:12px 16px}.roles{gap:6px}.roles button{border-radius:999px;border:1px solid rgba(100,18,32,.3);background:#FFFDF9;color:#641220;font-weight:600;padding:5px 12px}.roles button[aria-pressed=true]{background:#641220;border-color:#641220;color:#FFFDF9}label{font-weight:600;color:#1D1416;font-size:13px}textarea,select{border-radius:12px;border:1px solid #D9CBC2;background:#FFFDF9;color:#1D1416;padding:10px 12px}.topics{gap:8px}.topics button{border-radius:12px;border:1px solid #E3D3CA;background:#F3EADF;color:#3C2622;font-weight:600;padding:8px 10px}.topics button:hover,.roles button:hover,.close:hover,.secondary:hover{background:#EFE2D4}.roles button[aria-pressed=true]:hover{background:#4d0d18}.panel-actions{background:#F3EADF;border-top:1px solid #EADFD6;padding:12px 16px}.primary{border-radius:12px;background:#641220;border-color:#641220;color:#FFFDF9;font-weight:600;min-height:46px}.primary:hover{background:#4d0d18}.consult,.secondary{border-radius:999px;background:#FFFDF9;border-color:rgba(100,18,32,.35);color:#641220}.note,.role-note{color:#5A4B4E}.text-link,.setup,.next a{color:#8A1C2B}.address,.command{background:#F3EADF;border-radius:8px}@media (max-width:480px){h2{font-size:19px}.heading{padding:10px 12px}.panel-body,.panel-actions{padding:10px 12px}}' +

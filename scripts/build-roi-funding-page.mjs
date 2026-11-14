@@ -10,6 +10,7 @@ const sibling=fs.readFileSync(new URL('../public/tools/discovery-question-bank/i
 const shell=sibling.match(/<a class="hx-skip"[\s\S]*?(?=<main id="main">)/)[0].replace('Discovery Question Bank','Marketing ROI and Payback Check');
 const shellStyles=[...sibling.matchAll(/<link rel="stylesheet" href="[^"]+">/g)].map(m=>m[0]).join('\n');
 const shellScripts=[...sibling.matchAll(/<script src="[^"]+(?:analytics\.js|look\.js|history\.js)[^"]*"[^>]*><\/script>/g)].map(m=>m[0].includes('/assets/look.js')?m[0].replace(/look\.js[^"]*/, 'look.js?v='+crypto.createHash('sha256').update(fs.readFileSync(new URL('../public/assets/look.js',import.meta.url))).digest('hex').slice(0,10)):m[0]).join('\n');
+const asset=name=>'/assets/'+name+'?v='+crypto.createHash('sha256').update(fs.readFileSync(new URL('../public/assets/'+name,import.meta.url))).digest('hex').slice(0,10);
 const desc='Check one marketing programme against your own payback limit. CAC against monthly ARR, sensitivity, gross margin and finance questions. No invented figures.';
 const html=`<!doctype html>
 <html lang="en" class="hx-look"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -19,9 +20,9 @@ const html=`<!doctype html>
 <meta property="og:image" content="https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/share.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Should you fund this marketing programme? Payback on your own numbers, by Helix GTM.">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${c.PAGE_TITLE}"><meta name="twitter:description" content="${desc}"><meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/share.png"><meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preload" href="/assets/fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/fonts/instrumentsans-normal-latin.woff2" as="font" type="font/woff2" crossorigin>${shellStyles}<link rel="stylesheet" href="/assets/roi-funding.css">
+<link rel="preload" href="/assets/fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/fonts/instrumentsans-normal-latin.woff2" as="font" type="font/woff2" crossorigin>${shellStyles}<link rel="stylesheet" href="${asset('roi-funding.css')}">
 <script type="application/ld+json">${JSON.stringify({'@context':'https://schema.org','@type':'WebApplication',name:'Marketing ROI and Payback Check',url:'https://revenue-enablement.gtmhelix.com/tools/roi-business-case-builder/',description:desc,applicationCategory:'BusinessApplication',operatingSystem:'Any',isAccessibleForFree:true,creator:{'@type':'Person',name:'Shashwat Ghosh',url:'https://gtmhelix.com/about/'}})}</script>
-${shellScripts}<script src="/assets/roi-funding.js" defer></script></head><body class="roi-funding-page">
+${shellScripts}<script src="${asset('roi-funding.js')}" data-assistant-css="${asset('roi-funding-assistant.css')}" defer></script></head><body class="roi-funding-page">
 ${shell}<main id="main"><section class="funding-hero"><p class="for">For CMOs, demand generation heads and founders at Series A to C startups, mid-sized ITeS and AI native firms</p><h1>${c.PAGE_HEADING}</h1><p class="subtitle">${c.PAGE_SUBTITLE}</p></section>
 <div class="workspace"><form class="funding-card" id="funding-form" novalidate>
 <fieldset><legend>What do you want to fund, and where?</legend><label for="subject">Programme and location</label><textarea id="subject" name="subject" required maxlength="2000" placeholder="e.g. An ABM programme in India"></textarea></fieldset>

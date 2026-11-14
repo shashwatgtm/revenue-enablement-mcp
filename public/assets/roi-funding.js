@@ -60,10 +60,11 @@
  root.HelixFunding={money,moneyEcho,markdown,parseLine,resultView};
  if(typeof document==='undefined')return;
  const form=document.querySelector('#funding-form');if(!form)return;
+ const assistantSheet=document.currentScript?.dataset.assistantCss||'/assets/roi-funding-assistant.css';
  // The assistant lives in a shadow root. Page selectors cannot reach its focus ring.
  function styleAssistant(){
   const shadow=document.querySelector('#helix-assistant-launcher')?.shadowRoot;if(!shadow)return false;
-  if(!shadow.querySelector('link[data-funding-look]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/assets/roi-funding-assistant.css';sheet.dataset.fundingLook='';shadow.append(sheet);}
+  if(!shadow.querySelector('link[data-funding-look]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href=assistantSheet;sheet.dataset.fundingLook='';shadow.append(sheet);}
   return true;
  }
  if(!styleAssistant()){const observer=new MutationObserver(()=>{if(styleAssistant())observer.disconnect();});observer.observe(document.body,{childList:true,subtree:true});}

@@ -61,7 +61,7 @@ export function readFundingChat(words:string,now:Date):FundingChat {
  let limit:number|undefined=limits[0];
  // Conflicting limits remain unanswered rather than choosing whichever appeared first.
  if(new Set(limits).size>1){limit=undefined;for(const m of durations)assignedMonths.delete(m.index!);}
- limit??=durations.length?undefined:read([/\b(?:payback )?limit\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)\b/i]);
+ if(new Set(limits).size<=1)limit??=read([/\b(?:payback )?limit\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)\b/i]);
  const margin=read([/\b(?:gross )?margin\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i,/(?<![\w.-])(-?\d+(?:\.\d+)?)\s*%\s*(?:gross )?margin\b/i]);
  const cycle=cycles[0]??read([/\b(?:sales cycle|cycle|first touch to signed deal)\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i]);
  const win=read([/\bwin rate\s*(?:of|is|[:=])?\s*(-?\d+(?:\.\d+)?)/i,/(?<![\w.-])(-?\d+(?:\.\d+)?)\s*%\s*win rate\b/i]);

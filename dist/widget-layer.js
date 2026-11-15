@@ -50,12 +50,8 @@ function attachWidgets(server) {
                 if (build_profile_ts_1.BUILD_PROFILE.payload === 'full')
                     return { ...result, structuredContent: display };
                 // Rich display data stays in the component; every host also gets the full text.
-                if (display.marketSizing) {
-                    const { toolArgumentsEncoded, ...summary } = display.marketSizing;
-                    display.marketSizing = summary;
-                }
                 const { structuredContent, ...plain } = result;
-                return { ...plain, structuredContent: facts, _meta: { ...result._meta, ...display, toolArguments: request.params.arguments } };
+                return { ...plain, structuredContent: facts, _meta: { ...result._meta, ...display } };
             }
         }
         return result;

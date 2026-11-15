@@ -3,7 +3,7 @@
 
 ## Use it hosted (no install)
 
-Add `https://revenue-enablement.gtmhelix.com/mcp` as a Streamable HTTP connector. It needs no sign in. On 15 November 2026 the hosted server reported version 1.2.32 and 12 tools. [Connection instructions](https://revenue-enablement.gtmhelix.com/connect/). You can also open the [web app](https://revenue-enablement.gtmhelix.com/).
+Add `https://revenue-enablement.gtmhelix.com/mcp` as a Streamable HTTP connector. It needs no sign in. The hosted endpoint always runs the newest version (1.2.32) available on this site. It listed 12 tools on 15 November 2026. [Connection instructions](https://revenue-enablement.gtmhelix.com/connect/). You can also open the [web app](https://revenue-enablement.gtmhelix.com/).
 
 For a local stdio connection, run `npx -y @shashwatgtmalpha/revenue-enablement-mcp`. On 15 November 2026 the latest published npm version was 1.2.30. Check the available version with `npm view @shashwatgtmalpha/revenue-enablement-mcp version`.
 

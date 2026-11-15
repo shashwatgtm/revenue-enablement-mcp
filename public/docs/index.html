@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Revenue Enablement Docs: MCP and REST API | Helix GTM</title>
-<meta name="description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
+<meta name="description" content="Connect to the 12 Revenue Enablement MCP tools. Find the hosted address, local setup and input fields for each tool.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="Shashwat Ghosh, Helix GTM Consulting">
 <link rel="canonical" href="https://revenue-enablement.gtmhelix.com/docs/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Revenue Enablement by Helix GTM Consulting">
 <meta property="og:title" content="Revenue Enablement Docs: MCP and REST API | Helix GTM">
-<meta property="og:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
+<meta property="og:description" content="Connect to the 12 Revenue Enablement MCP tools. Find the hosted address, local setup and input fields for each tool.">
 <meta property="og:url" content="https://revenue-enablement.gtmhelix.com/docs/">
 <meta property="og:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
 <meta property="og:image:alt" content="Revenue Enablement by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Revenue Enablement Docs: MCP and REST API | Helix GTM">
-<meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
+<meta name="twitter:description" content="Connect to the 12 Revenue Enablement MCP tools. Find the hosted address, local setup and input fields for each tool.">
 <meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -155,14 +155,14 @@
    "@id": "https://revenue-enablement.gtmhelix.com/docs/#page",
    "url": "https://revenue-enablement.gtmhelix.com/docs/",
    "name": "Revenue Enablement Docs: MCP and REST API for developers",
-   "description": "How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server's own schemas.",
+   "description": "Connect to the 12 Revenue Enablement MCP tools. Find the hosted address, local setup and input fields for each tool.",
    "isPartOf": {
     "@id": "https://revenue-enablement.gtmhelix.com/#site"
    },
    "about": {
     "@id": "https://revenue-enablement.gtmhelix.com/#app"
    },
-   "dateModified": "2026-11-02",
+   "dateModified": "2026-11-15",
    "inLanguage": "en",
    "primaryImageOfPage": "https://revenue-enablement.gtmhelix.com/og.png"
   },
@@ -214,8 +214,8 @@
     <p class="hx-for"><b>For</b> developers and marketing operations teams. <b>The decision:</b> how to call Revenue Enablement from your own code or assistant.</p>
     <div class="ctas"><a class="btn" href="/#tools">Pick a tool</a></div>
     <div class="hx-hero-text"><div class="hx10-split-text">
-      <p class="sub">This page covers the MCP address, the REST API behind the web forms and every input field of all 12 tools.</p>
-      <p class="hx-byline">By <a href="https://gtmhelix.com/about/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix&nbsp;GTM&nbsp;Consulting · Last updated <time datetime="2026-11-02">2 November 2026</time></p>
+      <p class="sub">Connect to the 12 MCP tools, check their input fields or call the REST API behind the web forms.</p>
+      <p class="hx-byline">By <a href="https://gtmhelix.com/about/" rel="author">Shashwat Ghosh</a>, Co-Founder and Fractional CMO, Helix&nbsp;GTM&nbsp;Consulting · Last updated <time datetime="2026-11-15">15 November 2026</time></p>
     </div></div>
   </div>
 </section>
@@ -229,7 +229,7 @@
     <li>Authentication: none. Every tool is marked read only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
     <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.32.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
-    <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
+    <li>Local stdio: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code>. Latest npm version on 15 November 2026: 1.2.30.</li>
   </ul>
 </section>
 
@@ -284,34 +284,38 @@
 
 <section class="hx-section hx-wash" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.32.</p>
+  <p class="hx-sub">From hosted <code>tools/list</code> on 15 November 2026, version 1.2.32. A dot marks a field inside an object and <code>[]</code> marks an array item. Required fields inside an optional object apply when that object is supplied.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>
   <p><code>account_plan_builder</code></p>
-  <p class="hx-prose">Helps you decide how to grow an account in the next 90 days. You give the account name, plus contacts, products, threats and notes if you have them. You get a strategic account plan: a power map with one row per contact you name, whitespace analysis, competitive questions, an answer for each objection and a 90 day plan. It does not look the account up. <a href="/tools/account-plan-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide how to grow an account in the next 90 days. You give the account name, plus contacts, products, threats and notes if you have them. You get a strategic account plan: a power map with one row per contact you name, whitespace analysis, competitive questions, an answer for each objection and a 90 day plan. It does not look the account up.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>account_name</code></td><td>string</td><td>yes</td><td></td><td>Company/account name</td></tr>
 <tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry vertical</td></tr>
-<tr><td><code>current_arr</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
-<tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account_notes</td></tr>
+<tr><td><code>current_arr</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Current ARR with this account (0 for prospects)</td></tr>
+<tr><td><code>known_contacts</code></td><td>string</td><td>no</td><td></td><td>Known contacts and their roles, one per line or separated by semicolons, for example: Head of RevOps (champion); CFO. Each entry becomes one row, so put other notes in account notes</td></tr>
 <tr><td><code>current_products</code></td><td>string</td><td>no</td><td></td><td>Products/services they currently use from you</td></tr>
 <tr><td><code>expansion_opportunities</code></td><td>string</td><td>no</td><td></td><td>Potential expansion areas or whitespace</td></tr>
 <tr><td><code>competitive_threats</code></td><td>string</td><td>no</td><td></td><td>Known competitors in the account</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/service offering</td></tr>
 <tr><td><code>account_notes</code></td><td>string</td><td>no</td><td></td><td>Any additional context about the account</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="deal-strategy-coach" aria-labelledby="d-deal-strategy-coach">
   <h3 id="d-deal-strategy-coach">Deal Strategy Coach</h3>
   <p><code>deal_strategy_coach</code></p>
-  <p class="hx-prose">Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text. <a href="/tools/deal-strategy-coach/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>blocker_status</code></td><td>string</td><td>no</td><td>none, present, unknown</td><td>Ask whether any blocker is present. A confirmed typed fact overrides word reading.</td></tr>
+<tr><td><code>economic_buyer_engagement</code></td><td>string</td><td>no</td><td>engaged, not_engaged, unknown</td><td>Ask whether the budget holder actively participates in this decision. Overrides word reading.</td></tr>
+<tr><td><code>incumbent_status</code></td><td>string</td><td>no</td><td>present, none, unknown</td><td>Ask whether the buyer already uses a competing supplier. Overrides word reading.</td></tr>
+<tr><td><code>project_status</code></td><td>string</td><td>no</td><td>active, cancelled, unknown</td><td>Ask whether the project is still active. A cancelled project is held, without a close plan.</td></tr>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
-<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
+<tr><td><code>deal_value</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
 <tr><td><code>deal_stage</code></td><td>string</td><td>yes</td><td>prospecting, discovery, demo, proposal, negotiation, closing, stuck</td><td>Current deal stage</td></tr>
-<tr><td><code>days_in_stage</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
+<tr><td><code>days_in_stage</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
 <tr><td><code>champion_status</code></td><td>string</td><td>no</td><td>no_champion, potential_champion, confirmed_champion, multi_threaded</td><td>Champion identification status</td></tr>
 <tr><td><code>economic_buyer</code></td><td>string</td><td>no</td><td></td><td>Economic buyer name and engagement level</td></tr>
 <tr><td><code>competitors</code></td><td>string</td><td>no</td><td></td><td>Competitors in the deal and their position</td></tr>
@@ -319,14 +323,15 @@
 <tr><td><code>next_steps</code></td><td>string</td><td>no</td><td></td><td>Currently planned next steps</td></tr>
 <tr><td><code>close_date</code></td><td>string</td><td>no</td><td></td><td>Target close date</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="discovery-question-bank" aria-labelledby="d-discovery-question-bank">
   <h3 id="d-discovery-question-bank">Discovery Question Bank</h3>
   <p><code>discovery_question_bank</code></p>
-  <p class="hx-prose">Helps you decide what to ask on a discovery call. You give the framework you use (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. You get an opening for the conversation, questions in the language of the prospect&#x27;s sector and on what your solution covers, questions for each part of the framework, a closing and what to say to an objection. It uses only the inputs you give and says which it did not get. <a href="/tools/discovery-question-bank/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to ask on a discovery call. You give the framework you use (MEDDPICC, BANT, SPICED, Challenger, Gap Selling or all five) and what you already know about the prospect. You get an opening for the conversation, questions in the language of the prospect&#x27;s sector and on what your solution covers, questions for each part of the framework, a closing and what to say to an objection. It uses only the inputs you give and says which it did not get.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>contact_permission</code></td><td>string</td><td>no</td><td>allowed, declined, unknown</td><td>Optional confirmed fact. Ask whether this person permits further contact; this answer overrides contact-refusal wording in the notes.</td></tr>
 <tr><td><code>framework</code></td><td>string</td><td>yes</td><td>meddpicc, bant, spiced, challenger, gap_selling, all</td><td>Discovery framework to use</td></tr>
 <tr><td><code>prospect_industry</code></td><td>string</td><td>no</td><td></td><td>Prospect industry for context</td></tr>
 <tr><td><code>prospect_role</code></td><td>string</td><td>no</td><td></td><td>Role of person you are meeting with</td></tr>
@@ -335,35 +340,36 @@
 <tr><td><code>deal_stage</code></td><td>string</td><td>no</td><td>first_call, discovery, deep_dive, technical, executive</td><td>Stage of conversation</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution for relevant questions</td></tr>
 <tr><td><code>gaps_to_fill</code></td><td>string</td><td>no</td><td></td><td>Specific information gaps to address</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="roi-business-case-builder" aria-labelledby="d-roi-business-case-builder">
   <h3 id="d-roi-business-case-builder">ROI Business Case Builder</h3>
   <p><code>roi_business_case_builder</code></p>
-  <p class="hx-prose">Helps you build an ROI case the buyer&#x27;s finance team can check. You give your solution, its main value driver and the buyer&#x27;s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). <a href="/tools/roi-business-case-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you build an ROI case the buyer&#x27;s finance team can check. You give your solution, its main value driver and the buyer&#x27;s own figures: an annual value estimate, or current annual cost with the expected improvement percent. With them you get the ROI, payback, three year value and sensitivity. Without them it shows no ROI: it names the inputs to add and gives the structure of the case (the cost lines to price, your quoted results as reference points, the questions to ask). Ask finance for the cash-only annual benefit when an investment decision depends on cash.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer/prospect name</td></tr>
-<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>Industry for the example benchmarks: Technology, Financial_Services, Healthcare, Manufacturing or Retail (exact spelling). Any other value uses Technology</td></tr>
+<tr><td><code>industry</code></td><td>string</td><td>no</td><td></td><td>The customer&#x27;s industry, in any words. Used for wording and sector notes only: no industry figure is applied to the calculation. A return needs the buyer&#x27;s own figures (annual value estimate, or current annual cost with expected improvement percent)</td></tr>
 <tr><td><code>company_size</code></td><td>string</td><td>no</td><td>startup, smb, mid_market, enterprise</td><td>Company size tier</td></tr>
-<tr><td><code>annual_revenue</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Customer annual revenue</td></tr>
-<tr><td><code>employee_count</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Number of employees</td></tr>
+<tr><td><code>annual_revenue</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Customer annual revenue. Shown as your input; it is not turned into a value</td></tr>
+<tr><td><code>employee_count</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Number of employees. Shown as your input; it is not turned into a value</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
-<tr><td><code>solution_price</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
+<tr><td><code>solution_price</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Annual cost of your solution</td></tr>
 <tr><td><code>primary_value_driver</code></td><td>string</td><td>yes</td><td>revenue_increase, cost_reduction, productivity, risk_mitigation, multiple</td><td>Primary value category</td></tr>
-<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared. Shown in the output; to turn them into the value, give current_annual_cost and expected_improvement_percent, or annual_value_estimate</td></tr>
-<tr><td><code>current_annual_cost</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</td></tr>
-<tr><td><code>expected_improvement_percent</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</td></tr>
-<tr><td><code>annual_value_estimate</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
-<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Shown in the output; not used in the calculation</td></tr>
+<tr><td><code>known_metrics</code></td><td>string</td><td>no</td><td></td><td>Metrics the prospect shared, or results you can quote. Listed as reference points, never as the buyer&#x27;s figures; to turn the buyer&#x27;s figures into the value, give current annual cost and expected improvement percent, or annual value estimate</td></tr>
+<tr><td><code>current_annual_cost</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Optional: what the problem or the current process costs the buyer a year, in dollars (their figure)</td></tr>
+<tr><td><code>expected_improvement_percent</code></td><td>number (minimum 0, maximum 100)</td><td>no</td><td></td><td>Optional: the share of that annual cost the buyer expects to save, in percent (their figure)</td></tr>
+<tr><td><code>annual_value_estimate</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Optional: the buyer&#x27;s own estimate of the annual value in dollars; used as the value when given</td></tr>
+<tr><td><code>current_process</code></td><td>string</td><td>no</td><td></td><td>How they do it today. Separate the ways of working with a semicolon: each becomes a cost line to price. Not used in the calculation</td></tr>
 <tr><td><code>implementation_timeline</code></td><td>string</td><td>no</td><td></td><td>Expected implementation time. Shown in the output; not used in the calculation</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>annual_cash_benefit</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Optional buyer-confirmed annual cash benefit in US dollars, excluding staff time without a cash release. Ask finance to separate cash from non-cash value. Compared with the annual solution price; a cash deficit holds the investment decision.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="mutual-action-plan-generator" aria-labelledby="d-mutual-action-plan-generator">
   <h3 id="d-mutual-action-plan-generator">Mutual Action Plan Generator</h3>
   <p><code>mutual_action_plan_generator</code></p>
-  <p class="hx-prose">Helps you decide what has to happen, by whom and when, for a deal to sign on time. You give the deal name and the target close date, plus the current stage, the buyer&#x27;s champion, economic buyer and evaluators, known requirements and process steps if you have them. You get a close plan both sides can work from, with milestones, owners and dates. <a href="/tools/mutual-action-plan-generator/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what has to happen, by whom and when, for a deal to sign on time. You give the deal name and the target close date, plus the current stage, the buyer&#x27;s champion, economic buyer and evaluators, known requirements and process steps if you have them. You get a close plan both sides can work from, with milestones, owners and dates.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
 <tr><td><code>target_close_date</code></td><td>string</td><td>yes</td><td></td><td>Target close date (YYYY-MM-DD). A Saturday or Sunday date moves to the Friday before, and the plan says so</td></tr>
@@ -376,36 +382,36 @@
 <tr><td><code>known_process_steps</code></td><td>string</td><td>no</td><td></td><td>Known steps in their buying process, separated by semicolons or new lines (for example: Pilot; security review; procurement). Each step becomes its own milestone</td></tr>
 <tr><td><code>blockers</code></td><td>string</td><td>no</td><td></td><td>Known blockers or concerns</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you are selling</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="win-loss-analyzer" aria-labelledby="d-win-loss-analyzer">
   <h3 id="d-win-loss-analyzer">Win/Loss Analyzer</h3>
   <p><code>win_loss_analyzer</code></p>
-  <p class="hx-prose">Helps you decide why you won or lost and what to change. You give the details of one deal, a competitor pattern or a set of deals. You get a short write up that names the outcome, the stated reason in the buyer&#x27;s words, what the reason points to and what the buyer weighed, then questions for the review call and sector notes. It adds no figure or reason you did not give, and says what a missing outcome or reason would add. <a href="/tools/win-loss-analyzer/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide why you won or lost and what to change. You give the details of one deal, a competitor pattern or a set of deals. You get a short write up that names the outcome, the stated reason in the buyer&#x27;s words, what the reason points to and what the buyer weighed, then questions for the review call and sector notes. It adds no figure or reason you did not give, and says what a missing outcome or reason would add.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>analysis_type</code></td><td>string</td><td>yes</td><td>single_deal, deal_portfolio, competitor_analysis, loss_pattern</td><td>Type of analysis</td></tr>
 <tr><td><code>deal_outcome</code></td><td>string</td><td>no</td><td>won, lost, no_decision, mixed</td><td>Deal outcome for single deal analysis</td></tr>
 <tr><td><code>deal_details</code></td><td>string</td><td>no</td><td></td><td>Deal details, can be rough notes, CRM export, or structured data</td></tr>
 <tr><td><code>loss_reason</code></td><td>string</td><td>no</td><td></td><td>Stated loss reason (for lost deals)</td></tr>
 <tr><td><code>competitor_won</code></td><td>string</td><td>no</td><td></td><td>Competitor who won (if applicable)</td></tr>
-<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value</td></tr>
-<tr><td><code>sales_cycle_days</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Length of sales cycle</td></tr>
+<tr><td><code>deal_value</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Deal value</td></tr>
+<tr><td><code>sales_cycle_days</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Length of sales cycle</td></tr>
 <tr><td><code>stakeholders_involved</code></td><td>string</td><td>no</td><td></td><td>Key stakeholders and their positions</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>What you were selling</td></tr>
 <tr><td><code>multiple_deals</code></td><td>string</td><td>no</td><td></td><td>For portfolio analysis: summary of multiple deals</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="proposal-section-writer" aria-labelledby="d-proposal-section-writer">
   <h3 id="d-proposal-section-writer">Proposal Section Writer</h3>
   <p><code>proposal_section_writer</code></p>
-  <p class="hx-prose">Helps you write one section of a proposal for a named buyer. You give the section you need (such as an executive summary, solution overview or pricing justification), your solution, the buyer&#x27;s challenges, your differentiators, pricing and success measures. You get that section in sentences built from your inputs, with sector notes. It invents no figure, customer or date, and says once which inputs were not given. <a href="/tools/proposal-section-writer/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you write one section of a proposal for a named buyer. You give the section you need (such as an executive summary, solution overview or pricing justification), your solution, the buyer&#x27;s challenges, your differentiators, pricing and success measures. You get that section in sentences built from your inputs, with sector notes. It invents no figure, customer or date, and says once which inputs were not given.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>section_type</code></td><td>string</td><td>yes</td><td>executive_summary, problem_statement, solution_overview, implementation_plan, pricing_justification, risk_mitigation, success_metrics, company_overview, case_studies, next_steps</td><td>Proposal section to generate</td></tr>
 <tr><td><code>customer_name</code></td><td>string</td><td>no</td><td></td><td>Customer name</td></tr>
 <tr><td><code>customer_industry</code></td><td>string</td><td>no</td><td></td><td>Customer industry</td></tr>
-<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Accepted but not used yet: the text is the same for every audience</td></tr>
+<tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td>c_suite, vp_level, director, manager, technical, procurement</td><td>Adds a one-line note at the top of the executive summary on what this audience looks for</td></tr>
 <tr><td><code>customer_challenges</code></td><td>string</td><td>no</td><td></td><td>Key challenges identified</td></tr>
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>key_differentiators</code></td><td>string</td><td>no</td><td></td><td>Why you vs alternatives</td></tr>
@@ -413,13 +419,13 @@
 <tr><td><code>implementation_approach</code></td><td>string</td><td>no</td><td></td><td>How you will implement</td></tr>
 <tr><td><code>success_metrics</code></td><td>string</td><td>no</td><td></td><td>Expected outcomes/metrics</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>formal, consultative, bold, conservative</td><td>Tone for the proposal (changes only the opening of the executive summary)</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="email-sequence-generator" aria-labelledby="d-email-sequence-generator">
   <h3 id="d-email-sequence-generator">Email Sequence Generator</h3>
   <p><code>email_sequence_generator</code></p>
-  <p class="hx-prose">Helps you decide what to send, and when, to open or restart a conversation. You give the persona, stage and objective (prospecting, nurture, follow up or re engagement), plus your solution, the pain point, value proposition, proof and ask. You get each email with its subject, send day and body, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented. <a href="/tools/email-sequence-generator/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to send, and when, to open or restart a conversation. You give the persona, stage and objective (prospecting, nurture, follow up or re engagement), plus your solution, the pain point, value proposition, proof and ask. You get each email with its subject, send day and body, and a note on what you did not give. No placeholder is left in a body, and no result or statistic is invented.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>sequence_type</code></td><td>string</td><td>yes</td><td>cold_outreach, warm_follow_up, post_demo, proposal_follow_up, re_engagement, nurture, event_follow_up, referral_request</td><td>Type of email sequence. cold_outreach, warm_follow_up, post_demo and re_engagement have their own templates; the other types return a general outline</td></tr>
 <tr><td><code>target_persona</code></td><td>string</td><td>yes</td><td></td><td>Target persona (e.g., VP Sales, CTO, CFO)</td></tr>
@@ -429,16 +435,16 @@
 <tr><td><code>specific_pain_point</code></td><td>string</td><td>no</td><td></td><td>Specific pain point to address</td></tr>
 <tr><td><code>social_proof</code></td><td>string</td><td>no</td><td></td><td>Customer names, stats, or proof points</td></tr>
 <tr><td><code>call_to_action</code></td><td>string</td><td>no</td><td></td><td>Desired action (meeting, demo, reply)</td></tr>
-<tr><td><code>num_emails</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
+<tr><td><code>num_emails</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Accepted but not used yet: each sequence type has a fixed number of emails</td></tr>
 <tr><td><code>tone</code></td><td>string</td><td>no</td><td>professional, casual, urgent, consultative, provocative</td><td>Email tone</td></tr>
 <tr><td><code>sender_context</code></td><td>string</td><td>no</td><td></td><td>Context about sender (role, shared connections, etc.)</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="demo-script-builder" aria-labelledby="d-demo-script-builder">
   <h3 id="d-demo-script-builder">Demo Script Builder</h3>
   <p><code>demo_script_builder</code></p>
-  <p class="hx-prose">Helps you decide what to show in a demo, and in what order. You give the demo type, the persona and the use case, plus the features you must show and the pains you name. You get a timed run from opening to close, with spoken lines and a step for each feature tied to the pains, then discussion, close and follow up lines and sector notes. The answer says where each step came from and what it did not get. <a href="/tools/demo-script-builder/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide what to show in a demo, and in what order. You give the demo type, the persona and the use case, plus the features you must show and the pains you name. You get a timed run from opening to close, with spoken lines and a step for each feature tied to the pains, then discussion, close and follow up lines and sector notes. The answer says where each step came from and what it did not get.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>demo_type</code></td><td>string</td><td>yes</td><td>first_look, technical_deep_dive, executive_overview, competitive_displacement, expansion_upsell, proof_of_concept</td><td>Type of demo</td></tr>
 <tr><td><code>primary_audience</code></td><td>string</td><td>no</td><td></td><td>Primary demo audience (role/persona)</td></tr>
@@ -447,36 +453,37 @@
 <tr><td><code>your_solution</code></td><td>string</td><td>yes</td><td></td><td>Your product/solution</td></tr>
 <tr><td><code>key_pain_points</code></td><td>string</td><td>no</td><td></td><td>Pain points to address in demo</td></tr>
 <tr><td><code>competitor_context</code></td><td>string</td><td>no</td><td></td><td>Competitor being displaced or compared</td></tr>
-<tr><td><code>demo_duration</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Demo duration in minutes</td></tr>
+<tr><td><code>demo_duration</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Demo duration in minutes</td></tr>
 <tr><td><code>must_show_features</code></td><td>string</td><td>no</td><td></td><td>Features that must be demonstrated</td></tr>
 <tr><td><code>known_objections</code></td><td>string</td><td>no</td><td></td><td>Known objections to address</td></tr>
 <tr><td><code>desired_outcome</code></td><td>string</td><td>no</td><td></td><td>What you want to achieve from this demo</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="pricing-negotiation-guide" aria-labelledby="d-pricing-negotiation-guide">
   <h3 id="d-pricing-negotiation-guide">Pricing Negotiation Guide</h3>
   <p><code>pricing_negotiation_guide</code></p>
-  <p class="hx-prose">Helps you decide how to answer a discount request without giving away margin. You give the negotiation scenario, plus deal value, the discount asked, each side&#x27;s leverage and who approves. You get a leverage assessment, a value based negotiation strategy, answers to common pushback and a discount approval framework. <a href="/tools/pricing-negotiation-guide/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide how to answer a discount request without giving away margin. You give the negotiation scenario, plus deal value, the discount asked, each side&#x27;s leverage and who approves. You get a leverage assessment, a value based negotiation strategy, answers to common pushback and a discount approval framework. Ask whether the user has authority to approve the proposed terms.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>discount_request, budget_objection, competitor_pricing, procurement_pressure, multi_year_negotiation, enterprise_agreement, renewal_negotiation</td><td>Negotiation scenario</td></tr>
-<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Current deal value</td></tr>
-<tr><td><code>discount_requested</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
-<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Accepted but not used yet by this tool</td></tr>
+<tr><td><code>deal_value</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Current deal value</td></tr>
+<tr><td><code>discount_requested</code></td><td>number (minimum 0)</td><td>no</td><td></td><td>Discount percentage requested</td></tr>
+<tr><td><code>your_solution</code></td><td>string</td><td>no</td><td></td><td>Your product/solution. Named in the guide and used, with your leverage, to read the sector and how you charge</td></tr>
 <tr><td><code>competitor_price</code></td><td>string</td><td>no</td><td></td><td>Competitor pricing if known</td></tr>
-<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Shown in the output; the value example does not use it</td></tr>
+<tr><td><code>value_delivered</code></td><td>string</td><td>no</td><td></td><td>Quantified value your solution delivers. Used in the value reframe, word for word; the guide adds no value figure of its own</td></tr>
 <tr><td><code>buyer_leverage</code></td><td>string</td><td>no</td><td></td><td>Buyer leverage points (size, reference potential, etc.)</td></tr>
 <tr><td><code>your_leverage</code></td><td>string</td><td>no</td><td></td><td>Your leverage points (unique features, timeline, etc.)</td></tr>
 <tr><td><code>decision_timeline</code></td><td>string</td><td>no</td><td></td><td>When decision needs to be made</td></tr>
 <tr><td><code>approval_authority</code></td><td>string</td><td>no</td><td></td><td>Who has final approval on pricing</td></tr>
 <tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>pricing_authority_status</code></td><td>string</td><td>no</td><td>authorized, not_authorized, unknown</td><td>Optional confirmed fact. Ask whether the user can approve this price or discount. Free-text role titles do not establish authority; unconfirmed authority holds commitment to terms.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section" id="champion-enablement-kit" aria-labelledby="d-champion-enablement-kit">
   <h3 id="d-champion-enablement-kit">Champion Enablement Kit</h3>
   <p><code>champion_enablement_kit</code></p>
-  <p class="hx-prose">Helps you give your champion what they need to sell internally. You give the asset you need (an executive brief, internal business case, objection responses or presentation talking points), your solution, the customer&#x27;s situation and the objections you expect. You get the asset in the champion&#x27;s voice with the recommendation, answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote. <a href="/tools/champion-enablement-kit/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you give your champion what they need to sell internally. You give the asset you need (an executive brief, internal business case, objection responses or presentation talking points), your solution, the customer&#x27;s situation and the objections you expect. You get the asset in the champion&#x27;s voice with the recommendation, answers to likely questions, the decision requested, a note on the reader and sector notes. It invents no figure or quote.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>asset_type</code></td><td>string</td><td>yes</td><td>executive_brief, internal_business_case, objection_responses, presentation_talking_points, email_to_stakeholder, roi_one_pager, competitive_comparison, risk_assessment</td><td>Type of enablement asset</td></tr>
 <tr><td><code>champion_name</code></td><td>string</td><td>no</td><td></td><td>Champion name</td></tr>
@@ -489,13 +496,13 @@
 <tr><td><code>budget_context</code></td><td>string</td><td>no</td><td></td><td>Budget situation and pricing</td></tr>
 <tr><td><code>urgency_drivers</code></td><td>string</td><td>no</td><td></td><td>Why act now</td></tr>
 <tr><td><code>champion_wins</code></td><td>string</td><td>no</td><td></td><td>How this makes the champion look good</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 <section class="hx-section hx-wash" id="competitive-trap-setter" aria-labelledby="d-competitive-trap-setter">
   <h3 id="d-competitive-trap-setter">Competitive Trap Setter</h3>
   <p><code>competitive_trap_setter</code></p>
-  <p class="hx-prose">Helps you decide which questions expose the gaps in your main competitor, without negative selling. You give the named competitor, your solution, your strengths and its weak points as you know them. You get the set up, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and tactics for your stage, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor. <a href="/tools/competitive-trap-setter/">See what it does</a>.</p>
+  <p class="hx-prose">Helps you decide which questions expose the gaps in your main competitor, without negative selling. You give the named competitor, your solution, your strengths and its weak points as you know them. You get the set up, discovery questions, criteria to establish, reference call questions, requirement and scenario traps, commercial terms and tactics for your stage, with sector notes. Every line comes from your inputs and the sector, and none from an invented fact about the competitor.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>competitor</code></td><td>string</td><td>yes</td><td></td><td>Primary competitor to position against</td></tr>
 <tr><td><code>competitor_weaknesses</code></td><td>string</td><td>no</td><td></td><td>Known competitor weaknesses</td></tr>
@@ -506,7 +513,7 @@
 <tr><td><code>buyer_persona</code></td><td>string</td><td>no</td><td></td><td>Role of key evaluator</td></tr>
 <tr><td><code>trap_type</code></td><td>string</td><td>no</td><td>discovery_questions, evaluation_criteria, reference_questions, technical_requirements, commercial_terms, all</td><td>Type of competitive positioning</td></tr>
 <tr><td><code>business_model</code></td><td>string</td><td>no</td><td>saas, services, connectivity, transactions, marketplace, hardware_software, investment</td><td>Optional: how you charge (software subscription, services, connectivity, per transaction, marketplace, hardware plus software, or investment management). Read from your other inputs when left out</td></tr>
-<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#39;s own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
+<tr><td><code>your_sector</code></td><td>string</td><td>no</td><td>logistics_tech, fintech, saas, vertical_saas, ai_native, ites, telecom, software, cybersecurity, other</td><td>Optional: your company&#x27;s own industry (not your customers&#x27;). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.</td></tr>
   </tbody></table></div>
 </section>
 </div>

@@ -2,7 +2,7 @@
   "name": "@shashwatgtmalpha/revenue-enablement-mcp",
   "mcpName": "io.github.shashwatgtm/revenue-enablement-mcp",
   "version": "1.2.32",
-  "description": "Revenue Enablement MCP server: account plans, deal strategy, discovery questions, ROI cases, mutual action plans, win/loss reviews, proposals, email sequences, demo scripts, negotiation guides, champion kits and competitive traps. Runs locally over stdio (npm) or hosted over Streamable HTTP.",
+  "description": "Twelve B2B sales tools for account plans, deal strategy, discovery, ROI cases, proposals, negotiation and champion enablement. Available over stdio or hosted Streamable HTTP.",
   "main": "dist/index.js",
   "bin": {
     "revenue-enablement-mcp": "dist/index.js"
@@ -21,14 +21,17 @@
     "deal-strategy",
     "b2b",
     "roi-calculator",
-    "account-planning"
+    "account-planning",
+    "discovery",
+    "mutual-action-plan",
+    "sales-negotiation"
   ],
   "author": "Shashwat Ghosh <shashwat@gtmhelix.com> (https://gtmhelix.com/about/)",
-  "homepage": "https://tools.gtmhelix.com/connectors/",
+  "homepage": "https://revenue-enablement.gtmhelix.com/",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shashwatgtm/revenue-enablement-mcp.git"
+    "url": "git+https://github.com/shashwatgtm/revenue-enablement-mcp.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

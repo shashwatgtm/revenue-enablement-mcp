@@ -89,9 +89,9 @@ test("the draft opens with what is not given, once, and no merge field is left",
   assert.ok(emails(t).length === 5);
 });
 
-test("a given sequence keeps num_emails 0 as given (legacy contract) and says the length is fixed", async () => {
+test("a given sequence reports five drafts when zero were requested", async () => {
   const t = await call({ sequence_type: "cold_outreach", ...A, num_emails: 0 });
-  assert.match(t, /## Emails: 0\n/);
+  assert.match(t, /## Emails: 5\n/);
 });
 
 test("the sector notes below the draft differ by kind", async () => {

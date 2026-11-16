@@ -627,9 +627,10 @@ export function buildEmailSequence(args: Record<string, unknown>, D: Deps, foote
   if (!senderIn) sharpen.push(`\`sender context\` (your name and role): add your name and role before sending.`);
   const sharpenBlock = sharpen.length ? `\n\n## To sharpen this, give:\n\nWhat was not given, and what each input would change:\n\n${sharpen.map((x) => `- ${x}`).join('\n')}` : '';
 
-  const fixed = EMAIL_COUNTS[sequenceType] || emails.length;
-  const emailsText = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? (args.num_emails as number).toLocaleString('en-US') : `${fixed}`;
-  const fixedNote = args.num_emails !== undefined && args.num_emails !== null && args.num_emails !== '' ? `\n*This sequence type has ${fixed} emails and num emails is not used yet: add or remove emails to match the number you need.*` : '';
+  const requested = args.num_emails;
+  const fixedNote = typeof requested === 'number' && requested !== emails.length
+    ? `\n*Requested: ${requested} emails. This template produces ${emails.length}.*`
+    : '';
   const notes = ctx.v ? `\n\n---\n\n${sellerSw ? `### Sector notes: ${ctx.v.name}\n- The notes for this sector describe a software company's own customers, so they are left out for a buyer${indLow ? ` in ${indLow}` : ' in another industry'}.` : sectorBlock(ctx.v)}` : '';
   const solutionLine = solution.length <= 160 ? solution : P.label || clip(solution, 120);
   return `# ${TITLES[sequenceType] || sequenceType} Sequence
@@ -638,7 +639,7 @@ ${heldProof.length ? `**Evidence held:** Adverse or unconfirmed statements are n
 ## Target: ${persona ? `${persona}${indLow && !indInPersona ? ` in ${indLow}` : ''}` : indLow ? `buyers in ${indLow}` : 'not given'}
 ## Solution: ${solutionLine}
 ## Tone: ${tone}
-## Emails: ${emailsText}${fixedNote}
+## Emails: ${emails.length}${fixedNote}
 
 ${emails.join('\n\n---\n\n')}
 

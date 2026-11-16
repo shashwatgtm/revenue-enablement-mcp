@@ -29,10 +29,10 @@ test("mutual_action_plan_generator: a target close date in the past is refused i
   assert.match(r.text, /target close date 2020-01-01 is in the past/);
 });
 
-test("email_sequence_generator: num_emails 0 is shown as given, not replaced by 5", async () => {
+test("email_sequence_generator: a request for zero is distinguished from five generated emails", async () => {
   const r = await call("email_sequence_generator", { sequence_type: "cold_outreach", target_persona: "COO", your_solution: "FlowOps", num_emails: 0 });
-  assert.match(r.text, /## Emails: 0\n/);
-  assert.doesNotMatch(r.text, /## Emails: 5\n/);
+  assert.match(r.text, /## Emails: 5\n/);
+  assert.match(r.text, /Requested: 0 emails/);
 });
 
 test("demo_script_builder: demo_duration 0 falls back to the labelled default; 1 minute is singular", async () => {

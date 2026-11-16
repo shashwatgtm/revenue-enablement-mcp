@@ -744,8 +744,10 @@ function buildEmailSequence(args, D, footer, sectorBlock) {
         sharpen.push('`specific pain point`: it would change email 1 from a question about the topic to the problem in your words, and give email 3 a second angle.');
     if (!valueText)
         sharpen.push('`key value prop`: it would change the emails from saying what the product is to saying what you aim for.');
-    if (!proofText)
-        sharpen.push('`social proof` (a result, a customer quote or an award you may name): it would change emails 2, 3 and 5 from questions to quoted evidence; without it no email quotes a result or a customer.');
+    if (!proofText) {
+        const place = emails.length === 5 ? 'emails 2, 3 and 5' : 'the follow-up drafts';
+        sharpen.push(`\`social proof\` (a result, a customer quote or an award you may name): it would change ${place} from questions to quoted evidence; without it no email quotes a result or a customer.`);
+    }
     if (!ctaIn)
         sharpen.push('`call to action`: it would change the ask from a short call to your own wording.');
     if (!senderIn)

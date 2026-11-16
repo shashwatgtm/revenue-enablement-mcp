@@ -69,6 +69,7 @@ for (const [vertical, product, type] of scenarios) {
     const text = result.content[0].text;
     const drafts = [...text.matchAll(/^### Email (\d+)\b/gm)].map(m => Number(m[1]));
     assert.ok(drafts.length > 0);
+    if (drafts.length < 5) assert.doesNotMatch(text, /emails 2, 3 and 5/);
     assert.deepEqual(drafts, Array.from({length: drafts.length}, (_, i) => i + 1));
     assert.equal(Number(text.match(/^## Emails: (\d+)/m)?.[1]), drafts.length);
   });

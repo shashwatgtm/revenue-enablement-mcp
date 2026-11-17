@@ -1,6 +1,6 @@
 import { type Vertical, type BusinessModel } from './verticals.ts';
 export declare const YOUR_SECTOR_VALUES: readonly ["logistics_tech", "fintech", "saas", "vertical_saas", "ai_native", "ites", "telecom", "software", "cybersecurity", "other"];
-export declare const YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
+export declare const YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. Format is text using one of the listed labels. For example, \"logistics_tech\".";
 /** Set once per tool call (the value was already checked against the list of choices); anything else clears it. */
 export declare function setYourSector(value: unknown): void;
 export declare function sectorIsSet(): boolean;

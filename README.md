@@ -3,7 +3,7 @@
 
 ## Use it hosted (no install)
 
-Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.33). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
+Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector, or to Codex or Gemini CLI as an MCP server. It needs no sign-in and always runs the newest version (1.2.33). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
 
 The npm package below is an older version (1.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
 

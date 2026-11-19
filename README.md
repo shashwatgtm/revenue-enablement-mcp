@@ -1,4 +1,7 @@
 # Revenue Enablement MCP v1.2.33
+
+By Helix GTM Consulting (https://gtmhelix.com), built by Shashwat Ghosh, Co-Founder and Fractional CMO.
+
 **Deal Strategy & Sales Enablement Engine**: 12 tools for sales execution, deal management, and revenue acceleration.
 
 ## Use it hosted (no install)

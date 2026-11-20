@@ -7,7 +7,7 @@ export function dealCurrency(args: Record<string, unknown>): string | undefined 
   const found = new Set<string>();
   const signals: [string, RegExp][] = [
     ['INR', /₹|\b(?:INR|Rs\.?|rupees?|crores?|lakhs?)\b/i], ['GBP', /£|\bGBP\b/i], ['EUR', /€|\bEUR\b/i],
-    ['SGD', /S\$|\bSGD\b/i], ['AED', /\bAED\b/i], ['USD', /\bUSD\b|US\$|(?<![A-Za-z])\$/i]
+    ['SGD', /(?<![A-Za-z])S\$|\bSGD\b/i], ['AED', /\bAED\b/i], ['USD', /\bUSD\b|US\$|(?<![A-Za-z])\$/i]
   ];
   for (const [code, pattern] of signals) if(pattern.test(text)) found.add(code);
   // Multiple currencies in a comparison do not identify the deal's currency.

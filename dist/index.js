@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SERVER_VERSION = exports.SERVER_NAME = void 0;
 exports.createServer = createServer;
+const deal_currency_ts_1 = require("./deal-currency.js");
 const input_evidence_ts_1 = require("./input-evidence.js");
 const reader_actions_ts_1 = require("./reader-actions.js");
 const region_reader_ts_1 = require("./region-reader.js");
@@ -312,7 +313,11 @@ const tools = {
                 deal_value: {
                     type: 'number',
                     minimum: 0,
-                    description: "Deal value in dollars. Format is a JSON number. For example, 12."
+                    description: "Deal value in the supplied currency, in ordinary units (for example 45000000 for INR 4.5 crore). Format is a JSON number."
+                },
+                currency: {
+                    type: "string", enum: ["INR", "USD", "GBP", "EUR", "SGD", "AED"],
+                    description: "Optional deal currency. Otherwise read from the deal name or text; if none is supplied, the amount is labelled currency not supplied."
                 },
                 deal_stage: {
                     type: 'string',
@@ -1096,6 +1101,7 @@ function executeAccountPlanBuilder(args) {
 }
 // Tool 2: Deal Strategy Coach
 function executeDealStrategyCoach(args) {
+    const money = (value) => (0, deal_currency_ts_1.dealMoney)(value, args);
     const dealName = args.deal_name || 'Deal';
     const dealValue = args.deal_value || 0;
     const dealStage = args.deal_stage || 'discovery';

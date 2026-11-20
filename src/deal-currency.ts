@@ -14,11 +14,15 @@ export function dealCurrency(args: Record<string, unknown>): string | undefined 
   return found.size === 1 ? [...found][0] : undefined;
 }
 export function dealMoney(value: number, args: Record<string, unknown>): string {
-  const currency = dealCurrency(args), amount = value.toLocaleString('en-US', {maximumFractionDigits: 20});
-  if (!currency) return amount + ' (currency not supplied)';
+  const currency = dealCurrency(args);
+  const format = (n: number, locale = 'en-US', scaled = false) => n.toLocaleString(locale, {minimumFractionDigits: scaled || Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2});
+  const tiny = value > 0 && value < 0.005;
+  if (!currency) return (tiny ? 'under 0.01' : format(value)) + ' (currency not supplied)';
   if (currency === 'INR') {
+    if (tiny) return 'under ₹0.01';
     const scale = Math.abs(value) >= 1e7 ? 1e7 : Math.abs(value) >= 1e5 ? 1e5 : 1;
-    return '₹' + (value / scale).toLocaleString('en-IN', {maximumFractionDigits: 20}) + (scale === 1e7 ? ' crore' : scale === 1e5 ? ' lakh' : '');
+    return '₹' + format(value / scale, 'en-IN', scale !== 1) + (scale === 1e7 ? ' crore' : scale === 1e5 ? ' lakh' : '');
   }
-  return ({USD:'$',GBP:'£',EUR:'€',SGD:'S$',AED:'AED '} as Record<string,string>)[currency] + amount;
+  const symbol = ({USD:'$',GBP:'£',EUR:'€',SGD:'S$',AED:'AED '} as Record<string,string>)[currency];
+  return tiny ? 'under ' + symbol + '0.01' : symbol + format(value);
 }

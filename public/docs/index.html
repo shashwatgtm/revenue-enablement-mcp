@@ -311,7 +311,8 @@
   <p class="hx-prose">Helps you decide what to do next to move a deal. You give the deal name and stage, plus competitors, stakeholder positions and blockers. You get a deal health score, a strategy for the stage, next steps and risks to handle. Ask the user to confirm blocker status, economic buyer engagement, incumbent status and project status when those facts affect the score; typed facts take precedence over text. <a href="/tools/deal-strategy-coach/">See what it does</a>.</p>
   <div class="hx-table"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>deal_name</code></td><td>string</td><td>yes</td><td></td><td>Deal/opportunity name</td></tr>
-<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value in dollars</td></tr>
+<tr><td><code>deal_value</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Deal value in the supplied currency; if no currency is provided or identifiable, the amount is shown without a currency symbol.</td></tr>
+<tr><td><code>currency</code></td><td>string</td><td>no</td><td>INR, USD, GBP, EUR, SGD, AED</td><td>Optional deal currency; otherwise inferred from deal text.</td></tr>
 <tr><td><code>deal_stage</code></td><td>string</td><td>yes</td><td>prospecting, discovery, demo, proposal, negotiation, closing, stuck</td><td>Current deal stage</td></tr>
 <tr><td><code>days_in_stage</code></td><td>number (0 or more)</td><td>no</td><td></td><td>Days the deal has been in current stage</td></tr>
 <tr><td><code>champion_status</code></td><td>string</td><td>no</td><td>no_champion, potential_champion, confirmed_champion, multi_threaded</td><td>Champion identification status</td></tr>

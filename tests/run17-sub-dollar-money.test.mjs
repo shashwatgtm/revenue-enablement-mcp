@@ -24,8 +24,8 @@ test("account_plan_builder: Current ARR under $1 prints 2 decimals or 'under $0.
 });
 
 test("deal_strategy_coach and win_loss_analyzer: Deal Value under $1", async () => {
-  assert.match(await call("deal_strategy_coach", { deal_name: "D", deal_stage: "discovery", deal_value: 0.004 }), /\| \*\*Deal Value\*\* \| under \$0\.01 \|/);
-  assert.match(await call("deal_strategy_coach", { deal_name: "D", deal_stage: "discovery", deal_value: 50000 }), /\| \*\*Deal Value\*\* \| \$50,000 \|/);
+  assert.match(await call("deal_strategy_coach", { deal_name: "D", currency: "USD", deal_stage: "discovery", deal_value: 0.004 }), /\| \*\*Deal Value\*\* \| under \$0\.01 \|/);
+  assert.match(await call("deal_strategy_coach", { deal_name: "D", currency: "USD", deal_stage: "discovery", deal_value: 50000 }), /\| \*\*Deal Value\*\* \| \$50,000 \|/);
   assert.match(await call("win_loss_analyzer", { analysis_type: "single_deal", deal_value: 0.5 }), /\| \*\*Deal Value\*\* \| \$0\.50 \|/);
 });
 

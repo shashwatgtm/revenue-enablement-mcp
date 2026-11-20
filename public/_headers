@@ -21,3 +21,7 @@
 /.well-known/openai-apps-challenge
   Content-Type: text/plain; charset=utf-8
   Cache-Control: no-store
+
+# Review videos for the app directories: keep them working, keep them out of search results.
+/walkthrough/*
+  X-Robots-Tag: noindex

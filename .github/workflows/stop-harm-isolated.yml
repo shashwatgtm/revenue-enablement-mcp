@@ -1,0 +1,45 @@
+name: Stop harm isolated verification
+on:
+  push:
+    branches: [codex/validation-stop-harm-20261122]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE_REF: d665451ac7c63b34d11886a50683b1da2af0ce8c
+      HELIX_PROFILE: current
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.SOURCE_REF }}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Default current build
+        run: |
+          if [ -f scripts/build-profile.mjs ]; then npm run build; elif [ -f scripts/build-site.mjs ]; then node scripts/build-site.mjs; fi
+      - name: Full suite
+        shell: bash
+        run: |
+          set +e
+          node --test --test-concurrency=1 --test-reporter=tap > test.tap 2>&1
+          code=$?
+          printf '%s\n' "$code" > test-exit-code.txt
+          tail -n 14 test.tap
+          exit "$code"
+      - name: Failure names
+        if: always()
+        run: grep -E '^ *not ok' test.tap || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: full-suite
+          path: |
+            test.tap
+            test-exit-code.txt
+          retention-days: 14

@@ -1149,19 +1149,34 @@ function executeDealStrategyCoach(args) {
         healthScore -= 20;
         healthFactors.push('High risk: No champion identified');
     }
-    // Economic buyer
+    // Economic buyer. Stop-the-harm S6 (22 Nov 2026): when the typed fact and the text disagree, the typed fact is used, a
+    // warning is shown and the text claim earns no points; a buyer who is not engaged at proposal stage or later costs points.
+    const lateStage = ['proposal', 'negotiation', 'closing'].includes(dealStage);
+    const typedNotEngaged = args.economic_buyer_engagement === 'not_engaged';
+    // A stated sign-off conflicts with a typed 'not engaged' fact; it never adds score.
+    const signoffRead = (0, text_signals_ts_4.readSignal)(economicBuyer, /\bsigned[ -]+off\b/i);
+    const buyerConflict = (typedNotEngaged && (buyerRead.state === 'affirmed' || signoffRead.state === 'affirmed')) || (args.economic_buyer_engagement === 'engaged' && buyerRead.state === 'negated');
     if (buyerEngaged) {
         healthScore += 10;
         healthFactors.push('Economic buyer engaged');
     }
-    else if (economicBuyer) {
+    else if (lateStage && (typedNotEngaged || economicBuyer)) {
+        healthScore -= 10;
+        healthFactors.push(`High risk: Economic buyer not engaged at the ${dealStage} stage`);
+    }
+    else if (economicBuyer && !typedNotEngaged) {
         healthScore += 5;
         healthFactors.push('Note: Economic buyer identified but not engaged');
+    }
+    else if (typedNotEngaged) {
+        healthFactors.push('Note: Economic buyer not engaged');
     }
     else {
         healthScore -= 10;
         healthFactors.push('High risk: Economic buyer unknown');
     }
+    if (buyerConflict)
+        healthFactors.push(`Warning: these two facts disagree. You chose "${args.economic_buyer_engagement === 'engaged' ? 'engaged' : 'not engaged'}" for the economic buyer, but the text says "${economicBuyer.trim().slice(0, 120)}". The typed fact is used and the text claim earns no points; confirm which is right.`);
     // Days in stage penalty
     const stageDaysThreshold = {
         prospecting: 14,
@@ -1199,6 +1214,13 @@ function executeDealStrategyCoach(args) {
     healthFactors.push(args.incumbent_status ? `Incumbent fact supplied: ${args.incumbent_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Competition text', incumbentRead));
     healthFactors.push(args.blocker_status ? `Blocker fact supplied: ${args.blocker_status}; typed fact used.` : (0, text_signals_ts_4.evidenceLine)('Blocker text', blockerRead));
     healthScore = Math.max(0, Math.min(100, healthScore));
+    // Stop-the-harm S6 (22 Nov 2026): a close date that has passed is a high-risk flag ("re-date it").
+    const closeParsed = closeDate ? Date.parse(closeDate) : NaN;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const closePassed = Number.isFinite(closeParsed) && closeParsed < today.getTime();
+    if (closePassed)
+        healthFactors.push(`High risk: the close date (${closeDate.trim()}) has passed. Re-date it with the buyer before forecasting this deal.`);
     let healthStatus = buyerEngaged ? 'Healthy' : 'Buyer engagement unconfirmed';
     if (healthScore < 50) {
         healthStatus = 'At Risk';
@@ -1206,6 +1228,9 @@ function executeDealStrategyCoach(args) {
     else if (healthScore < 70) {
         healthStatus = 'Needs Attention';
     }
+    // Stop-the-harm S6 (22 Nov 2026): never "Healthy" while any high-risk flag is present.
+    if (healthStatus === 'Healthy' && healthFactors.some(f => /^High risk:/.test(f)))
+        healthStatus = closePassed ? 'Needs Attention: re-date it' : 'Needs Attention';
     // Stage-specific strategies
     const stageStrategies = {
         prospecting: `

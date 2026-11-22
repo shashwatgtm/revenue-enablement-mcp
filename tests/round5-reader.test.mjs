@@ -18,7 +18,7 @@ test('Round 5: a high rule score does not establish buyer engagement',async()=>{
  const args={deal_name:'Alert triage evaluation',deal_stage:'proposal',champion_status:'confirmed_champion',economic_buyer:'CISO has not attended a meeting',your_solution:'Alert triage software'};
  const response=await handler(new Request('https://example.com/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'deal_strategy_coach',arguments:args}})}));
  const r=(await response.json()).result;assert.ok(!r.isError);const text=r.content[0].text;
- assert.match(text,/Health Score: 85\/100 \(Buyer engagement unconfirmed\)/);
+ assert.match(text,/Health Score: 70\/100 \(Buyer engagement unconfirmed\)/);
  assert.doesNotMatch(text,/\(Healthy\)|\*\*Advance the deal\*\*/);
  assert.match(text,/Confirm the decision maker, participation and acceptance conditions/);
 });

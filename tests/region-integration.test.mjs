@@ -1,3 +1,4 @@
+// 22 Nov 2026 approved S6: only the deal answer was refreshed at the original capture date; other tools and the historical contract remain pinned.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';

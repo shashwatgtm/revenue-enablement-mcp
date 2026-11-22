@@ -6,7 +6,7 @@ const call=async(args)=>{const r=await req('tools/call',{name:'deal_strategy_coa
 const score=t=>Number(/Health Score: (\d+)/.exec(t)?.[1]);
 for(const vertical of ['Logistics tech','Fintech','SaaS','Vertical SaaS','AI native','ITeS','Telecom','Software','Cybersecurity'])test('R1 '+vertical+' exact, same meaning and opposite change scores by meaning',async()=>{
  const a={your_solution:vertical+' vendor'};const neutral=score(await call(a));
- for(const text of ['CFO engaged','The budget holder participates in the decision'])assert.equal(score(await call({...a,economic_buyer:text})),neutral+5);
+ for(const text of ['CFO engaged','The budget holder participates in the decision'])assert.equal(score(await call({...a,economic_buyer:text})),neutral+20);
  assert.equal(score(await call({...a,economic_buyer:'CFO, not engaged yet'})),neutral);
  for(const text of ['Known blockers: budget approval pending','The purchase cannot proceed until funds are approved'])assert.equal(score(await call({...a,blockers:text})),neutral-10);
  assert.equal(score(await call({...a,blockers:'No blockers; nothing stands in the way'})),neutral);

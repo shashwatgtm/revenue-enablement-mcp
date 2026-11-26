@@ -7,7 +7,7 @@ import { gateSubIndustry, withGeneralNotes } from './sub-industry.ts';
 import { explainSector, profileFor, VERTICALS, SUBTYPES, SECTOR_MODEL, type Vertical, type BusinessModel } from './verticals.ts';
 
 export const YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'] as const;
-export const YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
+export const YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. Format is text using one of the listed labels. For example, \"logistics_tech\".";
 const ID: Record<string, string> = { logistics_tech: 'logistics-tech', fintech: 'fintech', saas: 'saas', vertical_saas: 'vertical-saas', ai_native: 'ai-native', ites: 'ites', telecom: 'telecom', software: 'software', cybersecurity: 'cybersecurity' };
 
 let forced: string | undefined;

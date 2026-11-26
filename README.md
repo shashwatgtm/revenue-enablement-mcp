@@ -1,16 +1,21 @@
-# Revenue Enablement MCP v1.2.32
+# Revenue Enablement MCP v1.2.33
+
+By Helix GTM Consulting (https://gtmhelix.com), built by Shashwat Ghosh, Co-Founder and Fractional CMO.
+
 **Deal Strategy & Sales Enablement Engine**: 12 tools for sales execution, deal management, and revenue acceleration.
 
 ## Use it hosted (no install)
 
-Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector. It needs no sign-in and always runs the newest version (1.2.32). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
+Add `https://revenue-enablement.gtmhelix.com/mcp` to Claude or ChatGPT as a custom connector, or to Codex or Gemini CLI as an MCP server. It needs no sign-in and always runs the newest version (1.2.33). The same tools run as a free web app with a form per tool at https://revenue-enablement.gtmhelix.com/, and the setup steps are at https://revenue-enablement.gtmhelix.com/connect/.
 
-The npm package below is an older version (1.0.0 on npm on 27 September 2026) until the next npm release. Use it only if you need a local stdio server.
+The npm package below can lag behind the hosted server between releases; compare its version with the one the hosted server reports. Use it only if you need a local stdio server.
 
 
 [![NPM Version](https://img.shields.io/npm/v/@shashwatgtmalpha/revenue-enablement-mcp)](https://www.npmjs.com/package/@shashwatgtmalpha/revenue-enablement-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
+[![revenue-enablement-mcp MCP server](https://glama.ai/mcp/servers/shashwatgtm/revenue-enablement-mcp/badges/score.svg)](https://glama.ai/mcp/servers/shashwatgtm/revenue-enablement-mcp)
+[![Revenue Enablement MCP connector](https://glama.ai/mcp/connectors/io.github.shashwatgtm/revenue-enablement-mcp/badges/score.svg)](https://glama.ai/mcp/connectors/io.github.shashwatgtm/revenue-enablement-mcp)
 
 ## Quick Start
 
@@ -38,7 +43,7 @@ Add to your `claude_desktop_config.json`:
 
 ## Tools and inputs
 
-Generated on 27 September 2026 from the server's own tool list, and checked again on 18 October 2026 against `tools/list` of revenue-enablement-mcp 1.2.32 (the same code as the hosted MCP address), so every tool name, title, description and input below is exactly what the server accepts. Every tool is read-only.
+Tool names and input formats were checked against `tools/list` of revenue-enablement-mcp 1.2.33 on 17 November 2026. Query `tools/list` for current descriptions.
 
 | # | Tool | Title | What it does |
 |---|---|---|---|

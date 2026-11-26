@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en" class="hx-look">
-<head>
+<head><meta name="googlebot-news" content="noindex">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Revenue Enablement Docs: MCP and REST API | Helix GTM</title>
@@ -13,14 +13,14 @@
 <meta property="og:title" content="Revenue Enablement Docs: MCP and REST API | Helix GTM">
 <meta property="og:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
 <meta property="og:url" content="https://revenue-enablement.gtmhelix.com/docs/">
-<meta property="og:image" content="https://revenue-enablement.gtmhelix.com/og.png">
+<meta property="og:image" content="https://revenue-enablement.gtmhelix.com/assets/share/docs.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Revenue Enablement by Helix GTM Consulting">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Revenue Enablement Docs: MCP and REST API | Helix GTM">
 <meta name="twitter:description" content="How to call the 12 Revenue Enablement tools over MCP or REST: addresses, limits, errors and every input field, from the server&#x27;s own schemas.">
-<meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/og.png">
+<meta name="twitter:image" content="https://revenue-enablement.gtmhelix.com/assets/share/docs.jpg">
 <meta name="twitter:creator" content="@Shashwat_Ghosh">
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -202,6 +202,7 @@
 <script src="/assets/analytics.js?v=2eb2d1413a" data-privacy="/privacy/" defer></script>
 <script src="/assets/look.js?v=8ddfc15129" defer></script>
 <script src="https://gtmhelix.com/journey/history.js" defer></script>
+<link rel="stylesheet" href="/assets/site-access.css?v=1047d14556">
 </head>
 <body>
 <a class="hx-skip" href="#main">Skip to content</a>
@@ -227,7 +228,7 @@
   <ul class="hx-prose">
     <li>Address: <code>https://revenue-enablement.gtmhelix.com/mcp</code> (Streamable HTTP, stateless, JSON responses). GET returns 405 by design.</li>
     <li>Authentication: none. Every tool is marked read only (<code>readOnlyHint: true</code>, <code>destructiveHint: false</code>) and has a title.</li>
-    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.32.</li>
+    <li>Rate limit: 300 requests per minute per IP address. Server: <code>revenue-enablement-mcp</code> version 1.2.33.</li>
     <li>Limits: 262,144 bytes per call; text fields up to 4,000 characters, except the document fields <code>known_contacts</code> (Account Plan Builder), <code>account_notes</code> (Account Plan Builder) and <code>deal_details</code> (Win/Loss Analyzer), which take up to 100,000; one call per request (no batches). A call over a limit is refused before the tool runs.</li>
     <li>Local use: <code>npx -y @shashwatgtmalpha/revenue-enablement-mcp</code> runs these tools over stdio (npm can lag behind this site until a new version is published).</li>
   </ul>
@@ -278,13 +279,14 @@
 <tr><td>1.2.24</td><td>11 October 2026</td><td>safety fix only: the instruction echo safeguard; tool list and answers otherwise unchanged</td></tr>
 <tr><td>1.2.28</td><td>15 October 2026</td><td>security update only: MCP SDK 1.31.0 (advisory GHSA-6qxp-vccf-f47h); tool list and answers unchanged</td></tr>
 <tr><td>1.2.30</td><td>16 October 2026</td><td>security update: text you type is shown with a small backslash before characters that could start a link, image, tag or code, so it can never become live markup; tool list unchanged</td></tr>
-<tr><td>1.2.32 (this site)</td><td>18 October 2026</td><td>quality update: sector knowledge for the nine verticals on every tool; ROI without your own figures explains the method and asks for your numbers instead of an example figure; sub industry notes only when your own words name one; fixes to email subjects, demo steps and objection evidence</td></tr>
+<tr><td>1.2.32</td><td>18 October 2026</td><td>quality update: sector knowledge for the nine verticals on every tool; ROI without your own figures explains the method and asks for your numbers instead of an example figure; sub industry notes only when your own words name one; fixes to email subjects, demo steps and objection evidence</td></tr>
+<tr><td>1.2.33 (this site)</td><td>17 November 2026</td><td>Tool and parameter descriptions clarify usage, inputs and returned sections.</td></tr>
   </tbody></table></div>
 </section>
 
 <section class="hx-section hx-wash" aria-labelledby="ref-h">
   <h2 id="ref-h">Tool reference</h2>
-  <p class="hx-sub">Generated from the server's own input schemas, version 1.2.32.</p>
+  <p class="hx-sub">Tool names and input formats for server version 1.2.33.</p>
 </section>
 <section class="hx-section" id="account-plan-builder" aria-labelledby="d-account-plan-builder">
   <h3 id="d-account-plan-builder">Account Plan Builder</h3>

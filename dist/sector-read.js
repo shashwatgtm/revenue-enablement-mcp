@@ -15,7 +15,7 @@ const verticals_ts_1 = require("./verticals.js");
 const sub_industry_ts_1 = require("./sub-industry.js");
 const verticals_ts_2 = require("./verticals.js");
 exports.YOUR_SECTOR_VALUES = ['logistics_tech', 'fintech', 'saas', 'vertical_saas', 'ai_native', 'ites', 'telecom', 'software', 'cybersecurity', 'other'];
-exports.YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear.";
+exports.YOUR_SECTOR_DESCRIPTION = "Optional: your company's own industry (not your customers'). When given, it decides the sector notes; when left out, the tool reads it from your words and stays neutral if they are unclear. Format is text using one of the listed labels. For example, \"logistics_tech\".";
 const ID = { logistics_tech: 'logistics-tech', fintech: 'fintech', saas: 'saas', vertical_saas: 'vertical-saas', ai_native: 'ai-native', ites: 'ites', telecom: 'telecom', software: 'software', cybersecurity: 'cybersecurity' };
 let forced;
 /** Set once per tool call (the value was already checked against the list of choices); anything else clears it. */

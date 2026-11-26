@@ -1,0 +1,110 @@
+[
+  {
+    "sector": "SaaS",
+    "process": "subscription onboarding",
+    "teams": "customer success teams",
+    "annualCost": 120000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 20000,
+    "priceAboveSavings": 40000,
+    "exact": "The budget owner for customer success teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For customer success teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For customer success teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "ITeS",
+    "process": "service desk handovers",
+    "teams": "service desk teams",
+    "annualCost": 132000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 22000,
+    "priceAboveSavings": 44000,
+    "exact": "The budget owner for service desk teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For service desk teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For service desk teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "fintech",
+    "process": "settlement reconciliation",
+    "teams": "payments operations teams",
+    "annualCost": 144000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 24000,
+    "priceAboveSavings": 48000,
+    "exact": "The budget owner for payments operations teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For payments operations teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For payments operations teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "HR tech",
+    "process": "candidate screening",
+    "teams": "recruiting teams",
+    "annualCost": 156000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 26000,
+    "priceAboveSavings": 52000,
+    "exact": "The budget owner for recruiting teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For recruiting teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For recruiting teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "logistics",
+    "process": "parcel dispatch",
+    "teams": "dispatch teams",
+    "annualCost": 168000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 28000,
+    "priceAboveSavings": 56000,
+    "exact": "The budget owner for dispatch teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For dispatch teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For dispatch teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "healthcare IT",
+    "process": "clinic scheduling",
+    "teams": "clinic scheduling teams",
+    "annualCost": 180000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 30000,
+    "priceAboveSavings": 60000,
+    "exact": "The budget owner for clinic scheduling teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For clinic scheduling teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For clinic scheduling teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "manufacturing software",
+    "process": "production inspection",
+    "teams": "plant quality teams",
+    "annualCost": 192000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 32000,
+    "priceAboveSavings": 64000,
+    "exact": "The budget owner for plant quality teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For plant quality teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For plant quality teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "edtech",
+    "process": "classroom scheduling",
+    "teams": "teaching teams",
+    "annualCost": 204000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 34000,
+    "priceAboveSavings": 68000,
+    "exact": "The budget owner for teaching teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For teaching teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For teaching teams, the annual service fee exceeds the expected savings on outbound qualification."
+  },
+  {
+    "sector": "martech",
+    "process": "campaign approval",
+    "teams": "campaign operations teams",
+    "annualCost": 216000,
+    "improvementPercent": 25,
+    "priceBelowSavings": 36000,
+    "priceAboveSavings": 72000,
+    "exact": "The budget owner for campaign operations teams expects outbound qualification to cost less to run with the service. The quoted annual price is below the expected savings.",
+    "paraphrase": "For campaign operations teams, expected annual savings on outbound qualification exceed the service fee.",
+    "opposite": "For campaign operations teams, the annual service fee exceeds the expected savings on outbound qualification."
+  }
+]

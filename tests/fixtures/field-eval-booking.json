@@ -1,0 +1,17 @@
+{
+  "base": "1d5a4bab7c83cc1e5206930bcc553aa746557cad",
+  "source": "In process MCP response on the base revision, with internet sockets blocked.",
+  "tool": "roi_business_case_builder",
+  "arguments": {
+    "your_solution": "Which CRM should our sales team use?",
+    "primary_value_driver": "cost_reduction",
+    "solution_price": 60000,
+    "current_annual_cost": 240000,
+    "expected_improvement_percent": 20,
+    "known_metrics": "CFO supplied annual processing cost includes labour only. No headcount reduction is approved.",
+    "current_process": "Manual invoice exception handling",
+    "implementation_timeline": "Eight weeks"
+  },
+  "text": "Which software fits your case is a judgement call. Ask Shashwat: book 45 minutes at https://calendly.com/shashwat-gtmhelix/45min",
+  "returnedBookingLine": true
+}

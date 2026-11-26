@@ -1,17 +1,17 @@
 {
-  "base": "a62b50ee6bbce626f7f81f860fb72f8d61e2c00c",
+  "base": "1d5a4bab7c83cc1e5206930bcc553aa746557cad",
   "tools": {
-    "account_plan_builder": "a620c0554c63e95be1bad3c32c597eabbe3db090ff7541dc1e11c73646195c63",
-    "deal_strategy_coach": "a4e2f91cff16c04a1901fa18a334fbc05ffb6a07bd6c9a2aa95c5189fefa7571",
-    "discovery_question_bank": "831bec7870bac2d203dec23cb14779b216b518cab1f2b78bd006fc53cb19e1cb",
-    "roi_business_case_builder": "bc25c45320f3afe98bcb49607f90df267bdf1a5ba866f70b75832cff2e454b7d",
-    "mutual_action_plan_generator": "88432af8570c49a2d505f8971b5db8dc2d564134dcb21e002aba09b469ef5b38",
-    "win_loss_analyzer": "e74d0a13279c7384592d166660607608c7d3dc817d605d105d523c6b3189bdd0",
-    "proposal_section_writer": "6dca06a24558998c69247edd651c99e6ae1b49e0dd52069509d31d0183b733ea",
-    "email_sequence_generator": "f46b61c9c931b0cdde561dea9523929ca2bf9e5197b5cecd1b3d4e7407ddf761",
-    "demo_script_builder": "40745ee55090f38484141e44f5cbe1e004753f6e0386e944b25bc4046e0ea977",
-    "pricing_negotiation_guide": "675ec74d15ceb116e231861a486c2d7154dcceb0ee99c8b881a35d9abf6b7c51",
-    "champion_enablement_kit": "33cda1eb8032a14c112a63b9852e6f402c2dba28404ea75a0aec2299210ed011",
-    "competitive_trap_setter": "161373139cdc8b03d77a331549276cdd9c6e57f880f9262a389d0b20b4962eec"
+    "account_plan_builder": "14252c6ed51842db5fea353ebdfd2b90f28e7d6f2e994ec243916875fca90bb9",
+    "deal_strategy_coach": "1783739eb8ce466d34c55d2ea1cbc82de6f411053839012a90bded83fe633d94",
+    "discovery_question_bank": "16cf0503fea66a94993848676cafdb3343df79435ac186de04b509ee215864e1",
+    "roi_business_case_builder": "ead6c95b50fa03766d3809c2f7bf45f6a3a5bab84bfbf5a149117f9c1d589c79",
+    "mutual_action_plan_generator": "fe0f52862fc3f929a5f184f531ea61197cf88e4f7e980cb75bb53876f261b8e5",
+    "win_loss_analyzer": "b8020f5deff40e118ffa3b7a15bb2a090eec8d7a6debfd5bee513142ed7ff913",
+    "proposal_section_writer": "9428f9649021c03b0aa320cef94e4e3c2f280808c80a52c80ded5bd8a18fe810",
+    "email_sequence_generator": "98520f5fc0dca46142b9d0dc42a61570f6ea1f8f12208eab275f9e5758a169b8",
+    "demo_script_builder": "de70123b1a2224c260709e81b9555deae1999794b7c50bb2aa99de1fae3325ee",
+    "pricing_negotiation_guide": "577bcaec806c1d1b6130119a8392496de0faf27c11b35ef46412ecf6de13f451",
+    "champion_enablement_kit": "65069367d3b3bb3fc8c30f82bc774e49c3f78d192748add37ff7288b9565084c",
+    "competitive_trap_setter": "f1c1058f9bc06ff7ace2f06d165647c9ed98dce794786b0a9398e3fa360e4bba"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "base": "a62b50ee6bbce626f7f81f860fb72f8d61e2c00c",
+  "base": "1d5a4bab7c83cc1e5206930bcc553aa746557cad",
   "source": "In process MCP response on the base revision, with internet sockets blocked.",
   "tool": "roi_business_case_builder",
   "arguments": {
